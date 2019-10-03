@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
+
+package KdSoft.EtwLogging;
+
+// The EtwListener service definition.
+service EtwListener {
+  rpc OpenSession (OpenEtwSession) returns (EnableProvidersResult);
+  rpc EnableProviders (EnableProvidersRequest) returns (EnableProvidersResult);
+  rpc DisableProviders (DisableProvidersRequest) returns (google.protobuf.Empty);
+  rpc GetEvents (EtwEventRequest) returns (stream EtwEvent);
+  rpc SetCSharpFilter(SetFilterRequest) returns (google.protobuf.Empty);
+}
+
+// The request message containing the session name.
+message OpenEtwSession {
+  string name = 1;
+  bool try_attach = 2;
+  google.protobuf.Duration life_time = 3;
+  // provider_settings are ignored when try_attach = true
+  repeated ProviderSetting provider_settings = 4;
+}
+
+message EnableProvidersRequest {
+  string session_name = 1;
+  repeated ProviderSetting provider_settings = 2;
+}
+
+message ProviderSetting {
+    string name = 1;
+    TraceEventLevel level = 2;
+    uint64 match_keywords = 3;
+}
+
+message ProviderSettingResult {
+    string name = 1;
+    bool success = 2;
+}
+
+message EnableProvidersResult {
+    repeated ProviderSettingResult results = 1;
+}
+
+message DisableProvidersRequest {
+    string session_name = 1;
+    repeated string provider_names = 2;
+}
+
+message EtwEventRequest {
+    string session_name = 1;
+}
+
+message EtwEvent {
+  string provider_name = 1;
+  string event_name = 2;
+  uint32 id = 3;
+  string task_name = 4;
+  uint32 opcode = 5;
+  TraceEventLevel level = 6;
+  int32 version = 7;
+  int64 keywords = 8;
+  uint32 channel = 9;
+  google.protobuf.Timestamp time_stamp = 10;
+  string formatted_message = 11;
+  map<string, string> payload = 12;
+}
+
+message EtwSession {
+    string session_name = 1;
+    repeated ProviderSettingResult provider_results = 2;
+}
+
+message SetFilterRequest {
+    string session_name = 1;
+    string csharp_filter = 2;
+}
+
+enum TraceEventLevel {
+    //     Always log the event (It also can mean that the provider decides the verbosity)
+    //     You probably should not use it....
+    ALWAYS = 0;
+    //     Events that indicate critical conditions
+    CRITICAL = 1;
+    //     Events that indicate error conditions
+    ERROR = 2;
+    //     Events that indicate warning conditions
+    WARNING = 3;
+    //     Events that indicate information
+    INFORMATIONAL = 4;
+    //     Events that verbose information
+    VERBOSE = 5;
+}

@@ -1,0 +1,21 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+@section Styles{
+    <!-- Seems that fonts cannot be loaded from within a web component -->
+    <link rel="stylesheet" type="text/css" href="./styles/fontawesome/css/all.css" />
+}
+
+@section Scripts {
+    <script type="module" src="~/js/my-app.js"></script>
+    <script async type="module">
+        import MyAppModel from '/js/myAppModel.js';
+        const myapp = document.querySelector('my-app');
+        myapp.model = new MyAppModel();
+    </script>
+}
+
+<my-app appTitle="ETW Listener"></my-app>
