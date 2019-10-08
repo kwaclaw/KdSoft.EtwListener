@@ -54,6 +54,11 @@ return result;
                 MatchKeywords = 0,
                 Name = "SmartClinic-Services-Interop",
             };
+            var runtimeSetting = new ProviderSetting {
+                Level = TraceEventLevel.Informational,
+                MatchKeywords = 0,
+                Name = "Microsoft-Windows-DotNETRuntime",
+            };
 
             var openEtwSession = new OpenEtwSession {
                 Name = "TestSession",
@@ -62,6 +67,7 @@ return result;
             openEtwSession.ProviderSettings.Add(serverAppSetting);
             openEtwSession.ProviderSettings.Add(palabraServicesSetting);
             openEtwSession.ProviderSettings.Add(mqLinkSetting);
+            openEtwSession.ProviderSettings.Add(runtimeSetting);
 
             var reply = await client.OpenSessionAsync(openEtwSession);
             Console.WriteLine("Session: ");

@@ -29,9 +29,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SupportFiles", "SupportFile
 		TraceEventSamples\SupportFiles\EventProducer.cs = TraceEventSamples\SupportFiles\EventProducer.cs
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.Server", "EtwListenerService.Server\EtwEvents.Server.csproj", "{E97B6F12-EBA0-46BE-9256-E658ECB6E725}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.Server", "EtwEvents.Server\EtwEvents.Server.csproj", "{E97B6F12-EBA0-46BE-9256-E658ECB6E725}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.Client", "EtwListenerService.Client\EtwEvents.Client.csproj", "{61B88BD7-160F-49EB-90B5-FDF3056BD5FF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.Client", "EtwEvents.Client\EtwEvents.Client.csproj", "{61B88BD7-160F-49EB-90B5-FDF3056BD5FF}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.Interfaces", "EtwEvents.Interfaces\EtwEvents.Interfaces.csproj", "{B0E35391-282E-4F09-8174-A7DAEE263A86}"
 EndProject
