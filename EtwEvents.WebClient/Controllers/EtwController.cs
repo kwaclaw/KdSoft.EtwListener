@@ -36,13 +36,25 @@ namespace EtwEvents.WebClient
         }
 
         [HttpPost]
+        public async Task<IActionResult> CloseRemoteSession([FromQuery]string name) {
+            var credentials = ChannelCredentials.Insecure;
+            try {
+                var success = await _sessionManager.CloseRemoteSession(name).ConfigureAwait(false);
+                return Ok(success);
+            }
+            catch (Exception ex) {
+                return Problem(title: ex.Message);
+            }
+        }
+
+        [HttpGet]
         public async Task<IActionResult> StartEvents(string sessionName) {
             if (HttpContext.WebSockets.IsWebSocketRequest) {
                 var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
                 if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
                     var session = await sessionEntry.CreateTask.ConfigureAwait(false);
-                    session.StartEvents(webSocket);
-                    return new OkResult();
+                    await session.StartEvents(webSocket).ConfigureAwait(false);
+                    return new EmptyResult();  // OkResult not right here, tries to set status code which is not good in this scenario
                 }
                 else {
                     return new NotFoundObjectResult(new { Error = "Session not found" });

@@ -64,7 +64,8 @@ namespace EtwEvents.WebClient
 
                 var openEtwSession = new OpenEtwSession {
                     Name = name,
-                    LifeTime = lifeTime
+                    LifeTime = lifeTime,
+                    TryAttach = false,
                 };
                 openEtwSession.ProviderSettings.AddRange(providers);
 
@@ -79,7 +80,21 @@ namespace EtwEvents.WebClient
                 throw;
             }
         }
-        public bool StartEvents(WebSocket webSocket) {
+
+        internal async Task CloseRemote() {
+            try {
+                var closeEtwSession = new CloseEtwSession { Name = this.Name };
+                var reply = await _etwClient.CloseSessionAsync(closeEtwSession);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Close Session error");
+            }
+            finally {
+                await DisposeAsync().ConfigureAwait(false);
+            }
+        }
+
+        public Task StartEvents(WebSocket webSocket) {
             if (webSocket == null)
                 throw new ArgumentNullException(nameof(webSocket));
 
@@ -96,27 +111,36 @@ namespace EtwEvents.WebClient
                 _eventSession = eventSession;
             }
 
-            return eventSession.Start();
+            if (eventSession.Start())
+                return Task.WhenAll(eventSession.ReceiveTask, eventSession.RunTask!);
+            else
+                return eventSession.ReceiveTask;
         }
 
         public Task StopEvents() {
-            Task? eventTask = null;
+            Task? runTask = null;
+            Task receiveTask = null;
             lock (_syncObj) {
                 if (_eventSession != null) {
                     _eventSession.Stop();
-                    eventTask = _eventSession.RunTask;
+                    runTask = _eventSession.RunTask;
+                    receiveTask = _eventSession.ReceiveTask;
                     _eventSession = null;
                 }
             }
-            if (eventTask == null)
-                return Task.CompletedTask;
+            if (runTask == null)
+                return receiveTask ?? Task.CompletedTask;
             else
-                return eventTask;
+                return Task.WhenAll(receiveTask!, runTask);
         }
 
         public async ValueTask DisposeAsync() {
-            await StopEvents().ConfigureAwait(false);
-            await _channel.ShutdownAsync().ConfigureAwait(false);
+            try {
+                await StopEvents().ConfigureAwait(false);
+            }
+            finally {
+                await _channel.ShutdownAsync().ConfigureAwait(false);
+            }
         }
 
         public void Dispose() {

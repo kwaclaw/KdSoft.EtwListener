@@ -40,5 +40,14 @@ namespace EtwEvents.WebClient
             });
             return entry.CreateTask;
         }
+
+        public async Task<bool> CloseRemoteSession(string name) {
+            if (this.TryRemove(name, out var entry)) {
+                var session = await entry.CreateTask.ConfigureAwait(false);
+                await session.CloseRemote().ConfigureAwait(false);
+                return true;
+            }
+            return false;
+        }
     }
 }
