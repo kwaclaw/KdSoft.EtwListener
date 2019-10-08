@@ -4,9 +4,7 @@ import MyGridModel from './myGridModel.js';
 
 class MyAppModel {
   constructor() {
-    this.loadTime = 0;
-    this.parseTime = 0;
-    this.renderTime = 0;
+    this.traceSession = null;
     this.gridModel = new MyGridModel([], []);
     this.columns = [];
     return observable(this);
