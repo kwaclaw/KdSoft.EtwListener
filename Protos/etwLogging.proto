@@ -10,6 +10,7 @@ package KdSoft.EtwLogging;
 // The EtwListener service definition.
 service EtwListener {
   rpc OpenSession (OpenEtwSession) returns (EnableProvidersResult);
+  rpc CloseSession (CloseEtwSession) returns (google.protobuf.Empty);
   rpc EnableProviders (EnableProvidersRequest) returns (EnableProvidersResult);
   rpc DisableProviders (DisableProvidersRequest) returns (google.protobuf.Empty);
   rpc GetEvents (EtwEventRequest) returns (stream EtwEvent);
@@ -23,6 +24,10 @@ message OpenEtwSession {
   google.protobuf.Duration life_time = 3;
   // provider_settings are ignored when try_attach = true
   repeated ProviderSetting provider_settings = 4;
+}
+
+message CloseEtwSession {
+  string name = 1;
 }
 
 message EnableProvidersRequest {

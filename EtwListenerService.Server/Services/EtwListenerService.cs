@@ -39,6 +39,13 @@ namespace EtwEvents.Server
             return Task.FromResult(result);
         }
 
+        public override Task<Empty> CloseSession(CloseEtwSession request, ServerCallContext context) {
+            var session = GetSession(request.Name);
+            session.StopEvents();
+            session.GetLifeCycle().Terminate();
+            return Task.FromResult(empty);
+        }
+
         public override Task<EnableProvidersResult> EnableProviders(EnableProvidersRequest request, ServerCallContext context) {
             var result = new EnableProvidersResult();
             var session = GetSession(request.SessionName);
@@ -57,21 +64,28 @@ namespace EtwEvents.Server
             return Task.FromResult(empty);
         }
 
-        public override Task GetEvents(EtwEventRequest request, IServerStreamWriter<EtwEvent> responseStream, ServerCallContext context) {
-            var session = GetSession(request.SessionName);
+        //TODO handle that we can call GetEvents only once on real-time sessions, maybe we have to re-attach or close/open?
+
+        public override async Task GetEvents(EtwEventRequest request, IServerStreamWriter<EtwEvent> responseStream, ServerCallContext context) {
+            Task postEvent(tracing.TraceEvent evt) {
+                if (context.CancellationToken.IsCancellationRequested)
+                    return Task.CompletedTask;
+                else
+                    try {
+                        return responseStream.WriteAsync(new EtwEvent(evt));
+                    }
+                    // sometimes a WriteAsync is underway when IsCancellationRequested becomes true
+                    catch (InvalidOperationException) {
+                        return Task.CompletedTask;
+                    }
+            }
             responseStream.WriteOptions = new WriteOptions(WriteFlags.NoCompress);
 
-            var filter = session.GetFilter(); // this performs a lock
-            session.Instance.Source.Dynamic.All += async (tracing.TraceEvent evt) => {
-                if (TplActivities.TplEventSourceGuid.Equals(evt.ProviderGuid))
-                    return;
-                session.CheckFilterChanged(ref filter);
-                if (filter != null && filter.IncludeEvent(evt))
-                    await responseStream.WriteAsync(new EtwEvent(evt));
-            };
+            var tcs = new TaskCompletionSource<object>();
+            var session = GetSession(request.SessionName);
+            bool started = session.StartEvents(postEvent, tcs, context.CancellationToken);
 
-            session.Instance.Source.Process();
-            return Task.CompletedTask;
+            await tcs.Task;
         }
 
         public override Task<Empty> SetCSharpFilter(SetFilterRequest request, ServerCallContext context) {

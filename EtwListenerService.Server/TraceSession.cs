@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 using KdSoft.Utils;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -15,13 +17,13 @@ namespace EtwEvents.Server
 {
     public class TraceSession: TimedLifeCycleAware
     {
-        object syncObj = new object();
+        object _syncObj = new object();
 
-        TraceEventSession instance;
+        TraceEventSession _instance;
         public TraceEventSession Instance => CheckDisposed();
 
         TraceEventSession CheckDisposed() {
-            var inst = this.instance;
+            var inst = this._instance;
             if (inst == null)
                 throw new ObjectDisposedException(nameof(TraceSession));
             return inst;
@@ -31,22 +33,33 @@ namespace EtwEvents.Server
             IsCreated = true;
             if (tryAttach) {
                 try {
-                    instance = new TraceEventSession(name, TraceEventSessionOptions.Attach | TraceEventSessionOptions.NoRestartOnCreate);
+                    _instance = new TraceEventSession(name, TraceEventSessionOptions.Attach | TraceEventSessionOptions.NoRestartOnCreate);
                     IsCreated = false;
                 }
                 catch (FileNotFoundException ex) {
-                    instance = new TraceEventSession(name, TraceEventSessionOptions.Create);
-                    instance.EnableProvider(TplActivities.TplEventSourceGuid, tracing.TraceEventLevel.Always, TplActivities.TaskFlowActivityIdsKeyword);
+                    _instance = new TraceEventSession(name, TraceEventSessionOptions.Create);
+                    _instance.EnableProvider(TplActivities.TplEventSourceGuid, tracing.TraceEventLevel.Always, TplActivities.TaskFlowActivityIdsKeyword);
                 }
             }
             else {
-                instance = new TraceEventSession(name, TraceEventSessionOptions.Create);
-                instance.EnableProvider(TplActivities.TplEventSourceGuid, tracing.TraceEventLevel.Always, TplActivities.TaskFlowActivityIdsKeyword);
+                _instance = new TraceEventSession(name, TraceEventSessionOptions.Create);
+                _instance.EnableProvider(TplActivities.TplEventSourceGuid, tracing.TraceEventLevel.Always, TplActivities.TaskFlowActivityIdsKeyword);
             }
-            instance.EnableProviderTimeoutMSec = 10000;
+            _instance.EnableProviderTimeoutMSec = 10000;
         }
 
         public bool IsCreated { get; private set; }
+
+        protected override void Close() {
+            var inst = this._instance;
+            if (inst == null)
+                return;
+            this._instance = null;
+            try { inst.Dispose(); }
+            catch { }
+        }
+
+        #region Filters
 
         const string filterTemplate = @"
 using System;
@@ -68,7 +81,7 @@ namespace EtwEvents.Server
         CollectibleAssemblyLoadContext filterContext;
         IEventFilter filter;
         public IEventFilter GetFilter() {
-            lock (syncObj) {
+            lock (_syncObj) {
                 return filter;
             }
         }
@@ -79,7 +92,7 @@ namespace EtwEvents.Server
             bool result = filterChanged;
             if (result) {
                 filterChanged = false;
-                lock (syncObj) {
+                lock (_syncObj) {
                     currentFilter = this.filter;
                 }
             }
@@ -101,7 +114,7 @@ namespace EtwEvents.Server
             var filterClass = filterAssembly.ExportedTypes.Where(tp => tp.IsClass && filterType.IsAssignableFrom(tp)).First();
             var newFilter = (IEventFilter)Activator.CreateInstance(filterClass);
 
-            lock (syncObj) {
+            lock (_syncObj) {
                 filter = null;
                 filterContext?.Unload();
 
@@ -137,14 +150,58 @@ namespace EtwEvents.Server
             return compilation;
         }
 
+        #endregion
 
-        protected override void Close() {
-            var inst = this.instance;
-            if (inst == null)
-                return;
-            this.instance = null;
-            try { inst.Dispose(); }
-            catch { }
+        Action<tracing.TraceEvent> handleEvent = null;
+        Action handleCompleted = null;
+
+        int started = 0;
+        int stopped = 0;
+        public bool StartEvents(Func<tracing.TraceEvent, Task> postEvent, TaskCompletionSource<object> tcs, CancellationToken cancelToken) {
+            var filter = GetFilter(); // this performs a lock
+
+            Action<tracing.TraceEvent> newHandleEvent = async (tracing.TraceEvent evt) => {
+                if (this.stopped != 0) {
+                    var inst = this._instance;
+                    inst?.Source.StopProcessing();
+                    tcs.TrySetResult(null);
+                    return;
+                }
+                if (cancelToken.IsCancellationRequested) {
+                    // instance.Source.StopProcessing(); cannot continue once we have stopped
+                    return;
+                }
+                if (TplActivities.TplEventSourceGuid.Equals(evt.ProviderGuid))
+                    return;
+
+                CheckFilterChanged(ref filter);
+                if (filter == null || filter.IncludeEvent(evt)) {
+                    await postEvent(evt).ConfigureAwait(false);
+                }
+            };
+            var oldHandleEvent = Interlocked.Exchange(ref handleEvent, newHandleEvent);
+            if (oldHandleEvent != null) 
+                Instance.Source.Dynamic.All -= oldHandleEvent;
+            Instance.Source.Dynamic.All += newHandleEvent;
+
+            Action newHandleCompleted = () => tcs.TrySetResult(null);
+            var oldHandleCompleted = Interlocked.Exchange(ref handleCompleted, newHandleCompleted);
+            if (oldHandleCompleted != null) 
+                Instance.Source.Completed -= oldHandleCompleted;
+            Instance.Source.Completed += newHandleCompleted;
+
+            var oldStarted = Interlocked.CompareExchange(ref started, 1, 0);
+            if (oldStarted == 1 && !Instance.Source.CanReset) { // real time sessions cannot be reset
+                return false;
+            }
+            // this cannot be called multiple times in real time mode
+            Instance.Source.Process();
+            return true;
+        }
+
+        public void StopEvents() {
+            Instance.Flush();
+            this.stopped = -1;
         }
     }
 
