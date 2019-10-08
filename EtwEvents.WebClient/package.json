@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "postcss": "node node_modules/postcss-cli/bin/postcss src/styles/**/*.pcss --dir wwwroot/css --ext css --watch",
+    "postcss": "postcss_prebuild.cmd",
     "pika": "pika install --dest wwwroot/lib",
     "lint": "eslint"
   },

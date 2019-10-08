@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="KdSoft.Utils.Portable" Version="3.6.1" />
-    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.5">
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.6">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -28,7 +28,7 @@
   </ItemGroup>
 
   <Target Name="PostCSS" BeforeTargets="Build">
-    <Exec Command="node node_modules/postcss-cli/bin/postcss src/styles/fontawesome/css/all.css -o wwwroot/styles/fontawesome/css/all.css"></Exec>
+    <Exec Command="postcss_prebuild.cmd"></Exec>
     <Copy SourceFiles="@(FontAwsomeSprites)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeSprites->'wwwroot/styles/fontawesome/sprites/%(RecursiveDir)%(Filename)%(Extension)')" />
     <Copy SourceFiles="@(FontAwsomeSvgs)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeSvgs->'wwwroot/styles/fontawesome/svgs/%(RecursiveDir)%(Filename)%(Extension)')" />
     <Copy SourceFiles="@(FontAwsomeWebfonts)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeWebfonts->'wwwroot/styles/fontawesome/webfonts/%(RecursiveDir)%(Filename)%(Extension)')" />
