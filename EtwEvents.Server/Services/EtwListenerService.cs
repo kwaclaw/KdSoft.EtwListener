@@ -7,7 +7,7 @@ using tracing = Microsoft.Diagnostics.Tracing;
 
 namespace EtwEvents.Server
 {
-    public class EtwListenerService: EtwListener.EtwListenerBase
+    class EtwListenerService: EtwListener.EtwListenerBase
     {
         readonly TraceSessionManager sesManager;
         readonly Empty empty = new Empty();
@@ -64,8 +64,6 @@ namespace EtwEvents.Server
             return Task.FromResult(empty);
         }
 
-        //TODO handle that we can call GetEvents only once on real-time sessions, maybe we have to re-attach or close/open?
-
         public override async Task GetEvents(EtwEventRequest request, IServerStreamWriter<EtwEvent> responseStream, ServerCallContext context) {
             Task postEvent(tracing.TraceEvent evt) {
                 if (context.CancellationToken.IsCancellationRequested)
@@ -83,7 +81,7 @@ namespace EtwEvents.Server
 
             var tcs = new TaskCompletionSource<object>();
             var session = GetSession(request.SessionName);
-            bool started = session.StartEvents(postEvent, tcs, context.CancellationToken);
+            var realTimeSource = session.StartEvents(postEvent, tcs, context.CancellationToken);
 
             await tcs.Task;
         }

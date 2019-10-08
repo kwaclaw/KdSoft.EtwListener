@@ -15,12 +15,14 @@ using tracing = Microsoft.Diagnostics.Tracing;
 
 namespace EtwEvents.Server
 {
-    public class TraceSession: TimedLifeCycleAware
+    class TraceSession: TimedLifeCycleAware
     {
         object _syncObj = new object();
 
         TraceEventSession _instance;
         public TraceEventSession Instance => CheckDisposed();
+
+        Lazy<RealTimeTraceEventSource> _realTimeSource;
 
         TraceEventSession CheckDisposed() {
             var inst = this._instance;
@@ -52,10 +54,19 @@ namespace EtwEvents.Server
 
         protected override void Close() {
             var inst = this._instance;
-            if (inst == null)
+            if (inst != null) {
+                this._instance = null;
+                try { inst.Dispose(); }
+                catch { }
+            }
+
+            var rts = this._realTimeSource;
+            if (rts == null)
                 return;
-            this._instance = null;
-            try { inst.Dispose(); }
+            this._realTimeSource = null;
+            if (!rts.IsValueCreated)
+                return;
+            try { rts.Value.Source.Dispose(); }
             catch { }
         }
 
@@ -152,58 +163,34 @@ namespace EtwEvents.Server
 
         #endregion
 
-        Action<tracing.TraceEvent> handleEvent = null;
-        Action handleCompleted = null;
+        RealTimeTraceEventSource CreateRealTimeSource(
+           Func<tracing.TraceEvent, Task> postEvent,
+           TaskCompletionSource<object> tcs,
+           CancellationToken cancelToken
+        ) {
+            return new RealTimeTraceEventSource(this, postEvent, tcs, cancelToken);
+        }
 
-        int started = 0;
-        int stopped = 0;
-        public bool StartEvents(Func<tracing.TraceEvent, Task> postEvent, TaskCompletionSource<object> tcs, CancellationToken cancelToken) {
-            var filter = GetFilter(); // this performs a lock
+        public RealTimeTraceEventSource StartEvents(Func<tracing.TraceEvent, Task> postEvent, TaskCompletionSource<object> tcs, CancellationToken cancelToken) {
+            var newRtsLazy = new Lazy<RealTimeTraceEventSource>(() => CreateRealTimeSource(postEvent, tcs, cancelToken), false);
+            var oldRtsLazy = Interlocked.Exchange(ref _realTimeSource, newRtsLazy);
 
-            Action<tracing.TraceEvent> newHandleEvent = async (tracing.TraceEvent evt) => {
-                if (this.stopped != 0) {
-                    var inst = this._instance;
-                    inst?.Source.StopProcessing();
-                    tcs.TrySetResult(null);
-                    return;
-                }
-                if (cancelToken.IsCancellationRequested) {
-                    // instance.Source.StopProcessing(); cannot continue once we have stopped
-                    return;
-                }
-                if (TplActivities.TplEventSourceGuid.Equals(evt.ProviderGuid))
-                    return;
-
-                CheckFilterChanged(ref filter);
-                if (filter == null || filter.IncludeEvent(evt)) {
-                    await postEvent(evt).ConfigureAwait(false);
-                }
-            };
-            var oldHandleEvent = Interlocked.Exchange(ref handleEvent, newHandleEvent);
-            if (oldHandleEvent != null) 
-                Instance.Source.Dynamic.All -= oldHandleEvent;
-            Instance.Source.Dynamic.All += newHandleEvent;
-
-            Action newHandleCompleted = () => tcs.TrySetResult(null);
-            var oldHandleCompleted = Interlocked.Exchange(ref handleCompleted, newHandleCompleted);
-            if (oldHandleCompleted != null) 
-                Instance.Source.Completed -= oldHandleCompleted;
-            Instance.Source.Completed += newHandleCompleted;
-
-            var oldStarted = Interlocked.CompareExchange(ref started, 1, 0);
-            if (oldStarted == 1 && !Instance.Source.CanReset) { // real time sessions cannot be reset
-                return false;
+            if (oldRtsLazy?.IsValueCreated ?? false) {
+                oldRtsLazy.Value.Dispose();
             }
-            // this cannot be called multiple times in real time mode
-            Instance.Source.Process();
-            return true;
+
+            return newRtsLazy.Value;
         }
 
         public void StopEvents() {
             Instance.Flush();
-            this.stopped = -1;
+            var rtsLazy = Interlocked.Exchange(ref _realTimeSource, null);
+            if (rtsLazy?.IsValueCreated ?? false) {
+                rtsLazy.Value.Stop();
+            }
         }
     }
+
 
     public static class TplActivities
     {
