@@ -2,7 +2,7 @@ import { html } from '../lib/lit-html.js';
 import { repeat } from '../lib/lit-html/directives/repeat.js';
 import { observable, observe, unobserve } from '../lib/@nx-js/observer-util.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
-import { LitMvvmElement } from '../lib/@kdsoft/lit-mvvm.js';
+import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
 import { css, unsafeCSS } from '../styles/css-tag.js';
 import './my-grid.js';
 import MyAppModel from './myAppModel.js';
@@ -14,6 +14,7 @@ import './kdsoft-tree-node.js';
 import KdSoftCheckListModel from './kdsoft-checklist-model.js';
 import KdSoftDropdownModel from './kdsoft-dropdown-model.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
+import { SyncFusionGridStyle } from '../styles/css-grid-syncfusion-style.js';
 
 function* makeEmptyIterator() {
   //
@@ -22,13 +23,14 @@ function* makeEmptyIterator() {
 class MyApp extends LitMvvmElement {
   static get styles() {
     return [
+      SyncFusionGridStyle,
       css`
         :host {
           display: block;
         }
         
         .main-content {
-          height: calc(100vh - 34px);
+          height: calc(100vh - 36px);
           position: relative;
         }
 
@@ -40,11 +42,15 @@ class MyApp extends LitMvvmElement {
           --max-scroll-height: 200px;
         }
 
-        #txt {
-          width: 100%;
-          max-height: 100%;
-          min-height: 400px;
-          color: black:
+        #grid {
+          position: relative;
+          grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+          height: 100%;
+          overflow-x: auto;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+          pointer-events: auto;
+          z-index: 20;
         }
       `
     ];
@@ -61,6 +67,18 @@ class MyApp extends LitMvvmElement {
 
   constructor() {
     super();
+    this.scheduler = new BatchScheduler(100);
+
+    //this._dtFormat = new Intl.DateTimeFormat('default', { dateStyle: 'short', timeStyle: 'short' });
+    this._dtFormat = new Intl.DateTimeFormat('default', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: 'numeric',
+      minute: 'numeric',
+      second: 'numeric',
+      milli: 'numeric'
+    });
 
     const providerItems = [
       {
@@ -222,6 +240,7 @@ class MyApp extends LitMvvmElement {
     const eventsLabel = ts && ts.eventSession && ts.eventSession.ws ? 'Stop Events' : 'Start Events';
     const itemIterator = (ts && ts.eventSession) ? ts.eventSession.itemIterator() : makeEmptyIterator();
 
+
     return html`
       <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
       <link rel="stylesheet" type="text/css" href=${styleLinks.fontAwesome} />
@@ -237,20 +256,34 @@ class MyApp extends LitMvvmElement {
 
       <!-- Main content -->
       <div class="main-content">
-        <textarea id="txt">
+        <div id="grid" class="sfg-container">
+          <div class="sfg-header-row">
+            <div class="sfg-header">Sequence No</div>
+            <div class="sfg-header">Task</div>
+            <div class="sfg-header">OpCode</div>
+            <div class="sfg-header">TimeStamp</div>
+            <div class="sfg-header">Level</div>
+          </div>
           ${repeat(
             itemIterator,
-            item => item.timeStampSecs + (item.timeStampNanos / 1e9),
-            (item, indx) => html`${item.taskName}-${item.opCode} === ${item.providerName} === ${item.id}-${item.level}\n`
+            item => item.sequenceNo,
+            (item, indx) => {
+              //const dateString = this._dtFormat.format(new Date(item.timeStamp));
+              const dateString = `${this._dtFormat.format(item.timeStamp)}.${item.timeStamp % 1000}` ;
+              return html`
+            <div class="sfg-row">
+              <div>${item.sequenceNo}</div><div>${item.taskName}</div><div>${item.opCode}</div><div>${dateString}</div><div>${item.level}</div>
+            </div>`;
+            }
           )}
-        </textarea>
+        </div>
       </div>
     `;
   }
-
-
+  
   rendered() {
-    //
+    const grid = this.renderRoot.getElementById('grid');
+    grid.scrollTop = grid.scrollHeight;
   }
 }
 
