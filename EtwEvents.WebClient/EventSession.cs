@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Buffers;
+using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Grpc.Core;
 using KdSoft.EtwLogging;
-using Microsoft.AspNetCore.Connections;
 
 namespace EtwEvents.WebClient
 {
@@ -48,28 +47,41 @@ namespace EtwEvents.WebClient
             }
         }
 
-        async Task Run(CancellationToken stoppingToken) {
+
+        async Task Run(CancellationToken stoppingToken, TimeSpan frequency) {
             var jsonOptions = new JsonWriterOptions {
                 Indented = false,
                 SkipValidation = true,
             };
             var bufferWriter = new ArrayBufferWriter<byte>(512);
+            long sequenceNo = 0;
+
+            var stw = new Stopwatch();
 
             try {
 
                 using (var jsonWriter = new Utf8JsonWriter(bufferWriter, jsonOptions)) {
 
                     using (var streamer = _etwClient.GetEvents(_request)) {
+                        stw.Restart();
+                        bool startNewMessage = true;
+                        jsonWriter.Reset();
 
                         while (await streamer.ResponseStream.MoveNext(default(CancellationToken)).ConfigureAwait(false)) {
                             if (_webSocket.CloseStatus.HasValue)
                                 break;
 
                             bufferWriter.Clear();
-                            jsonWriter.Reset();
+
+                            if (startNewMessage) {
+                                startNewMessage = false;
+                                jsonWriter.WriteStartArray();
+                            }
+
                             jsonWriter.WriteStartObject();
 
                             var evt = streamer.ResponseStream.Current;
+                            jsonWriter.WriteNumber("sequenceNo", sequenceNo++);
                             jsonWriter.WriteString("providerName", evt.ProviderName);
                             jsonWriter.WriteNumber("channel", evt.Channel);
                             jsonWriter.WriteNumber("id", evt.Id);
@@ -77,8 +89,9 @@ namespace EtwEvents.WebClient
                             jsonWriter.WriteNumber("level", (uint)evt.Level);
                             jsonWriter.WriteNumber("opcode", evt.Opcode);
                             jsonWriter.WriteString("taskName", evt.TaskName);
-                            jsonWriter.WriteNumber("timeStampSecs", evt.TimeStamp.Seconds);
-                            jsonWriter.WriteNumber("timeStampNanos", evt.TimeStamp.Nanos);
+                            // timeStamp will be passed as milliseconds to Javascript
+                            var timeStamp = (evt.TimeStamp.Seconds * 1000) + (evt.TimeStamp.Nanos / 1000000);
+                            jsonWriter.WriteNumber("timeStamp", timeStamp);
                             jsonWriter.WriteNumber("version", evt.Version);
 
                             jsonWriter.WriteStartObject("payload");
@@ -88,10 +101,24 @@ namespace EtwEvents.WebClient
                             jsonWriter.WriteEndObject();
 
                             jsonWriter.WriteEndObject();
-                            jsonWriter.Flush();
 
-                            var written = bufferWriter.WrittenMemory;
-                            await _webSocket.SendAsync(written, WebSocketMessageType.Text, true, stoppingToken).ConfigureAwait(false);
+                            if (stw.Elapsed > frequency) {
+                                startNewMessage = true;
+                                jsonWriter.WriteEndArray();
+                                jsonWriter.Flush();
+
+                                var written = bufferWriter.WrittenMemory;
+                                await _webSocket.SendAsync(written, WebSocketMessageType.Text, true, stoppingToken).ConfigureAwait(false);
+
+                                jsonWriter.Reset();
+                                stw.Restart();
+                            }
+                            else {
+                                jsonWriter.Flush();
+
+                                var written = bufferWriter.WrittenMemory;
+                                await _webSocket.SendAsync(written, WebSocketMessageType.Text, false, stoppingToken).ConfigureAwait(false);
+                            }
                         }
                     }
                 }
@@ -125,7 +152,7 @@ namespace EtwEvents.WebClient
                 });
 
                 this._receiveTask = KeepReceiving(_stoppingCts.Token);
-                this._runTask = Run(_stoppingCts.Token);
+                this._runTask = Run(_stoppingCts.Token, TimeSpan.FromMilliseconds(20));
                 return true;
             }
             catch {
