@@ -4,6 +4,7 @@
 class RingBuffer {
   constructor(bufferSize) {
     this._items = new Array(bufferSize);
+    // next index to write to, one past the last item, also first item when buffer is full
     this._itemOffset = 0;
     return observable(this);
   }
@@ -27,11 +28,19 @@ class RingBuffer {
 
       if (overshoot >= 0) {
         const chunk1Length = newItems.length - overshoot;
-        this._items.splice(this._itemOffset, chunk1Length, newItems.slice(0, chunk1Length));
-        this._items.splice(0, overshoot, ...newItems.slice(chunk1Length));
+        const oldOffset = this._itemOffset;
+        for (let indx = 0; indx < chunk1Length; indx += 1) {
+          this._items[indx + oldOffset] = newItems[indx];
+        }
+        for (let indx = 0; indx < overshoot; indx += 1) {
+          this._items[indx] = newItems[indx + chunk1Length];
+        }
         newOffset = overshoot;
       } else {
-        this._items.splice(this._itemOffset, newItems.length, ...newItems);
+        const oldOffset = this._itemOffset;
+        for (let indx = 0; indx < newItems.length; indx += 1) {
+          this._items[indx + oldOffset] = newItems[indx];
+        }
       }
 
       this._itemOffset = newOffset;
@@ -45,19 +54,25 @@ class RingBuffer {
     return {
       [Symbol.iterator]() {
         this.current = self._itemOffset;
-        this.limit = self._itemOffset === 0 ? self._items.length - 1 : self._itemOffset - 1;
+        this.limit = self._itemOffset;
+        this.counted = 0;
         return this;
       },
 
       next() {
-        while (this.current !== this.limit) {
-          let itemIndex = this.current;
+        let itemIndex = this.current;
+        for (let indx = 0; indx < self._items.length; indx += 1) {
           const item = self._items[itemIndex];
+
           itemIndex += 1;
           if (itemIndex >= self._items.length) itemIndex = 0;
-          this.current = itemIndex;
+
+          if (itemIndex === this.limit) {
+            break;
+          }
 
           if (typeof item !== 'undefined') {
+            this.current = itemIndex;
             return { done: false, value: item };
           }
         }
