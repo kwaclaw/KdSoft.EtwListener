@@ -1,4 +1,5 @@
 ﻿import { observable } from '../lib/@nx-js/observer-util.js';
+import RingBuffer from './ringBuffer.js';
 
 class EventSession {
   constructor(wsUrl, bufferSize) {
@@ -6,53 +7,14 @@ class EventSession {
     this.ws = null;
     this._open = false;
     this._error = '';
-    this._items = new Array(bufferSize);
-    this._itemOffset = 0;
+    this._buffer = new RingBuffer(bufferSize);
     return observable(this);
   }
 
   get open() { return this._open; }
   get error() { return this._error; }
 
-  _addItem(item) {
-    let itemIndex = this._itemOffset;
-    this._items[itemIndex] = item;
-    itemIndex += 1;
-    if (itemIndex >= this._items.length) itemIndex -= this._items.length;
-    this._itemOffset = itemIndex;
-  }
-
-  // iterate over ringbuffer
-  itemIterator() {
-    const self = this;
-
-    return {
-      [Symbol.iterator]() {
-        this.current = 0;
-        return this;
-      },
-
-      next() {
-        if (this.current >= 0 && this.current < self._items.length) {
-          for (let index = this.current; index < self._items.length; index += 1) {
-            let itemIndex = self._itemOffset + index;
-            if (itemIndex >= self._items.length) itemIndex -= self._items.length;
-            const item = self._items[itemIndex];
-            this.current += 1;
-            if (item) {
-              return { done: false, value: item };
-            }
-          }
-          //let itemIndex = self._itemOffset + this.current;
-          //if (itemIndex >= self._items.length) itemIndex -= self._items.length;
-          //const item = self._items[itemIndex];
-          //this.current += 1;
-          //return { done: false, value: item };
-        }
-        return { done: true };
-      },
-    };
-  }
+  itemIterator() { return this._buffer.itemIterator(); }
 
   connect() {
     if (this.ws !== null) return;
@@ -76,9 +38,9 @@ class EventSession {
       let logEvent;
       try {
         logEvent = JSON.parse(ev.data);
-        this._addItem(logEvent);
+        this._buffer.addItems(logEvent);
       } catch (e) {
-        console.log(ev.data);
+        //console.log(ev.data);
         console.log(e);
       }
     };
