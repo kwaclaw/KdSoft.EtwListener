@@ -210,7 +210,7 @@ class MyApp extends LitMvvmElement {
     const ts = this.model.traceSession;
     if (!ts) return;
     if (!ts.eventSession) {
-      ts.eventSession = new EventSession(`ws://${window.location.host}/Etw/StartEvents?sessionName=${ts.name}`, 2000);
+      ts.eventSession = new EventSession(`ws://${window.location.host}/Etw/StartEvents?sessionName=${ts.name}`, 500);
     }
     if (!ts.eventSession.ws) {
       ts.eventSession.connect();
@@ -239,7 +239,7 @@ class MyApp extends LitMvvmElement {
     const sessionLabel = ts ? `Close ${ts.name}` : 'Open Session';
     const eventsLabel = ts && ts.eventSession && ts.eventSession.ws ? 'Stop Events' : 'Start Events';
     const itemIterator = (ts && ts.eventSession) ? ts.eventSession.itemIterator() : makeEmptyIterator();
-
+    this.counted = 0;
 
     return html`
       <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
@@ -269,7 +269,8 @@ class MyApp extends LitMvvmElement {
             item => item.sequenceNo,
             (item, indx) => {
               //const dateString = this._dtFormat.format(new Date(item.timeStamp));
-              const dateString = `${this._dtFormat.format(item.timeStamp)}.${item.timeStamp % 1000}` ;
+              const dateString = `${this._dtFormat.format(item.timeStamp)}.${item.timeStamp % 1000}`;
+              this.counted += 1;
               return html`
             <div class="sfg-row">
               <div>${item.sequenceNo}</div><div>${item.taskName}</div><div>${item.opCode}</div><div>${dateString}</div><div>${item.level}</div>
@@ -282,6 +283,8 @@ class MyApp extends LitMvvmElement {
   }
   
   rendered() {
+    console.log(`Repeat count: ${this.counted}`);
+
     const grid = this.renderRoot.getElementById('grid');
     grid.scrollTop = grid.scrollHeight;
   }
