@@ -16,11 +16,10 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.0.0" />
   </ItemGroup>
 
-
   <ItemGroup>
-    <FontAwsomeSprites Include="src/styles/fontawesome/sprites/**/*" />
-    <FontAwsomeSvgs Include="src/styles/fontawesome/svgs/**/*" />
-    <FontAwsomeWebfonts Include="src/styles/fontawesome/webfonts/**/*" />
+    <FontAwsomeSprites Include="src/css/fontawesome/sprites/**/*" />
+    <FontAwsomeSvgs Include="src/css/fontawesome/svgs/**/*" />
+    <FontAwsomeWebfonts Include="src/css/fontawesome/webfonts/**/*" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,9 +28,9 @@
 
   <Target Name="PostCSS" BeforeTargets="Build">
     <Exec Command="postcss_prebuild.cmd"></Exec>
-    <Copy SourceFiles="@(FontAwsomeSprites)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeSprites->'wwwroot/styles/fontawesome/sprites/%(RecursiveDir)%(Filename)%(Extension)')" />
-    <Copy SourceFiles="@(FontAwsomeSvgs)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeSvgs->'wwwroot/styles/fontawesome/svgs/%(RecursiveDir)%(Filename)%(Extension)')" />
-    <Copy SourceFiles="@(FontAwsomeWebfonts)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeWebfonts->'wwwroot/styles/fontawesome/webfonts/%(RecursiveDir)%(Filename)%(Extension)')" />
+    <Copy SourceFiles="@(FontAwsomeSprites)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeSprites->'wwwroot/css/fontawesome/sprites/%(RecursiveDir)%(Filename)%(Extension)')" />
+    <Copy SourceFiles="@(FontAwsomeSvgs)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeSvgs->'wwwroot/css/fontawesome/svgs/%(RecursiveDir)%(Filename)%(Extension)')" />
+    <Copy SourceFiles="@(FontAwsomeWebfonts)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeWebfonts->'wwwroot/css/fontawesome/webfonts/%(RecursiveDir)%(Filename)%(Extension)')" />
   </Target>
 
 </Project>

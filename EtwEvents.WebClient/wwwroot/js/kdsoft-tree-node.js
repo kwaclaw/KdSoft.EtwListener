@@ -166,7 +166,7 @@ class KdSoftTreeNode extends LitMvvmElement {
     const childrenClass = this.expanded ? 'children' : 'children-hidden';
     const result = html`
       <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
-      <link rel="stylesheet" type="text/css" href=${styleLinks.fontAwesome} />
+      <link rel="stylesheet" type="text/css" href=${styleLinks.fontawesome} />
       <style>
         :host {
           display: block;

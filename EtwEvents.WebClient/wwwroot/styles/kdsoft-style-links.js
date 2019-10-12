@@ -1,5 +1,5 @@
 export default {
-  tailwind: './styles/tailwind.css',
-  fontAwesome: './styles/fontawesome/all.css',
-  checkbox: './styles/kdsoft-checkbox.css'
+  tailwind: '../css/tailwind.css',
+  fontawesome: '../css/fontawesome/css/all.css',
+  checkbox: '../css/kdsoft-checkbox.css',
 };

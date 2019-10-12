@@ -254,7 +254,7 @@ class KdSoftCheckList extends LitMvvmElement {
 
     const result = html`
       <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
-      <link rel="stylesheet" type="text/css" href=${styleLinks.fontAwesome} />
+      <link rel="stylesheet" type="text/css" href=${styleLinks.fontawesome} />
       <link rel="stylesheet" type="text/css" href=${styleLinks.checkbox} />
       <style>
         :host {

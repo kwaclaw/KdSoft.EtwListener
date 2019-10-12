@@ -14,6 +14,7 @@ import './kdsoft-tree-node.js';
 import KdSoftCheckListModel from './kdsoft-checklist-model.js';
 import KdSoftDropdownModel from './kdsoft-dropdown-model.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
+import myappStyleLinks from '../styles/my-app-style-links.js';
 import { SyncFusionGridStyle } from '../styles/css-grid-syncfusion-style.js';
 
 function* makeEmptyIterator() {
@@ -243,8 +244,13 @@ class MyApp extends LitMvvmElement {
 
     return html`
       <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
-      <link rel="stylesheet" type="text/css" href=${styleLinks.fontAwesome} />
-
+      <link rel="stylesheet" type="text/css" href=${styleLinks.fontawesome} />
+      <link rel="stylesheet" type="text/css" href=${myappStyleLinks.myapp} />
+      <style>
+        :host {
+          position: relative;
+        }
+      </style>
       <!-- Header -->
       <div>
         <button @click=${this._sessionClicked}>${sessionLabel}</button>

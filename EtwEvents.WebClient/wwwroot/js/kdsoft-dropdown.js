@@ -130,7 +130,7 @@ class KdSoftDropDown extends LitMvvmElement {
     const selText = this.model.selectedText;
     const result = html`
       <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
-      <link rel="stylesheet" type="text/css" href=${styleLinks.fontAwesome} />
+      <link rel="stylesheet" type="text/css" href=${styleLinks.fontawesome} />
       <style>
         :host {
           display: inline-block;
