@@ -22,44 +22,6 @@ function* makeEmptyIterator() {
 }
 
 class MyApp extends LitMvvmElement {
-  static get styles() {
-    return [
-      SyncFusionGridStyle,
-      css`
-        :host {
-          display: block;
-        }
-        
-        .main-content {
-          position: relative;
-          min-height: calc(100vh - 60px);
-        }
-
-        kdsoft-dropdown {
-          width: 300px;
-        }
-
-        #droplistSingle, #droplistMulti {
-          --max-scroll-height: 200px;
-        }
-
-        #grid {
-          grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-          position: absolute;
-          top: 0;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          overflow-x: auto;
-          overflow-y: auto;
-          -webkit-overflow-scrolling: touch;
-          pointer-events: auto;
-          z-index: 20;
-        }
-      `
-    ];
-  }
-
   static _getSelectedText(clm) {
     let result = null;
     for (const selEntry of clm.selectedEntries) {
@@ -243,6 +205,53 @@ class MyApp extends LitMvvmElement {
     this.appTitle = this.getAttribute('appTitle');
   }
 
+  static get styles() {
+    return [
+      SyncFusionGridStyle,
+      css`
+        :host {
+          display: block;
+        }
+        
+        kdsoft-dropdown {
+          width: 300px;
+        }
+
+        #droplistSingle, #droplistMulti {
+          --max-scroll-height: 200px;
+        }
+
+        #main {
+          height: 100%;
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          flex-wrap: nowrap;
+          justify-content: flex-start;
+          align-items: stretch;
+        }
+
+        #grid {
+          grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          overflow-x: auto;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+          pointer-events: auto;
+          z-index: 20;
+        }
+
+        .brand {
+          font-family: Candara;
+        }
+      `
+    ];
+  }
+
   render() {
     const ts = this.model.traceSession;
     const sessionLabel = ts ? `Close ${ts.name}` : 'Open Session';
@@ -256,80 +265,74 @@ class MyApp extends LitMvvmElement {
       <link rel="stylesheet" type="text/css" href=${myappStyleLinks.myapp} />
       <style>
         :host {
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          flex-wrap: nowrap;
-          justify-content: flex-start;
-          align-items: stretch;
-        }
-        .brand {
-          font-family: Candara;
+
         }
       </style>
 
-      <nav class="flex-grow-0 flex items-center justify-between flex-wrap bg-gray-800 py-2 w-full z-10">
-        <div class="flex items-center flex-shrink-0 text-white mr-6">
-          <a class="text-white no-underline hover:text-white hover:no-underline" href="#">
-            <span class="text-2xl pl-2 brand"><i class="brand"></i>KDS</span>
-          </a>
-        </div>
-
-        <button class="btn btn-gray" @click=${this._sessionClicked}>${sessionLabel}</button>
-        <kdsoft-dropdown class="py-0" .model=${this.multiDropdownModel}>
-          <kdsoft-checklist id="droplistMulti" .model=${this.multiChecklistModel} allow-drag-drop show-checkboxes></kdsoft-checklist>
-        </kdsoft-dropdown>
-        <button class="btn btn-gray" @click=${this._eventsClicked} ?disabled=${!ts}>${eventsLabel}</button>
-
-        <div class="block lg:hidden">
-          <button id="nav-toggle" @click=${this._toggleNav}
-                  class="flex items-center px-3 py-2 border rounded text-gray-500 border-gray-600 hover:text-white hover:border-white">
-            <i class="fas fa-bars"></i>
-            <!-- <svg class="fill-current h-3 w-3" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Menu</title><path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"/></svg> -->
-          </button>
-        </div>
-
-        <div class="w-full flex-grow lg:flex lg:items-center lg:w-auto hidden lg:block pt-6 lg:pt-0" id="nav-content">
-          <ul class="list-reset lg:flex justify-end flex-1 items-center">
-            <li class="mr-3">
-              <a class="inline-block py-2 px-4 text-white no-underline" href="#">Active</a>
-            </li>
-            <li class="mr-3">
-              <a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" href="#">link</a>
-            </li>
-            <li class="mr-3">
-              <a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" href="#">link</a>
-            </li>
-            <li class="mr-3">
-              <a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" href="#">link</a>
-            </li>
-          </ul>
-        </div>
-      </nav>
-
-      <!-- Main content -->
-      <div class="flex-grow container main-content shadow-lg mx-auto bg-white ">
-        <div id="grid" class="sfg-container">
-          <div class="sfg-header-row">
-            <div class="sfg-header">Sequence No</div>
-            <div class="sfg-header">Task</div>
-            <div class="sfg-header">OpCode</div>
-            <div class="sfg-header">TimeStamp</div>
-            <div class="sfg-header">Level</div>
+      <div id="main">
+        <nav class="flex-grow-0 flex items-center justify-between flex-wrap bg-gray-800 py-2 w-full z-30">
+          <div class="flex items-center flex-shrink-0 text-white mr-6">
+            <a class="text-white no-underline hover:text-white hover:no-underline" href="#">
+              <span class="text-2xl pl-2 brand"><i class="brand"></i>KDS</span>
+            </a>
           </div>
-          ${repeat(
-            itemIterator,
-            item => item.sequenceNo,
-            (item, indx) => {
-              //const dateString = this._dtFormat.format(new Date(item.timeStamp));
-              const dateString = `${this._dtFormat.format(item.timeStamp)}.${item.timeStamp % 1000}`;
-              this.counted += 1;
-              return html`
-            <div class="sfg-row">
-              <div>${item.sequenceNo}</div><div>${item.taskName}</div><div>${item.opCode}</div><div>${dateString}</div><div>${item.level}</div>
-            </div>`;
-            }
-          )}
+
+          <button class="btn btn-gray" @click=${this._sessionClicked}>${sessionLabel}</button>
+          <kdsoft-dropdown class="py-0" .model=${this.multiDropdownModel}>
+            <kdsoft-checklist id="droplistMulti" .model=${this.multiChecklistModel} allow-drag-drop show-checkboxes></kdsoft-checklist>
+          </kdsoft-dropdown>
+          <button class="btn btn-gray" @click=${this._eventsClicked} ?disabled=${!ts}>${eventsLabel}</button>
+
+          <div class="block lg:hidden">
+            <button id="nav-toggle" @click=${this._toggleNav}
+                    class="flex items-center px-3 py-2 border rounded text-gray-500 border-gray-600 hover:text-white hover:border-white">
+              <i class="fas fa-bars"></i>
+              <!-- <svg class="fill-current h-3 w-3" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Menu</title><path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"/></svg> -->
+            </button>
+          </div>
+
+          <div class="w-full flex-grow lg:flex lg:items-center lg:w-auto hidden lg:block pt-6 lg:pt-0" id="nav-content">
+            <ul class="list-reset lg:flex justify-end flex-1 items-center">
+              <li class="mr-3">
+                <a class="inline-block py-2 px-4 text-white no-underline" href="#">Active</a>
+              </li>
+              <li class="mr-3">
+                <a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" href="#">link</a>
+              </li>
+              <li class="mr-3">
+                <a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" href="#">link</a>
+              </li>
+              <li class="mr-3">
+                <a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" href="#">link</a>
+              </li>
+            </ul>
+          </div>
+        </nav>
+
+        <!-- Main content -->
+        <div class="flex-grow relative">
+          <div id="grid" class="sfg-container">
+            <div class="sfg-header-row">
+              <div class="sfg-header">Sequence No</div>
+              <div class="sfg-header">Task</div>
+              <div class="sfg-header">OpCode</div>
+              <div class="sfg-header">TimeStamp</div>
+              <div class="sfg-header">Level</div>
+            </div>
+            ${repeat(
+              itemIterator,
+              item => item.sequenceNo,
+              (item, indx) => {
+                //const dateString = this._dtFormat.format(new Date(item.timeStamp));
+                const dateString = `${this._dtFormat.format(item.timeStamp)}.${item.timeStamp % 1000}`;
+                this.counted += 1;
+                return html`
+              <div class="sfg-row">
+                <div>${item.sequenceNo}</div><div>${item.taskName}</div><div>${item.opCode}</div><div>${dateString}</div><div>${item.level}</div>
+              </div>`;
+              }
+            )}
+          </div>
         </div>
       </div>
     `;
