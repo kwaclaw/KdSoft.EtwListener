@@ -1,17 +1,20 @@
 .btn {
   font-weight: 700;
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-  padding-left: 1rem;
-  padding-right: 1rem;
-  border-radius: 0.25rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
 }
 
-.btn-blue {
-  background-color: #4299e1;
+.btn-gray {
+  background-color: #a0aec0;
   color: #fff;
 }
 
-.btn-blue:hover {
-  background-color: #2b6cb0;
+.btn-gray:hover {
+  background-color: #718096;
+}
+
+.btn-gray:disabled {
+  color: #cbd5e0;
 }

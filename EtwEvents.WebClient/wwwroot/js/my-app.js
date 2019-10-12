@@ -31,8 +31,8 @@ class MyApp extends LitMvvmElement {
         }
         
         .main-content {
-          height: calc(100vh - 36px);
           position: relative;
+          min-height: calc(100vh - 60px);
         }
 
         kdsoft-dropdown {
@@ -44,9 +44,12 @@ class MyApp extends LitMvvmElement {
         }
 
         #grid {
-          position: relative;
           grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-          height: 100%;
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: 0;
           overflow-x: auto;
           overflow-y: auto;
           -webkit-overflow-scrolling: touch;
@@ -211,13 +214,18 @@ class MyApp extends LitMvvmElement {
     const ts = this.model.traceSession;
     if (!ts) return;
     if (!ts.eventSession) {
-      ts.eventSession = new EventSession(`ws://${window.location.host}/Etw/StartEvents?sessionName=${ts.name}`, 500);
+      // scroll bug in Chrome - will not show more than about 1000 items, works fine with FireFox
+      ts.eventSession = new EventSession(`ws://${window.location.host}/Etw/StartEvents?sessionName=${ts.name}`, 900);
     }
     if (!ts.eventSession.ws) {
       ts.eventSession.connect();
     } else {
       ts.eventSession.disconnect();
     }
+  }
+
+  _toggleNav() {
+    this.renderRoot.getElementById('nav-content').classList.toggle('hidden');
   }
 
   connectedCallback() {
@@ -249,19 +257,58 @@ class MyApp extends LitMvvmElement {
       <style>
         :host {
           position: relative;
+          display: flex;
+          flex-direction: column;
+          flex-wrap: nowrap;
+          justify-content: flex-start;
+          align-items: stretch;
+        }
+        .brand {
+          font-family: Candara;
         }
       </style>
-      <!-- Header -->
-      <div>
-        <button @click=${this._sessionClicked}>${sessionLabel}</button>
-        <kdsoft-dropdown .model=${this.multiDropdownModel}>
+
+      <nav class="flex-grow-0 flex items-center justify-between flex-wrap bg-gray-800 py-2 w-full z-10">
+        <div class="flex items-center flex-shrink-0 text-white mr-6">
+          <a class="text-white no-underline hover:text-white hover:no-underline" href="#">
+            <span class="text-2xl pl-2 brand"><i class="brand"></i>KDS</span>
+          </a>
+        </div>
+
+        <button class="btn btn-gray" @click=${this._sessionClicked}>${sessionLabel}</button>
+        <kdsoft-dropdown class="py-0" .model=${this.multiDropdownModel}>
           <kdsoft-checklist id="droplistMulti" .model=${this.multiChecklistModel} allow-drag-drop show-checkboxes></kdsoft-checklist>
         </kdsoft-dropdown>
-        <button @click=${this._eventsClicked} ?disabled=${!ts}>${eventsLabel}</button>
-      </div>
+        <button class="btn btn-gray" @click=${this._eventsClicked} ?disabled=${!ts}>${eventsLabel}</button>
+
+        <div class="block lg:hidden">
+          <button id="nav-toggle" @click=${this._toggleNav}
+                  class="flex items-center px-3 py-2 border rounded text-gray-500 border-gray-600 hover:text-white hover:border-white">
+            <i class="fas fa-bars"></i>
+            <!-- <svg class="fill-current h-3 w-3" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Menu</title><path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"/></svg> -->
+          </button>
+        </div>
+
+        <div class="w-full flex-grow lg:flex lg:items-center lg:w-auto hidden lg:block pt-6 lg:pt-0" id="nav-content">
+          <ul class="list-reset lg:flex justify-end flex-1 items-center">
+            <li class="mr-3">
+              <a class="inline-block py-2 px-4 text-white no-underline" href="#">Active</a>
+            </li>
+            <li class="mr-3">
+              <a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" href="#">link</a>
+            </li>
+            <li class="mr-3">
+              <a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" href="#">link</a>
+            </li>
+            <li class="mr-3">
+              <a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" href="#">link</a>
+            </li>
+          </ul>
+        </div>
+      </nav>
 
       <!-- Main content -->
-      <div class="main-content">
+      <div class="flex-grow container main-content shadow-lg mx-auto bg-white ">
         <div id="grid" class="sfg-container">
           <div class="sfg-header-row">
             <div class="sfg-header">Sequence No</div>
