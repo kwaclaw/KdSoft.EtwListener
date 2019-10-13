@@ -1,5 +1,6 @@
 import { html } from '../lib/lit-html.js';
 import { repeat } from '../lib/lit-html/directives/repeat.js';
+import { classMap } from '../lib/lit-html/directives/class-map.js';
 import { observable, observe, unobserve } from '../lib/@nx-js/observer-util.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
@@ -20,6 +21,16 @@ import { SyncFusionGridStyle } from '../styles/css-grid-syncfusion-style.js';
 function* makeEmptyIterator() {
   //
 }
+
+const runBtnBase = { fas: true };
+
+const classList = {
+  startBtn: { ...runBtnBase, 'fa-play': true, 'text-green-500': true },
+  stopBtn: { ...runBtnBase, 'fa-stop': true, 'text-red-500': true },
+  connectBtn: { ...runBtnBase, 'fa-wifi': true, 'text-red-500': true },
+  disconnectBtn: { ...runBtnBase, 'fa-wifi': true, 'text-green-500': true },
+};
+
 
 class MyApp extends LitMvvmElement {
   static _getSelectedText(clm) {
@@ -254,8 +265,8 @@ class MyApp extends LitMvvmElement {
 
   render() {
     const ts = this.model.traceSession;
-    const sessionLabel = ts ? `Close ${ts.name}` : 'Open Session';
-    const eventsLabel = ts && ts.eventSession && ts.eventSession.ws ? 'Stop Events' : 'Start Events';
+    const sessionClasses = ts ? classList.disconnectBtn : classList.connectBtn;
+    const eventsClasses = ts && ts.eventSession && ts.eventSession.ws ? classList.stopBtn : classList.startBtn;
     const itemIterator = (ts && ts.eventSession) ? ts.eventSession.itemIterator() : makeEmptyIterator();
     this.counted = 0;
 
@@ -277,11 +288,11 @@ class MyApp extends LitMvvmElement {
             </a>
           </div>
 
-          <button class="btn btn-gray" @click=${this._sessionClicked}>${sessionLabel}</button>
           <kdsoft-dropdown class="py-0" .model=${this.multiDropdownModel}>
             <kdsoft-checklist id="droplistMulti" .model=${this.multiChecklistModel} allow-drag-drop show-checkboxes></kdsoft-checklist>
           </kdsoft-dropdown>
-          <button class="btn btn-gray" @click=${this._eventsClicked} ?disabled=${!ts}>${eventsLabel}</button>
+          <button class="btn" @click=${this._sessionClicked}><i class=${classMap(sessionClasses)}></i></button>
+          <button class="btn" @click=${this._eventsClicked} ?disabled=${!ts}><i class=${classMap(eventsClasses)}></i></button>
 
           <div class="block lg:hidden">
             <button id="nav-toggle" @click=${this._toggleNav}
