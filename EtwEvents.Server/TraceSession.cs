@@ -61,13 +61,15 @@ namespace EtwEvents.Server
             }
 
             var rts = this._realTimeSource;
-            if (rts == null)
-                return;
-            this._realTimeSource = null;
-            if (!rts.IsValueCreated)
-                return;
-            try { rts.Value.Source.Dispose(); }
-            catch { }
+            if (rts != null) {
+                this._realTimeSource = null;
+                if (rts.IsValueCreated) {
+                    try { rts.Value.Source.Dispose(); }
+                    catch { }
+                }
+            }
+
+            SetFilter(null, null);
         }
 
         #region Filters
@@ -97,6 +99,20 @@ namespace EtwEvents.Server
             }
         }
 
+        void SetFilter(IEventFilter newFilter, CollectibleAssemblyLoadContext newFilterContext) {
+            lock (_syncObj) {
+                filter = null;
+                filterContext?.Unload();
+
+                if (newFilter != null) {
+                    filter = newFilter;
+                    filterContext = newFilterContext;
+                }
+
+                filterChanged = true;
+            }
+        }
+
         bool filterChanged;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool CheckFilterChanged(ref IEventFilter currentFilter) {
@@ -111,6 +127,10 @@ namespace EtwEvents.Server
         }
 
         public void SetFilter(string filterBody) {
+            if (string.IsNullOrWhiteSpace(filterBody)) {
+                SetFilter(null, null);
+            }
+
             var compilation = CompileFilter(filterBody);
 
             Assembly filterAssembly;
@@ -125,14 +145,7 @@ namespace EtwEvents.Server
             var filterClass = filterAssembly.ExportedTypes.Where(tp => tp.IsClass && filterType.IsAssignableFrom(tp)).First();
             var newFilter = (IEventFilter)Activator.CreateInstance(filterClass);
 
-            lock (_syncObj) {
-                filter = null;
-                filterContext?.Unload();
-
-                filter = newFilter;
-                filterContext = newFilterContext;
-                filterChanged = true;
-            }
+            SetFilter(newFilter, newFilterContext);
         }
 
         public static CSharpCompilation CompileFilter(string filterBody) {
