@@ -49,6 +49,7 @@ class EventSession {
   disconnect() {
     if (this.ws === null) return;
     this.ws.close();
+    this._open = false;
     this.ws = null;
   }
 }
