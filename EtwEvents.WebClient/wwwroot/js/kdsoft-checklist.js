@@ -179,10 +179,10 @@ class KdSoftCheckList extends LitMvvmElement {
     e.preventDefault();
   }
 
-  // NOTE: the checked status of a checkbox may not be properly rendered whe the checked attribute is set,
+  // NOTE: the checked status of a checkbox may not be properly rendered when the checked attribute is set,
   //       because that applies to inital rendering only. However, setting the checked property works!
   _getCheckBox(model, item) {
-    const chkid = `item-chk-${item.id}`;
+    const chkid = `item-chk-${model.getItemId(item)}`;
     return html`
 <input type="checkbox" id=${chkid}
   tabindex="-1"
@@ -190,7 +190,7 @@ class KdSoftCheckList extends LitMvvmElement {
   @click=${this._checkboxClicked}
   .checked=${model.isItemSelected(item)}
   ?disabled=${item.disabled} />
-<label for=${chkid}><span>${item.text}</span></label>
+<label for=${chkid}><span>${model.getItemText(item)}</span></label>
 `;
   }
 
@@ -208,7 +208,7 @@ class KdSoftCheckList extends LitMvvmElement {
   <span class="leading-normal cursor-pointer" @click=${this._downClick}><i class=${classMap(downArrowClasses)}></i></span>
   `
         : nothing}
-        ${showCheckboxes ? this._getCheckBox(this.model, item, indx) : html`<span>${item.text}</span>`}
+        ${showCheckboxes ? this._getCheckBox(this.model, item, indx) : html`<span>${this.model.getItemText(item)}</span>`}
       </a>
     `;
 
@@ -220,7 +220,7 @@ class KdSoftCheckList extends LitMvvmElement {
           tabindex="${tabindex}"
           draggable="true"
           class="list-item whitespace-no-wrap ${disabledString}"
-          title=${item.text}
+          title=${this.model.getItemText(item)}
           @dragstart=${this._dragStart}
           @dragenter=${this._dragEnter}
           @dragover=${this._dragOver}
@@ -236,7 +236,7 @@ class KdSoftCheckList extends LitMvvmElement {
           tabindex="${tabindex}"
           draggable="true"
           class="list-item whitespace-no-wrap ${disabledString}"
-          title=${item.text}
+          title=${this.model.getItemText(item)}
       >
         ${listItemContent}
       </li>
@@ -267,7 +267,7 @@ class KdSoftCheckList extends LitMvvmElement {
           @keydown=${this._itemListKeydown}
           @click=${this._itemListClick}
         >
-          ${repeat(this.model.filteredItems, entry => entry.item.id, entry => this._itemTemplate(entry.item, entry.index, showCheckboxes, hasArrows, allowDragAndDrop))}
+          ${repeat(this.model.filteredItems, entry => this.model.getItemId(entry.item), entry => this._itemTemplate(entry.item, entry.index, showCheckboxes, hasArrows, allowDragAndDrop))}
         </ul>
       </div>
     `;

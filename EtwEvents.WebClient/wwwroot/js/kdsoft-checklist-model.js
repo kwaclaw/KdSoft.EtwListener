@@ -51,7 +51,13 @@ function iterateFilter(items, filter) {
 const _multiSelect = new WeakMap();
 
 class KdSoftCheckListModel {
-  constructor(items = [], selectedIndexes = [], multiSelect = true) {
+  constructor(
+    items = [],
+    selectedIndexes = [],
+    multiSelect = true,
+    getItemText = item => item.text,
+    getItemId = item => item.getItemId
+  ) {
     if (!multiSelect && (selectedIndexes || []).length > 1) {
       throw new Error('Must not select multiple items');
     }
@@ -64,6 +70,9 @@ class KdSoftCheckListModel {
 
     // so that we can use this in the property getters/setters
     _multiSelect.set(result, multiSelect);
+
+    this.getItemText = getItemText;
+    this.getItemId = getItemId;
 
     return result;
   }
