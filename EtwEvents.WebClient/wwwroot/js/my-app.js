@@ -6,21 +6,14 @@ import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
 import { css, unsafeCSS } from '../styles/css-tag.js';
 import './my-grid.js';
-import MyAppModel from './myAppModel.js';
 import TraceSession from './traceSession.js';
-import EventSession from './eventSession.js';
 import './kdsoft-checklist.js';
 import './kdsoft-dropdown.js';
 import './kdsoft-tree-node.js';
-import KdSoftCheckListModel from './kdsoft-checklist-model.js';
-import KdSoftDropdownModel from './kdsoft-dropdown-model.js';
+import './trace-session-view.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
 import myappStyleLinks from '../styles/my-app-style-links.js';
-import { SyncFusionGridStyle } from '../styles/css-grid-syncfusion-style.js';
-
-function* makeEmptyIterator() {
-  //
-}
+import * as utils from './utils.js';
 
 const runBtnBase = { fas: true };
 
@@ -31,20 +24,19 @@ const classList = {
   disconnectBtn: { ...runBtnBase, 'fa-wifi': true, 'text-green-500': true },
 };
 
-
 class MyApp extends LitMvvmElement {
   static _getSelectedText(clm) {
     let result = null;
     for (const selEntry of clm.selectedEntries) {
-      if (result) result += `, ${selEntry.item.text}`;
-      else result = selEntry.item.text;
+      if (result) result += `, ${selEntry.item.name}`;
+      else result = selEntry.item.name;
     }
     return result;
   }
 
   constructor() {
     super();
-    this.scheduler = new BatchScheduler(100);
+    this.scheduler = new Queue(priorities.HIGH);
 
     //this._dtFormat = new Intl.DateTimeFormat('default', { dateStyle: 'short', timeStyle: 'short' });
     this._dtFormat = new Intl.DateTimeFormat('default', {
@@ -56,44 +48,6 @@ class MyApp extends LitMvvmElement {
       second: 'numeric',
       milli: 'numeric'
     });
-
-    const providerItems = [
-      {
-        id: 1,
-        disabled: false,
-        get text() { return this.name; },
-        name: 'Microsoft-Windows-Application Server-Applications',
-        level: 3,
-        matchKeyWords: 2305843009213825068
-      },
-      {
-        id: 2,
-        disabled: false,
-        get text() { return this.name; },
-        name: 'SmartClinic-Services-Mobility',
-        level: 4,
-        matchKeyWords: 0
-      },
-      {
-        id: 3,
-        disabled: false,
-        get text() { return this.name; },
-        name: 'SmartClinic-Services-Interop',
-        level: 4,
-        matchKeyWords: 0
-      },
-      {
-        id: 4,
-        disabled: false,
-        get text() { return this.name; },
-        name: 'Microsoft-Windows-DotNETRuntime',
-        level: 4,
-        matchKeyWords: 0
-      },
-    ];
-
-    this.multiChecklistModel = new KdSoftCheckListModel(providerItems, [0, 1, 3], true);
-    this.multiDropdownModel = new KdSoftDropdownModel();
   }
 
   connectDropdownChecklist(dropDownModel, checkListModel, checkListId, singleSelect) {
@@ -108,7 +62,7 @@ class MyApp extends LitMvvmElement {
     // react to search text changes in dropdown
     const searchObserver = observe(() => {
       const regex = new RegExp(dropDownModel.searchText, 'i');
-      checkListModel.filter = item => regex.test(item.text);
+      checkListModel.filter = item => regex.test(item.name);
     });
 
     const droppedObserver = observe(() => {
@@ -121,80 +75,36 @@ class MyApp extends LitMvvmElement {
     return [selectObserver, searchObserver, droppedObserver];
   }
 
-  async _closeRemoteSession(name) {
-    try {
-      const response = await fetch(`/Etw/CloseRemoteSession?name=${name}`, {
-        method: 'POST', // or 'PUT'
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+  //TODO multiple traceSessions, traceSessionViews!
 
-      const jobj = await response.json();
-      if (response.ok) {
-        this.model.traceSession = null;
-        console.log('Success:', JSON.stringify(jobj));
+  async _profileClicked() {
+    const profile = utils.first(this.model.profileCheckListModel.selectedEntries).item;
+    if (!profile) return;
+
+    const ts = this.model.traceSession;
+    if (ts && ts.profile.name === profile.name) {
+      if (ts.open) {
+        await ts.closeRemoteSession();
+      } else {
+        await ts.openSession();
       }
-      else {
-        this.model.traceSession = null;
-        console.log('Error:', JSON.stringify(jobj));
-      }
-    } catch (error) {
-      console.error('Error:', error);
+      return;
     }
-  }
 
-  async _openSession(name, host, providers) {
-    const request = { name, host, providers, lifeTime: 'PT6M30S' };
-
-    try {
-      const response = await fetch('/Etw/OpenSession', {
-        method: 'POST', // or 'PUT'
-        body: JSON.stringify(request), // data can be `string` or {object}!
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const jobj = await response.json();
-      if (response.ok) {
-        this.model.traceSession = new TraceSession(request.name, jobj.enabledProviders, jobj.failedProviders);
-        console.log('Success:', JSON.stringify(jobj));
-      }
-      else {
-        this.model.traceSession = null;
-        console.log('Error:', JSON.stringify(jobj));
-      }
-    } catch (error) {
-      this.model.traceSession = null;
-      console.error('Error:', error);
+    if (ts && ts.open) {
+      await ts.closeRemoteSession();
     }
-  }
 
-  async _sessionClicked() {
-    if (this.model.traceSession) {
-      await this._closeRemoteSession(this.model.traceSession.name);
-    } else {
-      const providers = [];
-      for (const entry of this.multiChecklistModel.selectedEntries) {
-        providers.push(entry.item);
-      }
-      await this._openSession('TestSession', 'localhost:50051', providers);
-    }
+    const session = new TraceSession(profile);
+    await session.openSession();
+    this.model.traceSession = session;
   }
 
   _eventsClicked() {
     const ts = this.model.traceSession;
     if (!ts) return;
-    if (!ts.eventSession) {
-      // scroll bug in Chrome - will not show more than about 1000 items, works fine with FireFox
-      ts.eventSession = new EventSession(`ws://${window.location.host}/Etw/StartEvents?sessionName=${ts.name}`, 900);
-    }
-    if (!ts.eventSession.ws) {
-      ts.eventSession.connect();
-    } else {
-      ts.eventSession.disconnect();
-    }
+
+    ts.toggleEvents();
   }
 
   _toggleNav() {
@@ -203,12 +113,12 @@ class MyApp extends LitMvvmElement {
 
   connectedCallback() {
     super.connectedCallback();
-    this._multiSelectObservers = this.connectDropdownChecklist(this.multiDropdownModel, this.multiChecklistModel, 'droplistMulti');
+    this._sessionListObservers = this.connectDropdownChecklist(this.model.sessionDropdownModel, this.model.profileCheckListModel, 'sessionProfiles', true);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    this._multiSelectObservers.forEach(o => unobserve(o));
+    this._sessionListObservers.forEach(o => unobserve(o));
   }
 
   firstRendered() {
@@ -218,7 +128,6 @@ class MyApp extends LitMvvmElement {
 
   static get styles() {
     return [
-      SyncFusionGridStyle,
       css`
         :host {
           display: block;
@@ -242,20 +151,6 @@ class MyApp extends LitMvvmElement {
           align-items: stretch;
         }
 
-        #grid {
-          grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-          position: absolute;
-          top: 0;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          overflow-x: auto;
-          overflow-y: auto;
-          -webkit-overflow-scrolling: touch;
-          pointer-events: auto;
-          z-index: 20;
-        }
-
         .brand {
           font-family: Candara;
         }
@@ -265,10 +160,8 @@ class MyApp extends LitMvvmElement {
 
   render() {
     const ts = this.model.traceSession;
-    const sessionClasses = ts ? classList.disconnectBtn : classList.connectBtn;
-    const eventsClasses = ts && ts.eventSession && ts.eventSession.ws ? classList.stopBtn : classList.startBtn;
-    const itemIterator = (ts && ts.eventSession) ? ts.eventSession.itemIterator() : makeEmptyIterator();
-    this.counted = 0;
+    const sessionClasses = ts && ts.open ? classList.disconnectBtn : classList.connectBtn;
+    const eventsClasses = ts && ts.eventSession && ts.eventSession.open ? classList.stopBtn : classList.startBtn;
 
     return html`
       <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
@@ -288,10 +181,10 @@ class MyApp extends LitMvvmElement {
             </a>
           </div>
 
-          <kdsoft-dropdown class="py-0" .model=${this.multiDropdownModel}>
-            <kdsoft-checklist id="droplistMulti" .model=${this.multiChecklistModel} allow-drag-drop show-checkboxes></kdsoft-checklist>
+          <kdsoft-dropdown class="py-0" .model=${this.model.sessionDropdownModel}>
+            <kdsoft-checklist id="sessionProfiles" .model=${this.model.profileCheckListModel} allow-drag-drop show-checkboxes></kdsoft-checklist>
           </kdsoft-dropdown>
-          <button class="btn" @click=${this._sessionClicked}><i class=${classMap(sessionClasses)}></i></button>
+          <button class="btn" @click=${this._profileClicked}><i class=${classMap(sessionClasses)}></i></button>
           <button class="btn" @click=${this._eventsClicked} ?disabled=${!ts}><i class=${classMap(eventsClasses)}></i></button>
 
           <div class="block lg:hidden">
@@ -322,38 +215,14 @@ class MyApp extends LitMvvmElement {
 
         <!-- Main content -->
         <div class="flex-grow relative">
-          <div id="grid" class="sfg-container">
-            <div class="sfg-header-row">
-              <div class="sfg-header">Sequence No</div>
-              <div class="sfg-header">Task</div>
-              <div class="sfg-header">OpCode</div>
-              <div class="sfg-header">TimeStamp</div>
-              <div class="sfg-header">Level</div>
-            </div>
-            ${repeat(
-              itemIterator,
-              item => item.sequenceNo,
-              (item, indx) => {
-                //const dateString = this._dtFormat.format(new Date(item.timeStamp));
-                const dateString = `${this._dtFormat.format(item.timeStamp)}.${item.timeStamp % 1000}`;
-                this.counted += 1;
-                return html`
-              <div class="sfg-row">
-                <div>${item.sequenceNo}</div><div>${item.taskName}</div><div>${item.opCode}</div><div>${dateString}</div><div>${item.level}</div>
-              </div>`;
-              }
-            )}
-          </div>
+          <trace-session-view .model=${ts}></trace-session-view>
         </div>
       </div>
     `;
   }
   
   rendered() {
-    console.log(`Repeat count: ${this.counted}`);
-
-    const grid = this.renderRoot.getElementById('grid');
-    grid.scrollTop = grid.scrollHeight;
+    //
   }
 }
 
