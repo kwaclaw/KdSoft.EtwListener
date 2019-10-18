@@ -16,12 +16,15 @@ import myappStyleLinks from '../styles/my-app-style-links.js';
 import * as utils from './utils.js';
 
 const runBtnBase = { fas: true };
+const tabBase = { 'inline-block': true, 'py-2': true, 'no-underline': true };
 
 const classList = {
   startBtn: { ...runBtnBase, 'fa-play': true, 'text-green-500': true },
   stopBtn: { ...runBtnBase, 'fa-stop': true, 'text-red-500': true },
   connectBtn: { ...runBtnBase, 'fa-wifi': true, 'text-red-500': true },
   disconnectBtn: { ...runBtnBase, 'fa-wifi': true, 'text-green-500': true },
+  tabActive: { ...tabBase, 'pl-4': true, 'pr-0': true, 'text-white': true },
+  tabInactive: { ...tabBase, 'px-4': true, 'text-gray-600': true, 'hover:text-gray-200': true, 'hover:text-underline': true },
 };
 
 class MyApp extends LitMvvmElement {
@@ -81,27 +84,41 @@ class MyApp extends LitMvvmElement {
     const profile = utils.first(this.model.profileCheckListModel.selectedEntries).item;
     if (!profile) return;
 
-    const ts = this.model.traceSession;
-    if (ts && ts.profile.name === profile.name) {
-      if (ts.open) {
-        await ts.closeRemoteSession();
-      } else {
-        await ts.openSession();
-      }
-      return;
-    }
-
-    if (ts && ts.open) {
-      await ts.closeRemoteSession();
-    }
+    if (this.model.traceSessions.has(profile.name)) return;
 
     const session = new TraceSession(profile);
     await session.openSession();
-    this.model.traceSession = session;
+    this.model.traceSessions.set(profile.name, session);
+    this.model.activeSessionName = profile.name;
   }
 
-  _eventsClicked() {
-    const ts = this.model.traceSession;
+  _sessionClicked(e) {
+    const linkElement = e.currentTarget.closest('li');
+    this.model.activeSessionName = linkElement.dataset.sessionName;
+  }
+
+  async _closeSessionClicked(e) {
+    const linkElement = e.currentTarget.closest('li');
+    const sessionName = linkElement.dataset.sessionName;
+    const ts = this.model.traceSessions.get(sessionName);
+    if (!ts) return;
+
+    // find they key that was inserted before (or after) the current key
+    const prevKey = utils.closest(this.model.traceSessions.keys(), sessionName);
+
+    try {
+      if (ts.open) {
+        await ts.closeRemoteSession();
+      }
+    } finally {
+      this.model.traceSessions.delete(sessionName);
+      this.model.activeSessionName = prevKey;
+    }
+  }
+
+  _eventsClicked(e) {
+    const linkElement = e.currentTarget.closest('li');
+    const ts = this.model.traceSessions.get(linkElement.dataset.sessionName);
     if (!ts) return;
 
     ts.toggleEvents();
@@ -159,9 +176,8 @@ class MyApp extends LitMvvmElement {
   }
 
   render() {
-    const ts = this.model.traceSession;
+    const ts = this.model.activeSession;
     const sessionClasses = ts && ts.open ? classList.disconnectBtn : classList.connectBtn;
-    const eventsClasses = ts && ts.eventSession && ts.eventSession.open ? classList.stopBtn : classList.startBtn;
 
     return html`
       <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
@@ -181,11 +197,10 @@ class MyApp extends LitMvvmElement {
             </a>
           </div>
 
-          <kdsoft-dropdown class="py-0" .model=${this.model.sessionDropdownModel}>
-            <kdsoft-checklist id="sessionProfiles" .model=${this.model.profileCheckListModel} allow-drag-drop show-checkboxes></kdsoft-checklist>
+          <kdsoft-dropdown class="py-0 text-white" .model=${this.model.sessionDropdownModel}>
+            <kdsoft-checklist id="sessionProfiles" class="text-black" .model=${this.model.profileCheckListModel} allow-drag-drop show-checkboxes></kdsoft-checklist>
           </kdsoft-dropdown>
           <button class="btn" @click=${this._profileClicked}><i class=${classMap(sessionClasses)}></i></button>
-          <button class="btn" @click=${this._eventsClicked} ?disabled=${!ts}><i class=${classMap(eventsClasses)}></i></button>
 
           <div class="block lg:hidden">
             <button id="nav-toggle" @click=${this._toggleNav}
@@ -197,18 +212,27 @@ class MyApp extends LitMvvmElement {
 
           <div class="w-full flex-grow lg:flex lg:items-center lg:w-auto hidden lg:block pt-6 lg:pt-0" id="nav-content">
             <ul class="list-reset lg:flex justify-end flex-1 items-center">
-              <li class="mr-3">
-                <a class="inline-block py-2 px-4 text-white no-underline" href="#">Active</a>
-              </li>
-              <li class="mr-3">
-                <a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" href="#">link</a>
-              </li>
-              <li class="mr-3">
-                <a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" href="#">link</a>
-              </li>
-              <li class="mr-3">
-                <a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" href="#">link</a>
-              </li>
+            ${[...this.model.traceSessions.values()].map(ses => {
+              const isActiveTab = this.model.activeSession === ses;
+              const tabClasses = isActiveTab ? classList.tabActive : classList.tabInactive;
+              const eventsClasses = ses.eventSession && ses.eventSession.open ? classList.stopBtn : classList.startBtn;
+              const buttonsClasses = isActiveTab ? 'inline-block' : 'hidden';
+
+              return html`
+                <li class="mr-3" data-session-name=${ses.profile.name} @click=${this._sessionClicked}>
+                  <a class=${classMap(tabClasses)} href="#">${ses.profile.name}</a>
+                  <div class="${buttonsClasses}">
+                    <button class="btn" @click=${this._eventsClicked}>
+                      <i class=${classMap(eventsClasses)}></i>
+                    </button>
+                    <button type="button" @click=${this._closeSessionClicked}>
+                      <i class="fas fa-lg fa-times text-gray-500"></i>
+                    </button>
+                  </div>
+                </li>
+                `;
+              }
+            )}
             </ul>
           </div>
         </nav>

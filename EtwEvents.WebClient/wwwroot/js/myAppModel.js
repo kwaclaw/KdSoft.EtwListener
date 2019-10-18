@@ -31,10 +31,11 @@ return result;
 
 class MyAppModel {
   constructor() {
-    this.traceSession = null;
+    this._traceSessions = new Map();
+    this.activeSessionName = null;
 
     const smartClinicProviders = [
-      new EventProvider('Microsoft-Windows-Application Server-Applications', 3, 2305843009213825068),
+      new EventProvider('Microsoft-Windows-Application Server-Applications', 0, 2305843009213825068),
       new EventProvider('SmartClinic-Services-Mobility', 4),
       new EventProvider('SmartClinic-Services-Interop', 4),
     ];
@@ -50,6 +51,9 @@ class MyAppModel {
 
     return observable(this);
   }
+
+  get traceSessions() { return this._traceSessions; }
+  get activeSession() { return this._traceSessions.get(this.activeSessionName); }
 }
 
 export default MyAppModel;
