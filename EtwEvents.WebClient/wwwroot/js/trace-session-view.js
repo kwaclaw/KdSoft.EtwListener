@@ -46,7 +46,7 @@ class TraceSessionView extends LitMvvmElement {
         }
 
         #grid {
-          grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+          grid-template-columns: auto auto auto auto auto auto;
           position: absolute;
           top: 0;
           bottom: 0;
@@ -82,6 +82,7 @@ class TraceSessionView extends LitMvvmElement {
             <div class="sfg-header">OpCode</div>
             <div class="sfg-header">TimeStamp</div>
             <div class="sfg-header">Level</div>
+            <div class="sfg-header">Payload</div>
           </div>
           ${repeat(
             itemIterator,
@@ -91,7 +92,12 @@ class TraceSessionView extends LitMvvmElement {
               const dateString = `${this._dtFormat.format(item.timeStamp)}.${item.timeStamp % 1000}`;
               return html`
             <div class="sfg-row">
-              <div>${item.sequenceNo}</div><div>${item.taskName}</div><div>${item.opCode}</div><div>${dateString}</div><div>${item.level}</div>
+              <div>${item.sequenceNo}</div>
+              <div>${item.taskName}</div>
+              <div>${item.opCode}</div>
+              <div>${dateString}</div>
+              <div>${item.level}</div>
+              <div><pre>${JSON.stringify(item.payload)}</pre></div>
             </div>`;
             }
           )}
