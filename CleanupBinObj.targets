@@ -1,0 +1,8 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Target Name="CleanUpBinObj" >
+    <RemoveDir Condition="'$(BaseOutputPath)'!=''"
+               Directories="$([System.IO.Path]::Combine($(MSBuildProjectDirectory),$(BaseOutputPath)))" /> <!-- bin -->
+    <RemoveDir Condition="'$(BaseIntermediateOutputPath)'!=''"
+               Directories="$([System.IO.Path]::Combine($(MSBuildProjectDirectory),$(BaseIntermediateOutputPath)))" /> <!-- obj -->
+  </Target>
+</Project>
