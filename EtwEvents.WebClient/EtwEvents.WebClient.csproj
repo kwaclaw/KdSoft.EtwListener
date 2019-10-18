@@ -1,10 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <LangVersion>8.0</LangVersion>
     <Nullable>enable</Nullable>
+    <AssemblyName>EtwEvents.WebClient</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
