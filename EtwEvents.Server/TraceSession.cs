@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.Dynamic;
 using System.IO;
 using System.Linq;
@@ -38,7 +39,7 @@ namespace EtwEvents.Server
                     _instance = new TraceEventSession(name, TraceEventSessionOptions.Attach | TraceEventSessionOptions.NoRestartOnCreate);
                     IsCreated = false;
                 }
-                catch (FileNotFoundException ex) {
+                catch (FileNotFoundException) {
                     _instance = new TraceEventSession(name, TraceEventSessionOptions.Create);
                     _instance.EnableProvider(TplActivities.TplEventSourceGuid, tracing.TraceEventLevel.Always, TplActivities.TaskFlowActivityIdsKeyword);
                 }
@@ -126,7 +127,7 @@ namespace EtwEvents.Server
             return result;
         }
 
-        public void SetFilter(string filterBody) {
+        public ImmutableArray<Diagnostic> SetFilter(string filterBody) {
             if (string.IsNullOrWhiteSpace(filterBody)) {
                 SetFilter(null, null);
             }
@@ -136,9 +137,14 @@ namespace EtwEvents.Server
             Assembly filterAssembly;
             var newFilterContext = new CollectibleAssemblyLoadContext();
             using (var ms = new MemoryStream()) {
-                var cr = compilation.Emit(ms);
-                ms.Seek(0, SeekOrigin.Begin);
-                filterAssembly = newFilterContext.LoadFromStream(ms);
+                var emitResult = compilation.Emit(ms);
+                if (emitResult.Success) {
+                    ms.Seek(0, SeekOrigin.Begin);
+                    filterAssembly = newFilterContext.LoadFromStream(ms);
+                }
+                else {
+                    return emitResult.Diagnostics;
+                }
             }
 
             var filterType = typeof(IEventFilter);
@@ -146,6 +152,8 @@ namespace EtwEvents.Server
             var newFilter = (IEventFilter)Activator.CreateInstance(filterClass);
 
             SetFilter(newFilter, newFilterContext);
+
+            return ImmutableArray<Diagnostic>.Empty;
         }
 
         public static CSharpCompilation CompileFilter(string filterBody) {

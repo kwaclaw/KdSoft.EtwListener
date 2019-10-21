@@ -14,7 +14,7 @@ service EtwListener {
   rpc EnableProviders (EnableProvidersRequest) returns (EnableProvidersResult);
   rpc DisableProviders (DisableProvidersRequest) returns (google.protobuf.Empty);
   rpc GetEvents (EtwEventRequest) returns (stream EtwEvent);
-  rpc SetCSharpFilter(SetFilterRequest) returns (google.protobuf.Empty);
+  rpc SetCSharpFilter(SetFilterRequest) returns (SetFilterResult);
 }
 
 // The request message containing the session name.
@@ -84,18 +84,55 @@ message SetFilterRequest {
     string csharp_filter = 2;
 }
 
+message LinePosition {
+    int32 line = 1;
+    int32 character = 2;
+}
+
+message LinePositionSpan {
+    LinePosition start = 1;
+    LinePosition end = 2;
+}
+
+message CompileDiagnostic {
+    string id = 1;
+    bool is_warning_as_error = 2;
+    int32 warning_level = 3;
+    CompileDiagnosticSeverity severity = 4;
+    LinePositionSpan line_span = 5;
+    string message = 6;
+}
+
+message SetFilterResult {
+    repeated CompileDiagnostic diagnostics = 1;
+}
+
+// Note: multiple enums in the same namespace cannot have duplicate value identifiers, so we prefix them;
+//       the C# code generator will remove these prefixes if they match the enum name
 enum TraceEventLevel {
     //     Always log the event (It also can mean that the provider decides the verbosity)
     //     You probably should not use it....
-    ALWAYS = 0;
+    TraceEventLevel_ALWAYS = 0;
     //     Events that indicate critical conditions
-    CRITICAL = 1;
+    TraceEventLevel_CRITICAL = 1;
     //     Events that indicate error conditions
-    ERROR = 2;
+    TraceEventLevel_ERROR = 2;
     //     Events that indicate warning conditions
-    WARNING = 3;
+    TraceEventLevel_WARNING = 3;
     //     Events that indicate information
-    INFORMATIONAL = 4;
+    TraceEventLevel_INFORMATIONAL = 4;
     //     Events that verbose information
-    VERBOSE = 5;
+    TraceEventLevel_VERBOSE = 5;
+}
+
+enum CompileDiagnosticSeverity {
+    //     Something that is an issue, as determined by some authority, but is not surfaced
+    //     through normal means. There may be different mechanisms that act on these issues.
+    CompileDiagnosticSeverity_HIDDEN = 0;
+    //     Information that does not indicate a problem (i.e. not prescriptive).
+    CompileDiagnosticSeverity_INFO = 1;
+    //     Something suspicious but allowed.
+    CompileDiagnosticSeverity_WARNING = 2;
+    //     Something not allowed by the rules of the language or other authority.
+    CompileDiagnosticSeverity_ERROR = 3;
 }

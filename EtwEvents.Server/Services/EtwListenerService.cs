@@ -10,7 +10,7 @@ namespace EtwEvents.Server
     class EtwListenerService: EtwListener.EtwListenerBase
     {
         readonly TraceSessionManager sesManager;
-        readonly Empty empty = new Empty();
+        static readonly Task<Empty> emptyTask = Task.FromResult(new Empty());
 
         public EtwListenerService(TraceSessionManager sesManager) {
             this.sesManager = sesManager;
@@ -43,7 +43,7 @@ namespace EtwEvents.Server
             var session = GetSession(request.Name);
             session.StopEvents();
             session.GetLifeCycle().Terminate();
-            return Task.FromResult(empty);
+            return emptyTask;
         }
 
         public override Task<EnableProvidersResult> EnableProviders(EnableProvidersRequest request, ServerCallContext context) {
@@ -61,7 +61,7 @@ namespace EtwEvents.Server
             foreach (var provider in request.ProviderNames) {
                 session.Instance.DisableProvider(provider);
             }
-            return Task.FromResult(empty);
+            return emptyTask;
         }
 
         public override async Task GetEvents(EtwEventRequest request, IServerStreamWriter<EtwEvent> responseStream, ServerCallContext context) {
@@ -86,10 +86,31 @@ namespace EtwEvents.Server
             await tcs.Task;
         }
 
-        public override Task<Empty> SetCSharpFilter(SetFilterRequest request, ServerCallContext context) {
+        public override Task<SetFilterResult> SetCSharpFilter(SetFilterRequest request, ServerCallContext context) {
             var session = GetSession(request.SessionName);
-            session.SetFilter(request.CsharpFilter);
-            return Task.FromResult(empty);
+            var diagnostics = session.SetFilter(request.CsharpFilter);
+            var result = new SetFilterResult();
+
+            foreach (var diag in diagnostics) {
+                LinePositionSpan lineSpan = null;
+                if (diag.Location.IsInSource) {
+                    var ls = diag.Location.GetLineSpan();
+                    lineSpan = new LinePositionSpan {
+                        Start = new LinePosition { Line = ls.StartLinePosition.Line, Character = ls.StartLinePosition.Character },
+                        End = new LinePosition { Line = ls.EndLinePosition.Line, Character = ls.EndLinePosition.Character }
+                    };
+                }
+                var dg = new CompileDiagnostic {
+                    Id = diag.Id,
+                    IsWarningAsError = diag.IsWarningAsError,
+                    WarningLevel = diag.WarningLevel,
+                    Severity = (CompileDiagnosticSeverity)diag.Severity,
+                    Message = diag.GetMessage(),
+                    LineSpan = lineSpan
+                };
+                result.Diagnostics.Add(dg);
+            }
+            return Task.FromResult(result);
         }
     }
 }
