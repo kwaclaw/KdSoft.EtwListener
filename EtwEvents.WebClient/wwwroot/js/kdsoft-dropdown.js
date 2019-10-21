@@ -40,11 +40,10 @@ class KdSoftDropDown extends LitMvvmElement {
           pointer-events: auto;
         }
         slot {
-          display: inline-block;
+          display: flex;
           position: absolute;
           left: 0;
           top: 0;
-          min-width: 100%;
         }
       `,
     ];
@@ -134,11 +133,12 @@ class KdSoftDropDown extends LitMvvmElement {
       <style>
         :host {
           display: inline-block;
+          line-height: 1.25em;
         }
       </style>
       <div id="container" class="border">
         <span id="seltext"
-          class="my-auto py-1 flex-grow whitespace-no-wrap overflow-x-hidden"
+          class="my-auto p-1 flex-grow whitespace-no-wrap overflow-x-hidden"
           tabindex="1"
           title="${selText}"
           @focus="${this._seltextFocused}"
