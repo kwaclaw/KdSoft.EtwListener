@@ -56,7 +56,7 @@ class KdSoftCheckListModel {
     selectedIndexes = [],
     multiSelect = true,
     getItemText = item => item.text,
-    getItemId = item => item.getItemId
+    getItemId = item => item.id
   ) {
     if (!multiSelect && (selectedIndexes || []).length > 1) {
       throw new Error('Must not select multiple items');

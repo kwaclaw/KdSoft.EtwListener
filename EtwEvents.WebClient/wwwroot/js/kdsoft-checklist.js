@@ -36,28 +36,6 @@ class KdSoftCheckList extends LitMvvmElement {
     return [...super.observedAttributes, 'arrows', 'allow-drag-drop'];
   }
 
-  static get styles() {
-    return [
-      css`
-        #container {
-          display: flex;
-          align-items: baseline;
-          justify-items: flex-end;
-        }
-        #item-list {
-          display: inline-block;
-          position: relative;
-          -webkit-overflow-scrolling: touch; /* Lets it scroll lazy */
-          padding: 5px;
-          max-height: var(--max-scroll-height, 300px);
-        }
-        .droppable {
-          outline: 2px solid darkgray;
-        }
-      `,
-    ];
-  }
-
   connectedCallback() {
     super.connectedCallback();
   }
@@ -246,6 +224,30 @@ class KdSoftCheckList extends LitMvvmElement {
     return result;
   }
 
+  static get styles() {
+    return [
+      css`
+        :host {
+          display: inline-block;
+        }
+        #container {
+          display: flex;
+        }
+        #item-list {
+          display: inline-block;
+          -webkit-overflow-scrolling: touch; /* Lets it scroll lazy */
+          padding: 5px;
+          box-sizing: border-box;
+          max-height: var(--max-scroll-height, 300px);
+          min-width: 100%;
+        }
+        .droppable {
+          outline: 2px solid darkgray;
+        }
+      `,
+    ];
+  }
+
   // using the repeat directive
   render() {
     const showCheckboxes = this.showCheckboxes;
@@ -257,11 +259,8 @@ class KdSoftCheckList extends LitMvvmElement {
       <link rel="stylesheet" type="text/css" href=${styleLinks.fontawesome} />
       <link rel="stylesheet" type="text/css" href=${styleLinks.checkbox} />
       <style>
-        :host {
-          display: inline-block;
-        }
       </style>
-      <div id="container" class="border" @click=${this._dropdownClicked}>
+      <div id="container" @click=${this._dropdownClicked}>
         <ul id="item-list"
           class="bg-white border-solid border border-gray-400 overflow-y-auto"
           @keydown=${this._itemListKeydown}
