@@ -9,22 +9,29 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Protobuf Include="..\Protos\etwLogging.proto" Link="etwLogging.proto" GrpcServices="Client">
+      <LinkBase></LinkBase>
+    </Protobuf>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc.Core" Version="2.24.0" />
+    <PackageReference Include="Google.Protobuf" Version="3.10.0" />
+    <PackageReference Include="Grpc.Tools" Version="2.24.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="KdSoft.Utils.Portable" Version="3.6.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.6">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <FontAwsomeSprites Include="src/css/fontawesome/sprites/**/*" />
     <FontAwsomeSvgs Include="src/css/fontawesome/svgs/**/*" />
     <FontAwsomeWebfonts Include="src/css/fontawesome/webfonts/**/*" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\EtwEvents.Interfaces\EtwEvents.Interfaces.csproj" />
   </ItemGroup>
 
   <Target Name="PostCSS" BeforeTargets="Build">
