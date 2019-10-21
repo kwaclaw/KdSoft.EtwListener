@@ -119,7 +119,7 @@ namespace EtwEvents.WebClient
 
         public Task StopEvents() {
             Task? runTask = null;
-            Task receiveTask = null;
+            Task? receiveTask = null;
             lock (_syncObj) {
                 if (_eventSession != null) {
                     _eventSession.Stop();
@@ -132,6 +132,12 @@ namespace EtwEvents.WebClient
                 return receiveTask ?? Task.CompletedTask;
             else
                 return Task.WhenAll(receiveTask!, runTask);
+        }
+
+        public async Task<SetFilterResult> SetCSharpFilter(string csharpFilter) {
+            var setFilterRequest = new SetFilterRequest { SessionName = this.Name, CsharpFilter = csharpFilter };
+            var result = await _etwClient.SetCSharpFilterAsync(setFilterRequest);
+            return result;
         }
 
         public async ValueTask DisposeAsync() {

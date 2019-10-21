@@ -1,14 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Net.WebSockets;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
-using EtwEvents.WebClient;
 using EtwEvents.WebClient.Models;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
-using KdSoft.EtwLogging;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EtwEvents.WebClient
@@ -25,6 +19,8 @@ namespace EtwEvents.WebClient
 
         [HttpPost]
         public async Task<IActionResult> OpenSession(TraceSessionRequest request) {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
             var credentials = ChannelCredentials.Insecure;
             try {
                 var session = await _sessionManager.OpenSession(request.Name, request.Host, credentials, request.Providers, request.LifeTime.ToDuration()).ConfigureAwait(false);
@@ -57,11 +53,11 @@ namespace EtwEvents.WebClient
                     return new EmptyResult();  // OkResult not right here, tries to set status code which is not good in this scenario
                 }
                 else {
-                    return new NotFoundObjectResult(new { Error = "Session not found" });
+                    return Problem(title: "Session not found");
                 }
             }
             else {
-                return new BadRequestResult();
+                return BadRequest();
             }
         }
 
@@ -70,10 +66,22 @@ namespace EtwEvents.WebClient
             if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
                 var session = await sessionEntry.CreateTask.ConfigureAwait(false);
                 await session.StopEvents().ConfigureAwait(false);
-                return new OkResult();
+                return Ok();
             }
             else {
-                return new NotFoundObjectResult(new { Error = "Session not found" });
+                return Problem(title: "Session not found");
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SetCSharpFilter(string sessionName, string csharpFilter) {
+            if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
+                var session = await sessionEntry.CreateTask.ConfigureAwait(false);
+                var result = await session.SetCSharpFilter(csharpFilter).ConfigureAwait(false);
+                return Ok(result);
+            }
+            else {
+                return Problem(title: "Session not found");
             }
         }
     }
