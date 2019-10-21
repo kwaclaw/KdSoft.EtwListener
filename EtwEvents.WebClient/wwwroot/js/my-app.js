@@ -11,6 +11,7 @@ import './kdsoft-checklist.js';
 import './kdsoft-dropdown.js';
 import './kdsoft-tree-node.js';
 import './trace-session-view.js';
+import './trace-session-config.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
 import myappStyleLinks from '../styles/my-app-style-links.js';
 import * as utils from './utils.js';
@@ -21,10 +22,10 @@ const tabBase = { 'inline-block': true, 'py-2': true, 'no-underline': true };
 const classList = {
   startBtn: { ...runBtnBase, 'fa-play': true, 'text-green-500': true },
   stopBtn: { ...runBtnBase, 'fa-stop': true, 'text-red-500': true },
-  connectBtn: { ...runBtnBase, 'fa-wifi': true, 'text-red-500': true },
-  disconnectBtn: { ...runBtnBase, 'fa-wifi': true, 'text-green-500': true },
-  tabActive: { ...tabBase, 'pl-4': true, 'pr-0': true, 'text-white': true },
+  tabActive: { ...tabBase, 'pl-4': true, 'pr-2': true, 'text-white': true },
   tabInactive: { ...tabBase, 'px-4': true, 'text-gray-600': true, 'hover:text-gray-200': true, 'hover:text-underline': true },
+  tabButtonsActive: { 'inline-block': true },
+  tabButtonsInActive: { hidden: true }
 };
 
 class MyApp extends LitMvvmElement {
@@ -78,9 +79,7 @@ class MyApp extends LitMvvmElement {
     return [selectObserver, searchObserver, droppedObserver];
   }
 
-  //TODO multiple traceSessions, traceSessionViews!
-
-  async _profileClicked() {
+  async _sessionFromProfileClicked() {
     const profile = utils.first(this.model.profileCheckListModel.selectedEntries).item;
     if (!profile) return;
 
@@ -92,23 +91,39 @@ class MyApp extends LitMvvmElement {
     this.model.activeSessionName = profile.name;
   }
 
+  _editProfileClicked() {
+    const profile = utils.first(this.model.profileCheckListModel.selectedEntries).item;
+    if (!profile) return;
+
+    //const profileModel = utils.mergeObjects(true, profile);  //-- this does not copy getters/setters
+    const profileModel = utils.cloneObject({}, profile);
+    const dlg = this.renderRoot.getElementById('dlg-config');
+    const cfg = dlg.getElementsByTagName('trace-session-config')[0];
+    cfg.model = profileModel;
+    dlg.showModal();
+  }
+
+  _getClickSession(e) {
+    const linkElement = e.currentTarget.closest('li');
+    const sessionName = linkElement.dataset.sessionName;
+    return { session: this.model.traceSessions.get(sessionName), sessionName };
+  }
+
   _sessionClicked(e) {
     const linkElement = e.currentTarget.closest('li');
     this.model.activeSessionName = linkElement.dataset.sessionName;
   }
 
   async _closeSessionClicked(e) {
-    const linkElement = e.currentTarget.closest('li');
-    const sessionName = linkElement.dataset.sessionName;
-    const ts = this.model.traceSessions.get(sessionName);
-    if (!ts) return;
+    const { session, sessionName } = this._getClickSession(e);
+    if (!session) return;
 
     // find they key that was inserted before (or after) the current key
     const prevKey = utils.closest(this.model.traceSessions.keys(), sessionName);
 
     try {
-      if (ts.open) {
-        await ts.closeRemoteSession();
+      if (session.open) {
+        await session.closeRemoteSession();
       }
     } finally {
       this.model.traceSessions.delete(sessionName);
@@ -116,12 +131,19 @@ class MyApp extends LitMvvmElement {
     }
   }
 
-  _eventsClicked(e) {
-    const linkElement = e.currentTarget.closest('li');
-    const ts = this.model.traceSessions.get(linkElement.dataset.sessionName);
-    if (!ts) return;
+  _filterSessionClicked(e) {
+    const { session, sessionName } = this._getClickSession(e);
+    if (!session) return;
 
-    ts.toggleEvents();
+    const dlg = this.renderRoot.getElementById('dlg-config');
+    dlg.showModal();
+  }
+
+  _eventsClicked(e) {
+    const { session, sessionName } = this._getClickSession(e);
+    if (!session) return;
+
+    session.toggleEvents();
   }
 
   _toggleNav() {
@@ -154,8 +176,8 @@ class MyApp extends LitMvvmElement {
           width: 300px;
         }
 
-        #droplistSingle, #droplistMulti {
-          --max-scroll-height: 200px;
+        kdsoft-checklist {
+          min-width: 300px;
         }
 
         #main {
@@ -171,13 +193,16 @@ class MyApp extends LitMvvmElement {
         .brand {
           font-family: Candara;
         }
+
+        #tab-buttons button {
+          padding-left: 0.25rem;
+          padding-right: 0.25rem;
+        }
       `
     ];
   }
 
   render() {
-    const ts = this.model.activeSession;
-    const sessionClasses = ts && ts.open ? classList.disconnectBtn : classList.connectBtn;
 
     return html`
       <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
@@ -200,7 +225,8 @@ class MyApp extends LitMvvmElement {
           <kdsoft-dropdown class="py-0 text-white" .model=${this.model.sessionDropdownModel}>
             <kdsoft-checklist id="sessionProfiles" class="text-black" .model=${this.model.profileCheckListModel} allow-drag-drop show-checkboxes></kdsoft-checklist>
           </kdsoft-dropdown>
-          <button class="btn" @click=${this._profileClicked}><i class=${classMap(sessionClasses)}></i></button>
+          <button class="px-2 py-1" @click=${this._sessionFromProfileClicked}><i class="fas fa-lg fa-wifi text-gray-500"></i></button>
+          <button class="px-2 py-1" @click=${this._editProfileClicked}><i class="fas fa-lg fa-edit text-gray-500"></i></button>
 
           <div class="block lg:hidden">
             <button id="nav-toggle" @click=${this._toggleNav}
@@ -216,14 +242,16 @@ class MyApp extends LitMvvmElement {
               const isActiveTab = this.model.activeSession === ses;
               const tabClasses = isActiveTab ? classList.tabActive : classList.tabInactive;
               const eventsClasses = ses.eventSession && ses.eventSession.open ? classList.stopBtn : classList.startBtn;
-              const buttonsClasses = isActiveTab ? 'inline-block' : 'hidden';
 
               return html`
-                <li class="mr-3" data-session-name=${ses.profile.name} @click=${this._sessionClicked}>
+                <li class="mr-2 pr-1 ${isActiveTab ? 'bg-gray-700' : ''}" data-session-name=${ses.profile.name} @click=${this._sessionClicked}>
                   <a class=${classMap(tabClasses)} href="#">${ses.profile.name}</a>
-                  <div class="${buttonsClasses}">
-                    <button class="btn" @click=${this._eventsClicked}>
+                  <div id="tab-buttons" class=${classMap(isActiveTab ? classList.tabButtonsActive : classList.tabButtonsInActive)}>
+                    <button type="button" @click=${this._eventsClicked}>
                       <i class=${classMap(eventsClasses)}></i>
+                    </button>
+                    <button type="button" @click=${this._filterSessionClicked}>
+                      <i class="fas fa-filter text-gray-500"></i>
                     </button>
                     <button type="button" @click=${this._closeSessionClicked}>
                       <i class="fas fa-lg fa-times text-gray-500"></i>
@@ -239,8 +267,12 @@ class MyApp extends LitMvvmElement {
 
         <!-- Main content -->
         <div class="flex-grow relative">
-          <trace-session-view .model=${ts}></trace-session-view>
+          <trace-session-view .model=${this.model.activeSession}></trace-session-view>
         </div>
+
+        <dialog id="dlg-config">
+          <trace-session-config></trace-session-config>
+        </dialog>
       </div>
     `;
   }
