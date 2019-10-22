@@ -34,6 +34,10 @@
     <FontAwsomeWebfonts Include="src/css/fontawesome/webfonts/**/*" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Remove="src/css/fontawesome/metadata/**/*" />
+  </ItemGroup>
+  
   <Target Name="PostCSS" BeforeTargets="Build">
     <Exec Command="postcss_prebuild.cmd"></Exec>
     <Copy SourceFiles="@(FontAwsomeSprites)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeSprites->'wwwroot/css/fontawesome/sprites/%(RecursiveDir)%(Filename)%(Extension)')" />
