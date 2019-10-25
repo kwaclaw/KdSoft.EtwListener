@@ -11,17 +11,6 @@ class TraceSessionConfig extends LitMvvmElement {
   constructor() {
     super();
     this.scheduler = new BatchScheduler(100);
-
-    //this._dtFormat = new Intl.DateTimeFormat('default', { dateStyle: 'short', timeStyle: 'short' });
-    this._dtFormat = new Intl.DateTimeFormat('default', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: 'numeric',
-      minute: 'numeric',
-      second: 'numeric',
-      milli: 'numeric'
-    });
   }
 
   connectedCallback() {

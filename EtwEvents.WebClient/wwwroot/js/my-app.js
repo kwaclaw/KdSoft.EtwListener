@@ -5,7 +5,6 @@ import { observable, observe, unobserve } from '../lib/@nx-js/observer-util.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
 import { css, unsafeCSS } from '../styles/css-tag.js';
-import './my-grid.js';
 import TraceSession from './traceSession.js';
 import './kdsoft-checklist.js';
 import './kdsoft-dropdown.js';
@@ -41,17 +40,6 @@ class MyApp extends LitMvvmElement {
   constructor() {
     super();
     this.scheduler = new Queue(priorities.HIGH);
-
-    //this._dtFormat = new Intl.DateTimeFormat('default', { dateStyle: 'short', timeStyle: 'short' });
-    this._dtFormat = new Intl.DateTimeFormat('default', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: 'numeric',
-      minute: 'numeric',
-      second: 'numeric',
-      milli: 'numeric'
-    });
   }
 
   connectDropdownChecklist(dropDownModel, checkListModel, checkListId, singleSelect) {

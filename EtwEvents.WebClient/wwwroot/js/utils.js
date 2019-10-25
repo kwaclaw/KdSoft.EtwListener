@@ -35,6 +35,17 @@ export function closest(iterator, comparand) {
   return result;
 }
 
+// const dateFormat = new Intl.DateTimeFormat('default', { dateStyle: 'short', timeStyle: 'short' });
+export const dateFormat = new Intl.DateTimeFormat('default', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: 'numeric',
+  minute: 'numeric',
+  second: 'numeric',
+  milli: 'numeric'
+});
+
 // const noType = 0;
 // const arrayType = 1;
 // const objectType = 2;

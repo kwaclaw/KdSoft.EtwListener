@@ -11,17 +11,6 @@ class TraceSessionView extends LitMvvmElement {
   constructor() {
     super();
     this.scheduler = new BatchScheduler(100);
-
-    //this._dtFormat = new Intl.DateTimeFormat('default', { dateStyle: 'short', timeStyle: 'short' });
-    this._dtFormat = new Intl.DateTimeFormat('default', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: 'numeric',
-      minute: 'numeric',
-      second: 'numeric',
-      milli: 'numeric'
-    });
   }
 
   connectedCallback() {
@@ -85,12 +74,11 @@ class TraceSessionView extends LitMvvmElement {
             <div class="sfg-header">Payload</div>
           </div>
           ${repeat(
-            itemIterator,
-            item => item.sequenceNo,
-            (item, indx) => {
-              //const dateString = this._dtFormat.format(new Date(item.timeStamp));
-              const dateString = `${this._dtFormat.format(item.timeStamp)}.${item.timeStamp % 1000}`;
-              return html`
+      itemIterator,
+      item => item.sequenceNo,
+      (item, indx) => {
+        const dateString = `${utils.dateFormat.format(item.timeStamp)}.${item.timeStamp % 1000}`;
+        return html`
             <div class="sfg-row">
               <div>${item.sequenceNo}</div>
               <div>${item.taskName}</div>
@@ -99,8 +87,8 @@ class TraceSessionView extends LitMvvmElement {
               <div>${item.level}</div>
               <div><pre>${JSON.stringify(item.payload)}</pre></div>
             </div>`;
-            }
-          )}
+      }
+    )}
         </div>
       </div>
     `;
