@@ -5,7 +5,9 @@ using System.Net.WebSockets;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using EtwEvents.WebClient.Models;
 using KdSoft.EtwLogging;
+using Microsoft.Extensions.Options;
 
 namespace EtwEvents.WebClient
 {
@@ -16,11 +18,25 @@ namespace EtwEvents.WebClient
         readonly EtwEventRequest _request;
         readonly CancellationTokenSource _stoppingCts;
 
-        public EventSession(EtwListener.EtwListenerClient etwClient, WebSocket webSocket, EtwEventRequest request) {
+        TimeSpan _pushFrequency;
+        IDisposable _pushFrequencyMonitor;
+
+        public EventSession(
+            EtwListener.EtwListenerClient etwClient,
+            WebSocket webSocket,
+            EtwEventRequest request,
+            IOptionsMonitor<EventSessionOptions> optionsMonitor
+        ) {
             this._etwClient = etwClient;
             this._webSocket = webSocket;
             this._request = request;
             this._stoppingCts = new CancellationTokenSource();
+            this._pushFrequency = optionsMonitor.CurrentValue.PushFrequency;
+            this._pushFrequencyMonitor = optionsMonitor.OnChange((opts, name) => {
+                Interlocked.MemoryBarrier();
+                this._pushFrequency = opts.PushFrequency;
+                Interlocked.MemoryBarrier();
+            });
         }
 
         async Task KeepReceiving(CancellationToken stoppingToken) {
@@ -48,7 +64,7 @@ namespace EtwEvents.WebClient
         }
 
 
-        async Task Run(CancellationToken stoppingToken, TimeSpan frequency) {
+        async Task Run(CancellationToken stoppingToken) {
             var jsonOptions = new JsonWriterOptions {
                 Indented = false,
                 SkipValidation = true,
@@ -102,7 +118,9 @@ namespace EtwEvents.WebClient
 
                             jsonWriter.WriteEndObject();
 
-                            if (stw.Elapsed > frequency) {
+                            Interlocked.MemoryBarrier();
+                            if (stw.Elapsed > _pushFrequency) {
+                                Interlocked.MemoryBarrier();
                                 startNewMessage = true;
                                 jsonWriter.WriteEndArray();
                                 jsonWriter.Flush();
@@ -150,9 +168,8 @@ namespace EtwEvents.WebClient
                 _stoppingCts.Token.Register(() => {
                     this._disposeTask = DisposeAsync();
                 });
-
                 this._receiveTask = KeepReceiving(_stoppingCts.Token);
-                this._runTask = Run(_stoppingCts.Token, TimeSpan.FromMilliseconds(20));
+                this._runTask = Run(_stoppingCts.Token);
                 return true;
             }
             catch {
@@ -189,6 +206,7 @@ namespace EtwEvents.WebClient
 
         public void Dispose() {
             try {
+                _pushFrequencyMonitor?.Dispose();
                 _webSocket.Dispose();
                 _stoppingCts.Dispose();
                 GC.SuppressFinalize(this);

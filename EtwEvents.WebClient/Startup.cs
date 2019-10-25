@@ -1,4 +1,5 @@
 using System;
+using EtwEvents.WebClient.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -21,6 +22,8 @@ namespace EtwEvents.WebClient
                 // This lambda determines whether user consent for non-essential cookies is needed for a given request.
                 options.CheckConsentNeeded = context => true;
             });
+
+            services.Configure<EventSessionOptions>(Configuration.GetSection("EventSessionOptions"));
 
             services.AddSingleton<TraceSessionManager>();
 

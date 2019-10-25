@@ -4,6 +4,7 @@ using EtwEvents.WebClient.Models;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace EtwEvents.WebClient
 {
@@ -12,9 +13,11 @@ namespace EtwEvents.WebClient
     public class EtwController: ControllerBase
     {
         readonly TraceSessionManager _sessionManager;
+        readonly IOptionsMonitor<EventSessionOptions> _optionsMonitor;
 
-        public EtwController(TraceSessionManager sessionManager) {
+        public EtwController(TraceSessionManager sessionManager, IOptionsMonitor<EventSessionOptions> optionsMonitor) {
             this._sessionManager = sessionManager;
+            this._optionsMonitor = optionsMonitor;
         }
 
         [HttpPost]
@@ -49,7 +52,7 @@ namespace EtwEvents.WebClient
                 var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
                 if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
                     var session = await sessionEntry.CreateTask.ConfigureAwait(false);
-                    await session.StartEvents(webSocket).ConfigureAwait(false);
+                    await session.StartEvents(webSocket, _optionsMonitor).ConfigureAwait(false);
                     return new EmptyResult();  // OkResult not right here, tries to set status code which is not good in this scenario
                 }
                 else {

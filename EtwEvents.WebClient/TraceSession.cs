@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
 using System.Threading.Tasks;
+using EtwEvents.WebClient.Models;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace EtwEvents.WebClient
 {
@@ -94,9 +96,11 @@ namespace EtwEvents.WebClient
             }
         }
 
-        public Task StartEvents(WebSocket webSocket) {
+        public Task StartEvents(WebSocket webSocket, IOptionsMonitor<EventSessionOptions> optionsMonitor) {
             if (webSocket == null)
                 throw new ArgumentNullException(nameof(webSocket));
+            if (optionsMonitor == null)
+                throw new ArgumentNullException(nameof(optionsMonitor));
 
             var request = new EtwEventRequest {
                 SessionName = this.Name
@@ -107,7 +111,7 @@ namespace EtwEvents.WebClient
                 if (_eventSession != null) {
                     _eventSession.Stop();
                 }
-                eventSession = new EventSession(_etwClient, webSocket, request);
+                eventSession = new EventSession(_etwClient, webSocket, request, optionsMonitor);
                 _eventSession = eventSession;
             }
 
