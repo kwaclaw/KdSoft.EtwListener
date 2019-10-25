@@ -44,11 +44,12 @@ class TraceSession {
   async openSession() {
     const p = this._profile;
     const request = { name: p.name, host: p.host, providers: this.providers, lifeTime: p.lifeTime };
+    const requestJson = JSON.stringify(request);
 
     try {
       const response = await fetch('/Etw/OpenSession', {
         method: 'POST', // or 'PUT'
-        body: JSON.stringify(request), // data can be `string` or {object}!
+        body: requestJson, // data can be `string` or {object}!
         headers: { 'Content-Type': 'application/json' }
       });
 
@@ -58,7 +59,7 @@ class TraceSession {
         this._failedProviders = jobj.failedProviders;
         this._open = true;
         console.log('Success:', JSON.stringify(jobj));
-      }  else {
+      } else {
         console.log('Error:', JSON.stringify(jobj));
       }
     } catch (error) {
@@ -70,13 +71,39 @@ class TraceSession {
     let evs = this._eventSession;
     if (!evs) {
       // scroll bug in Chrome - will not show more than about 1000 items, works fine with FireFox
-      evs = new EventSession(`wss://${window.location.host}/Etw/StartEvents?sessionName=${this.profile.name}`, 900);
+      evs = new EventSession(`ws://${window.location.host}/Etw/StartEvents?sessionName=${this.profile.name}`, 900);
       this._eventSession = evs;
     }
     if (!evs.open) {
       evs.connect();
     } else {
       evs.disconnect();
+    }
+  }
+
+  async applyFilter(newFilter) {
+    const url = new URL('/Etw/SetCSharpFilter', window.location);
+    // url.searchParams.set('sessionName', this.profile.name);
+    // url.searchParams.set('csharpFilter', newFilter);
+
+    const data = { sessionName: this.profile.name, csharpFilter: newFilter || null };
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const jobj = await response.json();
+      if (response.ok) {
+        console.log('Success:', JSON.stringify(jobj));
+        return true;
+      }
+      console.log('Error:', JSON.stringify(jobj));
+      return false;
+    } catch (error) {
+      console.error('Error:', error);
+      throw error;
     }
   }
 }

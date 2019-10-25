@@ -10,7 +10,7 @@ import * as utils from './utils.js';
 class TraceSessionConfig extends LitMvvmElement {
   constructor() {
     super();
-    this.scheduler = new BatchScheduler(100);
+    this.scheduler = new Queue(priorities.HIGH);
   }
 
   connectedCallback() {
@@ -23,6 +23,22 @@ class TraceSessionConfig extends LitMvvmElement {
 
   rendered() {
     //
+  }
+
+  _cancel(e) {
+    const evt = new CustomEvent('kdsoft-cancel', {
+      // composed allows bubbling beyond shadow root
+      bubbles: true, composed: true, cancelable: true, detail: { model: this.model } 
+    });
+    this.dispatchEvent(evt);
+  }
+
+  _apply(e) {
+    const evt = new CustomEvent('kdsoft-apply', {
+      // composed allows bubbling beyond shadow root
+      bubbles: true, composed: true, cancelable: true, detail: { model: this.model } 
+    });
+    this.dispatchEvent(evt);
   }
 
   static get styles() {
@@ -75,8 +91,8 @@ namespace EtwEvents.Server
     }
 }`}     </pre></div>
         <div class="flex justify-end mt-2">
-          <button type="button" class="py-1 px-2"><i class="fas fa-lg fa-check text-green-500"></i></button>
-          <button type="button" class="py-1 px-2"><i class="fas fa-lg fa-times text-red-500"></i></button>
+          <button type="button" class="py-1 px-2" @click=${this._apply}><i class="fas fa-lg fa-check text-green-500"></i></button>
+          <button type="button" class="py-1 px-2" @click=${this._cancel}><i class="fas fa-lg fa-times text-red-500"></i></button>
         </div>
       </div>
     `;

@@ -120,22 +120,20 @@ export const dateFormat = new Intl.DateTimeFormat('default', {
 // }
 
 export function cloneObject(target, source) {
+  // eslint-disable-next-line guard-for-in
   for (const key in source) {
     // Use getOwnPropertyDescriptor instead of source[key] to prevent from triggering setter/getter.
     const descriptor = Object.getOwnPropertyDescriptor(source, key);
     if (descriptor.value instanceof String) {
       target[key] = descriptor.value.slice(0);
-    }
-    else if (descriptor.value instanceof Array) {
+    } else if (descriptor.value instanceof Array) {
       target[key] = cloneObject([], descriptor.value);
-    }
-    else if (descriptor.value instanceof Object) {
+    } else if (descriptor.value instanceof Object) {
       const prototype = Reflect.getPrototypeOf(descriptor.value);
       const cloneObj = cloneObject({}, descriptor.value);
       Reflect.setPrototypeOf(cloneObj, prototype);
       target[key] = cloneObj;
-    }
-    else {
+    } else {
       Object.defineProperty(target, key, descriptor);
     }
   }

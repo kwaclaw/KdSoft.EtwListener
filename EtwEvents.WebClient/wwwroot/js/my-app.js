@@ -11,6 +11,7 @@ import './kdsoft-dropdown.js';
 import './kdsoft-tree-node.js';
 import './trace-session-view.js';
 import './trace-session-config.js';
+import './filter-form.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
 import myappStyleLinks from '../styles/my-app-style-links.js';
 import * as utils from './utils.js';
@@ -79,6 +80,12 @@ class MyApp extends LitMvvmElement {
     this.model.activeSessionName = profile.name;
   }
 
+  _formDoneHandler(e) {
+    const dlg = e.currentTarget;
+
+    dlg.close();
+  }
+
   _editProfileClicked() {
     const profile = utils.first(this.model.profileCheckListModel.selectedEntries).item;
     if (!profile) return;
@@ -86,6 +93,10 @@ class MyApp extends LitMvvmElement {
     //const profileModel = utils.mergeObjects(true, profile);  //-- this does not copy getters/setters
     const profileModel = utils.cloneObject({}, profile);
     const dlg = this.renderRoot.getElementById('dlg-config');
+    //TODO pass context somehow to handlers
+    // dlg.addEventListener('kdsoft-apply', this._configApplyHandler);
+    // dlg.addEventListener('kdsoft-cancel', this._configCancelHandler);
+
     const cfg = dlg.getElementsByTagName('trace-session-config')[0];
     cfg.model = profileModel;
     dlg.showModal();
@@ -123,7 +134,14 @@ class MyApp extends LitMvvmElement {
     const { session, sessionName } = this._getClickSession(e);
     if (!session) return;
 
-    const dlg = this.renderRoot.getElementById('dlg-config');
+    const profileModel = observable(utils.cloneObject({}, session.profile));
+    profileModel.applyFilter = async () => {
+      await session.applyFilter(profileModel.filter);
+    };
+
+    const dlg = this.renderRoot.getElementById('dlg-filter');
+    const cfg = dlg.getElementsByTagName('filter-form')[0];
+    cfg.model = profileModel;
     dlg.showModal();
   }
 
@@ -138,14 +156,26 @@ class MyApp extends LitMvvmElement {
     this.renderRoot.getElementById('nav-content').classList.toggle('hidden');
   }
 
+  _addDialogHandlers(dlg) {
+    dlg.addEventListener('kdsoft-done', this._formDoneHandler);
+  }
+
   connectedCallback() {
     super.connectedCallback();
     this._sessionListObservers = this.connectDropdownChecklist(this.model.sessionDropdownModel, this.model.profileCheckListModel, 'sessionProfiles', true);
+    this._addDialogHandlers(this.renderRoot.getElementById('dlg-filter'));
+    this._addDialogHandlers(this.renderRoot.getElementById('dlg-config'));
+  }
+
+  _removeDialogHandlers(dlg) {
+    dlg.removeEventListener('kdsoft-done', this._formDoneHandler);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     this._sessionListObservers.forEach(o => unobserve(o));
+    this._removeDialogHandlers(this.renderRoot.getElementById('dlg-filter'));
+    this._removeDialogHandlers(this.renderRoot.getElementById('dlg-config'));
   }
 
   firstRendered() {
@@ -191,7 +221,6 @@ class MyApp extends LitMvvmElement {
   }
 
   render() {
-
     return html`
       <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
       <link rel="stylesheet" type="text/css" href=${styleLinks.fontawesome} />
@@ -227,11 +256,11 @@ class MyApp extends LitMvvmElement {
           <div class="w-full flex-grow lg:flex lg:items-center lg:w-auto hidden lg:block pt-6 lg:pt-0" id="nav-content">
             <ul class="list-reset lg:flex justify-end flex-1 items-center">
             ${[...this.model.traceSessions.values()].map(ses => {
-              const isActiveTab = this.model.activeSession === ses;
-              const tabClasses = isActiveTab ? classList.tabActive : classList.tabInactive;
-              const eventsClasses = ses.eventSession && ses.eventSession.open ? classList.stopBtn : classList.startBtn;
+    const isActiveTab = this.model.activeSession === ses;
+    const tabClasses = isActiveTab ? classList.tabActive : classList.tabInactive;
+    const eventsClasses = ses.eventSession && ses.eventSession.open ? classList.stopBtn : classList.startBtn;
 
-              return html`
+    return html`
                 <li class="mr-2 pr-1 ${isActiveTab ? 'bg-gray-700' : ''}" data-session-name=${ses.profile.name} @click=${this._sessionClicked}>
                   <a class=${classMap(tabClasses)} href="#">${ses.profile.name}</a>
                   <div id="tab-buttons" class=${classMap(isActiveTab ? classList.tabButtonsActive : classList.tabButtonsInActive)}>
@@ -247,8 +276,8 @@ class MyApp extends LitMvvmElement {
                   </div>
                 </li>
                 `;
-              }
-            )}
+  }
+  )}
             </ul>
           </div>
         </nav>
@@ -261,10 +290,13 @@ class MyApp extends LitMvvmElement {
         <dialog id="dlg-config">
           <trace-session-config></trace-session-config>
         </dialog>
+        <dialog id="dlg-filter">
+          <filter-form></filter-form>
+        </dialog>
       </div>
     `;
   }
-  
+
   rendered() {
     //
   }
