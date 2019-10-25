@@ -9,7 +9,7 @@ using KdSoft.EtwLogging;
 
 namespace EtwEvents.WebClient
 {
-    public sealed class EventSession: IAsyncDisposable, IDisposable
+    sealed class EventSession: IAsyncDisposable, IDisposable
     {
         readonly EtwListener.EtwListenerClient _etwClient;
         readonly WebSocket _webSocket;
@@ -128,7 +128,7 @@ namespace EtwEvents.WebClient
             }
         }
 
-        Task _receiveTask;
+        Task _receiveTask = Task.CompletedTask;
         public Task ReceiveTask => _receiveTask;
 
         Task? _runTask;
