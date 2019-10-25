@@ -134,7 +134,7 @@ namespace EtwEvents.WebClient
                 return Task.WhenAll(receiveTask!, runTask);
         }
 
-        public async Task<SetFilterResult> SetCSharpFilter(string csharpFilter) {
+        public async Task<SetFilterResult> SetCSharpFilter(string? csharpFilter) {
             var setFilterRequest = new SetFilterRequest { SessionName = this.Name, CsharpFilter = csharpFilter };
             var result = await _etwClient.SetCSharpFilterAsync(setFilterRequest);
             return result;

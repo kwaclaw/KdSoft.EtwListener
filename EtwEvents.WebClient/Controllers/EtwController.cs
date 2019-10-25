@@ -74,8 +74,15 @@ namespace EtwEvents.WebClient
         }
 
         [HttpPost]
-        public async Task<IActionResult> SetCSharpFilter(string sessionName, string csharpFilter) {
-            if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
+        public async Task<IActionResult> SetCSharpFilter([FromBody]FilterRequest request) {
+            if (request == null)
+                return BadRequest();
+            string? csharpFilter = null;
+            if (!string.IsNullOrWhiteSpace(request.CSharpFilter)) {
+                csharpFilter = request.CSharpFilter;
+            }
+
+            if (_sessionManager.TryGetValue(request.SessionName!, out var sessionEntry)) {
                 var session = await sessionEntry.CreateTask.ConfigureAwait(false);
                 var result = await session.SetCSharpFilter(csharpFilter).ConfigureAwait(false);
                 return Ok(result);
