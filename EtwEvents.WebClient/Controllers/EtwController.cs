@@ -30,7 +30,7 @@ namespace EtwEvents.WebClient
                 return Ok(new SessionResult(session.EnabledProviders, session.RestartedProviders));
             }
             catch (Exception ex) {
-                return Problem(title: ex.Message);
+                return Problem(title: "Failure to open session", detail: ex.Message);
             }
         }
 
@@ -42,7 +42,7 @@ namespace EtwEvents.WebClient
                 return Ok(success);
             }
             catch (Exception ex) {
-                return Problem(title: ex.Message);
+                return Problem(title: "Failure to close session", detail: ex.Message);
             }
         }
 
@@ -56,7 +56,7 @@ namespace EtwEvents.WebClient
                     return new EmptyResult();  // OkResult not right here, tries to set status code which is not good in this scenario
                 }
                 else {
-                    return Problem(title: "Session not found");
+                    return Problem(title: "Session not found", detail: "Session may have been closed already.");
                 }
             }
             else {
@@ -72,7 +72,7 @@ namespace EtwEvents.WebClient
                 return Ok();
             }
             else {
-                return Problem(title: "Session not found");
+                return Problem(title: "Session not found", detail: "Session may have been closed already.");
             }
         }
 
@@ -91,7 +91,7 @@ namespace EtwEvents.WebClient
                 return Ok(result);
             }
             else {
-                return Problem(title: "Session not found");
+                return Problem(title: "Session not found", detail: "Session may have been closed already.");
             }
         }
     }
