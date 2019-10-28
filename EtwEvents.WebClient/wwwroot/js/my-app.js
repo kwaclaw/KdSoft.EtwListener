@@ -72,29 +72,20 @@ class MyApp extends LitMvvmElement {
   }
 
   async _sessionFromProfileClicked() {
-    const profile = utils.first(this.model.profileCheckListModel.selectedEntries).item;
-    if (!profile) return;
-
-    if (this.model.traceSessions.has(profile.name)) return;
-
-    const session = new TraceSession(profile);
-    await session.openSession();
-    this.model.traceSessions.set(profile.name, session);
-    this.model.activeSessionName = profile.name;
+    await this.model.openSessionFromSelectedProfile();
   }
 
-  _formDoneHandler(e) {
-    const dlg = e.currentTarget;
+  _profileFormDoneHandler(e) {
+    if (!e.detail.canceled) this.model.saveSelectedProfile(e.detail.model);
 
+    const dlg = e.currentTarget;
     dlg.close();
   }
 
   _editProfileClicked() {
-    const profile = utils.first(this.model.profileCheckListModel.selectedEntries).item;
-    if (!profile) return;
+    const profileModel = this.model.cloneObservableSelectedProfile();
+    if (!profileModel) return;
 
-    //const profileModel = utils.mergeObjects(true, profile);  //-- this does not copy getters/setters
-    const profileModel = utils.cloneObject({}, profile);
     const dlg = this.renderRoot.getElementById('dlg-config');
     //TODO pass context somehow to handlers
     // dlg.addEventListener('kdsoft-apply', this._configApplyHandler);
@@ -120,17 +111,7 @@ class MyApp extends LitMvvmElement {
     const { session, sessionName } = this._getClickSession(e);
     if (!session) return;
 
-    // find they key that was inserted before (or after) the current key
-    const prevKey = utils.closest(this.model.traceSessions.keys(), sessionName);
-
-    try {
-      if (session.open) {
-        await session.closeRemoteSession();
-      }
-    } finally {
-      this.model.traceSessions.delete(sessionName);
-      this.model.activeSessionName = prevKey;
-    }
+    this.model.closeSession(session);
   }
 
   _filterSessionClicked(e) {
@@ -160,7 +141,7 @@ class MyApp extends LitMvvmElement {
   }
 
   _addDialogHandlers(dlg) {
-    dlg.addEventListener('kdsoft-done', this._formDoneHandler);
+    dlg.addEventListener('kdsoft-done', this._profileFormDoneHandler.bind(this));
   }
 
   connectedCallback() {
@@ -171,7 +152,7 @@ class MyApp extends LitMvvmElement {
   }
 
   _removeDialogHandlers(dlg) {
-    dlg.removeEventListener('kdsoft-done', this._formDoneHandler);
+    dlg.removeEventListener('kdsoft-done', this._profileFormDoneHandler);
   }
 
   disconnectedCallback() {
