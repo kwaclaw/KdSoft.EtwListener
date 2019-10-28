@@ -55,7 +55,6 @@ class RingBuffer {
       [Symbol.iterator]() {
         this.current = self._itemOffset;
         this.limit = self._itemOffset;
-        this.counted = 0;
         return this;
       },
 

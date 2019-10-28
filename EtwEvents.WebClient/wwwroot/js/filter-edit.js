@@ -11,9 +11,7 @@ class FilterEdit extends LitMvvmElement {
   }
 
   _change(e) {
-    const filter = e.currentTarget.value;
-    this.model._filter = filter;
-    //e.currentTarget.innerHTML = '';
+    this.model.filter = e.currentTarget.value;
   }
 
   static get styles() {
