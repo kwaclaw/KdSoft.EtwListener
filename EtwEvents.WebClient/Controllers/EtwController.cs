@@ -27,7 +27,7 @@ namespace EtwEvents.WebClient
             var credentials = ChannelCredentials.Insecure;
             try {
                 var session = await _sessionManager.OpenSession(request.Name, request.Host, credentials, request.Providers, request.LifeTime.ToDuration()).ConfigureAwait(false);
-                return Ok(new SessionResult(session.EnabledProviders, session.FailedProviders));
+                return Ok(new SessionResult(session.EnabledProviders, session.RestartedProviders));
             }
             catch (Exception ex) {
                 return Problem(title: ex.Message);

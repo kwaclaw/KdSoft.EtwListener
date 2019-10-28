@@ -35,14 +35,14 @@ namespace EtwEvents.WebClient
         TraceSession(
             string name,
             List<string> enabledProviders,
-            List<string> failedProviders,
+            List<string> restartedProviders,
             Channel channel,
             EtwListener.EtwListenerClient etwClient,
             ILogger<TraceSession> logger
         ) {
             this.Name = name;
             this.EnabledProviders = enabledProviders;
-            this.FailedProviders = failedProviders;
+            this.RestartedProviders = restartedProviders;
             _channel = channel;
             _etwClient = etwClient;
             _logger = logger;
@@ -50,7 +50,7 @@ namespace EtwEvents.WebClient
 
         public string Name { get; }
         public List<string> EnabledProviders { get; }
-        public List<string> FailedProviders { get; }
+        public List<string> RestartedProviders { get; }
 
         public static async Task<TraceSession> Create(
             string name,
@@ -72,10 +72,10 @@ namespace EtwEvents.WebClient
                 openEtwSession.ProviderSettings.AddRange(providers);
 
                 var reply = await client.OpenSessionAsync(openEtwSession);
-                var enabledProviders = reply.Results.Where(r => r.Success).Select(r => r.Name).ToList();
-                var failedProviders = reply.Results.Where(r => !r.Success).Select(r => r.Name).ToList();
+                var enabledProviders = reply.Results.Select(r => r.Name).ToList();
+                var restartedProviders = reply.Results.Where(r => r.Restarted).Select(r => r.Name).ToList();
 
-                return new TraceSession(name, enabledProviders, failedProviders, channel, client, logger);
+                return new TraceSession(name, enabledProviders, restartedProviders, channel, client, logger);
             }
             catch {
                 await channel.ShutdownAsync().ConfigureAwait(false);

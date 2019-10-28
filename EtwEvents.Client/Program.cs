@@ -72,7 +72,7 @@ return result;
             var reply = await client.OpenSessionAsync(openEtwSession);
             Console.WriteLine("Session: ");
             foreach (var res in reply.Results) {
-                Console.WriteLine($"\t{res.Name} - {res.Success}");
+                Console.WriteLine($"\t{res.Name} - {res.Restarted}");
             }
 
             var filterRequest = new SetFilterRequest {

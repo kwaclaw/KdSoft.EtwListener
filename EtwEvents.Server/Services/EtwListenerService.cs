@@ -31,8 +31,8 @@ namespace EtwEvents.Server
 
             if (session.IsCreated) {  // can only enable providers when new session was created
                 foreach (var setting in request.ProviderSettings) {
-                    var success = session.Instance.EnableProvider(setting.Name, (tracing.TraceEventLevel)setting.Level, setting.MatchKeywords);
-                    result.Results.Add(new ProviderSettingResult { Name = setting.Name, Success = success });
+                    var restarted = session.Instance.EnableProvider(setting.Name, (tracing.TraceEventLevel)setting.Level, setting.MatchKeywords);
+                    result.Results.Add(new ProviderSettingResult { Name = setting.Name, Restarted = restarted });
                 }
             }
 
@@ -50,8 +50,8 @@ namespace EtwEvents.Server
             var result = new EnableProvidersResult();
             var session = GetSession(request.SessionName);
             foreach (var setting in request.ProviderSettings) {
-                var success = session.Instance.EnableProvider(setting.Name, (tracing.TraceEventLevel)setting.Level, setting.MatchKeywords);
-                result.Results.Add(new ProviderSettingResult { Name = setting.Name, Success = success });
+                var restarted = session.Instance.EnableProvider(setting.Name, (tracing.TraceEventLevel)setting.Level, setting.MatchKeywords);
+                result.Results.Add(new ProviderSettingResult { Name = setting.Name, Restarted = restarted });
             }
             return Task.FromResult(result);
         }

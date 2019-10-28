@@ -43,7 +43,7 @@ message ProviderSetting {
 
 message ProviderSettingResult {
     string name = 1;
-    bool success = 2;
+    bool restarted = 2;
 }
 
 message EnableProvidersResult {

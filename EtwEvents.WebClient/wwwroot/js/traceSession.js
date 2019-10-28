@@ -7,7 +7,7 @@ class TraceSession {
     this.providers = profile.providers.slice(0);
     this.filter = profile.filter;
     this._enabledProviders = [];
-    this._failedProviders = [];
+    this._restartedProviders = [];
     this._eventSession = null;
     this._open = false;
     return observable(this);
@@ -15,7 +15,7 @@ class TraceSession {
 
   get profile() { return this._profile; }
   get enabledProviders() { return this._enabledProviders; }
-  get failedProviders() { return this._failedProviders; }
+  get failedProviders() { return this._restartedProviders; }
 
   get open() { return this._open; }
 
@@ -56,7 +56,7 @@ class TraceSession {
       const jobj = await response.json();
       if (response.ok) {
         this._enabledProviders = jobj.enabledProviders;
-        this._failedProviders = jobj.failedProviders;
+        this._restartedProviders = jobj.restartedProviders;
         this._open = true;
         console.log('Success:', JSON.stringify(jobj));
       } else {
