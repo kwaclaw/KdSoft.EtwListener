@@ -1,18 +1,15 @@
-﻿import { observable } from '../lib/@nx-js/observer-util.js';
-
-class TraceSessionProfile {
-  constructor(name, host, providers, filter, lifeTime) {
-    this._name = name;
-    this._host = host;
-    this._providers = providers;
-    this._filter = filter;
-    this._lifeTime = lifeTime;
+﻿class TraceSessionProfile {
+  constructor(name, host, providers, filters, activeFilterIndex, lifeTime) {
+    this.name = name;
+    this.host = host;
+    this.providers = providers;
+    this.filters = filters;
+    this.activeFilterIndex = activeFilterIndex;
+    this.lifeTime = lifeTime;
   }
-  get name() { return this._name; }
-  get host() { return this._host; }
-  get providers() { return this._providers; }
-  get filter() { return this._filter; }
-  get lifeTime() { return this._lifeTime; }
+
+  get activeFilter() { return this.filters[this.activeFilterIndex]; }
+  set activeFilter(val) { this.filters[this.activeFilterIndex] = val; }
 }
 
 export default TraceSessionProfile;

@@ -5,7 +5,7 @@ class TraceSession {
   constructor(profile) {
     this._profile = profile;
     this.providers = profile.providers.slice(0);
-    this.filter = profile.filter;
+    this.filter = profile.activeFilter;
     this._enabledProviders = [];
     this._restartedProviders = [];
     this._eventSession = null;
