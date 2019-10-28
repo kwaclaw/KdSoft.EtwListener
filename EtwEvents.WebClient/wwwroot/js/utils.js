@@ -119,6 +119,7 @@ export const dateFormat = new Intl.DateTimeFormat('default', {
 //   return target;
 // }
 
+// this performs a full clone of a Javascript object or array
 export function cloneObject(target, source) {
   // eslint-disable-next-line guard-for-in
   for (const key in source) {
@@ -140,4 +141,21 @@ export function cloneObject(target, source) {
   const prototype = Reflect.getPrototypeOf(source);
   Reflect.setPrototypeOf(target, prototype);
   return target;
+}
+
+// this assigns existing target object properties from source properties of the same name;
+// property types are not matched, that is for instance, an integer could be assigned to a string;
+// Note: this are straight assignments, no cloning is performed, so be careful about modifying
+// reference type properties on the source after the assignments are done;
+export function assignExistingProperties(target, source) {
+  // eslint-disable-next-line guard-for-in
+  for (const key in target) {
+    const descriptor = Object.getOwnPropertyDescriptor(target, key);
+    if (typeof descriptor === 'undefined') continue;
+    // Use getOwnPropertyDescriptor instead of source[key] to prevent from triggering setter/getter.
+    const sourceDescriptor = Object.getOwnPropertyDescriptor(source, key);
+    if (typeof sourceDescriptor === 'undefined') continue;
+
+    target[key] = sourceDescriptor.value;
+  }
 }
