@@ -5,7 +5,7 @@ import { observable, observe, unobserve } from '../lib/@nx-js/observer-util.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
 import { css, unsafeCSS } from '../styles/css-tag.js';
-import TraceSession from './traceSession.js';
+import MyAppModel from '/js/my-app-model.js';
 import './kdsoft-checklist.js';
 import './kdsoft-dropdown.js';
 import './kdsoft-tree-node.js';
@@ -40,7 +40,10 @@ class MyApp extends LitMvvmElement {
 
   constructor() {
     super();
+    // setting model property here because we cannot reliable set it from a non-lit-html instantiated HTML page
     this.scheduler = new Queue(priorities.HIGH);
+    // we must assign the model *after* the scheduler
+    this.model = new MyAppModel();
   }
 
   connectDropdownChecklist(dropDownModel, checkListModel, checkListId, singleSelect) {
