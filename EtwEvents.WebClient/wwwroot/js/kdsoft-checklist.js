@@ -55,6 +55,11 @@ class KdSoftCheckList extends LitMvvmElement {
     this.model.selectIndex(itemDiv.dataset.itemIndex, e.currentTarget.checked);
   }
 
+  _itemClicked(e) {
+    const itemDiv = e.currentTarget.closest('.list-item');
+    this.model.selectIndex(itemDiv.dataset.itemIndex, true);
+  }
+
   _dragStart(e) {
     e.dataTransfer.setData('text/plain', e.currentTarget.dataset.itemIndex);
     e.dataTransfer.effectAllowed = 'move';
@@ -181,12 +186,12 @@ class KdSoftCheckList extends LitMvvmElement {
     const listItemContent = html`
       <a>
         ${hasArrows
-        ? html`
+    ? html`
   <span class="leading-normal cursor-pointer" @click=${this._upClick}><i class=${classMap(upArrowClasses)}></i></span>
   <span class="leading-normal cursor-pointer" @click=${this._downClick}><i class=${classMap(downArrowClasses)}></i></span>
   `
-        : nothing}
-        ${showCheckboxes ? this._getCheckBox(this.model, item, indx) : html`<span>${this.model.getItemText(item)}</span>`}
+    : nothing}
+        ${showCheckboxes ? this._getCheckBox(this.model, item, indx) : html`<span @click=${this._itemClicked}>${this.model.getItemText(item)}</span>`}
       </a>
     `;
 

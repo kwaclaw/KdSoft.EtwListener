@@ -64,7 +64,7 @@ class KdSoftCheckListModel {
 
     this.items = items;
     this.filter = null;
-    this._selectedItems = new WeakSet((selectedIndexes || []).map(i => items[i]));
+    this._selectedItems = new WeakSet((selectedIndexes || []).map(i => raw(items[i])));
 
     const result = observable(this);
 
