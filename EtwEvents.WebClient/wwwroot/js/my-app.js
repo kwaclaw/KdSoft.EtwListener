@@ -83,8 +83,8 @@ class MyApp extends LitMvvmElement {
   }
 
   _editProfileClicked() {
-    const profileModel = this.model.cloneObservableSelectedProfile();
-    if (!profileModel) return;
+    const configModel = this.model.getConfigModelFromSelectedProfile();
+    if (!configModel) return;
 
     const dlg = this.renderRoot.getElementById('dlg-config');
     //TODO pass context somehow to handlers
@@ -92,7 +92,7 @@ class MyApp extends LitMvvmElement {
     // dlg.addEventListener('kdsoft-cancel', this._configCancelHandler);
 
     const cfg = dlg.getElementsByTagName('trace-session-config')[0];
-    cfg.model = profileModel;
+    cfg.model = configModel;
     dlg.showModal();
   }
 

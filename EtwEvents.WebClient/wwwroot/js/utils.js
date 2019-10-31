@@ -156,6 +156,10 @@ export function assignExistingProperties(target, source) {
     const sourceDescriptor = Object.getOwnPropertyDescriptor(source, key);
     if (typeof sourceDescriptor === 'undefined') continue;
 
-    target[key] = sourceDescriptor.value;
+    Object.defineProperty(target, key, sourceDescriptor);
   }
 }
+
+//export const isoDurationRx = '/^(-)?P(?!$)((\d+Y)|(\d+\.\d+Y$))?((\d+M)|(\d+\.\d+M$))?((\d+W)|(\d+\.\d+W$))?((\d+D)|(\d+\.\d+D$))?(T(?=\d)((\d+H)|(\d+\.\d+H$))?((\d+M)|(\d+\.\d+M$))?(\d+(\.\d+)?S)?)??$/gmi';
+//export const isoDurationRx = '^P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$';
+export const isoDurationRx = /^P(?:\d+Y)?(?:\d+M)?(?:\d+D)?(?:T(?:\d+H)?(?:\d+M)?(?:\d+(?:\.\d+)?S)?)?$/;
