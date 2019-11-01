@@ -2,6 +2,7 @@ import { html, nothing } from '../lib/lit-html.js';
 import { repeat } from '../lib/lit-html/directives/repeat.js';
 import { classMap } from '../lib/lit-html/directives/class-map.js';
 import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
+import { observe, unobserve } from '../lib/@nx-js/observer-util.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { css } from '../styles/css-tag.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
@@ -15,9 +16,15 @@ const classList = {
   downArrowHidden: { ...arrowBase, 'fa-caret-square-down': true, invisible: true },
 };
 
+// and: https://web.dev/more-capable-form-controls/
+
 class KdSoftCheckList extends LitMvvmElement {
+  // turns this into a form-associated custom element: https://html.spec.whatwg.org/multipage/custom-elements.html#custom-elements-face-example
+  static get formAssociated() { return true; }
+
   constructor() {
     super();
+    this._internals = this.attachInternals();
     this.scheduler = new Queue(priorities.HIGH);
     //this.scheduler = new BatchScheduler(0);
   }
@@ -31,21 +38,52 @@ class KdSoftCheckList extends LitMvvmElement {
   get allowDragDrop() { return this.hasAttribute('allow-drag-drop'); }
   set allowDragDrop(val) { if (val) this.setAttribute('allow-drag-drop', ''); else this.removeAttribute('allow-drag-drop'); }
 
+  // The following properties and methods aren't strictly required,  but native form controls provide them.
+  // Providing them helps ensure consistency with native controls.
+  get form() { return this.internals_.form; }
+  get name() { return this.getAttribute('name'); }
+  get type() { return this.localName; }
+  get validity() { return this.internals_.validity; }
+  get validationMessage() { return this.internals_.validationMessage; }
+  get willValidate() { return this.internals_.willValidate; }
+
+  checkValidity() { return this.internals_.checkValidity(); }
+  reportValidity() { return this.internals_.reportValidity(); }
+
   // Observed attributes will trigger an attributeChangedCallback, which in turn will cause a re-render to be scheduled!
   static get observedAttributes() {
     return [...super.observedAttributes, 'arrows', 'allow-drag-drop'];
   }
 
   connectedCallback() {
+    // "lazy" observer because the model may still be null;
+    // therefore we must call this observer when rendered ewith a defined model
+    this._selectObserver = observe(() => {
+      const n = this.name;
+      const entries = new FormData();
+      for (const entry of this.model.selectedEntries) {
+        entries.append(n, entry.item.value);
+      }
+      this._internals.setFormValue(entries);
+    }, { lazy: true });
+
     super.connectedCallback();
   }
 
+  disconnectedCallback() {
+    if (this._selectObserver) unobserve(this._selectObserver);
+    super.disconnectedCallback();
+  }
+
   firstRendered() {
-    //
+    // might get called with this.model undefined
   }
 
   rendered() {
-    //
+    if (this.model && !this._selectObserverCalled) {
+      this._selectObserverCalled = true;
+      this._selectObserver();
+    }
   }
 
   _checkboxClicked(e) {
@@ -255,25 +293,27 @@ class KdSoftCheckList extends LitMvvmElement {
 
   // using the repeat directive
   render() {
+    if (!this.model) return html``;
+
     const showCheckboxes = this.showCheckboxes;
     const hasArrows = this.arrows;
     const allowDragAndDrop = this.allowDragDrop;
 
     const result = html`
-      <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
-      <link rel="stylesheet" type="text/css" href=${styleLinks.fontawesome} />
-      <link rel="stylesheet" type="text/css" href=${styleLinks.checkbox} />
-      <style>
-      </style>
-      <div id="container" @click=${this._dropdownClicked}>
-        <ul id="item-list"
-          class="bg-white border-solid border border-gray-400 overflow-y-auto"
-          @keydown=${this._itemListKeydown}
-          @click=${this._itemListClick}
-        >
-          ${repeat(this.model.filteredItems, entry => this.model.getItemId(entry.item), entry => this._itemTemplate(entry.item, entry.index, showCheckboxes, hasArrows, allowDragAndDrop))}
-        </ul>
-      </div>
+<link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
+<link rel="stylesheet" type="text/css" href=${styleLinks.fontawesome} />
+<link rel="stylesheet" type="text/css" href=${styleLinks.checkbox} />
+<style>
+</style>
+<div id="container" @click=${this._dropdownClicked}>
+  <ul id="item-list"
+    class="bg-white border-solid border border-gray-400 overflow-y-auto"
+    @keydown=${this._itemListKeydown}
+    @click=${this._itemListClick}
+  >
+    ${repeat(this.model.filteredItems, entry => this.model.getItemId(entry.item), entry => this._itemTemplate(entry.item, entry.index, showCheckboxes, hasArrows, allowDragAndDrop))}
+  </ul>
+</div>
     `;
     return result;
   }

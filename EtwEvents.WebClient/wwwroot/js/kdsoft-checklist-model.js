@@ -87,8 +87,11 @@ class KdSoftCheckListModel {
     if (this.multiSelect) {
       if (selected) this._selectedItems.add(raw(this.items[index]));
       else this._selectedItems.delete(raw(this.items[index]));
-    } else if (selected) this._selectedItems = new WeakSet([raw(this.items[index])]);
-    else this._selectedItems = new WeakSet();
+    } else if (selected) {
+      this._selectedItems = new WeakSet([raw(this.items[index])]);
+    } else {
+      this._selectedItems = new WeakSet();
+    }
   }
 
   isItemSelected(item) {
