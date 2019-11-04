@@ -138,10 +138,23 @@ namespace EtwEvents.WebClient
                 return Task.WhenAll(receiveTask!, runTask);
         }
 
-        public async Task<SetFilterResult> SetCSharpFilter(string? csharpFilter) {
-            var setFilterRequest = new SetFilterRequest { SessionName = this.Name, CsharpFilter = csharpFilter };
+        public async Task<BuildFilterResult> SetCSharpFilter(string csharpFilter) {
+            var setFilterRequest = new KdSoft.EtwLogging.SetFilterRequest { SessionName = this.Name, CsharpFilter = csharpFilter };
             var result = await _etwClient.SetCSharpFilterAsync(setFilterRequest);
             return result;
+        }
+
+        public static async Task<BuildFilterResult> TestCSharpFilter(string host, ChannelCredentials credentials, string csharpFilter) {
+            var channel = new Channel(host, credentials);
+            try {
+                var client = new EtwListener.EtwListenerClient(channel);
+                var testFilterRequest = new KdSoft.EtwLogging.TestFilterRequest { CsharpFilter = csharpFilter };
+                var result = await client.TestCSharpFilterAsync(testFilterRequest);
+                return result;
+            }
+            finally {
+                await channel.ShutdownAsync().ConfigureAwait(false);
+            }
         }
 
         public async ValueTask DisposeAsync() {

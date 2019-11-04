@@ -86,30 +86,16 @@ namespace EtwEvents.Server
             await tcs.Task;
         }
 
-        public override Task<SetFilterResult> SetCSharpFilter(SetFilterRequest request, ServerCallContext context) {
+        public override Task<BuildFilterResult> SetCSharpFilter(SetFilterRequest request, ServerCallContext context) {
             var session = GetSession(request.SessionName);
             var diagnostics = session.SetFilter(request.CsharpFilter);
-            var result = new SetFilterResult();
+            var result = new BuildFilterResult(diagnostics);
+            return Task.FromResult(result);
+        }
 
-            foreach (var diag in diagnostics) {
-                LinePositionSpan lineSpan = null;
-                if (diag.Location.IsInSource) {
-                    var ls = diag.Location.GetLineSpan();
-                    lineSpan = new LinePositionSpan {
-                        Start = new LinePosition { Line = ls.StartLinePosition.Line, Character = ls.StartLinePosition.Character },
-                        End = new LinePosition { Line = ls.EndLinePosition.Line, Character = ls.EndLinePosition.Character }
-                    };
-                }
-                var dg = new CompileDiagnostic {
-                    Id = diag.Id,
-                    IsWarningAsError = diag.IsWarningAsError,
-                    WarningLevel = diag.WarningLevel,
-                    Severity = (CompileDiagnosticSeverity)diag.Severity,
-                    Message = diag.GetMessage(),
-                    LineSpan = lineSpan
-                };
-                result.Diagnostics.Add(dg);
-            }
+        public override Task<BuildFilterResult> TestCSharpFilter(TestFilterRequest request, ServerCallContext context) {
+            var diagnostics = TraceSession.TestFilter(request.CsharpFilter);
+            var result = new BuildFilterResult(diagnostics);
             return Task.FromResult(result);
         }
     }

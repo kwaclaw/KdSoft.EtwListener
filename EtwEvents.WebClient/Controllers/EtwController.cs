@@ -36,7 +36,6 @@ namespace EtwEvents.WebClient
 
         [HttpPost]
         public async Task<IActionResult> CloseRemoteSession([FromQuery]string name) {
-            var credentials = ChannelCredentials.Insecure;
             try {
                 var success = await _sessionManager.CloseRemoteSession(name).ConfigureAwait(false);
                 return Ok(success);
@@ -77,10 +76,10 @@ namespace EtwEvents.WebClient
         }
 
         [HttpPost]
-        public async Task<IActionResult> SetCSharpFilter([FromBody]FilterRequest request) {
+        public async Task<IActionResult> SetCSharpFilter([FromBody]SetFilterRequest request) {
             if (request == null)
                 return BadRequest();
-            string? csharpFilter = null;
+            string csharpFilter = string.Empty;  // protobuf does not allow nulls
             if (!string.IsNullOrWhiteSpace(request.CSharpFilter)) {
                 csharpFilter = request.CSharpFilter;
             }
@@ -93,6 +92,22 @@ namespace EtwEvents.WebClient
             else {
                 return Problem(title: "Session not found", detail: "Session may have been closed already.");
             }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> TestCSharpFilter([FromBody]TestFilterRequest request) {
+            if (request == null)
+                return BadRequest();
+            if (string.IsNullOrWhiteSpace(request.Host))
+                return BadRequest("Host must be specified.");
+
+            string csharpFilter = string.Empty;  // protobuf does not allow nulls
+            if (!string.IsNullOrWhiteSpace(request.CSharpFilter)) {
+                csharpFilter = request.CSharpFilter;
+            }
+            var credentials = ChannelCredentials.Insecure;
+            var result = await TraceSession.TestCSharpFilter(request.Host, credentials, csharpFilter).ConfigureAwait(false);
+            return Ok(result);
         }
     }
 }

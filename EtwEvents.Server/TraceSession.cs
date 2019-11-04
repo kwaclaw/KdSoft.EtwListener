@@ -127,23 +127,43 @@ namespace EtwEvents.Server
             return result;
         }
 
+        public static ImmutableArray<Diagnostic> GenerateFilter(string filterBody, MemoryStream ms) {
+            var compilation = CompileFilter(filterBody);
+            var emitResult = compilation.Emit(ms);
+            if (emitResult.Success) {
+                return ImmutableArray<Diagnostic>.Empty;
+            }
+            return emitResult.Diagnostics;
+        }
+
+        public static ImmutableArray<Diagnostic> TestFilter(string filterBody) {
+            if (string.IsNullOrWhiteSpace(filterBody)) {
+                return ImmutableArray<Diagnostic>.Empty;
+            }
+            using (var ms = new MemoryStream()) {
+                var diagnostics = GenerateFilter(filterBody, ms);
+                if (diagnostics.Length > 0) {
+                    return diagnostics;
+                }
+            }
+            return ImmutableArray<Diagnostic>.Empty;
+        }
+
         public ImmutableArray<Diagnostic> SetFilter(string filterBody) {
             if (string.IsNullOrWhiteSpace(filterBody)) {
                 SetFilter(null, null);
             }
 
-            var compilation = CompileFilter(filterBody);
-
             Assembly filterAssembly;
             var newFilterContext = new CollectibleAssemblyLoadContext();
             using (var ms = new MemoryStream()) {
-                var emitResult = compilation.Emit(ms);
-                if (emitResult.Success) {
+                var diagnostics = GenerateFilter(filterBody, ms);
+                if (diagnostics.Length == 0) {
                     ms.Seek(0, SeekOrigin.Begin);
                     filterAssembly = newFilterContext.LoadFromStream(ms);
                 }
                 else {
-                    return emitResult.Diagnostics;
+                    return diagnostics;
                 }
             }
 
