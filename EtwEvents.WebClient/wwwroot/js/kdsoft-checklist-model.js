@@ -83,14 +83,27 @@ class KdSoftCheckListModel {
 
   get filteredItems() { return iterateFilter(this.items, this.filter); }
 
-  selectIndex(index, selected) {
+  selectIndex(index, select) {
     if (this.multiSelect) {
-      if (selected) this._selectedItems.add(raw(this.items[index]));
+      if (select) this._selectedItems.add(raw(this.items[index]));
       else this._selectedItems.delete(raw(this.items[index]));
-    } else if (selected) {
+    } else if (select) {
       this._selectedItems = new WeakSet([raw(this.items[index])]);
     } else {
       this._selectedItems = new WeakSet();
+    }
+  }
+
+  toggleIndex(index) {
+    const rawItem = raw(this.items[index]);
+    const isSelected = this._selectedItems.has(rawItem);
+    if (this.multiSelect) {
+      if (isSelected) this._selectedItems.delete(rawItem);
+      else this._selectedItems.add(rawItem);
+    } else if (isSelected) {
+      this._selectedItems = new WeakSet();
+    } else {
+      this._selectedItems = new WeakSet(rawItem);
     }
   }
 

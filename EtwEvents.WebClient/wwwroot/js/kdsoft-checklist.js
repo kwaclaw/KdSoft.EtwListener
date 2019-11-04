@@ -30,13 +30,22 @@ class KdSoftCheckList extends LitMvvmElement {
   }
 
   get showCheckboxes() { return this.hasAttribute('show-checkboxes'); }
-  set showCheckboxes(val) { if (val) this.setAttribute('show-checkboxes', ''); else this.removeAttribute('show-checkboxes'); }
+  set showCheckboxes(val) {
+    if (val) this.setAttribute('show-checkboxes', '');
+    else this.removeAttribute('show-checkboxes');
+  }
 
   get arrows() { return this.hasAttribute('arrows'); }
-  set arrows(val) { if (val) this.setAttribute('arrows', ''); else this.removeAttribute('arrows'); }
+  set arrows(val) {
+    if (val) this.setAttribute('arrows', '');
+    else this.removeAttribute('arrows');
+  }
 
   get allowDragDrop() { return this.hasAttribute('allow-drag-drop'); }
-  set allowDragDrop(val) { if (val) this.setAttribute('allow-drag-drop', ''); else this.removeAttribute('allow-drag-drop'); }
+  set allowDragDrop(val) {
+    if (val) this.setAttribute('allow-drag-drop', '');
+    else this.removeAttribute('allow-drag-drop');
+  }
 
   // The following properties and methods aren't strictly required,  but native form controls provide them.
   // Providing them helps ensure consistency with native controls.
@@ -55,18 +64,8 @@ class KdSoftCheckList extends LitMvvmElement {
     return [...super.observedAttributes, 'arrows', 'allow-drag-drop'];
   }
 
+  // model may still be undefined
   connectedCallback() {
-    // "lazy" observer because the model may still be null;
-    // therefore we must call this observer when rendered ewith a defined model
-    this._selectObserver = observe(() => {
-      const n = this.name;
-      const entries = new FormData();
-      for (const entry of this.model.selectedEntries) {
-        entries.append(n, entry.item.value);
-      }
-      this._internals.setFormValue(entries);
-    }, { lazy: true });
-
     super.connectedCallback();
   }
 
@@ -75,27 +74,39 @@ class KdSoftCheckList extends LitMvvmElement {
     super.disconnectedCallback();
   }
 
+  // first time model is defined for certain
   firstRendered() {
-    // might get called with this.model undefined
+    this._selectObserver = observe(() => {
+      const n = this.name;
+      const entries = new FormData();
+      for (const entry of this.model.selectedEntries) {
+        entries.append(n, entry.item.value);
+      }
+      this._internals.setFormValue(entries);
+    });
   }
 
   rendered() {
-    if (this.model && !this._selectObserverCalled) {
-      this._selectObserverCalled = true;
-      this._selectObserver();
-    }
+    //
   }
 
   _checkboxClicked(e) {
-    const itemDiv = e.currentTarget.closest('.list-item');
-    // if we don't want toggle on single-select
-    if (!this.model.multiSelect) e.currentTarget.checked = true;
-    this.model.selectIndex(itemDiv.dataset.itemIndex, e.currentTarget.checked);
+    e.preventDefault();
+    // want to keep dropped list open for multiple selections
+    if (this.model.multiSelect) {
+      e.stopPropagation();
+      const itemDiv = e.currentTarget.closest('.list-item');
+      this.model.selectIndex(itemDiv.dataset.itemIndex, e.currentTarget.checked);
+    }
   }
 
   _itemClicked(e) {
     const itemDiv = e.currentTarget.closest('.list-item');
-    this.model.selectIndex(itemDiv.dataset.itemIndex, true);
+    if (this.model.multiSelect) {
+      this.model.toggleIndex(itemDiv.dataset.itemIndex);
+    } else { // on single select we don't toggle a clicked item
+      this.model.selectIndex(itemDiv.dataset.itemIndex, true);
+    }
   }
 
   _dragStart(e) {
@@ -202,17 +213,17 @@ class KdSoftCheckList extends LitMvvmElement {
 
   // NOTE: the checked status of a checkbox may not be properly rendered when the checked attribute is set,
   //       because that applies to inital rendering only. However, setting the checked property works!
-  _getCheckBox(model, item) {
+  _checkBoxTemplate(model, item) {
     const chkid = `item-chk-${model.getItemId(item)}`;
     return html`
-<input type="checkbox" id=${chkid}
-  tabindex="-1"
-  class="kdsoft-checkbox"
-  @click=${this._checkboxClicked}
-  .checked=${model.isItemSelected(item)}
-  ?disabled=${item.disabled} />
-<label for=${chkid}><span>${model.getItemText(item)}</span></label>
-`;
+      <input type="checkbox" id=${chkid}
+        tabindex="-1"
+        class="kdsoft-checkbox"
+        @click=${this._checkboxClicked}
+        .checked=${model.isItemSelected(item)}
+        ?disabled=${item.disabled} />
+      <label for=${chkid}><span>${model.getItemText(item)}</span></label>
+    `;
   }
 
   _itemTemplate(item, indx, showCheckboxes, hasArrows, allowDragAndDrop) {
@@ -224,12 +235,16 @@ class KdSoftCheckList extends LitMvvmElement {
     const listItemContent = html`
       <a>
         ${hasArrows
-    ? html`
-  <span class="leading-normal cursor-pointer" @click=${this._upClick}><i class=${classMap(upArrowClasses)}></i></span>
-  <span class="leading-normal cursor-pointer" @click=${this._downClick}><i class=${classMap(downArrowClasses)}></i></span>
-  `
-    : nothing}
-        ${showCheckboxes ? this._getCheckBox(this.model, item, indx) : html`<span @click=${this._itemClicked}>${this.model.getItemText(item)}</span>`}
+          ? html`
+            <span class="leading-normal cursor-pointer" @click=${this._upClick}><i class=${classMap(upArrowClasses)}></i></span>
+            <span class="leading-normal cursor-pointer" @click=${this._downClick}><i class=${classMap(downArrowClasses)}></i></span>
+          `
+          : nothing
+        }
+        ${showCheckboxes
+          ? this._checkBoxTemplate(this.model, item, indx)
+          : html`<span>${this.model.getItemText(item)}</span>`
+        }
       </a>
     `;
 
@@ -258,6 +273,7 @@ class KdSoftCheckList extends LitMvvmElement {
           draggable="true"
           class="list-item whitespace-no-wrap ${disabledString}"
           title=${this.model.getItemText(item)}
+          @click=${this._itemClicked}
       >
         ${listItemContent}
       </li>
@@ -293,8 +309,6 @@ class KdSoftCheckList extends LitMvvmElement {
 
   // using the repeat directive
   render() {
-    if (!this.model) return html``;
-
     const showCheckboxes = this.showCheckboxes;
     const hasArrows = this.arrows;
     const allowDragAndDrop = this.allowDragDrop;
@@ -309,7 +323,6 @@ class KdSoftCheckList extends LitMvvmElement {
   <ul id="item-list"
     class="bg-white border-solid border border-gray-400 overflow-y-auto"
     @keydown=${this._itemListKeydown}
-    @click=${this._itemListClick}
   >
     ${repeat(this.model.filteredItems, entry => this.model.getItemId(entry.item), entry => this._itemTemplate(entry.item, entry.index, showCheckboxes, hasArrows, allowDragAndDrop))}
   </ul>
@@ -318,6 +331,7 @@ class KdSoftCheckList extends LitMvvmElement {
     return result;
   }
 
+  // scrolls to first selected item
   initView() {
     if (!this.model) return;
 
