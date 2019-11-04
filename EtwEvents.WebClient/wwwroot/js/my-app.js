@@ -6,6 +6,8 @@ import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
 import { css, unsafeCSS } from '../styles/css-tag.js';
 import MyAppModel from './my-app-model.js';
+import TraceSessionConfigModel from './trace-session-config-model.js';
+import FilterFormModel from './filter-form-model.js';
 import './kdsoft-checklist.js';
 import './kdsoft-dropdown.js';
 import './kdsoft-tree-node.js';
@@ -75,8 +77,15 @@ class MyApp extends LitMvvmElement {
     await this.model.openSessionFromSelectedProfile();
   }
 
-  _profileFormDoneHandler(e) {
-    if (!e.detail.canceled) this.model.saveSelectedProfile(e.detail.model);
+  _formDoneHandler(e) {
+    if (!e.detail.canceled) {
+      if (e.target.localName === 'filter-form') {
+        //TODO save changed filters
+        //this.model.saveSelectedProfile(e.detail.model);
+      } else if (e.target.localName === 'trace-session-config') {
+        this.model.saveSelectedProfile(e.detail.model);
+      }
+    }
 
     const dlg = e.currentTarget;
     dlg.close();
@@ -118,14 +127,9 @@ class MyApp extends LitMvvmElement {
     const { session, sessionName } = this._getClickSession(e);
     if (!session) return;
 
-    const profileModel = observable(utils.cloneObject({}, session.profile));
-    profileModel.applyFilter = async () => {
-      await session.applyFilter(profileModel.filter);
-    };
-
     const dlg = this.renderRoot.getElementById('dlg-filter');
     const cfg = dlg.getElementsByTagName('filter-form')[0];
-    cfg.model = profileModel;
+    cfg.model = new FilterFormModel(session);
     dlg.showModal();
   }
 
@@ -141,13 +145,13 @@ class MyApp extends LitMvvmElement {
   }
 
   _addDialogHandlers(dlg) {
-    dlg.addEventListener('kdsoft-done', this._profileFormDoneHandler.bind(this));
-  }
-
+    dlg.addEventListener('kdsoft-done', this._formDoneHandler.bind(this));
   }
 
   _removeDialogHandlers(dlg) {
-    dlg.removeEventListener('kdsoft-done', this._profileFormDoneHandler);
+    dlg.removeEventListener('kdsoft-done', this._formDoneHandler);
+  }
+
   connectedCallback() {
     super.connectedCallback();
   }

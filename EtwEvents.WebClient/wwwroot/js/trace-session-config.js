@@ -6,6 +6,7 @@ import styleLinks from '../styles/kdsoft-style-links.js';
 import * as utils from './utils.js';
 import EventProvider from './eventProvider.js';
 import './provider-config.js';
+import './filter-edit.js';
 
 class TraceSessionConfig extends LitMvvmElement {
   constructor() {
@@ -73,12 +74,31 @@ class TraceSessionConfig extends LitMvvmElement {
   static get styles() {
     return [
       css`
+        form {
+          display: block;
+          max-width: 1000px;
+        }
+
         #container {
+          display: block;
+          column-count: 2;
+          column-fill: auto;
+        }
+
+        #left-part {
           display: grid;
           grid-template-columns: 1fr 2fr;
           align-items: baseline;
           grid-gap: 5px;
           min-width: 480px;
+          break-after: column;
+          break-inside: avoid-column;
+        }
+
+        #right-part {
+          display: block;
+          break-before: column;
+          break-inside: avoid-column;
         }
 
         fieldset {
@@ -105,9 +125,7 @@ class TraceSessionConfig extends LitMvvmElement {
   }
 
   render() {
-    if (!this.model) return html``;
-
-    //const filter = this.model ? this.model.filter : null;
+    this.model.filters[0] = 'huiewofghifbrqe';
     const result = html`
       <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
       <link rel="stylesheet" type="text/css" href=${styleLinks.fontawesome} />
@@ -117,30 +135,37 @@ class TraceSessionConfig extends LitMvvmElement {
           display: block;
         }
       </style>
-      <form id="container" @change=${this._profileChanged}>
-        <fieldset>
-          <label for="name">Name</label>
-          <input id="name" name="name" type="text" required class="form-input" value=${this.model.name} />
-        </fieldset>
-        <fieldset>
-          <label for="host">Host</label>
-          <input id="host" name="host" type="url" class="form-input" value=${this.model.host} />
-        </fieldset>
-        <fieldset>
-          <label for="lifeTime">Life Time</label>
-          <input id="lifeTime" name="lifeTime" type="text" class="form-input"
-            value=${this.model.lifeTime}
-            placeholder="ISO Duration (PnYnMnDTnHnMnS)"
-            pattern=${utils.isoDurationRx.source} />
-        </fieldset>
-        <div id="providers" class="mt-2">
-          <div class="flex mb-1 pr-2">
-            <label>Providers</label>
-            <span class="text-gray-500 fas fa-plus w-7 h-7 ml-auto cursor-pointer select-none" @click=${this._addProviderClicked}></span>
+      <form @change=${this._profileChanged}>
+        <div id="container">
+          <div id="left-part">
+            <fieldset>
+              <label for="name">Name</label>
+              <input id="name" name="name" type="text" required class="form-input" value=${this.model.name} />
+            </fieldset>
+            <fieldset>
+              <label for="host">Host</label>
+              <input id="host" name="host" type="url" class="form-input" value=${this.model.host} />
+            </fieldset>
+            <fieldset>
+              <label for="lifeTime">Life Time</label>
+              <input id="lifeTime" name="lifeTime" type="text" class="form-input"
+                value=${this.model.lifeTime}
+                placeholder="ISO Duration (PnYnMnDTnHnMnS)"
+                pattern=${utils.isoDurationRx.source} />
+            </fieldset>
+            <div id="providers" class="mt-2">
+              <div class="flex mb-1 pr-2">
+                <label>Providers</label>
+                <span class="text-gray-500 fas fa-plus w-7 h-7 ml-auto cursor-pointer select-none" @click=${this._addProviderClicked}></span>
+              </div>
+              ${this.model.providers.map(provider => html`
+                <provider-config .model=${provider} @beforeExpand=${this._providerBeforeExpand} @delete=${this._providerDelete}></provider-config>
+              `)}
+            </div>
           </div>
-          ${this.model.providers.map(provider => html`
-            <provider-config .model=${provider} @beforeExpand=${this._providerBeforeExpand} @delete=${this._providerDelete}></provider-config>
-          `)}
+          <div id="right-part">
+            <filter-edit .model=${this.model.filters[0]}></filter-edit>
+          </div>
         </div>
         <div id="ok-cancel-buttons" class="flex flex-wrap justify-end mt-2 bt-1">
           <hr class="w-full mb-4" />

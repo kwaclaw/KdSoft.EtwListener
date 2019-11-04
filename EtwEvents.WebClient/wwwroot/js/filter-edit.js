@@ -42,7 +42,7 @@ class FilterEdit extends LitMvvmElement {
   }
 
   render() {
-    const filter = this.model ? this.model.filter : null;
+    const filter = this.model.filter;
     const result = html`
       <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
       <link rel="stylesheet" type="text/css" href=${styleLinks.fontawesome} />
@@ -59,7 +59,7 @@ namespace EtwEvents.Server
     public class EventFilter: IEventFilter
     {
         public bool IncludeEvent(TraceEvent evt) {
-            ${html`<textarea id="code" @blur=${this._change} rows="10" cols="80" spellcheck="false" placeholder="Your code goes here">${filter}</textarea>`}
+            ${html`<textarea id="code" @blur=${this._change} rows="10" spellcheck="false" placeholder="Your code goes here">${filter}</textarea>`}
         }
     }
 }`}   </pre></div>

@@ -84,7 +84,8 @@ class TraceSession {
     }
   }
 
-  async applyFilter(newFilter) {
+  async applyFilter(filterIndex) {
+    const newFilter = this.profile.filters[filterIndex];
     const url = new URL('/Etw/SetCSharpFilter', window.location);
     // url.searchParams.set('sessionName', this.profile.name);
     // url.searchParams.set('csharpFilter', newFilter);
