@@ -3,7 +3,8 @@ import { observable, observe } from '../lib/@nx-js/observer-util.js';
 
 class FilterFormModel {
   constructor(session) {
-    this.filters = session.profile.filters;
+    this.session = session;
+    this.filters = session.profile.filters.slice(0);
     this.activeFilterIndex = session.profile.activeFilterIndex;
     this.editFilterModels = [];
 
@@ -25,10 +26,21 @@ class FilterFormModel {
     return formModel;
   }
 
-  //TODO how is active filter index set?
+  incrementActiveIndex() {
+    const afIndex = this.activeFilterIndex + 1;
+    if (afIndex >= this.filters.length) return;
+    this.activeFilterIndex = afIndex;
+  }
 
-  async applyFilter() {
-    await this.session.applyFilter(this.activeFilterIndex);
+  decrementActiveIndex() {
+    const afIndex = this.activeFilterIndex - 1;
+    if (afIndex < 0) return;
+    this.activeFilterIndex = afIndex;
+  }
+
+  async applyActiveFilter() {
+    const result = await this.session.applyFilter(this.filters[this.activeFilterIndex]);
+    return result;
   }
 }
 

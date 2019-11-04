@@ -77,6 +77,15 @@ class MyAppModel {
       localStorage.setItem(`session-profile-${newProfile.name}`, JSON.stringify(newProfile));
     }
   }
+
+  saveSelectedProfileFilters(filterFormModel) {
+    const profile = utils.first(this.profileCheckListModel.selectedEntries).item;
+    if (profile) {
+      profile.filters = filterFormModel.filters;
+      profile.activeFilterIndex = filterFormModel.activeFilterIndex;
+      localStorage.setItem(`session-profile-${profile.name}`, JSON.stringify(profile));
+    }
+  }
 }
 
 export default MyAppModel;

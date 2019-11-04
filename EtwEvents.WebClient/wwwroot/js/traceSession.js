@@ -15,7 +15,7 @@ class TraceSession {
 
   get profile() { return this._profile; }
   get enabledProviders() { return this._enabledProviders; }
-  get failedProviders() { return this._restartedProviders; }
+  get restartedProviders() { return this._restartedProviders; }
 
   get open() { return this._open; }
 
@@ -84,8 +84,7 @@ class TraceSession {
     }
   }
 
-  async applyFilter(filterIndex) {
-    const newFilter = this.profile.filters[filterIndex];
+  async applyFilter(newFilter) {
     const url = new URL('/Etw/SetCSharpFilter', window.location);
     // url.searchParams.set('sessionName', this.profile.name);
     // url.searchParams.set('csharpFilter', newFilter);
@@ -102,10 +101,10 @@ class TraceSession {
       const status = jobj.status || 200;
       if (response.ok && (status >= 200 && status < 300)) {
         console.log('Success:', JSON.stringify(jobj));
-        return true;
+        return { success: true, details: jobj };
       }
       console.log('Error:', JSON.stringify(jobj));
-      return false;
+      return { success: false, details: jobj };
     } catch (error) {
       console.error('Error:', error);
       throw error;

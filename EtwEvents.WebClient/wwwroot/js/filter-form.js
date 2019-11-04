@@ -1,6 +1,6 @@
 ﻿import { html } from '../lib/lit-html.js';
 import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
-import { observable, observe } from '../lib/@nx-js/observer-util.js';
+import { observable, observe, unobserve } from '../lib/@nx-js/observer-util.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { css } from '../styles/css-tag.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
@@ -20,36 +20,44 @@ class FilterForm extends LitMvvmElement {
     this.dispatchEvent(evt);
   }
 
+  //TODO we should have these operations: save, apply & save, cancel
+  // and they should copy the filters to the profile before applying and/or saving
   async _apply(e) {
-    const success = await this.model.applyFilter();
-    if (success) {
+    const result = await this.model.applyActiveFilter();
+    if (result.success && result.details.diagnostics.length === 0) {
       const evt = new CustomEvent('kdsoft-done', {
         // composed allows bubbling beyond shadow root
-        bubbles: true, composed: true, cancelable: true, detail: { canceled: true, model: this.model }
+        bubbles: true, composed: true, cancelable: true, detail: { canceled: false, model: this.model }
       });
       this.dispatchEvent(evt);
+      return;
     }
+    console.log(JSON.stringify(result.details));
+  }
+
+  _save(e) {
+    const evt = new CustomEvent('kdsoft-done', {
+      // composed allows bubbling beyond shadow root
+      bubbles: true, composed: true, cancelable: true, detail: { canceled: false, model: this.model }
+    });
+    this.dispatchEvent(evt);
+  }
+
+  _scrollToActiveItem(filtersControl) {
+    const scrollPoint = (filtersControl.clientWidth * this.model.activeFilterIndex);
+    filtersControl.scrollTo({ left: scrollPoint, behavior: 'smooth' });
   }
 
   _filtersKeyDown(e) {
-    const scrollDistance = e.currentTarget.clientWidth;
     switch (e.key) {
       case 'ArrowDown':
       case 'ArrowRight': {
-        e.currentTarget.scrollBy({ left: scrollDistance, behavior: 'smooth' });
-        // const fedit = e.target.closest('filter-edit');
-        // if (!fedit) return;
-        // const nextSib = fedit.nextElementSibling;
-        // if (nextSib) nextSib.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+        this.model.incrementActiveIndex();
         break;
       }
       case 'ArrowUp':
       case 'ArrowLeft': {
-        e.currentTarget.scrollBy({ left: -scrollDistance, behavior: 'smooth' });
-        // const fedit = e.target.closest('filter-edit');
-        // if (!fedit) return;
-        // const prevSib = fedit.previousElementSibling;
-        // if (prevSib) prevSib.scrollIntoView({ behavior: 'smooth', inline: 'end' });
+        this.model.decrementActiveIndex();
         break;
       }
       default:
@@ -57,6 +65,16 @@ class FilterForm extends LitMvvmElement {
         return;
     }
     e.preventDefault();
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this._observer) unobserve(this._observer);
+  }
+
+  firstRendered() {
+    const filtersControl = this.renderRoot.getElementById('filters');
+    this._observer = observe(() => this._scrollToActiveItem(filtersControl));
   }
 
   static get styles() {
@@ -111,6 +129,7 @@ class FilterForm extends LitMvvmElement {
         })}
         </ul>
         <div class="flex justify-end mt-2">
+          <button type="button" class="py-1 px-2" @click=${this._save}><i class="fas fa-lg fa-save text-blue-500"></i></button>
           <button type="button" class="py-1 px-2" @click=${this._apply}><i class="fas fa-lg fa-check text-green-500"></i></button>
           <button type="button" class="py-1 px-2" @click=${this._cancel}><i class="fas fa-lg fa-times text-red-500"></i></button>
         </div>

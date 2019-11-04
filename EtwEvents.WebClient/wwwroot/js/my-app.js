@@ -80,8 +80,7 @@ class MyApp extends LitMvvmElement {
   _formDoneHandler(e) {
     if (!e.detail.canceled) {
       if (e.target.localName === 'filter-form') {
-        //TODO save changed filters
-        //this.model.saveSelectedProfile(e.detail.model);
+        this.model.saveSelectedProfileFilters(e.detail.model);
       } else if (e.target.localName === 'trace-session-config') {
         this.model.saveSelectedProfile(e.detail.model);
       }
