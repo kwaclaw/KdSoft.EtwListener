@@ -29,7 +29,8 @@ class TraceSession {
       });
 
       const jobj = await response.json();
-      if (response.ok && (jobj.status >= 200 && jobj.status < 300)) {
+      const status = jobj.status || 200;
+      if (response.ok && (status >= 200 && status < 300)) {
         this._open = false;
         console.log('Success:', JSON.stringify(jobj));
       } else {
@@ -54,7 +55,8 @@ class TraceSession {
       });
 
       const jobj = await response.json();
-      if (response.ok && (jobj.status >= 200 && jobj.status < 300)) {
+      const status = jobj.status || 200;
+      if (response.ok && (status >= 200 && status < 300)) {
         this._enabledProviders = jobj.enabledProviders;
         this._restartedProviders = jobj.restartedProviders;
         this._open = true;
@@ -96,7 +98,8 @@ class TraceSession {
       });
 
       const jobj = await response.json();
-      if (response.ok && (jobj.status >= 200 && jobj.status < 300)) {
+      const status = jobj.status || 200;
+      if (response.ok && (status >= 200 && status < 300)) {
         console.log('Success:', JSON.stringify(jobj));
         return true;
       }
