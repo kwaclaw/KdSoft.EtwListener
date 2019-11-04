@@ -147,7 +147,7 @@ export function cloneObject(target, source) {
 // property types are not matched, that is for instance, an integer could be assigned to a string;
 // Note: this are straight assignments, no cloning is performed, so be careful about modifying
 // reference type properties on the source after the assignments are done;
-export function assignExistingProperties(target, source) {
+export function assignTargetProperties(target, source) {
   // eslint-disable-next-line guard-for-in
   for (const key in target) {
     const descriptor = Object.getOwnPropertyDescriptor(target, key);
@@ -160,6 +160,4 @@ export function assignExistingProperties(target, source) {
   }
 }
 
-//export const isoDurationRx = '/^(-)?P(?!$)((\d+Y)|(\d+\.\d+Y$))?((\d+M)|(\d+\.\d+M$))?((\d+W)|(\d+\.\d+W$))?((\d+D)|(\d+\.\d+D$))?(T(?=\d)((\d+H)|(\d+\.\d+H$))?((\d+M)|(\d+\.\d+M$))?(\d+(\.\d+)?S)?)??$/gmi';
-//export const isoDurationRx = '^P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$';
 export const isoDurationRx = /^P(?:\d+Y)?(?:\d+M)?(?:\d+D)?(?:T(?:\d+H)?(?:\d+M)?(?:\d+(?:\.\d+)?S)?)?$/;

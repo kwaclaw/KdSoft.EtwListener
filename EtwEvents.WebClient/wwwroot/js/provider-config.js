@@ -18,14 +18,18 @@ class ProviderConfig extends LitMvvmElement {
 
   connectedCallback() {
     super.connectedCallback();
-    this.levelCheckListModel = new KdSoftCheckListModel(TraceSessionConfigModel.traceLevelList, [this.model.level || 0], false, item => item.name, item => item.value);
-    this._levelObservers = this.connectLevelControls(this.levelDropDownModel, this.levelCheckListModel, 'traceLevelList', true);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     this._levelObservers.forEach(o => unobserve(o));
     this.levelCheckListModel = null;
+  }
+
+  firstRendered() {
+    super.firstRendered();
+    this.levelCheckListModel = new KdSoftCheckListModel(TraceSessionConfigModel.traceLevelList, [this.model.level || 0], false, item => item.name, item => item.value);
+    this._levelObservers = this.connectLevelControls(this.levelDropDownModel, this.levelCheckListModel, 'traceLevelList', true);
   }
 
   static _getSelectedText(clm) {

@@ -18,7 +18,7 @@ class MyAppModel {
       if (key.startsWith('session-profile-')) {
         const item = JSON.parse(localStorage.getItem(key));
         const profile = new TraceSessionProfile();
-        utils.assignExistingProperties(profile, item);
+        utils.assignTargetProperties(profile, item);
         sessionProfiles.push(profile);
       }
     }
@@ -69,7 +69,7 @@ class MyAppModel {
   saveSelectedProfile(profileConfigModel) {
     const profile = utils.first(this.profileCheckListModel.selectedEntries).item;
     if (profile) {
-      utils.assignExistingProperties(profile, profileConfigModel);
+      utils.assignTargetProperties(profile, profileConfigModel);
       localStorage.setItem(`session-profile-${profile.name}`, JSON.stringify(profile));
     } else {
       const newProfile = profileConfigModel.cloneAsProfile();

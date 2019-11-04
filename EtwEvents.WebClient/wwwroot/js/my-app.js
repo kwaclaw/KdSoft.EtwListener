@@ -5,7 +5,7 @@ import { observable, observe, unobserve } from '../lib/@nx-js/observer-util.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
 import { css, unsafeCSS } from '../styles/css-tag.js';
-import MyAppModel from '/js/my-app-model.js';
+import MyAppModel from './my-app-model.js';
 import './kdsoft-checklist.js';
 import './kdsoft-dropdown.js';
 import './kdsoft-tree-node.js';
@@ -144,15 +144,12 @@ class MyApp extends LitMvvmElement {
     dlg.addEventListener('kdsoft-done', this._profileFormDoneHandler.bind(this));
   }
 
-  connectedCallback() {
-    super.connectedCallback();
-    this._sessionListObservers = this.connectDropdownChecklist(this.model.sessionDropdownModel, this.model.profileCheckListModel, 'sessionProfiles', true);
-    this._addDialogHandlers(this.renderRoot.getElementById('dlg-filter'));
-    this._addDialogHandlers(this.renderRoot.getElementById('dlg-config'));
   }
 
   _removeDialogHandlers(dlg) {
     dlg.removeEventListener('kdsoft-done', this._profileFormDoneHandler);
+  connectedCallback() {
+    super.connectedCallback();
   }
 
   disconnectedCallback() {
@@ -162,9 +159,13 @@ class MyApp extends LitMvvmElement {
     this._removeDialogHandlers(this.renderRoot.getElementById('dlg-config'));
   }
 
+  // called at most once every time after connectedCallback was executed
   firstRendered() {
     super.firstRendered();
     this.appTitle = this.getAttribute('appTitle');
+    this._sessionListObservers = this.connectDropdownChecklist(this.model.sessionDropdownModel, this.model.profileCheckListModel, 'sessionProfiles', true);
+    this._addDialogHandlers(this.renderRoot.getElementById('dlg-filter'));
+    this._addDialogHandlers(this.renderRoot.getElementById('dlg-config'));
   }
 
   static get styles() {
@@ -240,11 +241,11 @@ class MyApp extends LitMvvmElement {
           <div class="w-full flex-grow lg:flex lg:items-center lg:w-auto hidden lg:block pt-6 lg:pt-0" id="nav-content">
             <ul class="list-reset lg:flex justify-end flex-1 items-center">
             ${[...this.model.traceSessions.values()].map(ses => {
-    const isActiveTab = this.model.activeSession === ses;
-    const tabClasses = isActiveTab ? classList.tabActive : classList.tabInactive;
-    const eventsClasses = ses.eventSession && ses.eventSession.open ? classList.stopBtn : classList.startBtn;
+              const isActiveTab = this.model.activeSession === ses;
+              const tabClasses = isActiveTab ? classList.tabActive : classList.tabInactive;
+              const eventsClasses = ses.eventSession && ses.eventSession.open ? classList.stopBtn : classList.startBtn;
 
-    return html`
+              return html`
                 <li class="mr-2 pr-1 ${isActiveTab ? 'bg-gray-700' : ''}" data-session-name=${ses.profile.name} @click=${this._sessionClicked}>
                   <a class=${classMap(tabClasses)} href="#">${ses.profile.name}</a>
                   <div id="tab-buttons" class=${classMap(isActiveTab ? classList.tabButtonsActive : classList.tabButtonsInActive)}>
@@ -260,8 +261,8 @@ class MyApp extends LitMvvmElement {
                   </div>
                 </li>
                 `;
-  }
-  )}
+              }
+            )}
             </ul>
           </div>
         </nav>
