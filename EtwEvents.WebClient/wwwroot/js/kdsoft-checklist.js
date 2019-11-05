@@ -257,6 +257,7 @@ class KdSoftCheckList extends LitMvvmElement {
           draggable="true"
           class="list-item whitespace-no-wrap ${disabledString}"
           title=${this.model.getItemText(item)}
+          @click=${this._itemClicked}
           @dragstart=${this._dragStart}
           @dragenter=${this._dragEnter}
           @dragover=${this._dragOver}
@@ -270,7 +271,6 @@ class KdSoftCheckList extends LitMvvmElement {
       result = html`
       <li data-item-index="${indx}"
           tabindex="${tabindex}"
-          draggable="true"
           class="list-item whitespace-no-wrap ${disabledString}"
           title=${this.model.getItemText(item)}
           @click=${this._itemClicked}
