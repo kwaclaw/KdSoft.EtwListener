@@ -4,7 +4,7 @@ import { repeat } from '../lib/lit-html/directives/repeat.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { css } from '../styles/css-tag.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
-import { SyncFusionGridStyle } from '../styles/css-grid-syncfusion-style.js';
+import { KdSoftGridStyle } from '../styles/kdsoft-grid-style.js';
 import * as utils from './utils.js';
 
 class TraceSessionView extends LitMvvmElement {
@@ -28,7 +28,7 @@ class TraceSessionView extends LitMvvmElement {
 
   static get styles() {
     return [
-      SyncFusionGridStyle,
+      KdSoftGridStyle,
       css`
         #container {
           height: 100%
@@ -64,14 +64,14 @@ class TraceSessionView extends LitMvvmElement {
         }
       </style>
       <div id="container" class="border">
-        <div id="grid" class="sfg-container">
-          <div class="sfg-header-row">
-            <div class="sfg-header">Sequence No</div>
-            <div class="sfg-header">Task</div>
-            <div class="sfg-header">OpCode</div>
-            <div class="sfg-header">TimeStamp</div>
-            <div class="sfg-header">Level</div>
-            <div class="sfg-header">Payload</div>
+        <div id="grid" class="kds-container">
+          <div class="kds-header-row">
+            <div class="kds-header">Sequence No</div>
+            <div class="kds-header">Task</div>
+            <div class="kds-header">OpCode</div>
+            <div class="kds-header">TimeStamp</div>
+            <div class="kds-header">Level</div>
+            <div class="kds-header">Payload</div>
           </div>
           ${repeat(
       itemIterator,
@@ -79,7 +79,7 @@ class TraceSessionView extends LitMvvmElement {
       (item, indx) => {
         const dateString = `${utils.dateFormat.format(item.timeStamp)}.${item.timeStamp % 1000}`;
         return html`
-            <div class="sfg-row">
+            <div class="kds-row">
               <div>${item.sequenceNo}</div>
               <div>${item.taskName}</div>
               <div>${item.opCode}</div>
