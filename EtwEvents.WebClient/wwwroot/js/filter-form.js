@@ -15,7 +15,7 @@ class FilterForm extends LitMvvmElement {
   _cancel(e) {
     const evt = new CustomEvent('kdsoft-done', {
       // composed allows bubbling beyond shadow root
-      bubbles: true, composed: true, cancelable: true, detail: { canceled: false, model: this.model }
+      bubbles: true, composed: true, cancelable: true, detail: { canceled: true, model: this.model }
     });
     this.dispatchEvent(evt);
   }
@@ -114,11 +114,11 @@ class FilterForm extends LitMvvmElement {
       <style>
         :host {
           display: block;
-          width: 600px;
+          width: 800px;
         }
       </style>
-      <div id="container">
-        <ul id="filters" tabindex="0" @keydown=${this._filtersKeyDown}>
+      <div id="container" @keydown=${this._filtersKeyDown}>
+        <ul id="filters" tabindex="0">
         ${this.model.editFilterModels.map((filterModel, index) => {
           // model must be an object
           return html`

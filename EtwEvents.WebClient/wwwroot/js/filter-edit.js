@@ -19,17 +19,20 @@ class FilterEdit extends LitMvvmElement {
       css`
         #code-wrapper {
           color: gray;
-          line-height: 1em;
+          line-height: 1rem;
         }
         #code {
-          margin-left: 0;
+          margin-left: auto;
           border: 1px solid LightGray;
           spell-check: false;
           color: initial;
           padding: 3px;
-          line-height: 1.25em;
+          line-height: 1.25rem;
           font: inherit;
           resize: both;
+          white-space: pre;
+          overflow-wrap: normal;
+          width: 68ch;
         }
         /* only needed for contenteditable elements
         #code:empty::after {
