@@ -67,14 +67,26 @@ class FilterForm extends LitMvvmElement {
     e.preventDefault();
   }
 
+  _indicatorClick(e) {
+    const filterIndex = e.target.closest('li').dataset.index;
+    this.model.activeFilterIndex = Number(filterIndex);
+  }
+
   disconnectedCallback() {
     super.disconnectedCallback();
-    if (this._observer) unobserve(this._observer);
+    if (this._filterObserver) unobserve(this._filterObserver);
   }
 
   firstRendered() {
-    const filtersControl = this.renderRoot.getElementById('filters');
-    this._observer = observe(() => this._scrollToActiveItem(filtersControl));
+    // const filtersControl = this.renderRoot.getElementById('filters');
+    // this._filterObserver = observe(() => this._scrollToActiveItem(filtersControl));
+  }
+
+  rendered() {
+    this.schedule(() => {
+      const filtersControl = this.renderRoot.getElementById('filters');
+      this._scrollToActiveItem(filtersControl);
+    });
   }
 
   static get styles() {
@@ -84,12 +96,12 @@ class FilterForm extends LitMvvmElement {
           display: block;
         }
 
-        #filters {
+        .carousel {
           display: flex;
           flex-wrap: nowrap;
           overflow-x: hidden;
           -webkit-overflow-scrolling: touch;
-          scroll-snap-type: inline proximity;
+          scroll-snap-type: inline mandatory;
         }
 
         .carousel-item {
@@ -100,6 +112,11 @@ class FilterForm extends LitMvvmElement {
           scroll-snap-align: center;
         }
 
+        #footer {
+          display: grid;
+          grid-template-columns: 1fr auto 1fr;
+        }
+
         filter-edit {
           display: block;
         }
@@ -108,6 +125,7 @@ class FilterForm extends LitMvvmElement {
   }
 
   render() {
+    const activeFilterIndex = this.model.activeFilterIndex;
     const result = html`
       <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
       <link rel="stylesheet" type="text/css" href=${styleLinks.fontawesome} />
@@ -118,7 +136,7 @@ class FilterForm extends LitMvvmElement {
         }
       </style>
       <div id="container" @keydown=${this._filtersKeyDown}>
-        <ul id="filters" tabindex="0">
+        <ul id="filters" class="carousel" tabindex="0">
         ${this.model.editFilterModels.map((filterModel, index) => {
           // model must be an object
           return html`
@@ -128,10 +146,19 @@ class FilterForm extends LitMvvmElement {
           `;
         })}
         </ul>
-        <div class="flex justify-end mt-2">
-          <button type="button" class="py-1 px-2" @click=${this._save}><i class="fas fa-lg fa-save text-blue-500"></i></button>
-          <button type="button" class="py-1 px-2" @click=${this._apply}><i class="fas fa-lg fa-check text-green-500"></i></button>
-          <button type="button" class="py-1 px-2" @click=${this._cancel}><i class="fas fa-lg fa-times text-red-500"></i></button>
+        <div id="footer" class=" mt-2">
+          <div>&nbsp;</div>
+          <ol class="text-xl text-grey-500" @click=${this._indicatorClick}>
+            ${this.model.editFilterModels.map((filterModel, index) => {
+              const activeClass = index === activeFilterIndex ? 'text-blue-500' : '';
+              return html`<li class="inline-block w-8 cursor-pointer ${activeClass}" data-index=${index}>${index}</li>`;
+            })}
+          </ol>
+          <div class="flex justify-end">
+            <button type="button" class="py-1 px-2" @click=${this._save}><i class="fas fa-lg fa-save text-blue-500"></i></button>
+            <button type="button" class="py-1 px-2" @click=${this._apply}><i class="fas fa-lg fa-check text-green-500"></i></button>
+            <button type="button" class="py-1 px-2" @click=${this._cancel}><i class="fas fa-lg fa-times text-red-500"></i></button>
+          </div>
         </div>
       </div>
     `;
