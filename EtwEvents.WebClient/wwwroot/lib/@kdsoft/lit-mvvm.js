@@ -1,5 +1,5 @@
 import { TemplateResult, render, html } from '../lit-html.js';
-import { observe, unobserve } from '../@nx-js/observer-util.js';
+import { unobserve, observe } from '../@nx-js/observer-util.js';
 
 /* eslint-disable class-methods-use-this */
 
@@ -115,11 +115,6 @@ class LitBaseElement extends HTMLElement {
     }
   }
 
-  // this handler must be defined to trigger the necessary call to get observedAttributes() !!!
-  attributeChangedCallback(name, oldval, newval) {
-    //
-  }
-
   /**
    * Calls `render` to render DOM via lit-html.
    * This is what should be called by 'observable' implementations.
@@ -154,9 +149,18 @@ class LitBaseElement extends HTMLElement {
     }
   }
 
-  connectedCallback() {
+  _initialRender() {
     this._firstRendered = false;
     this._doRender();
+  }
+
+  // this handler must be defined to trigger the necessary call to get observedAttributes() !!!
+  attributeChangedCallback(name, oldval, newval) {
+    //
+  }
+
+  connectedCallback() {
+    this._initialRender();
   }
 
   disconnectedCallback() {
@@ -189,8 +193,8 @@ class LitMvvmElement extends LitBaseElement {
     const oldModel = _model.get(this);
     _model.set(this, value);
     if (oldModel !== value) {
-      // queue the reaction for later execution or run it immediately
-      this._scheduleRender();
+      // need to re-initialize rendering for a new model, old observers are now useless
+      this._initialRender();
     }
   }
 
@@ -207,18 +211,16 @@ class LitMvvmElement extends LitBaseElement {
     _scheduler.set(this, r => r());
   }
 
-  attributeChangedCallback(name, oldValue, newValue) {
-    super.attributeChangedCallback(name, oldValue, newValue);
-    // queue the reaction for later execution or run it immediately
-    this._scheduleRender();
-  }
-
   // Setting up observer of view model changes.
   // NOTE: the observer will not get re-triggered until the observed properties are read!!!
   //       that is, until the "get" traps of the proxy are used!!!
   // NOTE: the observer code will need to run synchronously, so that the observer
   //       can detect which properties were used at the end of the call!
-  connectedCallback() {
+  _setupObserver() {
+    if (this._observer) {
+      unobserve(this._observer);
+    }
+
     this._observer = observe(
       () => {
         // super._doRender() reads the relevant view model properties synchronously.
@@ -233,12 +235,29 @@ class LitMvvmElement extends LitBaseElement {
         /* debugger: console.log */
       }
     );
+  }
 
+  _initialRender() {
+    this._setupObserver();
     // Triggering the initial call to this._doRender(), thus reading observable properties for the first time.
     // NOTE: this is also necessary because the observer will not get re-triggered until the observed
     //       properties are read!!!, that is, until the "get" traps of the proxy are used!!!
-    super.connectedCallback();
+    super._initialRender();
   }
+
+  // we call super._doRender() through the observer, thus observing property access
+  _doRender() {
+    this._observer();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    super.attributeChangedCallback(name, oldValue, newValue);
+    this._doRender();
+  }
+
+  // connectedCallback() {
+  //   super.connectedCallback();
+  // }
 
   disconnectedCallback() {
     unobserve(this._observer);
@@ -249,19 +268,15 @@ class LitMvvmElement extends LitBaseElement {
     return !!this.model;
   }
 
-  // we call super._doRender() through the observer, thus observing property access
-  _doRender() {
-    this._observer();
-  }
-
-  // intended for internal use
-  _scheduleRender() {
+  // schedule an operation, useful when performing it after layout has happened;
+  // typically called from an override of rendered()
+  schedule(callback) {
     if (typeof this.scheduler === 'function') {
-      this.scheduler(this._doRender.bind(this));
+      this.scheduler(callback);
     } else if (typeof this.scheduler === 'object') {
-      this.scheduler.add(this._doRender.bind(this));
+      this.scheduler.add(callback);
     } else {
-      this._doRender();
+      callback();
     }
   }
 }
