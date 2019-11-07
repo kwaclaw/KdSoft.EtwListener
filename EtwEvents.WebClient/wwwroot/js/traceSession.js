@@ -84,12 +84,8 @@ class TraceSession {
     }
   }
 
-  async applyFilter(newFilter) {
-    const url = new URL('/Etw/SetCSharpFilter', window.location);
-    // url.searchParams.set('sessionName', this.profile.name);
-    // url.searchParams.set('csharpFilter', newFilter);
-
-    const data = { sessionName: this.profile.name, csharpFilter: newFilter || null };
+  async _callFilter(method, data) {
+    const url = new URL(`/Etw/${method}`, window.location);
     try {
       const response = await fetch(url, {
         method: 'POST',
@@ -109,6 +105,14 @@ class TraceSession {
       console.error('Error:', error);
       throw error;
     }
+  }
+
+  applyFilter(filter) {
+    return this._callFilter('SetCSharpFilter', { sessionName: this.profile.name, csharpFilter: filter || null });
+  }
+
+  testFilter(filter) {
+    return this._callFilter('TestCSharpFilter', { host: this.profile.host, csharpFilter: filter || null });
   }
 }
 

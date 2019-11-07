@@ -23,16 +23,35 @@ class FilterForm extends LitMvvmElement {
   //TODO we should have these operations: save, apply & save, cancel
   // and they should copy the filters to the profile before applying and/or saving
   async _apply(e) {
+    this.model.diagnostics = [];
     const result = await this.model.applyActiveFilter();
-    if (result.success && result.details.diagnostics.length === 0) {
-      const evt = new CustomEvent('kdsoft-done', {
-        // composed allows bubbling beyond shadow root
-        bubbles: true, composed: true, cancelable: true, detail: { canceled: false, model: this.model }
-      });
-      this.dispatchEvent(evt);
-      return;
+    if (result.success) {
+      if (result.details.diagnostics.length === 0) {
+        const evt = new CustomEvent('kdsoft-done', {
+          // composed allows bubbling beyond shadow root
+          bubbles: true, composed: true, cancelable: true, detail: { canceled: false, model: this.model }
+        });
+        this.dispatchEvent(evt);
+        return;
+      }
+      this.model.diagnostics = result.details.diagnostics;
     }
-    console.log(JSON.stringify(result.details));
+  }
+
+  async _test(e) {
+    this.model.diagnostics = [];
+    const result = await this.model.testActiveFilter();
+    if (result.success) {
+      if (result.details.diagnostics.length === 0) {
+        const evt = new CustomEvent('kdsoft-done', {
+          // composed allows bubbling beyond shadow root
+          bubbles: true, composed: true, cancelable: true, detail: { canceled: false, model: this.model }
+        });
+        this.dispatchEvent(evt);
+        return;
+      }
+      this.model.diagnostics = result.details.diagnostics;
+    }
   }
 
   _save(e) {
@@ -147,7 +166,10 @@ class FilterForm extends LitMvvmElement {
         })}
         </ul>
         <div id="footer" class=" mt-2">
-          <div>&nbsp;</div>
+          <div class="flex justify-start">
+            <button type="button" class="py-1 px-2" @click=${this._save}><i class="fas fa-lg fa-save text-blue-500"></i></button>
+            <button type="button" class="py-1 px-2" @click=${this._test}><i class="fas fa-lg fa-stethoscope text-orange-500"></i></button>
+          </div>
           <ol class="text-xl text-grey-500" @click=${this._indicatorClick}>
             ${this.model.editFilterModels.map((filterModel, index) => {
               const activeClass = index === activeFilterIndex ? 'text-blue-500' : '';
@@ -155,7 +177,6 @@ class FilterForm extends LitMvvmElement {
             })}
           </ol>
           <div class="flex justify-end">
-            <button type="button" class="py-1 px-2" @click=${this._save}><i class="fas fa-lg fa-save text-blue-500"></i></button>
             <button type="button" class="py-1 px-2" @click=${this._apply}><i class="fas fa-lg fa-check text-green-500"></i></button>
             <button type="button" class="py-1 px-2" @click=${this._cancel}><i class="fas fa-lg fa-times text-red-500"></i></button>
           </div>

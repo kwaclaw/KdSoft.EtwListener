@@ -38,9 +38,12 @@ class FilterFormModel {
     this.activeFilterIndex = afIndex;
   }
 
-  async applyActiveFilter() {
-    const result = await this.session.applyFilter(this.filters[this.activeFilterIndex]);
-    return result;
+  applyActiveFilter() {
+    return this.session.applyFilter(this.filters[this.activeFilterIndex]);
+  }
+
+  testActiveFilter() {
+    return this.session.testFilter(this.filters[this.activeFilterIndex]);
   }
 }
 
