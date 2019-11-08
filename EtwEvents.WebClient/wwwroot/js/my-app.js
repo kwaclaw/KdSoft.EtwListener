@@ -30,6 +30,28 @@ const classList = {
   tabButtonsInActive: { hidden: true }
 };
 
+function _formDoneHandler(e) {
+  if (!e.detail.canceled) {
+    if (e.target.localName === 'filter-form') {
+      this.model.saveSelectedProfileFilters(e.detail.model);
+    } else if (e.target.localName === 'trace-session-config') {
+      this.model.saveSelectedProfile(e.detail.model);
+    }
+  }
+
+  const dlg = e.currentTarget;
+  dlg.close();
+}
+
+function _formSaveHandler(e) {
+  if (e.target.localName === 'filter-form') {
+    this.model.saveSelectedProfileFilters(e.detail.model);
+  } else if (e.target.localName === 'trace-session-config') {
+    this.model.saveSelectedProfile(e.detail.model);
+  }
+}
+
+
 class MyApp extends LitMvvmElement {
   static _getSelectedText(clm) {
     let result = null;
@@ -46,6 +68,9 @@ class MyApp extends LitMvvmElement {
     this.scheduler = new Queue(priorities.HIGH);
     // we must assign the model *after* the scheduler
     this.model = new MyAppModel();
+    // this allows us to unregister the event handlers, because we maintain references to their instances
+    this._formDoneHandler = _formDoneHandler.bind(this);
+    this._formSaveHandler = _formSaveHandler.bind(this);
   }
 
   connectDropdownChecklist(dropDownModel, checkListModel, checkListId, singleSelect) {
@@ -75,19 +100,6 @@ class MyApp extends LitMvvmElement {
 
   async _sessionFromProfileClicked() {
     await this.model.openSessionFromSelectedProfile();
-  }
-
-  _formDoneHandler(e) {
-    if (!e.detail.canceled) {
-      if (e.target.localName === 'filter-form') {
-        this.model.saveSelectedProfileFilters(e.detail.model);
-      } else if (e.target.localName === 'trace-session-config') {
-        this.model.saveSelectedProfile(e.detail.model);
-      }
-    }
-
-    const dlg = e.currentTarget;
-    dlg.close();
   }
 
   _editProfileClicked() {
@@ -144,11 +156,13 @@ class MyApp extends LitMvvmElement {
   }
 
   _addDialogHandlers(dlg) {
-    dlg.addEventListener('kdsoft-done', this._formDoneHandler.bind(this));
+    dlg.addEventListener('kdsoft-done', this._formDoneHandler);
+    dlg.addEventListener('kdsoft-save', this._formSaveHandler);
   }
 
   _removeDialogHandlers(dlg) {
     dlg.removeEventListener('kdsoft-done', this._formDoneHandler);
+    dlg.removeEventListener('kdsoft-save', this._formSaveHandler);
   }
 
   connectedCallback() {

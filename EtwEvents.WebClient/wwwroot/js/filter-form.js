@@ -42,22 +42,16 @@ class FilterForm extends LitMvvmElement {
     this.model.diagnostics = [];
     const result = await this.model.testActiveFilter();
     if (result.success) {
-      if (result.details.diagnostics.length === 0) {
-        const evt = new CustomEvent('kdsoft-done', {
-          // composed allows bubbling beyond shadow root
-          bubbles: true, composed: true, cancelable: true, detail: { canceled: false, model: this.model }
-        });
-        this.dispatchEvent(evt);
-        return;
-      }
       this.model.diagnostics = result.details.diagnostics;
+    } else {
+      throw (result);
     }
   }
 
   _save(e) {
-    const evt = new CustomEvent('kdsoft-done', {
+    const evt = new CustomEvent('kdsoft-save', {
       // composed allows bubbling beyond shadow root
-      bubbles: true, composed: true, cancelable: true, detail: { canceled: false, model: this.model }
+      bubbles: true, composed: true, cancelable: true, detail: { model: this.model }
     });
     this.dispatchEvent(evt);
   }
