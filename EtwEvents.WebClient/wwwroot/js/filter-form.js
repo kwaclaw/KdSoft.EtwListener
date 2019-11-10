@@ -23,8 +23,9 @@ class FilterForm extends LitMvvmElement {
   //TODO we should have these operations: save, apply & save, cancel
   // and they should copy the filters to the profile before applying and/or saving
   async _apply(e) {
-    this.model.diagnostics = [];
-    const result = await this.model.applyActiveFilter();
+    const filterModel = this.model.activeFilterModel;
+    filterModel.diagnostics = [];
+    const result = await this.model.session.applyFilter(filterModel.filter);
     if (result.success) {
       if (result.details.diagnostics.length === 0) {
         const evt = new CustomEvent('kdsoft-done', {
@@ -34,15 +35,16 @@ class FilterForm extends LitMvvmElement {
         this.dispatchEvent(evt);
         return;
       }
-      this.model.diagnostics = result.details.diagnostics;
+      filterModel.diagnostics = result.details.diagnostics;
     }
   }
 
   async _test(e) {
-    this.model.diagnostics = [];
-    const result = await this.model.testActiveFilter();
+    const filterModel = this.model.activeFilterModel;
+    filterModel.diagnostics = [];
+    const result = await this.model.session.testFilter(filterModel.filter);
     if (result.success) {
-      this.model.diagnostics = result.details.diagnostics;
+      filterModel.diagnostics = result.details.diagnostics;
     } else {
       throw (result);
     }
@@ -150,7 +152,7 @@ class FilterForm extends LitMvvmElement {
       </style>
       <div id="container" @keydown=${this._filtersKeyDown}>
         <ul id="filters" class="carousel" tabindex="0">
-        ${this.model.editFilterModels.map((filterModel, index) => {
+        ${this.model.filterModels.map((filterModel, index) => {
           // model must be an object
           return html`
             <li class="carousel-item">
@@ -165,9 +167,9 @@ class FilterForm extends LitMvvmElement {
             <button type="button" class="py-1 px-2" @click=${this._test}><i class="fas fa-lg fa-stethoscope text-orange-500"></i></button>
           </div>
           <ol class="text-xl text-grey-500" @click=${this._indicatorClick}>
-            ${this.model.editFilterModels.map((filterModel, index) => {
+            ${this.model.filterModels.map((filterModel, index) => {
               const activeClass = index === activeFilterIndex ? 'text-blue-500' : '';
-              return html`<li class="inline-block w-8 cursor-pointer ${activeClass}" data-index=${index}>${index}</li>`;
+              return html`<li class="inline-block w-8 cursor-pointer ${activeClass}" data-index=${index}>${index + 1}</li>`;
             })}
           </ol>
           <div class="flex justify-end">

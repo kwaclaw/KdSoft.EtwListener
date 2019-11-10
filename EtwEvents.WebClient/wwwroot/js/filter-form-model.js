@@ -4,23 +4,18 @@ import { observable, observe } from '../lib/@nx-js/observer-util.js';
 class FilterFormModel {
   constructor(session) {
     this.session = session;
-    this.filters = session.profile.filters.slice(0);
     this.activeFilterIndex = session.profile.activeFilterIndex;
-    this.editFilterModels = [];
+    this.filterModels = [];
 
     const formModel = observable(this);
-    for (let indx = 0; indx < this.filters.length; indx += 1) {
+    for (let indx = 0; indx < session.profile.filters.length; indx += 1) {
       const editModel = {
         index: indx,
-        filter: this.filters[indx],
+        filter: session.profile.filters[indx].slice(0),
+        diagnostics: [],
       };
       const observableEditModel = observable(editModel);
-      this.editFilterModels.push(observableEditModel);
-      // update form model when filter gets edited
-      editModel.observer = observe(() => {
-        this.filters[indx] = observableEditModel.filter;
-        console.log(`Filter changed: ${observableEditModel.filter}`);
-      });
+      this.filterModels.push(observableEditModel);
     }
     
     return formModel;
@@ -38,13 +33,7 @@ class FilterFormModel {
     this.activeFilterIndex = afIndex;
   }
 
-  applyActiveFilter() {
-    return this.session.applyFilter(this.filters[this.activeFilterIndex]);
-  }
-
-  testActiveFilter() {
-    return this.session.testFilter(this.filters[this.activeFilterIndex]);
-  }
+  get activeFilterModel() { return this.filterModels[this.activeFilterIndex]; }
 }
 
 export default FilterFormModel;
