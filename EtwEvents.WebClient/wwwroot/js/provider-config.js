@@ -92,7 +92,19 @@ class ProviderConfig extends LitMvvmElement {
 
   _fieldChanged(e) {
     e.stopPropagation();
-    this.model[e.target.name] = e.target.value;
+    let val;
+    switch (e.target.type) {
+      case 'number':
+        val = e.target.valueAsNumber;
+        break;
+      case 'date':
+        val = e.target.valueAsDate;
+        break;
+      default:
+        val = e.target.value;
+        break;
+    }
+    this.model[e.target.name] = val;
   }
 
   static get styles() {
