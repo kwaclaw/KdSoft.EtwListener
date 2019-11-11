@@ -124,6 +124,8 @@ class TraceSessionConfig extends LitMvvmElement {
     ];
   }
 
+  /* eslint-disable indent, no-else-return */
+
   render() {
     this.model.filters[0] = 'huiewofghifbrqe';
     const result = html`

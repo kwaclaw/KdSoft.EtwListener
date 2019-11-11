@@ -226,6 +226,8 @@ class KdSoftCheckList extends LitMvvmElement {
     `;
   }
 
+  /* eslint-disable indent, no-else-return */
+
   _itemTemplate(item, indx, showCheckboxes, hasArrows, allowDragAndDrop) {
     const disabledString = item.disabled ? 'disabled' : '';
     const tabindex = indx === 0 ? '0' : '-1';
@@ -252,31 +254,31 @@ class KdSoftCheckList extends LitMvvmElement {
 
     if (allowDragAndDrop) {
       result = html`
-      <li data-item-index="${indx}"
-          tabindex="${tabindex}"
-          draggable="true"
-          class="list-item whitespace-no-wrap ${disabledString}"
-          title=${this.model.getItemText(item)}
-          @click=${this._itemClicked}
-          @dragstart=${this._dragStart}
-          @dragenter=${this._dragEnter}
-          @dragover=${this._dragOver}
-          @dragleave=${this._dragLeave}
-          @drop=${this._drop}
-      >
-        ${listItemContent}
-      </li>
+        <li data-item-index="${indx}"
+            tabindex="${tabindex}"
+            draggable="true"
+            class="list-item whitespace-no-wrap ${disabledString}"
+            title=${this.model.getItemText(item)}
+            @click=${this._itemClicked}
+            @dragstart=${this._dragStart}
+            @dragenter=${this._dragEnter}
+            @dragover=${this._dragOver}
+            @dragleave=${this._dragLeave}
+            @drop=${this._drop}
+        >
+          ${listItemContent}
+        </li>
       `;
     } else {
       result = html`
-      <li data-item-index="${indx}"
-          tabindex="${tabindex}"
-          class="list-item whitespace-no-wrap ${disabledString}"
-          title=${this.model.getItemText(item)}
-          @click=${this._itemClicked}
-      >
-        ${listItemContent}
-      </li>
+        <li data-item-index="${indx}"
+            tabindex="${tabindex}"
+            class="list-item whitespace-no-wrap ${disabledString}"
+            title=${this.model.getItemText(item)}
+            @click=${this._itemClicked}
+        >
+          ${listItemContent}
+        </li>
       `;
     }
 
@@ -314,19 +316,19 @@ class KdSoftCheckList extends LitMvvmElement {
     const allowDragAndDrop = this.allowDragDrop;
 
     const result = html`
-<link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
-<link rel="stylesheet" type="text/css" href=${styleLinks.fontawesome} />
-<link rel="stylesheet" type="text/css" href=${styleLinks.checkbox} />
-<style>
-</style>
-<div id="container" @click=${this._dropdownClicked}>
-  <ul id="item-list"
-    class="bg-white border-solid border border-gray-400 overflow-y-auto"
-    @keydown=${this._itemListKeydown}
-  >
-    ${repeat(this.model.filteredItems, entry => this.model.getItemId(entry.item), entry => this._itemTemplate(entry.item, entry.index, showCheckboxes, hasArrows, allowDragAndDrop))}
-  </ul>
-</div>
+      <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
+      <link rel="stylesheet" type="text/css" href=${styleLinks.fontawesome} />
+      <link rel="stylesheet" type="text/css" href=${styleLinks.checkbox} />
+      <style>
+      </style>
+      <div id="container" @click=${this._dropdownClicked}>
+        <ul id="item-list"
+          class="bg-white border-solid border border-gray-400 overflow-y-auto"
+          @keydown=${this._itemListKeydown}
+        >
+          ${repeat(this.model.filteredItems, entry => this.model.getItemId(entry.item), entry => this._itemTemplate(entry.item, entry.index, showCheckboxes, hasArrows, allowDragAndDrop))}
+        </ul>
+      </div>
     `;
     return result;
   }

@@ -145,6 +145,8 @@ class ProviderConfig extends LitMvvmElement {
     ];
   }
 
+  /* eslint-disable indent, no-else-return */
+
   render() {
     const provider = this.model;
     const expanded = provider.expanded || false;

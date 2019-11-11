@@ -219,6 +219,8 @@ class MyApp extends LitMvvmElement {
     ];
   }
 
+  /* eslint-disable indent, no-else-return */
+
   render() {
     return html`
       <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />

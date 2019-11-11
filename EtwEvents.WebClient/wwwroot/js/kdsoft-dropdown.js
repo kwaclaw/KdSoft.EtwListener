@@ -125,6 +125,8 @@ class KdSoftDropDown extends LitMvvmElement {
     }
   }
 
+  /* eslint-disable indent, no-else-return */
+
   render() {
     const selText = this.model.selectedText;
     const result = html`

@@ -160,6 +160,7 @@ class KdSoftTreeNode extends LitMvvmElement {
     this.dispatchEvent(evt);
   }
 
+  /* eslint-disable indent, no-else-return */
 
   render() {
     const expanderClasses = this.expanded ? classList.expanderDown : classList.expanderUp;

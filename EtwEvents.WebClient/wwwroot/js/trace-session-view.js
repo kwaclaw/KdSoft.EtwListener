@@ -51,6 +51,8 @@ class TraceSessionView extends LitMvvmElement {
     ];
   }
 
+  /* eslint-disable indent, no-else-return */
+
   render() {
     const ts = this.model;
     const itemIterator = (ts && ts.eventSession) ? ts.eventSession.itemIterator() : utils.emptyIterator();
@@ -74,21 +76,22 @@ class TraceSessionView extends LitMvvmElement {
             <div class="kds-header">Payload</div>
           </div>
           ${repeat(
-      itemIterator,
-      item => item.sequenceNo,
-      (item, indx) => {
-        const dateString = `${utils.dateFormat.format(item.timeStamp)}.${item.timeStamp % 1000}`;
-        return html`
-            <div class="kds-row">
-              <div>${item.sequenceNo}</div>
-              <div>${item.taskName}</div>
-              <div>${item.opCode}</div>
-              <div>${dateString}</div>
-              <div>${item.level}</div>
-              <div><pre>${JSON.stringify(item.payload)}</pre></div>
-            </div>`;
-      }
-    )}
+            itemIterator,
+            item => item.sequenceNo,
+            (item, indx) => {
+              const dateString = `${utils.dateFormat.format(item.timeStamp)}.${item.timeStamp % 1000}`;
+              return html`
+                <div class="kds-row">
+                  <div>${item.sequenceNo}</div>
+                  <div>${item.taskName}</div>
+                  <div>${item.opCode}</div>
+                  <div>${dateString}</div>
+                  <div>${item.level}</div>
+                  <div><pre>${JSON.stringify(item.payload)}</pre></div>
+                </div>
+              `;
+            }
+          )}
         </div>
       </div>
     `;
