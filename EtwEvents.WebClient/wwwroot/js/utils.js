@@ -161,3 +161,15 @@ export function assignTargetProperties(target, source) {
 }
 
 export const isoDurationRx = /^P(?:\d+Y)?(?:\d+M)?(?:\d+D)?(?:T(?:\d+H)?(?:\d+M)?(?:\d+(?:\.\d+)?S)?)?$/;
+
+export function spliceStr(str, index, count, add) {
+  // We cannot pass negative indexes directly to the 2nd slicing operation.
+  if (index < 0) {
+    index = str.length + index;
+    if (index < 0) {
+      index = 0;
+    }
+  }
+
+  return str.slice(0, index) + (add || '') + str.slice(index + count);
+}
