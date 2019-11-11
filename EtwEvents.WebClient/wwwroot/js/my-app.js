@@ -1,12 +1,10 @@
 import { html } from '../lib/lit-html.js';
-import { repeat } from '../lib/lit-html/directives/repeat.js';
 import { classMap } from '../lib/lit-html/directives/class-map.js';
 import { observable, observe, unobserve } from '../lib/@nx-js/observer-util.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
 import { css, unsafeCSS } from '../styles/css-tag.js';
 import MyAppModel from './my-app-model.js';
-import TraceSessionConfigModel from './trace-session-config-model.js';
 import FilterFormModel from './filter-form-model.js';
 import './kdsoft-checklist.js';
 import './kdsoft-dropdown.js';
@@ -16,7 +14,6 @@ import './trace-session-config.js';
 import './filter-form.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
 import myappStyleLinks from '../styles/my-app-style-links.js';
-import * as utils from './utils.js';
 
 const runBtnBase = { fas: true };
 const tabBase = { 'inline-block': true, 'py-2': true, 'no-underline': true };
@@ -107,10 +104,6 @@ class MyApp extends LitMvvmElement {
     if (!configModel) return;
 
     const dlg = this.renderRoot.getElementById('dlg-config');
-    //TODO pass context somehow to handlers
-    // dlg.addEventListener('kdsoft-apply', this._configApplyHandler);
-    // dlg.addEventListener('kdsoft-cancel', this._configCancelHandler);
-
     const cfg = dlg.getElementsByTagName('trace-session-config')[0];
     cfg.model = configModel;
     dlg.showModal();

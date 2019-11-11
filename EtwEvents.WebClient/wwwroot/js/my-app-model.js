@@ -23,7 +23,7 @@ class MyAppModel {
       }
     }
 
-    this.profileCheckListModel = new KdSoftCheckListModel(sessionProfiles, [1], false, item => item.name, item => item.name);
+    this.profileCheckListModel = new KdSoftCheckListModel(sessionProfiles, [0], false, item => item.name, item => item.name);
     this.sessionDropdownModel = new KdSoftDropdownModel();
 
     return observable(this);
@@ -81,8 +81,6 @@ class MyAppModel {
   saveSelectedProfileFilters(filterFormModel) {
     const profile = utils.first(this.profileCheckListModel.selectedEntries).item;
     if (profile) {
-      profile.filters = filterFormModel.filters;
-      profile.activeFilterIndex = filterFormModel.activeFilterIndex;
       localStorage.setItem(`session-profile-${profile.name}`, JSON.stringify(profile));
     }
   }
