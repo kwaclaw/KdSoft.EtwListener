@@ -23,7 +23,7 @@ class FilterFormModel {
 
   incrementActiveIndex() {
     const afIndex = this.activeFilterIndex + 1;
-    if (afIndex >= this.filters.length) return;
+    if (afIndex >= this.filterModels.length) return;
     this.activeFilterIndex = afIndex;
   }
 
@@ -33,10 +33,12 @@ class FilterFormModel {
     this.activeFilterIndex = afIndex;
   }
 
-  postActiveFilter() {
+  postFormData() {
     const profile = this.session.profile;
     profile.activeFilterIndex = this.activeFilterIndex;
-    profile.filters[this.activeFilterIndex] = this.activeFilterModel.filter;
+    for (let indx = 0; indx < this.filterModels.length; indx += 1) {
+      profile.filters[indx] = this.filterModels[indx].filter;
+    }
   }
 
   removeActiveFilter() {

@@ -78,8 +78,8 @@ function consolidateOverlappingSpans(diagnostics) {
   // since they don't overlap we can sort simply by span start positions
   result.sort((x, y) => comparePos(x.span.start, y.span.start));
 
-  console.log(JSON.stringify(diagnostics));
-  console.log(JSON.stringify(result));
+  // console.log(JSON.stringify(diagnostics));
+  // console.log(JSON.stringify(result));
   return result;
 }
 
@@ -276,7 +276,8 @@ namespace EtwEvents.Server
   {
     public bool IncludeEvent(TraceEvent evt) {
       ${html`<div id="code"
-        contenteditable @blur=${this._change}
+        contenteditable
+        @blur=${this._change}
         rows="10"
         spellcheck="false"
         title=${codeToolTip}

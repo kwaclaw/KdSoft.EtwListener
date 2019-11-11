@@ -211,6 +211,10 @@ class MyApp extends LitMvvmElement {
           padding-left: 0.25rem;
           padding-right: 0.25rem;
         }
+
+        #dlg-filter {
+          width: 80ch;
+        }
       `
     ];
   }

@@ -20,15 +20,13 @@ class FilterForm extends LitMvvmElement {
     this.dispatchEvent(evt);
   }
 
-  //TODO we should have these operations: save, apply & save, cancel
-  // and they should copy the filters to the profile before applying and/or saving
   async _apply(e) {
     const filterModel = this.model.activeFilterModel;
     filterModel.diagnostics = [];
     const result = await this.model.session.applyFilter(filterModel.filter);
     if (result.success) {
       if (result.details.diagnostics.length === 0) {
-        this.model.postActiveFilter();
+        this.model.postFormData();
         const evt = new CustomEvent('kdsoft-done', {
           // composed allows bubbling beyond shadow root
           bubbles: true, composed: true, cancelable: true, detail: { canceled: false, model: this.model }
@@ -52,7 +50,7 @@ class FilterForm extends LitMvvmElement {
   }
 
   _save(e) {
-    this.model.postActiveFilter();
+    this.model.postFormData();
     const evt = new CustomEvent('kdsoft-save', {
       // composed allows bubbling beyond shadow root
       bubbles: true, composed: true, cancelable: true, detail: { model: this.model }
@@ -158,7 +156,6 @@ class FilterForm extends LitMvvmElement {
       <style>
         :host {
           display: block;
-          width: 800px;
         }
       </style>
       <div id="container" @keydown=${this._filtersKeyDown}>
@@ -181,7 +178,7 @@ class FilterForm extends LitMvvmElement {
             <ol class="inline-block text-xl text-gray-500" @click=${this._indicatorClick}>
               ${this.model.filterModels.map((filterModel, index) => {
                 if (index === activeFilterIndex) {
-                  return html`<li class="inline-flex justify-around items-center w-10 px-1 mx-1 cursor-pointer text-blue-500 bg-blue-100 border border-gray-400 rounded-full" data-index=${index}>
+                  return html`<li class="inline-flex justify-around items-center w-10 px-1 mx-1 cursor-pointer text-blue-500 bg-blue-100 border border-gray-100 rounded-full" data-index=${index}>
                     ${index + 1}
                     <button type="button" class="mr-1 text-gray-600" @click=${this._remove}><i class="fas fa-times"></i></button>
                   </li>`;
