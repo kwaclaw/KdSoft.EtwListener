@@ -17,7 +17,7 @@ class FilterFormModel {
       const observableEditModel = observable(editModel);
       this.filterModels.push(observableEditModel);
     }
-    
+
     return formModel;
   }
 
@@ -31,6 +31,29 @@ class FilterFormModel {
     const afIndex = this.activeFilterIndex - 1;
     if (afIndex < 0) return;
     this.activeFilterIndex = afIndex;
+  }
+
+  postActiveFilter() {
+    const profile = this.session.profile;
+    profile.activeFilterIndex = this.activeFilterIndex;
+    profile.filters[this.activeFilterIndex] = this.activeFilterModel.filter;
+  }
+
+  removeActiveFilter() {
+    this.filterModels.splice(this.activeFilterIndex, 1);
+    if (this.activeFilterIndex >= this.filterModels.length) {
+      this.activeFilterIndex = this.filterModels.length - 1;
+    }
+  }
+
+  addFilterModel() {
+    const newModel = {
+      index: this.filterModels.length,
+      filter: '',
+      diagnostics: [],
+    };
+    this.filterModels.push(newModel);
+    this.activeFilterIndex = this.filterModels.length - 1;
   }
 
   get activeFilterModel() { return this.filterModels[this.activeFilterIndex]; }

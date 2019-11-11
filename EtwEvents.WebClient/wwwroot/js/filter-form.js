@@ -28,6 +28,7 @@ class FilterForm extends LitMvvmElement {
     const result = await this.model.session.applyFilter(filterModel.filter);
     if (result.success) {
       if (result.details.diagnostics.length === 0) {
+        this.model.postActiveFilter();
         const evt = new CustomEvent('kdsoft-done', {
           // composed allows bubbling beyond shadow root
           bubbles: true, composed: true, cancelable: true, detail: { canceled: false, model: this.model }
@@ -51,11 +52,21 @@ class FilterForm extends LitMvvmElement {
   }
 
   _save(e) {
+    this.model.postActiveFilter();
     const evt = new CustomEvent('kdsoft-save', {
       // composed allows bubbling beyond shadow root
       bubbles: true, composed: true, cancelable: true, detail: { model: this.model }
     });
     this.dispatchEvent(evt);
+  }
+
+  _add(e) {
+    this.model.addFilterModel();
+  }
+
+  _remove(e) {
+    e.stopPropagation();
+    this.model.removeActiveFilter();
   }
 
   _scrollToActiveItem(filtersControl) {
@@ -166,12 +177,21 @@ class FilterForm extends LitMvvmElement {
             <button type="button" class="py-1 px-2" @click=${this._save}><i class="fas fa-lg fa-save text-blue-500"></i></button>
             <button type="button" class="py-1 px-2" @click=${this._test}><i class="fas fa-lg fa-stethoscope text-orange-500"></i></button>
           </div>
-          <ol class="text-xl text-grey-500" @click=${this._indicatorClick}>
-            ${this.model.filterModels.map((filterModel, index) => {
-              const activeClass = index === activeFilterIndex ? 'text-blue-500' : '';
-              return html`<li class="inline-block w-8 cursor-pointer ${activeClass}" data-index=${index}>${index + 1}</li>`;
-            })}
-          </ol>
+          <div>
+            <ol class="inline-block text-xl text-gray-500" @click=${this._indicatorClick}>
+              ${this.model.filterModels.map((filterModel, index) => {
+                if (index === activeFilterIndex) {
+                  return html`<li class="inline-flex justify-around items-center w-10 px-1 mx-1 cursor-pointer text-blue-500 bg-blue-100 border border-gray-400 rounded-full" data-index=${index}>
+                    ${index + 1}
+                    <button type="button" class="mr-1 text-gray-600" @click=${this._remove}><i class="fas fa-times"></i></button>
+                  </li>`;
+                } else {
+                  return html`<li class="inline-flex justify-center items-center w-8 cursor-pointer" data-index=${index}>${index + 1}</li>`;
+                }
+              })}
+            </ol>
+            <button type="button" class="px-1" @click=${this._add}><i class="fas fa-lg fa-plus text-gray-500"></i></button>
+          </div>
           <div class="flex justify-end">
             <button type="button" class="py-1 px-2" @click=${this._apply}><i class="fas fa-lg fa-check text-green-500"></i></button>
             <button type="button" class="py-1 px-2" @click=${this._cancel}><i class="fas fa-lg fa-times text-red-500"></i></button>
