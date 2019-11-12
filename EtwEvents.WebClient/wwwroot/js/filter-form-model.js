@@ -5,14 +5,14 @@ import FilterCarouselModel from './filter-carousel-model.js';
 class FilterFormModel {
   constructor(session) {
     this.session = session;
-    this.filterCarouselModel = new FilterCarouselModel(session.profile.filters, session.profile.activeFilterIndex);
+    this.filterCarousel = new FilterCarouselModel(session.profile.filters, session.profile.activeFilterIndex);
     return observable(this);
   }
 
   postFormData() {
     const profile = this.session.profile;
-    const filterModels = this.filterCarouselModel.filterModels;
-    profile.activeFilterIndex = this.filterCarouselModel.activeFilterIndex;
+    const filterModels = this.filterCarousel.filterModels;
+    profile.activeFilterIndex = this.filterCarousel.activeFilterIndex;
     for (let indx = 0; indx < filterModels.length; indx += 1) {
       profile.filters[indx] = filterModels[indx].filter;
     }
@@ -20,7 +20,7 @@ class FilterFormModel {
   }
 
   async applyActiveFilter() {
-    const filterModel = this.filterCarouselModel.activeFilterModel;
+    const filterModel = this.filterCarousel.activeFilterModel;
     filterModel.diagnostics = [];
     const result = await this.session.applyFilter(filterModel.filter);
     if (result.success) {
@@ -39,7 +39,7 @@ class FilterFormModel {
   }
 
   async testActiveFilter() {
-    const filterModel = this.filterCarouselModel.activeFilterModel;
+    const filterModel = this.filterCarousel.activeFilterModel;
     filterModel.diagnostics = [];
     const result = await this.session.testFilter(filterModel.filter);
     if (result.success) {

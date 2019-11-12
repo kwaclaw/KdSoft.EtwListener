@@ -74,7 +74,7 @@ class FilterForm extends LitMvvmElement {
           display: block;
         }
       </style>
-      <filter-carousel .model=${this.model.filterCarouselModel}>
+      <filter-carousel .model=${this.model.filterCarousel}>
         <button slot="start" type="button" class="py-1 px-2" @click=${this._save}>
           <i class="fas fa-lg fa-save text-blue-500"></i>
         </button>

@@ -27,7 +27,7 @@ const classList = {
   tabButtonsInActive: { hidden: true }
 };
 
-function _formDoneHandler(e) {
+function formDoneHandler(e) {
   if (!e.detail.canceled) {
     if (e.target.localName === 'filter-form') {
       this.model.saveSelectedProfileFilters(e.detail.model);
@@ -40,7 +40,7 @@ function _formDoneHandler(e) {
   dlg.close();
 }
 
-function _formSaveHandler(e) {
+function formSaveHandler(e) {
   if (e.target.localName === 'filter-form') {
     this.model.saveSelectedProfileFilters(e.detail.model);
   } else if (e.target.localName === 'trace-session-config') {
@@ -66,8 +66,8 @@ class MyApp extends LitMvvmElement {
     // we must assign the model *after* the scheduler
     this.model = new MyAppModel();
     // this allows us to unregister the event handlers, because we maintain references to their instances
-    this._formDoneHandler = _formDoneHandler.bind(this);
-    this._formSaveHandler = _formSaveHandler.bind(this);
+    this._formDoneHandler = formDoneHandler.bind(this);
+    this._formSaveHandler = formSaveHandler.bind(this);
   }
 
   connectDropdownChecklist(dropDownModel, checkListModel, checkListId, singleSelect) {
