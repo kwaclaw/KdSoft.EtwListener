@@ -147,7 +147,7 @@ export function cloneObject(target, source) {
 // property types are not matched, that is for instance, an integer could be assigned to a string;
 // Note: this are straight assignments, no cloning is performed, so be careful about modifying
 // reference type properties on the source after the assignments are done;
-export function assignTargetProperties(target, source) {
+export function setTargetProperties(target, source) {
   // eslint-disable-next-line guard-for-in
   for (const key in target) {
     const descriptor = Object.getOwnPropertyDescriptor(target, key);

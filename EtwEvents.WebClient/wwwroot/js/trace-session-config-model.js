@@ -4,7 +4,7 @@ import * as utils from './utils.js';
 import TraceSessionProfile from './traceSessionProfile.js';
 import FilterCarouselModel from './filter-carousel-model.js';
 
-const _traceLevelList = [
+const traceLevelList = [
   { name: 'Always', value: 0 },
   { name: 'Critical', value: 1 },
   { name: 'Error', value: 2 },
@@ -32,7 +32,7 @@ class TraceSessionConfigModel extends TraceSessionProfile {
     return utils.cloneObject({}, Object.getPrototypeOf(this));
   }
 
-  static get traceLevelList() { return observable(_traceLevelList.slice(0)); }
+  static get traceLevelList() { return observable(traceLevelList.slice(0)); }
 }
 
 export default TraceSessionConfigModel;
