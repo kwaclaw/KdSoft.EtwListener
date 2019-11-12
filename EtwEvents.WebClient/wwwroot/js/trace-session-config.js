@@ -1,4 +1,5 @@
 ﻿import { html } from '../lib/lit-html.js';
+import { classMap } from '../lib/lit-html/directives/class-map.js';
 import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { css } from '../styles/css-tag.js';
@@ -8,10 +9,26 @@ import EventProvider from './eventProvider.js';
 import './provider-config.js';
 import './filter-edit.js';
 
+const tabBase = {
+  'text-gray-600': true,
+  'pt-4': true,
+  'pb-2': true,
+  'px-6': true,
+  block: true,
+  'hover:text-blue-500': true,
+  'focus:outline-none': true
+};
+
+const classList = {
+  tabActive: { ...tabBase, 'text-blue-500': true, 'border-b-2': true, 'font-medium': true, 'border-blue-500': true },
+  tabInactive: tabBase,
+};
+
 class TraceSessionConfig extends LitMvvmElement {
   constructor() {
     super();
     this.scheduler = new Queue(priorities.HIGH);
+    this.activeTabId = 'general';
   }
 
   connectedCallback() {
@@ -57,6 +74,10 @@ class TraceSessionConfig extends LitMvvmElement {
   _addProviderClicked(e) {
     const newProvider = new EventProvider('<New Provider>', 0);
     this.model.providers.splice(0, 0, newProvider);
+    this.model.providers.forEach(p => {
+      p.expanded = false;
+    });
+    newProvider.expanded = true;
   }
 
   _providerDelete(e) {
@@ -71,34 +92,51 @@ class TraceSessionConfig extends LitMvvmElement {
     });
   }
 
+  _tabClick(e) {
+    e.stopPropagation();
+    const btn = e.target.closest('button');
+    this.model.activeSection = btn.dataset.tabid;
+  }
+
+  _tabClass(tabId) {
+    return this.model.activeSection === tabId ? classList.tabActive : classList.tabInactive;
+  }
+
+  _sectionActive(tabId) {
+    return this.model.activeSection === tabId ? 'active' : '';
+  }
+
   static get styles() {
     return [
       css`
         form {
-          display: block;
-          max-width: 1000px;
+          position: relative;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
         }
 
         #container {
-          display: block;
-          column-count: 2;
-          column-fill: auto;
+          position: relative;
+          flex: 1 1 auto;
+          overflow-y: auto;
         }
 
-        #left-part {
+        section {
+          position: relative;
+        }
+
+        section:not(.active) {
+          display: none !important;
+        }
+
+        #general {
           display: grid;
           grid-template-columns: 1fr 2fr;
           align-items: baseline;
+          align-content: start;
           grid-gap: 5px;
           min-width: 480px;
-          break-after: column;
-          break-inside: avoid-column;
-        }
-
-        #right-part {
-          display: block;
-          break-before: column;
-          break-inside: avoid-column;
         }
 
         fieldset {
@@ -109,12 +147,15 @@ class TraceSessionConfig extends LitMvvmElement {
           font-weight: bolder;
         }
 
-        #providers {
-          grid-column: 1/-1;
+        #filters {
+          width: 100%;
+          height: 100%;
         }
 
         #ok-cancel-buttons {
-          grid-column: 1/-1;
+          align-self: flex-end;
+          margin-top: auto;
+          width: 100%;
         }
 
         #name:invalid, #host:invalid, #lifeTime:invalid {
@@ -127,7 +168,6 @@ class TraceSessionConfig extends LitMvvmElement {
   /* eslint-disable indent, no-else-return */
 
   render() {
-    this.model.filters[0] = 'huiewofghifbrqe';
     const result = html`
       <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
       <link rel="stylesheet" type="text/css" href=${styleLinks.fontawesome} />
@@ -138,8 +178,14 @@ class TraceSessionConfig extends LitMvvmElement {
         }
       </style>
       <form @change=${this._profileChanged}>
-        <div id="container">
-          <div id="left-part">
+        <nav class="flex flex-col sm:flex-row mb-4" @click=${this._tabClick}>
+          <button type="button" class=${classMap(this._tabClass('general'))} data-tabid="general">General</button>
+          <button type="button" class=${classMap(this._tabClass('providers'))} data-tabid="providers">Providers</button>
+          <button type="button" class=${classMap(this._tabClass('filters'))} data-tabid="filters">Filters</button>
+          <button type="button" class=${classMap(this._tabClass('columns'))} data-tabid="columns">Columns</button>
+        </nav>
+        <div id="container" class="mb-4">
+          <section id="general" class="${this._sectionActive('general')}">
             <fieldset>
               <label for="name">Name</label>
               <input id="name" name="name" type="text" required class="form-input" value=${this.model.name} />
@@ -155,19 +201,21 @@ class TraceSessionConfig extends LitMvvmElement {
                 placeholder="ISO Duration (PnYnMnDTnHnMnS)"
                 pattern=${utils.isoDurationRx.source} />
             </fieldset>
-            <div id="providers" class="mt-2">
-              <div class="flex mb-1 pr-2">
-                <label>Providers</label>
-                <span class="text-gray-500 fas fa-plus w-7 h-7 ml-auto cursor-pointer select-none" @click=${this._addProviderClicked}></span>
-              </div>
-              ${this.model.providers.map(provider => html`
-                <provider-config .model=${provider} @beforeExpand=${this._providerBeforeExpand} @delete=${this._providerDelete}></provider-config>
-              `)}
+          </section>
+          <section id="providers" class="${this._sectionActive('providers')}">
+            <div class="flex mb-1 pr-2">
+              <span class="text-gray-500 fas fa-lg fa-plus w-7 h-7 ml-auto cursor-pointer select-none" @click=${this._addProviderClicked}></span>
             </div>
-          </div>
-          <div id="right-part">
-            <filter-edit .model=${this.model.filters[0]}></filter-edit>
-          </div>
+            ${this.model.providers.map(provider => html`
+              <provider-config .model=${provider} @beforeExpand=${this._providerBeforeExpand} @delete=${this._providerDelete}></provider-config>
+            `)}
+          </section>
+          <section id="filters" class="${this._sectionActive('filters')}">
+            <filter-carousel class="h-full" .model=${this.model.filterCarousel}></filter-edit>
+          </section>
+          <section id="columns" class="${this._sectionActive('columns')}">
+            &nbsp;
+          </section>
         </div>
         <div id="ok-cancel-buttons" class="flex flex-wrap justify-end mt-2 bt-1">
           <hr class="w-full mb-4" />

@@ -1,7 +1,8 @@
 ﻿
-import TraceSessionProfile from './traceSessionProfile.js';
-import * as utils from './utils.js';
 import { observable } from '../lib/@nx-js/observer-util.js';
+import * as utils from './utils.js';
+import TraceSessionProfile from './traceSessionProfile.js';
+import FilterCarouselModel from './filter-carousel-model.js';
 
 const _traceLevelList = [
   { name: 'Always', value: 0 },
@@ -20,6 +21,9 @@ class TraceSessionConfigModel extends TraceSessionProfile {
       utils.cloneObject([], profile.filters),
       profile.activeFilterIndex,
       (profile.lifeTime || '').slice(0));
+
+    this.filterCarousel = new FilterCarouselModel(profile.filters, profile.activeFilterIndex);
+    this.activeSection = 'general';
 
     return observable(this);
   }

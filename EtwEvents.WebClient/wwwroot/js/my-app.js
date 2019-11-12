@@ -212,6 +212,14 @@ class MyApp extends LitMvvmElement {
           padding-right: 0.25rem;
         }
 
+        #dlg-config {
+          width: 800px;
+          min-height: 400px;
+          height: 500px;
+          max-height: 600px;
+          position: relative;
+        }
+
         #dlg-filter {
           width: 80ch;
         }
@@ -289,7 +297,7 @@ class MyApp extends LitMvvmElement {
         </div>
 
         <dialog id="dlg-config">
-          <trace-session-config></trace-session-config>
+          <trace-session-config class="h-full"></trace-session-config>
         </dialog>
         <dialog id="dlg-filter">
           <filter-form></filter-form>

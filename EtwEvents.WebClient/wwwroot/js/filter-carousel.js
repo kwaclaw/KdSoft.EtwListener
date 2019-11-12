@@ -69,10 +69,14 @@ class FilterCarousel extends LitMvvmElement {
     return [
       css`
         #container {
-          display: block;
+          position: relative;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
         }
 
         .carousel {
+          flex: 1 1 auto;
           display: flex;
           flex-wrap: nowrap;
           overflow-x: hidden;
@@ -89,12 +93,17 @@ class FilterCarousel extends LitMvvmElement {
         }
 
         #footer {
+          margin-top: auto;
+          width: 100%;
+          align-self: flex-end;
           display: grid;
           grid-template-columns: 1fr auto 1fr;
         }
 
         filter-edit {
           display: block;
+          height: 100%;
+          overflow-y: auto;
         }
       `,
     ];
@@ -114,13 +123,13 @@ class FilterCarousel extends LitMvvmElement {
       </style>
       <div id="container" @keydown=${this._filtersKeyDown}>
         <ul id="filters" class="carousel" tabindex="0">
-        ${this.model.filterModels.map((filterModel, index) => {
-          return html`
-            <li class="carousel-item" tabindex="0">
-              <filter-edit .model=${filterModel}></filter-edit>
-            </li>
-          `;
-        })}
+          ${this.model.filterModels.map((filterModel, index) => {
+            return html`
+              <li class="carousel-item" tabindex="0">
+                <filter-edit .model=${filterModel}></filter-edit>
+              </li>
+            `;
+          })}
         </ul>
         <div id="footer" class="mt-2">
           <div class="flex justify-start">
