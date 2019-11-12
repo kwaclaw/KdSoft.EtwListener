@@ -1,5 +1,6 @@
 
 import { observable, raw } from '../lib/@nx-js/observer-util.js';
+import { html } from '../lib/lit-html.js';
 
 function iterateSelectedItems(items, selectedItems) {
   let current;
@@ -55,7 +56,7 @@ class KdSoftCheckListModel {
     items = [],
     selectedIndexes = [],
     multiSelect = true,
-    getItemText = item => item.text,
+    getItemTemplate = item => html``,
     getItemId = item => item.id
   ) {
     if (!multiSelect && (selectedIndexes || []).length > 1) {
@@ -71,7 +72,7 @@ class KdSoftCheckListModel {
     // so that we can use this in the property getters/setters
     _multiSelect.set(result, multiSelect);
 
-    this.getItemText = getItemText;
+    this.getItemTemplate = getItemTemplate;
     this.getItemId = getItemId;
 
     return result;

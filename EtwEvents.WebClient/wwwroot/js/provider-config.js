@@ -28,7 +28,13 @@ class ProviderConfig extends LitMvvmElement {
 
   firstRendered() {
     super.firstRendered();
-    this.levelCheckListModel = new KdSoftCheckListModel(TraceSessionConfigModel.traceLevelList, [this.model.level || 0], false, item => item.name, item => item.value);
+    this.levelCheckListModel = new KdSoftCheckListModel(
+      TraceSessionConfigModel.traceLevelList,
+      [this.model.level || 0],
+      false,
+      item => html`${item.name}`,
+      item => item.value
+    );
     this._levelObservers = this.connectLevelControls(this.levelDropDownModel, this.levelCheckListModel, 'traceLevelList', true);
   }
 

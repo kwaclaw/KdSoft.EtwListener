@@ -1,4 +1,4 @@
-
+import { html } from '../lib/lit-html.js';
 import { observable } from '../lib/@nx-js/observer-util.js';
 import KdSoftCheckListModel from './kdsoft-checklist-model.js';
 import KdSoftDropdownModel from './kdsoft-dropdown-model.js';
@@ -23,7 +23,7 @@ class MyAppModel {
       }
     }
 
-    this.profileCheckListModel = new KdSoftCheckListModel(sessionProfiles, [0], false, item => item.name, item => item.name);
+    this.profileCheckListModel = new KdSoftCheckListModel(sessionProfiles, [0], false, item => html`${item.name}`, item => item.name);
     this.sessionDropdownModel = new KdSoftDropdownModel();
 
     return observable(this);

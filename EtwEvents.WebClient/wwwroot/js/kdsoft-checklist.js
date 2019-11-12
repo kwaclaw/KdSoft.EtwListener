@@ -222,7 +222,6 @@ class KdSoftCheckList extends LitMvvmElement {
         @click=${this._checkboxClicked}
         .checked=${model.isItemSelected(item)}
         ?disabled=${item.disabled} />
-      <label for=${chkid}><span>${model.getItemText(item)}</span></label>
     `;
   }
 
@@ -235,7 +234,7 @@ class KdSoftCheckList extends LitMvvmElement {
     const downArrowClasses = indx >= (this.model.items.length - 1) ? classList.downArrowHidden : classList.downArrowVisible;
 
     const listItemContent = html`
-      <a>
+      <span>
         ${hasArrows
           ? html`
             <span class="leading-normal cursor-pointer" @click=${this._upClick}><i class=${classMap(upArrowClasses)}></i></span>
@@ -243,11 +242,9 @@ class KdSoftCheckList extends LitMvvmElement {
           `
           : nothing
         }
-        ${showCheckboxes
-          ? this._checkBoxTemplate(this.model, item, indx)
-          : html`<span>${this.model.getItemText(item)}</span>`
-        }
-      </a>
+        ${showCheckboxes ? this._checkBoxTemplate(this.model, item, indx) : nothing}
+        ${this.model.getItemTemplate(item)}
+      </span>
     `;
 
     let result;
@@ -258,7 +255,6 @@ class KdSoftCheckList extends LitMvvmElement {
             tabindex="${tabindex}"
             draggable="true"
             class="list-item whitespace-no-wrap ${disabledString}"
-            title=${this.model.getItemText(item)}
             @click=${this._itemClicked}
             @dragstart=${this._dragStart}
             @dragenter=${this._dragEnter}
@@ -274,7 +270,6 @@ class KdSoftCheckList extends LitMvvmElement {
         <li data-item-index="${indx}"
             tabindex="${tabindex}"
             class="list-item whitespace-no-wrap ${disabledString}"
-            title=${this.model.getItemText(item)}
             @click=${this._itemClicked}
         >
           ${listItemContent}
