@@ -81,6 +81,14 @@ class KdSoftCheckListModel {
 
   get selectedEntries() { return iterateSelectedItems(this.items, this._selectedItems); }
 
+  get selectedIndexes() {
+    const result = [];
+    for (const selEntry of this.selectedEntries) {
+      result.push(selEntry.index);
+    }
+    return result;
+  }
+
   get filteredItems() { return iterateFilter(this.items, this.filter); }
 
   selectIndex(index, select) {
