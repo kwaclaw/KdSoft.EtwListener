@@ -156,8 +156,8 @@ class ProviderConfig extends LitMvvmElement {
     const expanded = provider.expanded || false;
     const borderColor = expanded ? 'border-indigo-500' : 'border-transparent';
     const htColor = expanded ? 'text-indigo-700' : 'text-gray-700';
-    const timesClasses = expanded ? 'text-indigo-500 fas fa-times' : 'text-gray-600 fas fa-times';
-    const chevronClasses = expanded ? 'text-indigo-500 fas fa-chevron-circle-up' : 'text-gray-600 fas fa-chevron-circle-down';
+    const timesClasses = 'text-gray-600 fas fa-lg fa-times';
+    const chevronClasses = expanded ? 'text-indigo-500 fas fa-lg  fa-chevron-circle-up' : 'text-gray-600 fas fa-lg fa-chevron-circle-down';
 
     return html`
       <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />

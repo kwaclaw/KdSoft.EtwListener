@@ -114,6 +114,7 @@ class TraceSessionConfig extends LitMvvmElement {
           height: 100%;
           display: flex;
           flex-direction: column;
+          align-items: stretch;
         }
 
         #container {
@@ -148,14 +149,12 @@ class TraceSessionConfig extends LitMvvmElement {
         }
 
         #filters {
-          width: 100%;
           height: 100%;
         }
 
         #ok-cancel-buttons {
           align-self: flex-end;
           margin-top: auto;
-          width: 100%;
         }
 
         #name:invalid, #host:invalid, #lifeTime:invalid {
@@ -213,12 +212,12 @@ class TraceSessionConfig extends LitMvvmElement {
           <section id="filters" class="${this._sectionActive('filters')}">
             <filter-carousel class="h-full" .model=${this.model.filterCarousel}></filter-edit>
           </section>
-          <section id="columns" class="${this._sectionActive('columns')}">
+          <section id="columns" class="${this._sectionActive('columns')} flex">
             &nbsp;
           </section>
         </div>
+        <hr class="mb-4" />
         <div id="ok-cancel-buttons" class="flex flex-wrap justify-end mt-2 bt-1">
-          <hr class="w-full mb-4" />
           <button type="button" class="py-1 px-2" @click=${this._apply}><i class="fas fa-lg fa-check text-green-500"></i></button>
           <button type="button" class="py-1 px-2" @click=${this._cancel}><i class="fas fa-lg fa-times text-red-500"></i></button>
         </div>

@@ -73,6 +73,7 @@ class FilterCarousel extends LitMvvmElement {
           height: 100%;
           display: flex;
           flex-direction: column;
+          align-items: stretch;
         }
 
         .carousel {
@@ -94,8 +95,6 @@ class FilterCarousel extends LitMvvmElement {
 
         #footer {
           margin-top: auto;
-          width: 100%;
-          align-self: flex-end;
           display: grid;
           grid-template-columns: 1fr auto 1fr;
         }
@@ -131,7 +130,8 @@ class FilterCarousel extends LitMvvmElement {
             `;
           })}
         </ul>
-        <div id="footer" class="mt-2">
+        <hr class="my-4" />
+        <div id="footer">
           <div class="flex justify-start">
             <slot name="start"></slot>
           </div>
