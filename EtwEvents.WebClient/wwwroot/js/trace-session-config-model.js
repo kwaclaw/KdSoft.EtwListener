@@ -29,7 +29,9 @@ class TraceSessionConfigModel extends TraceSessionProfile {
   }
 
   cloneAsProfile() {
-    return utils.cloneObject({}, Object.getPrototypeOf(this));
+    const result = utils.cloneObject({}, this);
+    Reflect.setPrototypeOf(result, TraceSessionProfile.prototype);
+    return result;
   }
 
   static get traceLevelList() { return observable(traceLevelList.slice(0)); }
