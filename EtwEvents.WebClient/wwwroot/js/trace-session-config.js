@@ -1,6 +1,7 @@
 ﻿import { html } from '../lib/lit-html.js';
 import { classMap } from '../lib/lit-html/directives/class-map.js';
 import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
+import { observe, unobserve } from '../lib/@nx-js/observer-util.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { css } from '../styles/css-tag.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
@@ -8,6 +9,7 @@ import * as utils from './utils.js';
 import EventProvider from './eventProvider.js';
 import './provider-config.js';
 import './filter-edit.js';
+import './kdsoft-checklist.js';
 
 const tabBase = {
   'text-gray-600': true,
@@ -24,11 +26,20 @@ const classList = {
   tabInactive: tabBase,
 };
 
+function getPayloadItemTemplate(item) {
+    return html`
+      <div class="inline-block w-1\/3 ml-2 mr-4 truncate" title=${item.name}>${item.name}</div>
+      <div class="inline-block w-1\/2 border-l pl-2 truncate" title=${item.label}>${item.label}</div>
+      <span class="ml-auto flex-end text-gray-600" @click=${e => this._deletePayloadColumn(e)}><i class="far fa-trash-alt"></i></span>
+    `;
+}
+
 class TraceSessionConfig extends LitMvvmElement {
   constructor() {
     super();
     this.scheduler = new Queue(priorities.HIGH);
     this.activeTabId = 'general';
+    this._getPayloadItemTemplate = getPayloadItemTemplate.bind(this);
   }
 
   connectedCallback() {
@@ -37,10 +48,13 @@ class TraceSessionConfig extends LitMvvmElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
+    if (this._standardColumnsObserver) unobserve(this._standardColumnsObserver);
   }
 
   firstRendered() {
-    //
+    this._standardColumnsObserver = observe(() => {
+      this.model.standardColumns = this.model.standardColumnCheckList.selectedIndexes;
+    });
   }
 
   rendered() {
@@ -106,6 +120,24 @@ class TraceSessionConfig extends LitMvvmElement {
     return this.model.activeSection === tabId ? 'active' : '';
   }
 
+  _addPayloadColumnClicked(e) {
+    const r = this.renderRoot;
+    const nameInput = r.getElementById('payload-field');
+    const labelInput = r.getElementById('payload-label');
+    const valid = nameInput.reportValidity() && labelInput.reportValidity();
+    if (!valid) return;
+
+    const name = nameInput.value;
+    const label = labelInput.value;
+    this.model.payloadColumnCheckList.items.push({ name, label });
+  }
+
+  _deletePayloadColumn(e) {
+    e.stopPropagation();
+    const itemIndex = e.target.closest('.list-item').dataset.itemIndex;
+    this.model.payloadColumnCheckList.items.splice(itemIndex, 1);
+  }
+
   static get styles() {
     return [
       css`
@@ -146,6 +178,7 @@ class TraceSessionConfig extends LitMvvmElement {
 
         label {
           font-weight: bolder;
+          color: #718096;
         }
 
         #filters {
@@ -160,6 +193,11 @@ class TraceSessionConfig extends LitMvvmElement {
         #name:invalid, #host:invalid, #lifeTime:invalid {
           border: 2px solid red;
         }
+
+        #standard-cols-wrapper {
+          position: relative;
+          width: 40%;
+        }
       `,
     ];
   }
@@ -167,6 +205,7 @@ class TraceSessionConfig extends LitMvvmElement {
   /* eslint-disable indent, no-else-return */
 
   render() {
+    this.model.payloadColumnCheckList.getItemTemplate = this._getPayloadItemTemplate;
     const result = html`
       <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
       <link rel="stylesheet" type="text/css" href=${styleLinks.fontawesome} />
@@ -202,8 +241,8 @@ class TraceSessionConfig extends LitMvvmElement {
             </fieldset>
           </section>
           <section id="providers" class="${this._sectionActive('providers')}">
-            <div class="flex mb-1 pr-2">
-              <span class="text-gray-500 fas fa-lg fa-plus w-7 h-7 ml-auto cursor-pointer select-none" @click=${this._addProviderClicked}></span>
+            <div class="flex my-2 pr-2">
+              <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none" @click=${this._addProviderClicked}></span>
             </div>
             ${this.model.providers.map(provider => html`
               <provider-config .model=${provider} @beforeExpand=${this._providerBeforeExpand} @delete=${this._providerDelete}></provider-config>
@@ -212,8 +251,21 @@ class TraceSessionConfig extends LitMvvmElement {
           <section id="filters" class="${this._sectionActive('filters')}">
             <filter-carousel class="h-full" .model=${this.model.filterCarousel}></filter-edit>
           </section>
-          <section id="columns" class="${this._sectionActive('columns')} flex">
-            &nbsp;
+          <section id="columns" class="${this._sectionActive('columns')} h-full flex items-stretch">
+            <div id="standard-cols-wrapper" class="mr-4">
+              <label class="block mb-1" for="standard-cols">Standard Columns</label>
+              <kdsoft-checklist id="standard-cols" class="w-full text-black" .model=${this.model.standardColumnCheckList} allow-drag-drop show-checkboxes></kdsoft-checklist>
+            </div>
+            <div id="payload-cols-wrapper" class="flex-grow flex flex-col items-stretch">
+              <label class="block mb-1" for="payload-cols">Payload Columns</label>
+              <kdsoft-checklist id="payload-cols" class="text-black" .model=${this.model.payloadColumnCheckList} allow-drag-drop show-checkboxes></kdsoft-checklist>
+              <div class="w-full self-end mt-auto pt-4 pb-1 flex items-center">
+                <!-- <label class="mr-4" for="payload-field">New</label> -->
+                <input id="payload-field" type="text" class="form-input mr-4" placeholder="field name" required />
+                <input id="payload-label" type="text" class="form-input" placeholder="field label" required />
+                <span class="text-gray-500 fas fa-lg fa-plus ml-auto pl-4 cursor-pointer select-none" @click=${this._addPayloadColumnClicked}></span>
+              </div>
+            </div>
           </section>
         </div>
         <hr class="mb-4" />
