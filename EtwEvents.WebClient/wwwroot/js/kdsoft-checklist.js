@@ -234,7 +234,7 @@ class KdSoftCheckList extends LitMvvmElement {
     const downArrowClasses = indx >= (this.model.items.length - 1) ? classList.downArrowHidden : classList.downArrowVisible;
 
     const listItemContent = html`
-      <span>
+      <div class="w-full inline-flex">
         ${hasArrows
           ? html`
             <span class="leading-normal cursor-pointer" @click=${this._upClick}><i class=${classMap(upArrowClasses)}></i></span>
@@ -244,7 +244,7 @@ class KdSoftCheckList extends LitMvvmElement {
         }
         ${showCheckboxes ? this._checkBoxTemplate(this.model, item, indx) : nothing}
         ${this.model.getItemTemplate(item)}
-      </span>
+      </div>
     `;
 
     let result;
@@ -296,6 +296,9 @@ class KdSoftCheckList extends LitMvvmElement {
           box-sizing: border-box;
           max-height: var(--max-scroll-height, 300px);
           min-width: 100%;
+        }
+        .list-item {
+          position: relative;
         }
         .droppable {
           outline: 2px solid darkgray;
