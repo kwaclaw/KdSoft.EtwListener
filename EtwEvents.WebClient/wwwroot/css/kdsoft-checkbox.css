@@ -7,6 +7,7 @@
 .kdsoft-checkbox {
   width: 1.2rem;
   height: 1.2rem;
+  line-height: 1.5rem;
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
@@ -15,8 +16,7 @@
   -webkit-user-select: none;
   -moz-user-select: none;
   user-select: none;
-  padding: 0.125rem 0.3rem;
-  vertical-align: text-bottom;
+  padding: 0.15rem 0.3rem;
   border: 1px solid #c8c8c8;
   border-radius: 0.2rem;
   cursor: pointer;
