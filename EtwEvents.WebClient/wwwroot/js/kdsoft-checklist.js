@@ -7,7 +7,7 @@ import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { css } from '../styles/css-tag.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
 
-const arrowBase = { far: true, 'fa-lg': true, 'text-blue-500': true, 'align-text-bottom': true, 'pt-1': true };
+const arrowBase = { far: true, 'fa-lg': true, 'text-gray-500': true, 'align-text-bottom': true };
 
 const classList = {
   upArrowVisible: { ...arrowBase, 'fa-caret-square-up': true },
@@ -218,7 +218,7 @@ class KdSoftCheckList extends LitMvvmElement {
     return html`
       <input type="checkbox" id=${chkid}
         tabindex="-1"
-        class="kdsoft-checkbox"
+        class="kdsoft-checkbox mr-2 my-auto"
         @click=${this._checkboxClicked}
         .checked=${model.isItemSelected(item)}
         ?disabled=${item.disabled} />
@@ -234,11 +234,11 @@ class KdSoftCheckList extends LitMvvmElement {
     const downArrowClasses = indx >= (this.model.items.length - 1) ? classList.downArrowHidden : classList.downArrowVisible;
 
     const listItemContent = html`
-      <div class="w-full inline-flex">
+      <div class="w-full inline-flex items-baseline">
         ${hasArrows
           ? html`
-            <span class="leading-normal cursor-pointer" @click=${this._upClick}><i class=${classMap(upArrowClasses)}></i></span>
-            <span class="leading-normal cursor-pointer" @click=${this._downClick}><i class=${classMap(downArrowClasses)}></i></span>
+            <span class="leading-none cursor-pointer my-auto mr-1" @click=${this._upClick}><i class=${classMap(upArrowClasses)}></i></span>
+            <span class="leading-none cursor-pointer my-auto mr-2" @click=${this._downClick}><i class=${classMap(downArrowClasses)}></i></span>
           `
           : nothing
         }
