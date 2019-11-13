@@ -28,7 +28,7 @@ const classList = {
 
 function getPayloadItemTemplate(item) {
     return html`
-      <div class="inline-block w-1\/3 ml-2 mr-4 truncate" title=${item.name}>${item.name}</div>
+      <div class="inline-block w-1\/3 mr-4 truncate" title=${item.name}>${item.name}</div>
       <div class="inline-block w-1\/2 border-l pl-2 truncate" title=${item.label}>${item.label}</div>
       <span class="ml-auto flex-end text-gray-600" @click=${e => this._deletePayloadColumn(e)}><i class="far fa-trash-alt"></i></span>
     `;
