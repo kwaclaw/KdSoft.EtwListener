@@ -261,8 +261,8 @@ class TraceSessionConfig extends LitMvvmElement {
               <kdsoft-checklist id="payload-cols" class="text-black" .model=${this.model.payloadColumnCheckList} allow-drag-drop show-checkboxes></kdsoft-checklist>
               <div class="w-full self-end mt-auto pt-4 pb-1 flex items-center">
                 <!-- <label class="mr-4" for="payload-field">New</label> -->
-                <input id="payload-field" type="text" class="form-input mr-4" placeholder="field name" required />
-                <input id="payload-label" type="text" class="form-input" placeholder="field label" required />
+                <input id="payload-field" type="text" form="" class="form-input mr-4" placeholder="field name" required />
+                <input id="payload-label" type="text" form="" class="form-input" placeholder="field label" required />
                 <span class="text-gray-500 fas fa-lg fa-plus ml-auto pl-4 cursor-pointer select-none" @click=${this._addPayloadColumnClicked}></span>
               </div>
             </div>
