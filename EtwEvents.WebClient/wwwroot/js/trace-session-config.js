@@ -26,11 +26,11 @@ const classList = {
   tabInactive: tabBase,
 };
 
-function getPayloadItemTemplate(item) {
+function getPayloadColumnListItemTemplate(item) {
     return html`
       <div class="inline-block w-1\/3 mr-4 truncate" title=${item.name}>${item.name}</div>
       <div class="inline-block w-1\/2 border-l pl-2 truncate" title=${item.label}>${item.label}</div>
-      <span class="ml-auto flex-end text-gray-600" @click=${e => this._deletePayloadColumn(e)}><i class="far fa-trash-alt"></i></span>
+      <span class="ml-auto flex-end text-gray-600" @click=${(e) => this._deletePayloadColumnClick(e)}><i class="far fa-trash-alt"></i></span>
     `;
 }
 
@@ -39,7 +39,7 @@ class TraceSessionConfig extends LitMvvmElement {
     super();
     this.scheduler = new Queue(priorities.HIGH);
     this.activeTabId = 'general';
-    this._getPayloadItemTemplate = getPayloadItemTemplate.bind(this);
+    this._getPayloadColumnListItemTemplate = getPayloadColumnListItemTemplate.bind(this);
   }
 
   connectedCallback() {
@@ -48,12 +48,14 @@ class TraceSessionConfig extends LitMvvmElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    if (this._standardColumnsObserver) unobserve(this._standardColumnsObserver);
+    if (this._columnsListObserver) unobserve(this._columnsListObserver);
   }
 
   firstRendered() {
-    this._standardColumnsObserver = observe(() => {
+    this._columnsListObserver = observe(() => {
       this.model.standardColumns = this.model.standardColumnCheckList.selectedIndexes;
+      this.model.payloadColumnList = this.model.payloadColumnCheckList.items;
+      this.model.payloadColumns = this.model.payloadColumnCheckList.selectedIndexes;
     });
   }
 
@@ -80,12 +82,12 @@ class TraceSessionConfig extends LitMvvmElement {
     this.dispatchEvent(evt);
   }
 
-  _profileChanged(e) {
+  _profileChange(e) {
     e.stopPropagation();
     this.model[e.target.name] = e.target.value;
   }
 
-  _addProviderClicked(e) {
+  _addProviderClick(e) {
     const newProvider = new EventProvider('<New Provider>', 0);
     this.model.providers.splice(0, 0, newProvider);
     this.model.providers.forEach(p => {
@@ -120,7 +122,7 @@ class TraceSessionConfig extends LitMvvmElement {
     return this.model.activeSection === tabId ? 'active' : '';
   }
 
-  _addPayloadColumnClicked(e) {
+  _addPayloadColumnClick(e) {
     const r = this.renderRoot;
     const nameInput = r.getElementById('payload-field');
     const labelInput = r.getElementById('payload-label');
@@ -130,12 +132,21 @@ class TraceSessionConfig extends LitMvvmElement {
     const name = nameInput.value;
     const label = labelInput.value;
     this.model.payloadColumnCheckList.items.push({ name, label });
+    // clear input controls
+    nameInput.value = null;
+    labelInput.value = null;
   }
 
-  _deletePayloadColumn(e) {
+  _deletePayloadColumnClick(e) {
     e.stopPropagation();
     const itemIndex = e.target.closest('.list-item').dataset.itemIndex;
     this.model.payloadColumnCheckList.items.splice(itemIndex, 1);
+  }
+
+  _payloadFieldBlur(e) {
+    const fieldVal = e.currentTarget.value;
+    const labelInput = this.renderRoot.getElementById('payload-label');
+    if (!labelInput.value) labelInput.value = fieldVal;
   }
 
   static get styles() {
@@ -205,7 +216,11 @@ class TraceSessionConfig extends LitMvvmElement {
   /* eslint-disable indent, no-else-return */
 
   render() {
-    this.model.payloadColumnCheckList.getItemTemplate = this._getPayloadItemTemplate;
+    // we don't have a "beforeFirstRender" event, so we set the item template function here
+    if (!this._firstRendered) {
+      this.model.payloadColumnCheckList.getItemTemplate = this._getPayloadColumnListItemTemplate;
+    }
+
     const result = html`
       <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
       <link rel="stylesheet" type="text/css" href=${styleLinks.fontawesome} />
@@ -215,7 +230,7 @@ class TraceSessionConfig extends LitMvvmElement {
           display: block;
         }
       </style>
-      <form @change=${this._profileChanged}>
+      <form @change=${this._profileChange}>
         <nav class="flex flex-col sm:flex-row mb-4" @click=${this._tabClick}>
           <button type="button" class=${classMap(this._tabClass('general'))} data-tabid="general">General</button>
           <button type="button" class=${classMap(this._tabClass('providers'))} data-tabid="providers">Providers</button>
@@ -242,7 +257,7 @@ class TraceSessionConfig extends LitMvvmElement {
           </section>
           <section id="providers" class="${this._sectionActive('providers')}">
             <div class="flex my-2 pr-2">
-              <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none" @click=${this._addProviderClicked}></span>
+              <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none" @click=${this._addProviderClick}></span>
             </div>
             ${this.model.providers.map(provider => html`
               <provider-config .model=${provider} @beforeExpand=${this._providerBeforeExpand} @delete=${this._providerDelete}></provider-config>
@@ -261,9 +276,9 @@ class TraceSessionConfig extends LitMvvmElement {
               <kdsoft-checklist id="payload-cols" class="text-black" .model=${this.model.payloadColumnCheckList} allow-drag-drop show-checkboxes></kdsoft-checklist>
               <div class="w-full self-end mt-auto pt-4 pb-1 flex items-center">
                 <!-- <label class="mr-4" for="payload-field">New</label> -->
-                <input id="payload-field" type="text" form="" class="form-input mr-4" placeholder="field name" required />
+                <input id="payload-field" type="text" form="" class="form-input mr-4" placeholder="field name" required @blur=${this._payloadFieldBlur} />
                 <input id="payload-label" type="text" form="" class="form-input" placeholder="field label" required />
-                <span class="text-gray-500 fas fa-lg fa-plus ml-auto pl-4 cursor-pointer select-none" @click=${this._addPayloadColumnClicked}></span>
+                <span class="text-gray-500 fas fa-lg fa-plus ml-auto pl-4 cursor-pointer select-none" @click=${this._addPayloadColumnClick}></span>
               </div>
             </div>
           </section>
