@@ -56,7 +56,7 @@ class KdSoftCheckListModel {
     items = [],
     selectedIndexes = [],
     multiSelect = true,
-    getItemTemplate = item => html``,
+    getItemTemplate = () => html``,
     getItemId = item => item.id
   ) {
     if (!multiSelect && (selectedIndexes || []).length > 1) {
