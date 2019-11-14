@@ -35,7 +35,6 @@ class TraceSessionView extends LitMvvmElement {
         }
 
         #grid {
-          grid-template-columns: auto auto auto auto auto auto;
           position: absolute;
           top: 0;
           bottom: 0;
@@ -47,6 +46,10 @@ class TraceSessionView extends LitMvvmElement {
           pointer-events: auto;
           z-index: 20;
         }
+
+        .payload {
+          font-style: italic;
+        }
       `,
     ];
   }
@@ -55,6 +58,17 @@ class TraceSessionView extends LitMvvmElement {
 
   render() {
     const ts = this.model;
+
+    //TODO create the column lists only on/before first render, as in: if (!this.firstRendered) { ... }
+
+    const sclist = ts.profile.getStandardColumnList();
+    const standardCols = ts.profile.standardColumns.map(col => sclist[col]);
+
+    const pclist = ts.profile.payloadColumnList;
+    const payloadCols = ts.profile.payloadColumns.map(pcol => pclist[pcol]);
+
+    const colTemplate = Array(standardCols.length + payloadCols.length).fill('auto').join(' ');
+
     const itemIterator = (ts && ts.eventSession) ? ts.eventSession.itemIterator() : utils.emptyIterator();
 
     const result = html`
@@ -64,30 +78,25 @@ class TraceSessionView extends LitMvvmElement {
         :host {
           display: block;
         }
+        #grid {
+          grid-template-columns: ${colTemplate};
+        }
       </style>
       <div id="container" class="border">
         <div id="grid" class="kds-container">
           <div class="kds-header-row">
-            <div class="kds-header">Sequence No</div>
-            <div class="kds-header">Task</div>
-            <div class="kds-header">OpCode</div>
-            <div class="kds-header">TimeStamp</div>
-            <div class="kds-header">Level</div>
-            <div class="kds-header">Payload</div>
+            ${standardCols.map(col => html`<div class="kds-header">${col.label}</div>`)}
+            ${payloadCols.map(col => html`<div class="kds-header payload">${col.label}</div>`)}
           </div>
           ${repeat(
             itemIterator,
             item => item.sequenceNo,
             (item, indx) => {
-              const dateString = `${utils.dateFormat.format(item.timeStamp)}.${item.timeStamp % 1000}`;
+              //const dateString = `${utils.dateFormat.format(item.timeStamp)}.${item.timeStamp % 1000}`;
               return html`
                 <div class="kds-row">
-                  <div>${item.sequenceNo}</div>
-                  <div>${item.taskName}</div>
-                  <div>${item.opCode}</div>
-                  <div>${dateString}</div>
-                  <div>${item.level}</div>
-                  <div><pre>${JSON.stringify(item.payload)}</pre></div>
+                  ${standardCols.map(col => html`<div>${item[col.name]}</div>`)}
+                  ${payloadCols.map(col => html`<div>${item.payload[col.name]}</div>`)}
                 </div>
               `;
             }
