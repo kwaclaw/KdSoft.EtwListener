@@ -7,6 +7,25 @@ import styleLinks from '../styles/kdsoft-style-links.js';
 import { KdSoftGridStyle } from '../styles/kdsoft-grid-style.js';
 import * as utils from './utils.js';
 
+function renderColumn(colValue, colType) {
+  // variable != null checks for both, != undefined and != null, without being falsy for 0
+  if (colValue != null) {
+    switch (colType) {
+      case 'number':
+        return colValue.toString();
+      case 'string':
+        return colValue;
+      case 'date':
+        return `${utils.dateFormat.format(colValue)}.${colValue % 1000}`;
+      case 'object':
+        return JSON.stringify(colValue);
+      default:
+        return colValue;
+    }
+  }
+  return '';
+}
+
 class TraceSessionView extends LitMvvmElement {
   constructor() {
     super();
@@ -61,13 +80,15 @@ class TraceSessionView extends LitMvvmElement {
 
     //TODO create the column lists only on/before first render, as in: if (!this.firstRendered) { ... }
 
-    const sclist = ts.profile.getStandardColumnList();
-    const standardCols = ts.profile.standardColumns.map(col => sclist[col]);
+    if (!this._firstRendered) {
+      const sclist = ts.profile.getStandardColumnList();
+      this._standardCols = ts.profile.standardColumns.map(col => sclist[col]);
 
-    const pclist = ts.profile.payloadColumnList;
-    const payloadCols = ts.profile.payloadColumns.map(pcol => pclist[pcol]);
+      const pclist = ts.profile.payloadColumnList;
+      this._payloadCols = ts.profile.payloadColumns.map(pcol => pclist[pcol]);
 
-    const colTemplate = Array(standardCols.length + payloadCols.length).fill('auto').join(' ');
+      this._colTemplate = Array(this._standardCols.length + this._payloadCols.length).fill('auto').join(' ');
+    }
 
     const itemIterator = (ts && ts.eventSession) ? ts.eventSession.itemIterator() : utils.emptyIterator();
 
@@ -79,24 +100,23 @@ class TraceSessionView extends LitMvvmElement {
           display: block;
         }
         #grid {
-          grid-template-columns: ${colTemplate};
+          grid-template-columns: ${this._colTemplate};
         }
       </style>
       <div id="container" class="border">
         <div id="grid" class="kds-container">
           <div class="kds-header-row">
-            ${standardCols.map(col => html`<div class="kds-header">${col.label}</div>`)}
-            ${payloadCols.map(col => html`<div class="kds-header payload">${col.label}</div>`)}
+            ${this._standardCols.map(col => html`<div class="kds-header">${col.label}</div>`)}
+            ${this._payloadCols.map(col => html`<div class="kds-header payload">${col.label}</div>`)}
           </div>
           ${repeat(
             itemIterator,
             item => item.sequenceNo,
             (item, indx) => {
-              //const dateString = `${utils.dateFormat.format(item.timeStamp)}.${item.timeStamp % 1000}`;
               return html`
                 <div class="kds-row">
-                  ${standardCols.map(col => html`<div>${item[col.name]}</div>`)}
-                  ${payloadCols.map(col => html`<div>${item.payload[col.name]}</div>`)}
+                  ${this._standardCols.map(col => html`<div>${renderColumn(item[col.name], col.type)}</div>`)}
+                  ${this._payloadCols.map(col => html`<div>${renderColumn(item.payload[col.name], col.type)}</div>`)}
                 </div>
               `;
             }

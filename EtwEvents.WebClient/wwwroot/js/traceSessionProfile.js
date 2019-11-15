@@ -1,10 +1,10 @@
 ﻿const standardColumnList = [
-  { name: 'sequenceNo', label: 'Sequence No' },
-  { name: 'taskName', label: 'Task' },
-  { name: 'opCode', label: 'OpCode' },
-  { name: 'timeStamp', label: 'TimeStamp' },
-  { name: 'level', label: 'Level' },
-  { name: 'payload', label: 'Payload' }
+  { name: 'sequenceNo', label: 'Sequence No', type: 'number' },
+  { name: 'taskName', label: 'Task', type: 'string' },
+  { name: 'opCode', label: 'OpCode', type: 'number' },
+  { name: 'timeStamp', label: 'TimeStamp', type: 'date' },
+  { name: 'level', label: 'Level', type: 'number' },
+  { name: 'payload', label: 'Payload', type: 'object' }
 ];
 
 class TraceSessionProfile {
