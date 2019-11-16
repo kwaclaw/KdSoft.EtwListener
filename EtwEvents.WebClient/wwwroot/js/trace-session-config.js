@@ -120,6 +120,7 @@ class TraceSessionConfig extends LitMvvmElement {
   _tabClick(e) {
     e.stopPropagation();
     const btn = e.target.closest('button');
+    if (!btn) return;
     this.model.activeSection = btn.dataset.tabid;
   }
 

@@ -100,7 +100,7 @@ class ProviderConfig extends LitMvvmElement {
     this.dispatchEvent(evt);
   }
 
-  _fieldChanged(e) {
+  _fieldChange(e) {
     e.stopPropagation();
     let val;
     switch (e.target.type) {
@@ -175,29 +175,30 @@ class ProviderConfig extends LitMvvmElement {
         }
       </style>
 
-      <article class="bg-gray-100 p-2" @change=${this._fieldChanged}>
-      <div class="border-l-2 ${borderColor}">
-        <header class="flex items-center justify-start pl-1 cursor-pointer select-none">
+      <article class="bg-gray-100 p-2" @change=${this._fieldChange}>
+        <div class="border-l-2 ${borderColor}">
+          <header class="flex items-center justify-start pl-1 cursor-pointer select-none">
             <input name="name" type="text" class="${htColor} form-input mr-2 w-full" value=${provider.name} ?readonly=${!expanded} />
             <span class="${timesClasses} w-7 h-7 ml-auto mr-2" @click=${this._deleteClicked}></span>
             <span class="${chevronClasses} w-7 h-7" @click=${this._expandClicked}></span>
-        </header>
-        <div class="mt-2" ?hidden=${!expanded}>
-          <div class="provider pl-8 pb-1">
+          </header>
+          <div class="mt-2" ?hidden=${!expanded}>
+            <div class="provider pl-8 pb-1">
               <fieldset>
-                  <label class="text-gray-600" for="level">Level</label>
-                  <kdsoft-dropdown id="traceLevel" class="py-0" .model=${this.levelDropDownModel}>
-                    <kdsoft-checklist id="traceLevelList" class="text-black" .model=${this.levelCheckListModel}></kdsoft-checklist>
-                  </kdsoft-dropdown>
+                <label class="text-gray-600" for="level">Level</label>
+                <kdsoft-dropdown id="traceLevel" class="py-0" .model=${this.levelDropDownModel}>
+                  <kdsoft-checklist id="traceLevelList" class="text-black" .model=${this.levelCheckListModel}></kdsoft-checklist>
+                </kdsoft-dropdown>
               </fieldset>
               <fieldset>
-                  <label class="text-gray-600" for="keyWords">MatchKeyWords</label>
+                <label class="text-gray-600" for="keyWords">MatchKeyWords</label>
                   <input id="keyWords" name="matchKeyWords" type="number" min="0" class="form-input" value=${provider.matchKeyWords} />
               </fieldset>
               <fieldset>
-                  <label class="text-gray-600" for="isDisabled">Disabled</label>
+                <label class="text-gray-600" for="isDisabled">Disabled</label>
                   <input id="isDisabled" name="disabled" type="checkbox" class="kdsoft-checkbox mt-auto mb-auto" ?checked=${provider.disabled} />
               </fieldset>
+            </div>
           </div>
         </div>
       </article>
