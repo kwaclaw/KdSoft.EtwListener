@@ -10,6 +10,7 @@ import EventProvider from './eventProvider.js';
 import './provider-config.js';
 import './filter-edit.js';
 import './kdsoft-checklist.js';
+import TraceSessionProfile from './traceSessionProfile.js';
 
 const tabBase = {
   'text-gray-600': true,
@@ -27,11 +28,14 @@ const classList = {
 };
 
 function getPayloadColumnListItemTemplate(item) {
-    return html`
-      <div class="inline-block w-1\/3 mr-4 truncate" title=${item.name}>${item.name}</div>
-      <div class="inline-block w-1\/2 border-l pl-2 truncate" title=${item.label}>${item.label}</div>
-      <span class="ml-auto flex-end text-gray-600" @click=${(e) => this._deletePayloadColumnClick(e)}><i class="far fa-trash-alt"></i></span>
-    `;
+  return html`
+    <div class="inline-block w-1\/3 mr-4 truncate" title=${item.name}>${item.name}</div>
+    <div class="inline-block w-2\/5 border-l pl-2 truncate" title=${item.label}>${item.label}</div>
+    <div class="inline-block w-1\/5 border-l pl-2" title=${item.type}>${item.type}&nbsp;</div>
+    <span class="ml-auto flex-end text-gray-600" @click=${e => this._deletePayloadColumnClick(e)}>
+      <i class="far fa-trash-alt">
+    </i></span>
+  `;
 }
 
 class TraceSessionConfig extends LitMvvmElement {
@@ -126,15 +130,17 @@ class TraceSessionConfig extends LitMvvmElement {
     const r = this.renderRoot;
     const nameInput = r.getElementById('payload-field');
     const labelInput = r.getElementById('payload-label');
+    const typeSelect = r.getElementById('payload-type');
     const valid = nameInput.reportValidity() && labelInput.reportValidity();
     if (!valid) return;
 
     const name = nameInput.value;
     const label = labelInput.value;
-    this.model.payloadColumnCheckList.items.push({ name, label });
+    this.model.payloadColumnCheckList.items.push({ name, label, type: typeSelect.value });
     // clear input controls
     nameInput.value = null;
     labelInput.value = null;
+    typeSelect.value = 'string';
   }
 
   _deletePayloadColumnClick(e) {
@@ -257,10 +263,15 @@ class TraceSessionConfig extends LitMvvmElement {
           </section>
           <section id="providers" class="${this._sectionActive('providers')}">
             <div class="flex my-2 pr-2">
-              <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none" @click=${this._addProviderClick}></span>
+              <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
+                @click=${this._addProviderClick}></span>
             </div>
             ${this.model.providers.map(provider => html`
-              <provider-config .model=${provider} @beforeExpand=${this._providerBeforeExpand} @delete=${this._providerDelete}></provider-config>
+              <provider-config
+                .model=${provider}
+                @beforeExpand=${this._providerBeforeExpand}
+                @delete=${this._providerDelete}>
+              </provider-config>
             `)}
           </section>
           <section id="filters" class="${this._sectionActive('filters')}">
@@ -269,15 +280,24 @@ class TraceSessionConfig extends LitMvvmElement {
           <section id="columns" class="${this._sectionActive('columns')} h-full flex items-stretch">
             <div id="standard-cols-wrapper" class="mr-4">
               <label class="block mb-1" for="standard-cols">Standard Columns</label>
-              <kdsoft-checklist id="standard-cols" class="w-full text-black" .model=${this.model.standardColumnCheckList} allow-drag-drop show-checkboxes></kdsoft-checklist>
+              <kdsoft-checklist id="standard-cols" class="w-full text-black"
+                .model=${this.model.standardColumnCheckList}
+                allow-drag-drop show-checkboxes>
+              </kdsoft-checklist>
             </div>
             <div id="payload-cols-wrapper" class="flex-grow flex flex-col items-stretch">
               <label class="block mb-1" for="payload-cols">Payload Columns</label>
-              <kdsoft-checklist id="payload-cols" class="text-black" .model=${this.model.payloadColumnCheckList} allow-drag-drop show-checkboxes></kdsoft-checklist>
+              <kdsoft-checklist id="payload-cols" class="text-black"
+                .model=${this.model.payloadColumnCheckList}
+                allow-drag-drop show-checkboxes>
+              </kdsoft-checklist>
               <div class="w-full self-end mt-auto pt-4 pb-1 flex items-center">
                 <!-- <label class="mr-4" for="payload-field">New</label> -->
-                <input id="payload-field" type="text" form="" class="form-input mr-4" placeholder="field name" required @blur=${this._payloadFieldBlur} />
-                <input id="payload-label" type="text" form="" class="form-input" placeholder="field label" required />
+                <input id="payload-field" type="text" form="" class="form-input mr-2" placeholder="field name" required @blur=${this._payloadFieldBlur} />
+                <input id="payload-label" type="text" form="" class="form-input mr-2" placeholder="field label" required />
+                <select id="payload-type" class="form-select">
+                  ${TraceSessionProfile.columnType.map(ct => html`<option>${ct}</option>`)}
+                </select>
                 <span class="text-gray-500 fas fa-lg fa-plus ml-auto pl-4 cursor-pointer select-none" @click=${this._addPayloadColumnClick}></span>
               </div>
             </div>

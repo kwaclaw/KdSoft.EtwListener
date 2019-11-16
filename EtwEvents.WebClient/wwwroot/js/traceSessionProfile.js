@@ -24,6 +24,7 @@ class TraceSessionProfile {
   get activeFilter() { return this.filters[this.activeFilterIndex]; }
   set activeFilter(val) { this.filters[this.activeFilterIndex] = val; }
 
+  static get columnType() { return ['string', 'number', 'date', 'object']; }
 }
 
 export default TraceSessionProfile;
