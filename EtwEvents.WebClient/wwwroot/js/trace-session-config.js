@@ -33,8 +33,8 @@ function getPayloadColumnListItemTemplate(item) {
     <div class="inline-block w-2\/5 border-l pl-2 truncate" title=${item.label}>${item.label}</div>
     <div class="inline-block w-1\/5 border-l pl-2" title=${item.type}>${item.type}&nbsp;</div>
     <span class="ml-auto flex-end text-gray-600" @click=${e => this._deletePayloadColumnClick(e)}>
-      <i class="far fa-trash-alt">
-    </i></span>
+      <i class="far fa-trash-alt"></i>
+    </span>
   `;
 }
 
