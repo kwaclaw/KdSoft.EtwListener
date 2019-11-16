@@ -1,4 +1,4 @@
-﻿import { html } from '../lib/lit-html.js';
+﻿import { html, nothing } from '../lib/lit-html.js';
 import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
 import { repeat } from '../lib/lit-html/directives/repeat.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
@@ -40,6 +40,15 @@ class TraceSessionView extends LitMvvmElement {
     //
   }
 
+  _gridClick(e) {
+    //e.preventDefault();
+    const row = e.target.closest('.kds-row');
+    if (!row) return;
+    const payload = row.querySelector('.payload');
+    if (!payload) return;
+    payload.toggleAttribute('hidden');
+  }
+
   rendered() {
     const grid = this.renderRoot.getElementById('grid');
     grid.scrollTop = grid.scrollHeight;
@@ -66,8 +75,12 @@ class TraceSessionView extends LitMvvmElement {
           z-index: 20;
         }
 
-        .payload {
+        .kds-header.payload {
           font-style: italic;
+        }
+
+        .kds-row > .payload {
+          grid-column: 1/-1;
         }
       `,
     ];
@@ -83,6 +96,7 @@ class TraceSessionView extends LitMvvmElement {
     if (!this._firstRendered) {
       const sclist = ts.profile.getStandardColumnList();
       this._standardCols = ts.profile.standardColumns.map(col => sclist[col]);
+      this._expandPayload = this._standardCols.findIndex(col => col.name === 'payload') < 0;
 
       const pclist = ts.profile.payloadColumnList;
       this._payloadCols = ts.profile.payloadColumns.map(pcol => pclist[pcol]);
@@ -104,7 +118,7 @@ class TraceSessionView extends LitMvvmElement {
         }
       </style>
       <div id="container" class="border">
-        <div id="grid" class="kds-container">
+        <div id="grid" class="kds-container" @click=${this._gridClick}>
           <div class="kds-header-row">
             ${this._standardCols.map(col => html`<div class="kds-header">${col.label}</div>`)}
             ${this._payloadCols.map(col => html`<div class="kds-header payload">${col.label}</div>`)}
@@ -117,6 +131,7 @@ class TraceSessionView extends LitMvvmElement {
                 <div class="kds-row">
                   ${this._standardCols.map(col => html`<div>${renderColumn(item[col.name], col.type)}</div>`)}
                   ${this._payloadCols.map(col => html`<div>${renderColumn(item.payload[col.name], col.type)}</div>`)}
+                  ${this._expandPayload ? html`<div class="payload" hidden><pre>${JSON.stringify(item.payload, null, 2)}</pre></div>` : nothing}
                 </div>
               `;
             }
