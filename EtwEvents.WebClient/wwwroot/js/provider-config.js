@@ -103,6 +103,9 @@ class ProviderConfig extends LitMvvmElement {
       case 'date':
         val = e.target.valueAsDate;
         break;
+      case 'checkbox':
+        val = e.target.checked;
+        break;
       default:
         val = e.target.value;
         break;
@@ -151,8 +154,6 @@ class ProviderConfig extends LitMvvmElement {
   /* eslint-disable indent, no-else-return */
 
   render() {
-    const provider = this.model;
-    const expanded = provider.expanded || false;
     if (!this._firstRendered) {
       // first time we know that this.model is defined for certain
       this.levelCheckListModel = new KdSoftCheckListModel(
@@ -164,6 +165,7 @@ class ProviderConfig extends LitMvvmElement {
       );
     }
 
+    const expanded = this.model.expanded || false;
     const borderColor = expanded ? 'border-indigo-500' : 'border-transparent';
     const htColor = expanded ? 'text-indigo-700' : 'text-gray-700';
     const timesClasses = 'text-gray-600 fas fa-lg fa-times';
@@ -182,7 +184,11 @@ class ProviderConfig extends LitMvvmElement {
       <article class="bg-gray-100 p-2" @change=${this._fieldChange}>
         <div class="border-l-2 ${borderColor}">
           <header class="flex items-center justify-start pl-1 cursor-pointer select-none">
-            <input name="name" type="text" class="${htColor} form-input mr-2 w-full" value=${provider.name} ?readonly=${!expanded} />
+            <input name="name" type="text"
+              class="${htColor} form-input mr-2 w-full" 
+              ?readonly=${!expanded}
+              .value=${this.model.name}
+            />
             <span class="${timesClasses} w-7 h-7 ml-auto mr-2" @click=${this._deleteClicked}></span>
             <span class="${chevronClasses} w-7 h-7" @click=${this._expandClicked}></span>
           </header>
@@ -196,11 +202,11 @@ class ProviderConfig extends LitMvvmElement {
               </fieldset>
               <fieldset>
                 <label class="text-gray-600" for="keyWords">MatchKeyWords</label>
-                  <input id="keyWords" name="matchKeyWords" type="number" min="0" class="form-input" value=${provider.matchKeyWords} />
+                <input id="keyWords" name="matchKeyWords" type="number" min="0" class="form-input" .value=${this.model.matchKeyWords} />
               </fieldset>
               <fieldset>
                 <label class="text-gray-600" for="isDisabled">Disabled</label>
-                  <input id="isDisabled" name="disabled" type="checkbox" class="kdsoft-checkbox mt-auto mb-auto" ?checked=${provider.disabled} />
+                <input id="isDisabled" name="disabled" type="checkbox" class="kdsoft-checkbox mt-auto mb-auto" .checked=${!!this.model.disabled} />
               </fieldset>
             </div>
           </div>

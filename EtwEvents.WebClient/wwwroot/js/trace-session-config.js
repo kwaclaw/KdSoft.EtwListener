@@ -253,16 +253,16 @@ class TraceSessionConfig extends LitMvvmElement {
           <section id="general" class="${this._sectionActive('general')}">
             <fieldset>
               <label for="name">Name</label>
-              <input id="name" name="name" type="text" required class="form-input" value=${this.model.name} />
+              <input id="name" name="name" type="text" required class="form-input" .value=${this.model.name} />
             </fieldset>
             <fieldset>
               <label for="host">Host</label>
-              <input id="host" name="host" type="url" class="form-input" value=${this.model.host} />
+              <input id="host" name="host" type="url" class="form-input" .value=${this.model.host} />
             </fieldset>
             <fieldset>
               <label for="lifeTime">Life Time</label>
               <input id="lifeTime" name="lifeTime" type="text" class="form-input"
-                value=${this.model.lifeTime}
+                .value=${this.model.lifeTime}
                 placeholder="ISO Duration (PnYnMnDTnHnMnS)"
                 pattern=${utils.isoDurationRx.source} />
             </fieldset>
