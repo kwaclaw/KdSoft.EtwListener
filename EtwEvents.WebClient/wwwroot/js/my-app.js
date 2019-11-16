@@ -185,14 +185,6 @@ class MyApp extends LitMvvmElement {
           display: block;
         }
         
-        kdsoft-dropdown {
-          width: 300px;
-        }
-
-        kdsoft-checklist {
-          min-width: 300px;
-        }
-
         #main {
           height: 100%;
           position: relative;
@@ -222,6 +214,13 @@ class MyApp extends LitMvvmElement {
 
         #dlg-filter {
           width: 80ch;
+        }
+
+        #sessionDropDown {
+          width: 250px;
+        }
+        #sessionProfiles {
+          width: 275px;
         }
       `
     ];
