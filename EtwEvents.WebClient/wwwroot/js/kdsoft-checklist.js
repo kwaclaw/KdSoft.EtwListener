@@ -287,6 +287,8 @@ class KdSoftCheckList extends LitMvvmElement {
           display: inline-block;
         }
         #container {
+          position: relative;
+          width: 100%;
           display: flex;
         }
         #item-list {

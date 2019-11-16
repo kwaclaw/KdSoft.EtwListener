@@ -103,6 +103,27 @@ class KdSoftCheckListModel {
     }
   }
 
+  selectId(id, select) {
+    let item = null;
+    for (let indx = 0; indx < this.items.length; indx += 1) {
+      const tempItem = this.items[indx];
+      if (this.getItemId(item) === id) {
+        item = tempItem;
+        break;
+      }
+    }
+    if (item === null) return;
+
+    if (this.multiSelect) {
+      if (select) this._selectedItems.add(raw(item));
+      else this._selectedItems.delete(raw(item));
+    } else if (select) {
+      this._selectedItems = new WeakSet([raw(item)]);
+    } else {
+      this._selectedItems = new WeakSet();
+    }
+  }
+
   toggleIndex(index) {
     const rawItem = raw(this.items[index]);
     const isSelected = this._selectedItems.has(rawItem);
