@@ -28,13 +28,6 @@ class ProviderConfig extends LitMvvmElement {
 
   firstRendered() {
     super.firstRendered();
-    this.levelCheckListModel = new KdSoftCheckListModel(
-      TraceSessionConfigModel.traceLevelList,
-      [this.model.level || 0],
-      false,
-      item => html`${item.name}`,
-      item => item.value
-    );
     this._levelObservers = this.connectLevelControls(this.levelDropDownModel, this.levelCheckListModel, 'traceLevelList', true);
   }
 
@@ -160,6 +153,17 @@ class ProviderConfig extends LitMvvmElement {
   render() {
     const provider = this.model;
     const expanded = provider.expanded || false;
+    if (!this._firstRendered) {
+      // first time we know that this.model is defined for certain
+      this.levelCheckListModel = new KdSoftCheckListModel(
+        TraceSessionConfigModel.traceLevelList,
+        [this.model.level || 0],
+        false,
+        item => html`${item.name}`,
+        item => item.value
+      );
+    }
+
     const borderColor = expanded ? 'border-indigo-500' : 'border-transparent';
     const htColor = expanded ? 'text-indigo-700' : 'text-gray-700';
     const timesClasses = 'text-gray-600 fas fa-lg fa-times';
