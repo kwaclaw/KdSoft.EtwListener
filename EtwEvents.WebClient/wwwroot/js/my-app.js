@@ -1,6 +1,6 @@
 import { html } from '../lib/lit-html.js';
 import { classMap } from '../lib/lit-html/directives/class-map.js';
-import { observable, observe, unobserve } from '../lib/@nx-js/observer-util.js';
+import { observe, unobserve } from '../lib/@nx-js/observer-util.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
 import { css, unsafeCSS } from '../styles/css-tag.js';
@@ -48,6 +48,15 @@ function formSaveHandler(e) {
   }
 }
 
+function getProfileItemTemplate(item) {
+  return html`
+    <div class="inline-block w-4\/5 truncate" title=${item.name}>${item.name}</div>
+    <span class="ml-auto flex-end text-gray-600" @click=${e => this._deleteProfileClick(e, item.name)}>
+      <i class="far fa-trash-alt"></i>
+    </span>
+  `;
+}
+
 
 class MyApp extends LitMvvmElement {
   static _getSelectedText(clm) {
@@ -65,28 +74,34 @@ class MyApp extends LitMvvmElement {
     this.scheduler = new Queue(priorities.HIGH);
     // we must assign the model *after* the scheduler
     this.model = new MyAppModel();
+
     // this allows us to unregister the event handlers, because we maintain references to their instances
     this._formDoneHandler = formDoneHandler.bind(this);
     this._formSaveHandler = formSaveHandler.bind(this);
   }
 
-  connectDropdownChecklist(dropDownModel, checkListModel, checkListId, singleSelect) {
-    const checkList = this.shadowRoot.getElementById(checkListId);
+  connectDropdownSessionlist(checkListId, singleSelect) {
     // react to selection changes in checklist
     const selectObserver = observe(() => {
-      dropDownModel.selectedText = MyApp._getSelectedText(checkListModel);
+      const checkListModel = this.model.profileCheckListModel;
+      checkListModel.getItemTemplate = getProfileItemTemplate.bind(this);
+      checkListModel.getItemId = item => item.name;
+
+      const checkList = this.shadowRoot.getElementById(checkListId);
+      this.model.sessionDropdownModel.selectedText = MyApp._getSelectedText(checkListModel);
       // single select: always close up on selecting an item
       if (singleSelect) checkList.blur();
     });
 
     // react to search text changes in dropdown
     const searchObserver = observe(() => {
-      const regex = new RegExp(dropDownModel.searchText, 'i');
-      checkListModel.filter = item => regex.test(item.name);
+      const regex = new RegExp(this.model.sessionDropdownModel.searchText, 'i');
+      this.model.profileCheckListModel.filter = item => regex.test(item.name);
     });
 
     const droppedObserver = observe(() => {
-      if (dropDownModel.dropped) {
+      if (this.model.sessionDropdownModel.dropped) {
+        const checkList = this.shadowRoot.getElementById(checkListId);
         // queue this at the end of updates to be rendered correctly
         checkList.scheduler.add(() => checkList.initView());
       }
@@ -107,6 +122,11 @@ class MyApp extends LitMvvmElement {
     const cfg = dlg.getElementsByTagName('trace-session-config')[0];
     cfg.model = configModel;
     dlg.showModal();
+  }
+
+  _deleteProfileClick(e, profileName) {
+    e.stopPropagation();
+    this.model.deleteProfile(profileName);
   }
 
   _getClickSession(e) {
@@ -173,7 +193,7 @@ class MyApp extends LitMvvmElement {
   firstRendered() {
     super.firstRendered();
     this.appTitle = this.getAttribute('appTitle');
-    this._sessionListObservers = this.connectDropdownChecklist(this.model.sessionDropdownModel, this.model.profileCheckListModel, 'sessionProfiles', true);
+    this._sessionListObservers = this.connectDropdownSessionlist('sessionProfiles', true);
     this._addDialogHandlers(this.renderRoot.getElementById('dlg-filter'));
     this._addDialogHandlers(this.renderRoot.getElementById('dlg-config'));
   }
@@ -247,8 +267,11 @@ class MyApp extends LitMvvmElement {
             </a>
           </div>
 
-          <kdsoft-dropdown class="py-0 text-white" .model=${this.model.sessionDropdownModel}>
-            <kdsoft-checklist id="sessionProfiles" class="text-black" .model=${this.model.profileCheckListModel} allow-drag-drop show-checkboxes></kdsoft-checklist>
+          <kdsoft-dropdown id="sessionDropDown" class="py-0 text-white" .model=${this.model.sessionDropdownModel}>
+            <kdsoft-checklist id="sessionProfiles" class="text-black"
+              .model=${this.model.profileCheckListModel}
+              allow-drag-drop>
+            </kdsoft-checklist>
           </kdsoft-dropdown>
           <button class="px-2 py-1" @click=${this._sessionFromProfileClick}><i class="fas fa-lg fa-wifi text-gray-500"></i></button>
           <button class="px-2 py-1" @click=${this._editProfileClick}><i class="fas fa-lg fa-edit text-gray-500"></i></button>

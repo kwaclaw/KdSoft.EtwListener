@@ -12,6 +12,16 @@ class MyAppModel {
     this._traceSessions = new Map();
     this.activeSessionName = null;
 
+    this._loadSessionProfiles();
+    this.sessionDropdownModel = new KdSoftDropdownModel();
+
+    return observable(this);
+  }
+
+  get traceSessions() { return this._traceSessions; }
+  get activeSession() { return this._traceSessions.get(this.activeSessionName); }
+
+  _loadSessionProfiles(selectName) {
     const sessionProfiles = [];
     for (let i = 0; i < localStorage.length; i += 1) {
       const key = localStorage.key(i);
@@ -22,15 +32,12 @@ class MyAppModel {
         sessionProfiles.push(profile);
       }
     }
+    sessionProfiles.sort((x, y) => String.prototype.localeCompare.call(x.name, y.name));
+    let selectIndex = sessionProfiles.findIndex(p => p.name === selectName);
+    if (selectIndex < 0) selectIndex = 0;
 
-    this.profileCheckListModel = new KdSoftCheckListModel(sessionProfiles, [0], false, item => html`${item.name}`, item => item.name);
-    this.sessionDropdownModel = new KdSoftDropdownModel();
-
-    return observable(this);
+    this.profileCheckListModel = new KdSoftCheckListModel(sessionProfiles, [selectIndex], false);
   }
-
-  get traceSessions() { return this._traceSessions; }
-  get activeSession() { return this._traceSessions.get(this.activeSessionName); }
 
   async openSessionFromSelectedProfile() {
     const profile = utils.first(this.profileCheckListModel.selectedEntries).item;
@@ -67,8 +74,9 @@ class MyAppModel {
   }
 
   saveSelectedProfile(profileConfigModel) {
-    const profile = utils.first(this.profileCheckListModel.selectedEntries).item;
-    if (profile) {
+    const selectedProfileEntry = utils.first(this.profileCheckListModel.selectedEntries);
+    if (selectedProfileEntry) {
+      const profile = selectedProfileEntry.item;
       utils.setTargetProperties(profile, profileConfigModel);
       localStorage.setItem(`session-profile-${profile.name}`, JSON.stringify(profile));
     } else {
@@ -76,6 +84,17 @@ class MyAppModel {
       this.profileCheckListModel.items.push(newProfile);
       localStorage.setItem(`session-profile-${newProfile.name}`, JSON.stringify(newProfile));
     }
+    this._loadSessionProfiles(selectedProfileEntry ? selectedProfileEntry.item.name : null);
+  }
+
+  deleteProfile(profileName) {
+    const selectedProfileEntry = utils.first(this.profileCheckListModel.selectedEntries);
+    let selectProfileName = selectedProfileEntry != null ? selectedProfileEntry.item.name : null;
+    if (selectProfileName === profileName) {
+      selectProfileName = null;
+    }
+    localStorage.removeItem(`session-profile-${profileName}`);
+    this._loadSessionProfiles(selectProfileName);
   }
 
   saveSelectedProfileFilters(filterFormModel) {
