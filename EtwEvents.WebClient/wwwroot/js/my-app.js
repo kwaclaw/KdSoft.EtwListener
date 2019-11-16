@@ -95,11 +95,11 @@ class MyApp extends LitMvvmElement {
     return [selectObserver, searchObserver, droppedObserver];
   }
 
-  async _sessionFromProfileClicked() {
+  async _sessionFromProfileClick() {
     await this.model.openSessionFromSelectedProfile();
   }
 
-  _editProfileClicked() {
+  _editProfileClick() {
     const configModel = this.model.getConfigModelFromSelectedProfile();
     if (!configModel) return;
 
@@ -115,19 +115,19 @@ class MyApp extends LitMvvmElement {
     return { session: this.model.traceSessions.get(sessionName), sessionName };
   }
 
-  _sessionClicked(e) {
+  _sessionClick(e) {
     const linkElement = e.currentTarget.closest('li');
     this.model.activeSessionName = linkElement.dataset.sessionName;
   }
 
-  async _closeSessionClicked(e) {
+  async _closeSessionClick(e) {
     const { session, sessionName } = this._getClickSession(e);
     if (!session) return;
 
     this.model.closeSession(session);
   }
 
-  _filterSessionClicked(e) {
+  _filterSessionClick(e) {
     const { session, sessionName } = this._getClickSession(e);
     if (!session) return;
 
@@ -137,7 +137,7 @@ class MyApp extends LitMvvmElement {
     dlg.showModal();
   }
 
-  _eventsClicked(e) {
+  _eventsClick(e) {
     const { session, sessionName } = this._getClickSession(e);
     if (!session) return;
 
@@ -251,8 +251,8 @@ class MyApp extends LitMvvmElement {
           <kdsoft-dropdown class="py-0 text-white" .model=${this.model.sessionDropdownModel}>
             <kdsoft-checklist id="sessionProfiles" class="text-black" .model=${this.model.profileCheckListModel} allow-drag-drop show-checkboxes></kdsoft-checklist>
           </kdsoft-dropdown>
-          <button class="px-2 py-1" @click=${this._sessionFromProfileClicked}><i class="fas fa-lg fa-wifi text-gray-500"></i></button>
-          <button class="px-2 py-1" @click=${this._editProfileClicked}><i class="fas fa-lg fa-edit text-gray-500"></i></button>
+          <button class="px-2 py-1" @click=${this._sessionFromProfileClick}><i class="fas fa-lg fa-wifi text-gray-500"></i></button>
+          <button class="px-2 py-1" @click=${this._editProfileClick}><i class="fas fa-lg fa-edit text-gray-500"></i></button>
 
           <div class="block lg:hidden">
             <button id="nav-toggle" @click=${this._toggleNav}
@@ -270,16 +270,16 @@ class MyApp extends LitMvvmElement {
               const eventsClasses = ses.eventSession && ses.eventSession.open ? classList.stopBtn : classList.startBtn;
 
               return html`
-                <li class="mr-2 pr-1 ${isActiveTab ? 'bg-gray-700' : ''}" data-session-name=${ses.profile.name} @click=${this._sessionClicked}>
+                <li class="mr-2 pr-1 ${isActiveTab ? 'bg-gray-700' : ''}" data-session-name=${ses.profile.name} @click=${this._sessionClick}>
                   <a class=${classMap(tabClasses)} href="#">${ses.profile.name}</a>
                   <div id="tab-buttons" class=${classMap(isActiveTab ? classList.tabButtonsActive : classList.tabButtonsInActive)}>
-                    <button type="button" @click=${this._eventsClicked}>
+                    <button type="button" @click=${this._eventsClick}>
                       <i class=${classMap(eventsClasses)}></i>
                     </button>
-                    <button type="button" @click=${this._filterSessionClicked}>
+                    <button type="button" @click=${this._filterSessionClick}>
                       <i class="fas fa-filter text-gray-500"></i>
                     </button>
-                    <button type="button" @click=${this._closeSessionClicked}>
+                    <button type="button" @click=${this._closeSessionClick}>
                       <i class="fas fa-lg fa-times text-gray-500"></i>
                     </button>
                   </div>
