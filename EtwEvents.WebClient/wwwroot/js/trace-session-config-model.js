@@ -1,6 +1,6 @@
 ﻿
 import { html } from '../lib/lit-html.js';
-import { observable } from '../lib/@nx-js/observer-util.js';
+import { observable, observe } from '../lib/@nx-js/observer-util.js';
 import * as utils from './utils.js';
 import TraceSessionProfile from './traceSessionProfile.js';
 import FilterCarouselModel from './filter-carousel-model.js';
@@ -23,6 +23,7 @@ class TraceSessionConfigModel extends TraceSessionProfile {
       utils.cloneObject([], profile.filters || []),
       profile.activeFilterIndex,
       (profile.lifeTime || '').slice(0),
+      utils.cloneObject([], profile.standardColumnOrder || []),
       (profile.standardColumns || []).slice(0),
       utils.cloneObject([], profile.payloadColumnList || []),
       (profile.payloadColumns || []).slice(0)
@@ -47,7 +48,21 @@ class TraceSessionConfigModel extends TraceSessionProfile {
       item => item.name
     );
 
-    return observable(this);
+    const result = observable(this);
+
+    // observe checklist model changes
+    this._standardColumnsListObserver = observe(() => {
+      // we need to update the standard colum order when the standardColumnCheckList changes it
+      this._updateStandardColumnOrder(this.standardColumnCheckList.items)
+      this.standardColumns = this.standardColumnCheckList.selectedIndexes;
+    });
+
+    this._payloadColumnsListObserver = observe(() => {
+      this.payloadColumnList = this.payloadColumnCheckList.items;
+      this.payloadColumns = this.payloadColumnCheckList.selectedIndexes;
+    });
+
+    return result;
   }
 
   cloneAsProfile() {

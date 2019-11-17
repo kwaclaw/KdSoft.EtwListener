@@ -52,16 +52,10 @@ class TraceSessionConfig extends LitMvvmElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    if (this._columnsListObserver) unobserve(this._columnsListObserver);
     if (this._filterObserver) unobserve(this._filterObserver);
   }
 
   firstRendered() {
-    this._columnsListObserver = observe(() => {
-      this.model.standardColumns = this.model.standardColumnCheckList.selectedIndexes;
-      this.model.payloadColumnList = this.model.payloadColumnCheckList.items;
-      this.model.payloadColumns = this.model.payloadColumnCheckList.selectedIndexes;
-    });
     this._filterObserver = observe(() => {
       this.model.filters = this.model.filterCarousel.filterModels.map(fm => fm.filter);
       this.model.activeFilterIndex = this.model.filterCarousel.activeFilterIndex;
