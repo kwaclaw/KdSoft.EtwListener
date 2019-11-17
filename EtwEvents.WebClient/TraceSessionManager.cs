@@ -25,7 +25,6 @@ namespace EtwEvents.WebClient
                 this._sessionIdleTime = TimeSpan.FromMinutes(5);
         }
 
-
         public Task<TraceSession> OpenSession(
             string name,
             string host,
@@ -33,11 +32,20 @@ namespace EtwEvents.WebClient
             IReadOnlyList<ProviderSetting> providers,
             Duration lifeTime
         ) {
+            // NOTE: the value factory might be executed multiple times with this overload of GetOrAdd,
+            //       if this is a problem then we need to use Lazy<T> instead.
             var entry = this.GetOrAdd(name, sessionName => {
                 var sessionLogger = _loggerFactory.CreateLogger<TraceSession>();
                 var createTask = TraceSession.Create(sessionName, host, credentials, providers, lifeTime, sessionLogger);
-                return new TraceSessionEntry(createTask, _sessionIdleTime);
+                var checkedTask = createTask.ContinueWith(ct => {
+                    if (!ct.IsCompletedSuccessfully) {
+                        _ = this.TryRemove(sessionName, out var failedEntry);
+                    }
+                    return ct.Result;
+                }, TaskScheduler.Default);
+                return new TraceSessionEntry(checkedTask, _sessionIdleTime);
             });
+
             return entry.CreateTask;
         }
 
