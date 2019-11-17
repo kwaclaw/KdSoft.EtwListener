@@ -51,7 +51,7 @@ function formSaveHandler(e) {
 function getProfileItemTemplate(item) {
   return html`
     <div class="inline-block w-4\/5 truncate" title=${item.name}>${item.name}</div>
-    <span class="ml-auto flex-end text-gray-600" @click=${e => this._deleteProfileClick(e, item.name)}>
+    <span class="ml-auto flex-end text-gray-600 cursor-pointer" @click=${e => this._deleteProfileClick(e, item.name)}>
       <i class="far fa-trash-alt"></i>
     </span>
   `;
@@ -81,12 +81,16 @@ class MyApp extends LitMvvmElement {
   }
 
   connectDropdownSessionlist(checkListId, singleSelect) {
-    // react to selection changes in checklist
-    const selectObserver = observe(() => {
+    // react to changes in checklistModel, re-assign getItemTemplate when model changes
+    const checkListModelObserver = observe(() => {
       const checkListModel = this.model.profileCheckListModel;
       checkListModel.getItemTemplate = getProfileItemTemplate.bind(this);
       checkListModel.getItemId = item => item.name;
+    });
 
+    // react to selection changes in checklist
+    const selectObserver = observe(() => {
+      const checkListModel = this.model.profileCheckListModel;
       const checkList = this.shadowRoot.getElementById(checkListId);
       this.model.sessionDropdownModel.selectedText = MyApp._getSelectedText(checkListModel);
       // single select: always close up on selecting an item
@@ -107,7 +111,7 @@ class MyApp extends LitMvvmElement {
       }
     });
 
-    return [selectObserver, searchObserver, droppedObserver];
+    return [checkListModelObserver, selectObserver, searchObserver, droppedObserver];
   }
 
   async _sessionFromProfileClick() {
@@ -268,10 +272,7 @@ class MyApp extends LitMvvmElement {
           </div>
 
           <kdsoft-dropdown id="sessionDropDown" class="py-0 text-white" .model=${this.model.sessionDropdownModel}>
-            <kdsoft-checklist id="sessionProfiles" class="text-black"
-              .model=${this.model.profileCheckListModel}
-              allow-drag-drop>
-            </kdsoft-checklist>
+            <kdsoft-checklist id="sessionProfiles" class="text-black leading-normal" .model=${this.model.profileCheckListModel}></kdsoft-checklist>
           </kdsoft-dropdown>
           <button class="px-2 py-1" @click=${this._sessionFromProfileClick}><i class="fas fa-lg fa-wifi text-gray-500"></i></button>
           <button class="px-2 py-1" @click=${this._editProfileClick}><i class="fas fa-lg fa-edit text-gray-500"></i></button>
