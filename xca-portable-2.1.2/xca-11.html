@@ -1,0 +1,41 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="LinuxDoc-Tools 0.9.72">
+ <TITLE>XCA - X Certificate and key management: Certificate Revocation Lists</TITLE>
+ <LINK HREF="xca-12.html" REL=next>
+ <LINK HREF="xca-10.html" REL=previous>
+ <LINK HREF="xca.html#toc11" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="xca-12.html">Next</A>
+<A HREF="xca-10.html">Previous</A>
+<A HREF="xca.html#toc11">Contents</A>
+<HR>
+<H2><A NAME="s11">11.</A> <A HREF="xca.html#toc11">Certificate Revocation Lists</A></H2>
+
+
+<P>All certificates are issued for a restricted period of time.
+However it may happen that a certificate should not be used or becomes invalid
+before the "not after" time in the certificate is reached. In this case
+the issuing CA should revoke this certificate by putting it on the list of
+revoked certificates, signing and publishing it.</P>
+
+<H2><A NAME="ss11.1">11.1</A> <A HREF="xca.html#toc11.1">Generation of Certificate revocation lists</A>
+</H2>
+
+
+<P>In XCA this can be done by the context-menu of the CA and the
+"revoke" entry in the context-menu of the issued certificate.
+First all invalid certificates must be marked as revoked and
+then a Certificate Revocation List should be created and will be stored in the
+database.</P>
+
+
+
+<HR>
+<A HREF="xca-12.html">Next</A>
+<A HREF="xca-10.html">Previous</A>
+<A HREF="xca.html#toc11">Contents</A>
+</BODY>
+</HTML>

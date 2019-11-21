@@ -1,0 +1,201 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="LinuxDoc-Tools 0.9.72">
+ <TITLE>XCA - X Certificate and key management: Certificates</TITLE>
+ <LINK HREF="xca-10.html" REL=next>
+ <LINK HREF="xca-8.html" REL=previous>
+ <LINK HREF="xca.html#toc9" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="xca-10.html">Next</A>
+<A HREF="xca-8.html">Previous</A>
+<A HREF="xca.html#toc9">Contents</A>
+<HR>
+<H2><A NAME="s9">9.</A> <A HREF="xca.html#toc9">Certificates</A></H2>
+
+
+<P>All certificates from the database are displayed in a tree view reflecting
+the chain dependencies.
+If there is a CA certificate and several client certificates signed by this CA,
+the client certificates can be shown by clicking on the plus sign of the CA certificate.</P>
+
+<H2><A NAME="ca_cert"></A> <A NAME="ss9.1">9.1</A> <A HREF="xca.html#toc9.1">CA certificates </A>
+</H2>
+
+
+<P>XCA will recognize CA certificates if the CA flag in the <CODE>Basic Constraints</CODE>
+is set to true.
+If there is a corresponding private key, the <CODE>CA</CODE>
+sub-menu in the context-menu will be enabled.</P>
+
+
+<P>For building the chains the CA flag is disregarded, because there are some
+CAs without this flag.
+Instead it considers the issuer name and the signature to decide which certificate is the issuer.
+In case of more than one possible issuer, the one with the latest
+expiry date will be used as issuer to collect all issued certificates.</P>
+
+<H2><A NAME="ss9.2">9.2</A> <A HREF="xca.html#toc9.2">Generating certificates</A>
+</H2>
+
+
+<P>After clicking on the <CODE>New Certificate</CODE> button the Certificate input dialog will be started to ask
+all needed information for generating a new Certificate. See: 
+<A HREF="xca-5.html#wizard">The Certificate input dialog</A>
+Certificate creation can also be invoked by the context menu of the certificate list background
+or by the context menu of the request.
+In this case the Certificate input dialog is preset with the request to be signed.</P>
+
+
+<P>If a <CODE>CA certificate</CODE> is selected in the certificate list, this
+certificate will be preselected as issuing certificate.</P>
+
+<H2><A NAME="ss9.3">9.3</A> <A HREF="xca.html#toc9.3">Certificate details</A>
+</H2>
+
+
+<P>The signer is the internal name of the issuers certificate, <EM>SELF SIGNED</EM> if it is
+self signed or <EM>SIGNER UNKNOWN</EM> if the issuer's certificate is not available.
+The validity is set to <EM>valid</EM> if the certificate's dates are valid
+or to <EM>Not valid</EM> if they are not, compared to the
+internal time and date of the OS.</P>
+
+
+<P>If the certificate is revoked, the revocation date will be shown instead.</P>
+
+
+<P>On the <EM>Subject</EM> and <EM>Issuer</EM> tab the distinguished name is
+also displayed in a format defined in RFC2253 for copy&amp;paste.</P>
+
+<H2><A NAME="ss9.4">9.4</A> <A HREF="xca.html#toc9.4">Certificate Export</A>
+</H2>
+
+<P>
+<UL>
+<LI><B>Clipboard</B> Copy all selected certificates to the clipboard as PEM file</LI>
+<LI><B>File</B> Export to external file.
+The filename can be selected in the export dialog and the Export format:
+<UL>
+<LI><B>PEM</B> - PEM encoded</LI>
+<LI><B>PEM with Certificate chain</B> - PEM encoded certificate
+and all issuers up to the root certificate in one file</LI>
+<LI><B>PEM all trusted Certificates</B> - List of all PEM encoded
+certificates that are marked as <EM>Always trusted</EM>
+(usually all self-signed certificates) in one file for e.g.
+apache as trusted certificate store.</LI>
+<LI><B>PEM all Certificates</B> - All PEM encoded certificates
+in one file.</LI>
+<LI><B>DER</B> - DER encoded certificate.</LI>
+<LI><B>PKCS#7</B> - DER encoded PKCS#7 structure containing
+the certificate.</LI>
+<LI><B>PKCS#7 with Certificate chain</B> - DER encoded
+PKCS#7 structure containing the
+certificate and all issuers up to the root certificate.</LI>
+<LI><B>PKCS#7 all trusted Certificates</B> - DER encoded
+PKCS#7 structure containing all
+certificates that are marked as <EM>Always trusted</EM></LI>
+<LI><B>PKCS#7 all Certificates</B> - DER encoded PKCS#7 structure
+containing all certificates.</LI>
+<LI><B>PKCS#12</B> - PKCS#12 structure containing the certificate
+and the corresponding private key</LI>
+<LI><B>PKCS#12</B> - PKCS#12 structure containing the certificate,
+the corresponding private key and the chain of all
+issuers certificates.</LI>
+<LI><B>PEM cert + key</B> - concatenation of the private key
+and certificate in a format used by apache or the
+X509 patch for OpenSSH.</LI>
+<LI><B>PEM cert + PKCS8 key</B> - concatenation of the
+private key in PKCS#8 format and certificate.</LI>
+</UL>
+
+</LI>
+<LI><B>Token</B> Store certificate on the Security token containing the private key</LI>
+<LI><B>Other token</B> Store certificate on any Security token</LI>
+<LI><B>OpenSSL config</B> Create an OpenSSL config file from the content of this certificate, which can be used to generate a similar certificate with openssl (openssl req -new -x509 -config &lt;file&gt;)</LI>
+</UL>
+</P>
+
+
+<P>When exporting PKCS#12 structures you are asked later for an encryption
+password.</P>
+
+<H2><A NAME="ss9.5">9.5</A> <A HREF="xca.html#toc9.5">Certificate Transformation</A>
+</H2>
+
+
+<P>A certificate transformation creates a new database entry based on the selected certificate.</P>
+<P>
+<UL>
+<LI><B>Public Key</B> Extract the public key from the certificate and store it in the Private Keys Tab.</LI>
+<LI><B>Request</B> Create a PKCS#10 request by using the data from the certificate. The private key of the certificate must be available for this option.</LI>
+<LI><B>Similar Certificate</B> Starts the Certificate input dialog preset with all values from the current certificate to create a new certificate.</LI>
+<LI><B>Template</B> Create a XCA template with the values of the request.</LI>
+</UL>
+</P>
+
+<H2><A NAME="ss9.6">9.6</A> <A HREF="xca.html#toc9.6">Certificate revocation</A>
+</H2>
+
+
+<P>Certificates can only be revoked, if the private key of the issuer's certificate
+is available. The certificate will be marked as revoked and the revocation date
+and reason will be stored with the CA certificate.</P>
+<P>If more than one unrevoked certificate of the same issuer is selected, all of them will be revoked
+at once with the same revocation date and reason. The context menu shows this by adding
+the number of selected certificates in squared brackets.</P>
+
+
+<P>To generate a CRL, revoke the appropriate certificates and select CA->Generate CRL in the context-menu of the signing certificate.</P>
+
+<H2><A NAME="ss9.7">9.7</A> <A HREF="xca.html#toc9.7">Certificate renewal</A>
+</H2>
+
+
+<P>Certificates can only be renewed, if the private key of the issuer's certificate
+is available. Renewal is done by creating a new certificate as a copy of the original one
+with adjusted validity dates.</P>
+<P>Use the <CODE>Revoke old certificate</CODE> check-box to automatically revoke the old
+certificate.</P>
+<P>If more than one certificate of the same issuer is selected, all of them will be renewed
+at once with the same validity dates. The context menu shows this by adding
+the number of selected certificates in squared brackets.</P>
+
+<H2><A NAME="ss9.8">9.8</A> <A HREF="xca.html#toc9.8">CA special functions</A>
+</H2>
+
+
+<P>The context menu of CA certificates contains the <EM>CA</EM> sub-menu,
+which makes the following functions available:</P>
+<P>
+<UL>
+<LI><B>Properties</B></LI>
+<LI><B>Generate CRL</B> Generate the CRL by collecting all
+revoked certificates and their revocation date.</LI>
+<LI><B>Manage revocations</B> Displays all revocations and allows to manipulate them.</LI>
+</UL>
+</P>
+
+<H3>CA Properties</H3>
+
+<P>
+<UL>
+<LI><B>CRL days</B> The days until the next CRL release.</LI>
+<LI><B>Signing Template</B> The default template for
+issuing certificates.</LI>
+</UL>
+</P>
+
+<H3>Manage revocations</H3>
+
+<P>Non existing certificates may be revoked by adding the serial number of the certificate.
+Since version 1.3.0 it is not required anymore to keep revoked certificates in the database,
+because the revocation information is stored together with the CA certificate.</P>
+
+
+<HR>
+<A HREF="xca-10.html">Next</A>
+<A HREF="xca-8.html">Previous</A>
+<A HREF="xca.html#toc9">Contents</A>
+</BODY>
+</HTML>

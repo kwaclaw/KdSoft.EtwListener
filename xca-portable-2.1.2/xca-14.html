@@ -1,0 +1,208 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="LinuxDoc-Tools 0.9.72">
+ <TITLE>XCA - X Certificate and key management: Step by Step guides</TITLE>
+ <LINK HREF="xca-15.html" REL=next>
+ <LINK HREF="xca-13.html" REL=previous>
+ <LINK HREF="xca.html#toc14" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="xca-15.html">Next</A>
+<A HREF="xca-13.html">Previous</A>
+<A HREF="xca.html#toc14">Contents</A>
+<HR>
+<H2><A NAME="s14">14.</A> <A HREF="xca.html#toc14">Step by Step guides</A></H2>
+
+
+<P>Beginners may follow these steps to easily create their first certificates.
+This guide shows the minimal requirements for various tasks.  For more
+advanced use of XCA, users are encouraged to familiarize themselves with
+the applicable standards.</P>
+
+<H2><A NAME="ss14.1">14.1</A> <A HREF="xca.html#toc14.1">Setting up a Root CA Certificate</A>
+</H2>
+
+<P>
+<OL>
+<LI>Click the <B>Certificates</B> tab.</LI>
+<LI>Click the <B>New Certificate</B> button.</LI>
+<LI>Make sure the <B>Source</B> tab is showing, clicking it if necessary.
+<UL>
+<LI>At the bottom of the panel, ensure that the
+<B>"[default] CA"</B>
+template is showing, and click the <B>Apply all</B> button.
+This will fill in appropriate values under the <B>Extensions</B>,
+<B>Key Usage</B>, and <B>Netscape</B> tabs.</LI>
+</UL>
+</LI>
+<LI>Click the <B>Subject</B> tab.
+<UL>
+<LI>Type in the internal name; this is for display purposes
+in the tool, only.</LI>
+<LI>Fill in the required fields in the upper Distinguished
+Name section (Country name, State/Province, Locality,
+Organization, Common name, E-Mail address).
+The common name can be something like "ACME Certificate Authority".</LI>
+<LI>If you want to add in any additional parts to the
+distinguished name, use the <B>Add</B> button.</LI>
+<LI>Select the desired private key or generate a new one.</LI>
+</UL>
+</LI>
+<LI>Click the <B>Extensions</B> tab.
+<UL>
+<LI>The Time Range is probably fine (10 years). If you want
+to change the duration, then change it and click <B>Apply</B>.</LI>
+</UL>
+</LI>
+<LI>The CRL distribution point will be part of the issued certificates.
+It should however be thought about a common URL for all of them like
+<CODE>http://www.example.com/crl/crl.der</CODE></LI>
+<LI>Click the <B>OK</B> button at the bottom.</LI>
+</OL>
+</P>
+<P>You may wish to now issue an (initially) empty CRL.  Follow the instructions
+given for issuing CRLs below, except that you do not actually revoke any
+certificate.</P>
+
+<H2><A NAME="ss14.2">14.2</A> <A HREF="xca.html#toc14.2">Creating a CA-Signed Host Certificate</A>
+</H2>
+
+
+<P>
+<OL>
+<LI>Click the <B>Certificates</B> tab.</LI>
+<LI>Click the <B>New Certificate</B> button.</LI>
+<LI>Make sure the <B>Source</B> tab is showing, clicking it if necessary.
+<UL>
+<LI>At the bottom of the panel, select the template
+<B>"[default] HTTPS_server"</B> (or another suitable
+template, if you have created your own)
+and click the <B>Apply</B> button.
+This will fill in appropriate values under the <B>Extensions</B>,
+<B>Key Usage</B>, and <B>Netscape</B> tabs.</LI>
+<LI>In the Signing section, select the certificate that
+will be used to sign the new certificate.</LI>
+</UL>
+</LI>
+<LI>Click the <B>Subject</B> tab.
+<UL>
+<LI>Type in the internal name; this is for display purposes
+in the tool, only.  For host certificates, the host
+FQDN (fully qualified domain name) is not a bad choice.</LI>
+<LI>Fill in the required fields in the upper "Distinguished
+Name" section (Country code, State/Province, Locality,
+Organization, Common name, E-Mail address).  For host
+certificates, the common name must be the FQDN to which you
+wish users to connect. This need not be the canonical
+name of the host, but can also be an alias.  For example,
+if <CODE>pluto.example.com</CODE> is your web server
+and it has a DNS CNAME entry of <CODE>www.example.com</CODE>,
+then you probably want the Common Name value in the certificate
+to be
+<CODE>www.example.com</CODE>.</LI>
+<LI>If you want to add in any additional parts to the
+distinguished name, use the drop-down box and <B>Add</B>
+button.</LI>
+<LI>Select the desired private key or generate a new one.</LI>
+</UL>
+</LI>
+<LI>Click the <B>Extensions</B> tab.
+<UL>
+<LI>Change the Time Range if desired and click <B>Apply</B>.</LI>
+<LI>In the event that you need to revoke any certificates in the
+future, you should designate a certificate revocation list
+location.  The location must be unique for this root certificate.
+XCA exports CRLs in either PEM or DER format with appropriate
+suffixes, so this should be considered when selecting the URL.
+Selecting a URI something like
+<CODE>http://www.example.com/crl/crl.der</CODE>
+is probably suitable.
+
+On the "CRL distribution point" line, click the <B>Edit</B>
+button.
+Type in the desired URI, then click <B>Add</B>.
+Add in any additional desired URIs in the same fashion.
+Click <B>Validate</B> and <B>Apply</B>.
+(Alternate mechanisms such as OCSP are beyond the scope of
+this guide.)</LI>
+</UL>
+</LI>
+<LI>Click the OK button at the bottom</LI>
+</OL>
+</P>
+
+<H2><A NAME="ss14.3">14.3</A> <A HREF="xca.html#toc14.3">Creating a Self-Signed Host Certificate</A>
+</H2>
+
+<P>This procedure is almost identical to that of creating a CA-Signed
+certificate with the following exceptions:</P>
+<P>
+<OL>
+<LI>When creating certificate, select "Create a self signed certificate"
+under the <B>Source</B> tab.</LI>
+<LI>Self-signed certificates cannot be revoked, so the CRL URI should
+be blank.</LI>
+</OL>
+</P>
+
+<H2><A NAME="ss14.4">14.4</A> <A HREF="xca.html#toc14.4">Setting Up A Template</A>
+</H2>
+
+
+<P>If you have, or expect to have, multiple hosts under one domain and
+signed by the same root certificate, then setting up a template for
+your hosts can simplify host certificate creation and improve consistency.</P>
+
+
+<P>The values of templates can be applied on the first tab of the
+certificate-generation dialog. It can be selected, whether the subject,
+the extensions or both parts of the template will be applied.
+This way a subject-only template may be defined and later
+applied together with the HTTPS_client or HTTPS_server template.</P>
+<P>
+<OL>
+<LI>Click on the <B>Templates</B> tab.</LI>
+<LI>Click on the <B>New Template</B> button</LI>
+<LI>Select an appropriate value for the Preset Template Values, then
+click <B>OK</B></LI>
+<LI>Under the <B>Subject</B> tab, specify an internal name for the
+template.</LI>
+<LI>Fill in (or modify) any values that you wish to be populated when
+using the template.  Leave the rest blank (notably the "Common Name"
+field).</LI>
+<LI>When all desired fields are filled in, click the <B>OK</B> button
+at the bottom of the window.</LI>
+</OL>
+</P>
+<P>Your template is now ready for use when creating new certificates.</P>
+<P>Alternatively, you may export an existing Certificate or Certificate signing request
+to a template by the Export-context menu of the item.</P>
+
+<H2><A NAME="ss14.5">14.5</A> <A HREF="xca.html#toc14.5">Revoking a Certificate issued by a CA</A>
+</H2>
+
+
+<P>
+<OL>
+<LI>Click the <B>Certificates</B> tab.</LI>
+<LI>Right-click on the certificate that you want to revoke
+and select <B>Revoke</B></LI>
+<LI>Right-click the CA certificate that was used to sign the certificate
+being revoked.  Select <B>CA</B> --> <B>Generate CRL</B></LI>
+<LI>Click the <B>OK</B> button in the <B>Create CRL</B> dialog.</LI>
+<LI>Click on the <B>Revocation lists</B> tab in the main window.</LI>
+<LI>Right-click on the CRL you just generated and select <B>Export</B>.
+Select the desired format (probably DER) and click <B>OK</B></LI>
+<LI>Copy the exported CRL to the location published in the issued
+certificate's CRL Distribution Points.</LI>
+<LI>Optionally, delete older CRLs for the same CA certificate.</LI>
+</OL>
+</P>
+
+<HR>
+<A HREF="xca-15.html">Next</A>
+<A HREF="xca-13.html">Previous</A>
+<A HREF="xca.html#toc14">Contents</A>
+</BODY>
+</HTML>

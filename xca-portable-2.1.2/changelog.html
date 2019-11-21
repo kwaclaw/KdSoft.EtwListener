@@ -1,0 +1,699 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+  <HEAD>
+    <META http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <LINK rel="stylesheet" href="xca-doc.css">
+</head><body><h2>Changelog</h2><div><ul>
+</ul></div><div id="changelog_2.1.2"><h3>xca 2.1.2 Wed Nov 07 2018</h3><ul>
+
+ </li><li> Close #40 macOS: Crash after xca v2.0.1 quit
+ </li><li> Close #37: XCA 2: EVP_DecryptFinal_ex:bad decrypt
+ </li><li> Close #74: Exiting XCA 2.1.1 corrupts database
+ </li><li> Make PKCS11 libs, working dir and main-window size host-dependent
+ </li><li> Support for XCA as portable App
+ </li><li> Close #69 Library not loaded: @rpath/ contains local directory
+ </li><li> Close #60: Fix MacOSX 2.1.1 binary
+ </li><li> Add new maintained languages: Polish, Spanish, Portuguese
+
+</ul></div><div id="changelog_2.1.1"><h3>xca 2.1.1 Thu Sep 13 2018</h3><ul>
+
+ </li><li> Allow manual override of the CSR signed flag
+ </li><li> Close #56: Duplicate Serials after Upgrade 2.1.0
+ </li><li> Close #57: SAN IP not working in 2.1.0
+ </li><li> Close #55: Calculate "CSR signed" information from legacy database
+ </li><li> Close #55: Add Certificate counter column for CSR
+ </li><li> Fix slovak translation
+ </li><li> Close #50: Hang while importing 1.4.1 database into 2.1.0
+
+</ul></div><div id="changelog_2.1.0"><h3>xca 2.1.0 Tue Jul 24 2018</h3><ul>
+
+ </li><li> Close #48: The SKI tickbox isn't generating an SKI extension for CSRs
+ </li><li> Fix translation of dates
+ </li><li> Add private key icon to the key name
+ </li><li> Inspired by #42: display dates relative (seconds ago, yesterday, ...)
+   while column ordering is still strict by age.
+   The ToolTip shows date and time.
+ </li><li> Related to #39: Dynamically adjust explicit DN entries
+ </li><li> Close #39: Subject entries shuffled
+ </li><li> Close #36: Support adding CN to X509v3 SAN automatically
+ </li><li> Close #35: Configurable size of serial number.
+ </li><li> Close #34: Improve Mac OSX installation
+ </li><li> Close #27: Configurable certificate expiry warning threshold
+ </li><li> Generate calender (.ics) files for certificate and CRL expiries
+
+</ul></div><div id="changelog_2.0.1"><h3>xca 2.0.1 Tue May 08 2018</h3><ul>
+
+ </li><li> Close #32: Version field contains "Created by Qt/QMake" on MacOSX
+ </li><li> Review and update russian ltranslation
+ </li><li> Close #31: Closing certificate details window toggles tree folding
+ </li><li> Close #25: Certificates are no longer coloured
+ </li><li> Close #24: Add LibreSSL support. Tested with LibreSSL 2.7.2
+ </li><li> Close #23: Improve limiting to pattern in certificate tree view
+ </li><li> Close #20: Unable to chose remote database type (dropdown empty)
+ </li><li> Close #19: Replace 3DES encryption by AES-256 during key export
+
+</ul></div><div id="changelog_2.0.0"><h3>xca 2.0.0 Tue Apr 10 2018</h3><ul>
+
+ </li><li> Open database before starting a transaction
+ </li><li> Fix default hash during startup
+ </li><li> Fix Importing PKCS#12 and PKCS#7 files
+ </li><li> Improve automatic setting of the certificate internal name
+ </li><li> Don't use remote DB descriptor as local database filename proposal
+ </li><li> Usability: Preset remote database input values with previous ones
+ </li><li> Add another missing windows postgres library
+
+ </li><li class="prerelease">xca 2.0.0-pre04 Thu Mar 22 2018
+
+ </li><li> Accept drivers that don't support transactions
+ </li><li> Install MySQL and PostgreSQL drivers on windows
+ </li><li> Closes #10: Warn if certificate without any extension is created
+ </li><li> Add table prefix to be prepended to each table for remote SQL DB
+ </li><li> Update translations
+
+ </li><li class="prerelease">xca 2.0.0-pre03 Thu Mar 15 2018
+
+ </li><li> Fix installation of sql plugins in the Windows installer
+ </li><li> Fix opening, importing and dropping databases
+
+ </li><li class="prerelease">xca 2.0.0-pre02 Tue Mar 13 2018
+
+ </li><li> Fix crash during PKCS#12 export
+ </li><li> Update HTTPS_server template and add example SAN
+ </li><li> Acceppt empty password for private key decryption
+ </li><li> Fix legacy database-without-password import
+
+ </li><li class="prerelease">xca 2.0.0-pre01 Sun Mar 11 2018
+
+ </li><li> Close GitHub Bug #5: Exporting a private key results
+   in too-permissive permissions
+ </li><li> Close GitHub Bug #4: Workaround QT bug of editing in QDateTimeEdit
+ </li><li> Fix display of dates in the Certificate details (local time displayed a GMT)
+ </li><li> The internal name is not neccessarily unique anymore and can be edited
+   in the details dialog as well as the comment.
+ </li><li> CSR signing is now statically stored in the database and the comment
+   of the issued certificate.
+ </li><li> Private keys in the database are PKCS#8 encrypted and can be exported
+   and decrypted without XCA.
+ </li><li> No more incrementing serials. Only unique random serial numbers.
+ </li><li> "xca_db_stat" application removed. Use the SQLite3 browser "sqlitebrowser".
+ </li><li> "xca extract" functionality removed. SQL views may be used instead.
+ </li><li> Each item may be commented. XCA itself comments important events in the item.
+ </li><li> Each item knows its time and origin of appearance.
+ </li><li> Change database format to SQL(ite) and support MySQL and PostgreSQL.
+
+</ul></div><div id="changelog_1.4.1"><h3>xca 1.4.1 Sat Mar 3 2018</h3><ul>
+
+ </li><li> Replace links to XCA on Sourceforge in the software and
+   documentation by links to my Site.
+
+ </li><li class="prerelease">xca 1.4.1-pre02 Thu Mar 1 2018
+
+ </li><li> SF Bug #122 isValid() tried to convert the serial to 64 bit
+ </li><li> Beautify mandatory distinguished name entry errors
+ </li><li> Support dragging certificates and other items as PEM text
+ </li><li> Show User settings and installation path in the about dialog
+
+ </li><li class="prerelease">xca 1.4.1-pre01 Sun Feb 18 2018
+
+ </li><li> Remove SPKAC support. Netscape is not of this world anymore.
+ </li><li> SF bug #124 Wrong assumptions about slots returned by PKCS11 library
+ </li><li> Cleanup and improve the OID text files, remove senseless aia.txt
+ </li><li> Update HTML documentation
+ </li><li> Refine and document Entropy gathering
+ </li><li> Indicate development and release version by git commit hash
+ </li><li> Fix dumping private keys during "Dump database"
+ </li><li> Fix Null pointer exception when importing PKCS#12 with OpenSSL 1.1.0
+ </li><li> SF Bug #110 Exported private key from 4096 bit SSH key is wrong
+ </li><li> SF Bug #109 Revoked.png isn't a valid image
+ </li><li> SF Bug #121 CA serial number is ignored in hierarchical view
+ </li><li> Improve speed of Bulk import.
+ </li><li> Fix starting xca with a database as first arg
+
+</ul></div><div id="changelog_1.4.0"><h3>xca 1.4.0 Thu Jan 4 2018</h3><ul>
+
+ </li><li> Update OpenSSL version for MacOSX and W32 to 1.1.0g
+ </li><li> Change default hash to SHA-256 and
+   add a warning if the default hash algorithm is SHA1 or less
+ </li><li> Switch to Qt5 for Windows build and installation
+ </li><li> Do not apply the default template when creating a similar cert
+ </li><li> Close SF #120 Crash when importing CA certificate
+ </li><li> Close SF #116 db_x509.cpp:521: Mismatching allocation and deallocation
+ </li><li> Add support for OpenSSL 1.1 (by Patrick Monnerat)
+ </li><li> Support generating an OpenSSL "index.txt" (by Adam Dawidowski)
+ </li><li> Thales nCipher key generation changes for EC and DSA keys
+ </li><li> Add Slovak translation
+
+</ul></div><div id="changelog_1.3.2"><h3>xca 1.3.2 Sat Oct 10 2015</h3><ul>
+
+ </li><li> Gentoo Bug #562288 linking fails
+ </li><li> Add OID resolver, move some Menu items to "Extra"
+ </li><li> SF. Bug. #81 Make xca qt5 compatible
+ </li><li> SF. Bug. #107 error:0D0680A8:asn1 encoding
+ </li><li> Don't validate notBefore and notAfter if they are disabled.
+
+</ul></div><div id="changelog_1.3.1"><h3>xca 1.3.1 Fri Aug 21 2015</h3><ul>
+
+ </li><li> Fix endless loop while searching for a signer of a CRL
+
+</ul></div><div id="changelog_1.3.0"><h3>xca 1.3.0 Thu Aug 11 2015</h3><ul>
+
+ </li><li> Update to OpenSSL 1.0.2d for Windows and MAC
+ </li><li> SF Bug #105 1.2.0 OS X Retina Display Support
+ </li><li> Digitaly sign Windows and MAC binaries with a valid certificate
+ </li><li> Refactor the context menu. Exporting many selected items
+   to the clipboard or a PEM file now works. Certificate renewal and revocation
+   may now be performed on a batch of certificates.
+ </li><li> Feat. Reg. #83 Option to revoke old certificate when renewing
+ </li><li> Refactor revocation handling. All revocation information is
+   stored with the CA and may be modified.
+   Revoked certificates may now be deleted from the database
+ </li><li> Support nameConstraints, policyMappings, InhibitAnyPolicy, PolicyConstraint
+   and (OSCP)noCheck when transforming certificates to templates or OpenSSL configs
+ </li><li> Fix SF Bug #104 Export to template introduces spaces
+ </li><li> Add option for disabling legacy Netscape extensions
+ </li><li> Support exporting SSH2 public key to the clipboard
+ </li><li> SF Bug #102 Weak entropy source used for key generation:
+   Use /dev/random, mouse/kbd entropy, token RNG
+ </li><li> SF Feat. Req. #80 Create new certificate,
+   based on existing certificate, same for requests
+ </li><li> Add Cert/Req Column for Signature Algorithm
+ </li><li> SF Feat. Req. #81 Show key size in New Certificate dialog
+ </li><li> Distinguish export from transform:
+   - Export writes to an external file,
+   - Transform generates another XCA item
+
+</ul></div><div id="changelog_1.2.0"><h3>xca 1.2.0 Sat Mar 21 2015</h3><ul>
+
+ </li><li> Update to OpenSSL 1.0.2a for Windows and MAC
+   drop brainpool extra builds
+ </li><li> Use CTRL +/- to change the font size in the view
+ </li><li> Add Row numbering for easy item counting
+ </li><li> Support SSH2 public key format for import and export
+ </li><li> Add support for SHA-224
+ </li><li> add "xca extract" to export items from the database on the commandline
+
+</ul></div><div id="changelog_1.1.0"><h3>xca 1.1.0 Sat Nov 22 2014</h3><ul>
+
+ </li><li> SF Bug #79 Template export from WinXP
+   cannot be imported in Linux and Mac OS X
+ </li><li> Support for Brainpool windows and MacOSX binaries
+ </li><li> SF Feat. Req. #70 ability to search certificates
+ </li><li> SF Feat. Req. #75 show SHA-256 digest
+ </li><li> RedHat Bug #1164340 - segfault when viewing a
+   RHEL entitlement certificate
+ </li><li> Database hardening
+   - Delete invalid items (on demand)
+   - Be more tolerant against database errors
+   - Gracefully handle and repair corrupt databases
+   - Add "xca_db_stat(.exe)" binary to all installations
+ </li><li> Translation updates
+ </li><li> Optionally allow hash algos not supported by the token
+ </li><li> Select whether to translate established x509 terms
+ </li><li> Finish Token EC and DSA support - generate, import, export, sign
+ </li><li> SF Feat. Req. #57 More options for Distinguished Name
+ </li><li> Switch to autoconf for the configure script
+ </li><li> SF Feature Req. #76 Export private keys to clipboard
+ </li><li> EC Keys: show Curve name in table
+ </li><li> Support EC key generation on PKCS#11 token
+ </li><li> PKCS#11: Make EC and RSA signatures work
+ </li><li> PKCS#11: Fix reading EC keys from card
+ </li><li> SF Bug #82 Certificate Creation out of Spec
+ </li><li> SF Bug #95 XCA 1.0 only runs in French on a UK English Mac
+
+</ul></div><div id="changelog_1.0.0"><h3>xca 1.0.0 Wed Oct 22 2014</h3><ul>
+
+ </li><li>  SF Bug #89 Validating CRL distribution point results in error
+ </li><li>  SF Feature Req. #69 Create "Recent databases..." file menu item
+ </li><li>  SF Bug #75 authorityInfoAccess set error
+ </li><li>  SF Bug #88 Minor spelling error
+ </li><li>  SF Bug #87 Unable to set default key length
+    The Key generation dialog now allows to remember the current settings
+ </li><li>  Do not interpret HTML tags in message boxes
+ </li><li>  Overwite extensions from the PKCS#10 request by local extensions
+    This avoids duplication errors and allows to overwrite some
+    extensions from the request
+ </li><li>  SF Bug #78 replace path separators in export filenames
+ </li><li>  SF Feature Req. #71 Add KDC Authentication OIDs to default files
+ </li><li>  SF Bug #82 Certificate Creation out of Spec
+ </li><li>  Add Croatian translation
+ </li><li>  SF Bug #83 Inappropriate gcc argument order in configure script
+
+</ul></div><div id="changelog_0.9.3"><h3>xca 0.9.3 Sat May 12 2012</h3><ul>
+
+  </li><li> Fix double free in a1time resulting in random crashes
+
+</ul></div><div id="changelog_0.9.2"><h3>xca 0.9.2 Sun May 6 2012</h3><ul>
+
+  </li><li> Support for Local timezone dates.
+    Differentiate between invalid and undefined dates.
+  </li><li> Fix Bug #3461403 Error when create certificate with CRL distribution point
+    User error -&gt; Improve user-friendlyness
+  </li><li> Fix Bug #3485139 Exception when creating certificates in passwordless db
+  </li><li> Avoid very long names resulting in duplicate names in the database.
+  </li><li> Add warning colors for expired dates.
+
+</ul></div><div id="changelog_0.9.1"><h3>xca 0.9.1 Fri Oct 21 2011</h3><ul>
+
+  </li><li> Close bug [ 3372449 ] All numeric names cannot be used
+  </li><li> add search functionality for PKCS#11 libraries
+  </li><li> fix ASN.1 encoding of PKCS#10 request
+  </li><li> Close bug [ 3318203 ] Build failure with GNU gold linker
+  </li><li> Add x509v3 extensions to the list of selectable columns
+  </li><li> Close bug [ 3314262 ] Incorrect "Path length" template parameter handling
+  </li><li> Close bug [ 3314263 ] Unrevoking a certificate does not make it "Trusted"
+  </li><li> Feature Request [3286442] Make success/import messges optional
+  </li><li> improve Password entry
+  </li><li> Improve SPKAC import
+  </li><li> add french translation by Patrick Monnerat
+  </li><li> Export requests or certificates as openssl config file
+  </li><li> Support building with EC disabled
+  </li><li> Close bug [3091576] Private key export is always PKCS#8 encoded
+  </li><li> Feature Request [3058196] Autoload database
+  </li><li> Feature Request [3058195] Export directly to the clipboard
+  </li><li> Close bug [3062711] Additional OIDs
+  </li><li> Close bug [3062708] Invalid user configuration file path name
+  </li><li> Fix PKCS#11 library handling
+
+</ul></div><div id="changelog_0.9.0"><h3>xca 0.9.0 Sun Aug 29 2010</h3><ul>
+
+  </li><li> support loading more than one PKCS#11 library
+  </li><li> remove the need for engine_pkcs11
+    now more than one PKCS#11 library can be loaded and used in parallel
+  </li><li> Add de/selection of columns and add a lot of new possible columns
+    All Subject entries, the subject hash and whole name,
+    Certificate fingerprints, dates, CA info, CRL number,
+    corresponding key of certs and requests
+  </li><li> Improve CRL generation [3035294] CRLNumber, CRLReason
+  </li><li> improve creating templates from cert
+    - enhance parsing of CRL-DP, SAN, IAN and AuthInfoAcc
+    - add support for CertificatePolicies
+    - unknown extension are written as generic DER
+  </li><li> improve date handling. "notBefore" is not reset to now anymore
+    when applying a time range
+  </li><li> Support dropping files onto the application
+  </li><li> russian translation by Pavel Belly
+  </li><li> support loading DER formatted PKCS#8 keys
+  </li><li> ease commandline use
+  </li><li> add DH param generation menu entry
+  </li><li> improve token handling and PIN changing dialogs
+  </li><li> improve key-value table input for "additional DN entries"
+  </li><li> PIN and PUK changing implemented
+  </li><li> apply partial template-contents
+    - applying the subject only or the extensions only is possible now
+  </li><li> add informational messageboxes
+    - whenever an item was successfully created or imported
+  </li><li> add support for random serial numbers
+  </li><li> improve messages, usability and german translation
+  </li><li> improve token support
+    - token initializing
+    - creating keys on a token
+    - store existing keys on a token
+    - delete keys and certs from a token
+
+</ul></div><div id="changelog_0.8.1"><h3>xca 0.8.1 Tue Jan 5 2010</h3><ul>
+
+  </li><li> fix string conversion from QString to ASN1
+
+</ul></div><div id="changelog_0.8.0"><h3>xca 0.8.0 Thu Dec 10 2009</h3><ul>
+
+  </li><li> improve documentation
+  </li><li> improve file-dialog handling
+  </li><li> Generate Template from certificate or PKCS#10 request
+    -&gt; Feature request [2213094] and [1108304]
+  </li><li> add hash algos "ripemd160" and "SHA384"
+  </li><li> add the "no well-defined date" from RFC 5280 as checkbox
+  </li><li> Feature request [1996192]
+    Include "OCSPSigning" in misc/eku.txt
+  </li><li> Support for EC keys
+  </li><li> Update Step-by-step documentation
+    Thanks Devin Reade
+  </li><li> Support for Smart Cards
+  </li><li> set proper file-extension .xdb on opening databases
+
+</ul></div><div id="changelog_0.7.0"><h3>xca 0.7.0 Fri Sep 11 2009</h3><ul>
+
+  </li><li> support modifying the CSR subject during signing
+  </li><li> update key images
+  </li><li> fix date settings in Certificate renewal dialog
+  </li><li> fix certificate request verification
+  </li><li> check for duplicate x509 v3 extensions
+    Bug  [ 1881482 ] and [ 1998815 ]
+  </li><li> make sha1 the default hash to avoid problems with other software
+    Bug [ 1751397 ]
+  </li><li> add validation button to see all extensions before creating the cert
+  </li><li> change the hashing for the default password.
+    this makes it incompatible to older versions
+  </li><li> Major changes for MAC OS X
+  </li><li> extend template format for nconf settings
+  </li><li> add nconf input field for arbitrary OpenSSL extensions
+    and a "validate" button to check the settings before applying
+  </li><li> fix xca.desktop Bug [ 1837956 ]
+  </li><li> fix item-export error handling
+  </li><li> add PEM paste import feature
+  </li><li> extend PEM import to import all items from a PEM file
+
+</ul></div><div id="changelog_0.6.4"><h3>xca 0.6.4 Mon Aug 13 2007</h3><ul>
+
+  </li><li> Bug "tree view loose track" fixed
+  </li><li> check for certificate errors and display them instead of crashing
+  </li><li> move used-keys-button form options to NewX509 dialog
+  </li><li> Set string options in options dialog
+  </li><li> remove extension and attribute tab in details dialog if
+    no extensions or attributes available
+  </li><li> documentation updated
+  </li><li> X509 request attributes (like challange password) can be set
+    and viewed.
+
+</ul></div><div id="changelog_0.6.3"><h3>xca 0.6.3 Thu May 17 2007</h3><ul>
+
+  </li><li> show CRL signature algorithm information
+  </li><li> Add options dialog to set the default hash algo,
+    mandatory distinguished name entries and allow duplicate key use
+    as requested by some users
+  </li><li> make cert, crl and key details copy&amp;paste able
+  </li><li> fix background color of clicklabels
+    Bug [ 1704699 ]
+  </li><li> remove missleading tooltips 
+    Bug [ 1704700 ]
+  </li><li> fix segfault
+  </li><li> switch string handling to UTF8
+
+</ul></div><div id="changelog_0.6.2"><h3>xca 0.6.2 Mon Apr 9 2007</h3><ul>
+
+  </li><li> break endless loop in chain building
+    Bug [ 1696878 ]
+
+</ul></div><div id="changelog_0.6.1"><h3>xca 0.6.1 Thu Apr 5 2007</h3><ul>
+
+  </li><li> minor documentation updates
+  </li><li> Fix openssl-cross patch 
+  </li><li> recognize certificates with circular references
+    [ xca-Bugs-1693027 ]
+  </li><li> be compatibile to QT-4.1 (thanks Tamas TEVESZ)
+  </li><li> remove all usages of QT3 backward lib 
+    [ xca-Feature Requests-1692800 ]
+
+</ul></div><div id="changelog_0.6.0"><h3>xca 0.6.0 Fri Mar 16 2007</h3><ul>
+
+  </li><li> set initial sorting to ascending order
+  </li><li> add RFC2253 representation of subject and issuer
+    to copy &amp; paste
+  </li><li> fix dialog sizes for long DNs
+  </li><li> move hash algo into signer box [ 1656260 ]
+  </li><li> make QA serial a compile time option
+  </li><li> fix date generation and warn if generalized time is used
+  </li><li> autodetect and load any type of PEM files
+  </li><li> fix version number in exported *.xca template
+  </li><li> fix import of older XCA templates
+  </li><li> add support for predefined templates as there was in 0.5.1
+  </li><li> fix cmdline import of crypto items
+  </li><li> add undelete feature for deleted items
+  </li><li> fix database shrinking of curent db during opening of new db
+
+</ul></div><div id="changelog_0.6.0-beta02"><h3>xca 0.6.0-beta02 Fri Feb 2 2007</h3><ul>
+
+  </li><li> correct and fixate the order of x509name entries
+  </li><li> Add CRL properties dialog to select the dates and the
+    signing algo
+  </li><li> Add SHA256 and SHA512
+  </li><li> Certificate export for apache and OpenSSH+X509
+  </li><li> Default templates for client, server, CA removed
+  </li><li> template duplication added
+  </li><li> sort serial numbers numerically and not lexicographically
+    Bug [1166075]
+  </li><li> add build support for cygwin and mingw-cross
+  </li><li> delete rpm/ and debian/ subdirs
+  </li><li> Port to QT4 and openssl 0.9.8
+    remove the need of Berkeley DB
+    importing of old database dump possible
+  </li><li> finish support for Mac OS X
+  </li><li> add X509 V3 extensions to PKCS#10 requests
+  </li><li> add "validation" function for editable extensions below
+  </li><li> add "edit" buttons for subject/issuer alt. name,
+    crl dist. point and cert. auth. info access
+  </li><li> add DB-dump function into subdirs
+  </li><li> Support for DSA keys
+  </li><li> Fix error in template changing
+  </li><li> change storage-format of keys: store the public unencrypted
+    and the private additionally encrypted.
+  </li><li> Allow different passwords for keys
+
+</ul></div><div id="changelog_0.5.1"><h3>xca 0.5.1 Tue Jul 13 2004</h3><ul>
+
+  </li><li> support for different languages on WIN platform (Thanks Ilya)
+  </li><li> better installation and deinstallation on WIN platform
+  </li><li> documentation updated
+
+</ul></div><div id="changelog_0.5.0"><h3>xca 0.5.0 Sun Jun 13 2004</h3><ul>
+
+  </li><li> orthographical changes
+  </li><li> more translations
+  </li><li> segfault in CRL import removed
+  </li><li> manpage and documentation updated
+  </li><li> store "midnight" in template
+
+</ul></div><div id="changelog_0.4.7-RC2"><h3>xca 0.4.7-RC2 Fri Apr 16 2004</h3><ul>
+
+  </li><li> open db if explicit mentioned, otherwise do not.
+  </li><li> Errormessage on a wrong pkcs12 password more comprehensive
+  </li><li> postinst and  postrm do update-menu
+  </li><li> search more intensive for the CRL signer
+  </li><li> add /etc/xca/nid.txt to OID search path
+  </li><li> debian build enhanced, lintian satisfied, manpage added.
+  </li><li> AuthorityInfoAccess enhanced "aia.txt" as oid list added
+  </li><li> allow empty passwords on PKCS#12 import
+
+</ul></div><div id="changelog_0.4.7-RC1"><h3>xca 0.4.7-RC1 Thu Feb 5 2004</h3><ul>
+
+  </li><li> debian menu-entry added
+  </li><li> Open and closing of different databases
+  </li><li> Menu added
+  </li><li> German translation
+  </li><li> CRLs will revoke existing certs
+  </li><li> memory leaks removed
+  </li><li> support for other compiled in basedir on unix
+  </li><li> Authority info access added
+     Certificate policies still pending :-(
+  </li><li> additional (private) oids can be registered in oids.txt
+  </li><li> OIDs for extended key usage and Distinguished name are
+    now read from eku.txt and dn.txt respectively.
+  </li><li> About dialog and help window added.
+  </li><li> Requestdetail is now tabdialog
+
+</ul></div><div id="changelog_0.4.6"><h3>xca 0.4.6 Tue Nov 25 2003</h3><ul>
+
+  </li><li> Country is State or Province
+  </li><li> xca.dsp: WIN32 changes from Ilya
+  </li><li> New configure added, Makefile.in's purged and one configuration:
+    "Local.mak" for flags and compilers.
+    supports parallel builds (make -j)
+  </li><li> SmartCard Logon OID added
+  </li><li> Fixed bugs:
+  </li><li> [ 846052 ] Tab order in Certificate Netscape extensions is wrong
+  </li><li> [ 845800 ] CRL Generation problem for Netscape
+  </li><li> [ 836967 ] Unable to specify alternate database
+  </li><li> [ 843725 ] xca dies when opened with a pem key as argument
+  </li><li> [ 789374 ] Bad encoding in misc/xca.desktop
+  </li><li> by Wolfgang Glas &lt;wolfgang.glas@ev-i.at&gt;:
+    - Support for UTF8 in x509name
+    - Netscape SPKAC support added
+
+</ul></div><div id="changelog_0.4.5"><h3>xca 0.4.5 Wed Aug 13 2003</h3><ul>
+
+  </li><li> more german translations
+  </li><li> [ 737036 ] make error texts copiable from pop-up-windows to clipboard
+    by adding a button doing this
+  </li><li> [ 767603 ] Key sizes
+    Implemented by making the Key-size ComboBox
+    editable to enter arbitrary key sizes.
+  </li><li> [ 765774 ] change password for database
+
+</ul></div><div id="changelog_0.4.4"><h3>xca 0.4.4 Wed Aug 6 2003</h3><ul>
+
+  </li><li> [ 783853 ] renewal uses 'notBefore' as 'notAfter' date
+  </li><li> [ 783830 ] GeneralizedTime-format breaks browsers
+
+</ul></div><div id="changelog_0.4.3"><h3>xca 0.4.3 Tue Aug 5 2003</h3><ul>
+
+  </li><li> remove Certificate creation bug (AuthKeyId)
+  </li><li> always take the right cert for signing
+  </li><li> critical flag in key usage and extended key usage works now
+  </li><li> Import of Multiple items is done and works
+    [ 739726 ] extend description of -p option
+    [ 775529 ] Import of PKCS#7 item not shown
+  </li><li> made the details dialogs internal name read only
+  </li><li> some segmentation faults removed
+  </li><li> VPN OIDs added to Ext. Keyusage
+
+</ul></div><div id="changelog_0.4.2"><h3>xca 0.4.2 Sun Jul 20 2003</h3><ul>
+
+  </li><li> Memory leak removed
+  </li><li> Template import and export added
+  </li><li> fix bug [ 773056 ] Duplicate 'All files (*.*)'
+    selection on import menus
+  </li><li> import of PKCS#12 keys repaired
+  </li><li> crl icon added to W32 installation
+  </li><li> /usr/local/include removed from CPP flags
+  </li><li> Buttons "Export Cert" and "Change Template"
+    reconnected.
+  </li><li> Authority Key identifier repaired
+
+</ul></div><div id="changelog_0.4.1"><h3>xca 0.4.1 Tue Jul 15 2003</h3><ul>
+
+  </li><li> some compiling issues removed
+  </li><li> Import via commandline repaired,
+  </li><li> signing of requests without key fixed
+  </li><li> Changes for WIN32 version from Ilya added
+  </li><li> solved bug:
+    [ 770120 ] Attempting to export private key results in no file exported
+  </li><li> implemented feature request:
+    [ 755599 ] add PFX import button to Keytab
+
+</ul></div><div id="changelog_0.4.0"><h3>xca 0.4.0 Tue Jul 8 2003</h3><ul>
+
+  </li><li> Solved bugs:
+  </li><li> [ 752111 ] Cannot handle dates past 32-bit boundary (2038)
+  </li><li> [ 744227 ] Bug in handling of 3rd. party CRLs
+  </li><li> The following Feature requests were implemented:
+  </li><li> [ 743152 ] Attributes in subject name
+  </li><li> [ 755853 ] select the hash algorithm for signing.
+  </li><li> The code was completely rewritten to remove
+    many unpretty codefragements and get a more stable codebase
+  </li><li> The names of certs and keys in the detailsview of Certs, CRLs
+    and Requests are clickable.
+  </li><li> xca desktopfile added and will be installed in applications,
+    key.xpm will be installed as xca.xpm in pixmaps
+    ([ 763954 ] xca.desktop file) Thanks to Enrico Scholz
+
+</ul></div><div id="changelog_0.3.2"><h3>xca 0.3.2 Thu May 15 2003</h3><ul>
+
+  </li><li> Optimizations, icon for WIN32 platform
+  </li><li> MS Registry and %USERPROFILE% support
+  </li><li> Support for PKCS#7 certs (im/export)
+  </li><li> small UI changes
+
+</ul></div><div id="changelog_0.3.1"><h3>xca 0.3.1 Thu Apr 24 2003</h3><ul>
+
+  </li><li> Tool Tips added
+  </li><li> CRL handling (import, export, details) added
+
+</ul></div><div id="changelog_0.3.0"><h3>xca 0.3.0 Fri Apr 25 2003</h3><ul>
+
+  </li><li> several bugfixes and memoryleaks removed
+  </li><li> export to TinyCA and "openssl ca" added
+  </li><li> switch between tree/plain view in certificate list
+  </li><li> notAfter dates in certificate view can be sorted reasonably
+  </li><li> libdb-4.1.24 and higher is supported
+  </li><li> The certificate details dialog was redesigned to be a smaller tab-dialog
+  </li><li> Mainwindow dialog shrinked
+  </li><li> Item viewing and import via the commandline is possible
+  </li><li> documentation littlebit updated
+  </li><li> changes in configure
+  </li><li> The wizard invokes the key generation process only if really needed
+
+</ul></div><div id="changelog_0.2.12"><h3>xca 0.2.12 Mon Jan 6 2003</h3><ul>
+
+  </li><li> PKCS#7 encryption and signing of files added
+  </li><li> First attempt of documentation added
+  </li><li> Several export targets added
+  </li><li> Certificate renewal repaired
+
+</ul></div><div id="changelog_0.2.11"><h3>xca 0.2.11 Wed Dec 4 2002</h3><ul>
+
+  </li><li> Certificate export enhanced, increase signer-serial on certimport.
+  </li><li> interpretation of serial as hex and not as dezimal.
+  </li><li> configure continues even if qt lib is absent.
+  </li><li> $HOME/xca is created if it does not exist.
+
+</ul></div><div id="changelog_0.2.10"><h3>xca 0.2.10 Tue Oct 29 2002</h3><ul>
+
+  </li><li> shows not After time and serial in listview
+  </li><li> some segfaults removed
+  </li><li> Certificate renewal implemented
+  </li><li> extension-bug removed
+  </li><li> request-kontextmenu contains signing
+  </li><li> create request from certificate
+  </li><li> FreeBSD paths and libs  recognized by configure
+
+</ul></div><div id="changelog_0.2.9"><h3>xca 0.2.9 Mon Oct 21 2002</h3><ul>
+
+  </li><li> several segfaults eliminated
+  </li><li> key-use counter corrected
+  </li><li> initial truststate fixed
+  </li><li> remembers Im/Export directories
+  </li><li> import of mutiple certs/keys/requests/pkcs12
+  </li><li> database transactions activated
+  </li><li> exception-handling completed
+
+</ul></div><div id="changelog_0.2.8"><h3>xca 0.2.8 Sun Oct 13 2002</h3><ul>
+
+  </li><li> consistency checks for Iss-alt-name and Sub-alt-name
+  </li><li> Check for certificate dates to not exceed those of the signer
+  </li><li> defines for libdb &gt;4.1.x
+  </li><li> default templates added
+  </li><li> package-builder do build without printf-debugging
+  </li><li> key-use counter works now well
+
+</ul></div><div id="changelog_0.2.7"><h3>xca 0.2.7 Tue Oct 8 2002</h3><ul>
+
+  </li><li> segfaults removed
+  </li><li> minor wizard changes
+
+</ul></div><div id="changelog_0.2.6"><h3>xca 0.2.6 Mon Sep 30 2002</h3><ul>
+
+  </li><li> show common name in request list and certificate list
+  </li><li> CRL generation added
+  </li><li> Key-export fixed
+  </li><li> signing-template, CRL date and CRL time interval adjustable
+  </li><li> Fix for windows filenames
+
+</ul></div><div id="changelog_0.2.5"><h3>xca 0.2.5 Tue Sep 24 2002</h3><ul>
+
+  </li><li>  Certificate and Template Wizard completed
+  </li><li>  CA-serial can be changed and is stored with the cert
+  </li><li>  Passwordboxes set focus right (Andrey Brindeew &lt;abr@abr.pp.ru&gt;)
+  </li><li>  configure enhanced with  error and success messages
+  </li><li>  x509 v3 extensions completed inc. Netscape extensions
+  </li><li>  Templates implemented
+  </li><li>  Files for MS Visual C++ added (yes, it compiles on MS Windows)
+  </li><li>  Windows Installer added (Nullsoft)
+
+</ul></div><div id="changelog_0.2.4"><h3>xca 0.2.4 Tue Sep 10 2002</h3><ul>
+
+  </li><li> PKCS#12 import added
+  </li><li> bugfixes fileview, requestgeneration
+
+</ul></div><div id="changelog_0.2.3"><h3>xca 0.2.3 Wed Sep 4 2002</h3><ul>
+
+  </li><li> icons changed
+  </li><li> context menu on right mousebutton
+  </li><li> trust state settings added
+  </li><li> dialogboxes are resizeable
+  </li><li> extended keyusage added to v3 extensions when creating new cert
+  </li><li> all dialogs translated to english
+  </li><li> no more images in *.ui files
+
+</ul></div><div id="changelog_0.2.2"><h3>xca 0.2.2 Thu Jul 18 2002</h3><ul>
+
+  </li><li> basic constraints, key usage and subject/authority key identifier
+  </li><li> signing wizard...
+  </li><li> Signatures can be done with requests and from scratch
+  </li><li> Certificate for signing can be self or foreign,
+  </li><li> password is saved as md5sum
+
+</ul></div><div id="changelog_0.1.12"><h3>xca 0.1.12 Thu Jul 11 2002</h3><ul>
+
+  </li><li> icons added
+  </li><li> treeview for Certificates
+  </li><li> private keys are triple DES encrypted in db
+  </li><li> program asks for initial password on startup
+  </li><li> some segfaulting bugs removed
+
+</ul></div><div id="changelog_0.1.11"><h3>xca 0.1.11 Wed Jul 3 2002</h3><ul>
+
+  </li><li> RSA Keys are generated and stored to or loaded from a file
+    in either DER or PEM format.
+  </li><li> They get stored in a local Berkeley DB.
+  </li><li> Changing their description and viewing their contents, as well
+    as deleting them from local DB is possible.
+</body></html>

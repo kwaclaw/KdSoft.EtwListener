@@ -1,0 +1,223 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="LinuxDoc-Tools 0.9.72">
+ <TITLE>XCA - X Certificate and key management: The Certificate Input Dialog</TITLE>
+ <LINK HREF="xca-6.html" REL=next>
+ <LINK HREF="xca-4.html" REL=previous>
+ <LINK HREF="xca.html#toc5" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="xca-6.html">Next</A>
+<A HREF="xca-4.html">Previous</A>
+<A HREF="xca.html#toc5">Contents</A>
+<HR>
+<H2><A NAME="wizard"></A> <A NAME="s5">5.</A> <A HREF="xca.html#toc5">The Certificate Input Dialog</A></H2>
+
+
+<P>This input dialog is the central part for collecting all data regarding certificates,
+requests and templates. It will be invoked whenever such an item is going
+to be created or, in case of a template, is altered.</P>
+
+<H2><A NAME="ss5.1">5.1</A> <A HREF="xca.html#toc5.1">Source</A>
+</H2>
+
+
+<P>This page is not shown when creating or changing templates.</P>
+
+<H3>Signing Request</H3>
+
+
+<P>If it is desired to either enroll a certificate from a PKCS#10 request
+by a local CA, or to create a certificate from a request by self-signing it,
+the request can be selected here. In the later case the private key of
+the request must be available.</P>
+
+<H3>Signing</H3>
+
+
+<P>Either self-signing or the CA certificate for signing may be selected here.
+Additionally, the desired signing algorithm can be adjusted.
+The drop-down list contains all 
+<A HREF="xca-9.html#ca_cert">CA certificates</A>
+with an available private key.</P>
+
+<H3>Signature Algorithm</H3>
+
+
+<P>Usually SHA256 or higher should be used, but
+since older windows versions including XP can not handle them,
+you may opt to use SHA1. The default signing algorithm may be
+selected by the <EM>Options</EM> menu.</P>
+
+<H3>Templates</H3>
+
+
+<P>The fields of the certificate can be preset by the values of a template
+by selecting it and clicking <EM>Apply all</EM>.
+Templates can be mixed by applying the subject of one template and then
+applying the extensions of an other by using the
+buttons <EM>Apply subject</EM> and <EM>Apply extensions</EM></P>
+
+<H2><A NAME="ss5.2">5.2</A> <A HREF="xca.html#toc5.2">Personal Settings</A>
+</H2>
+
+
+
+<H3>Subject</H3>
+
+
+<P>On this Page all personal data like country, name and email address
+can be filled in.
+The <CODE>Country code</CODE> field must either be empty or exactly contain
+two letters representing your country code; e.g. <CODE>DE</CODE> for Germany.
+If you want to create an SSL-server certificate the <CODE>Common name</CODE>
+must contain the <CODE>DNS</CODE> name of the server. Alternatively the subject-alternative-name
+extension may be used to define additional DNS names, even wildcards. In this case
+the CommonName must be repeated here, because TLS clients disregard the CommonName
+in case the subject-alternative-name extension exists.
+If the <CODE>internal name</CODE> is empty, the common name will be used
+as internal name.
+It will also be used as default internal name, if a new key is created here.</P>
+
+
+<P>Other rarely used <CODE>name-entries</CODE> can be selected in the dialog below.
+By using this table instead of the explicit entries above,
+the order of the entries can be adjusted.
+A new line can be added via the <EM>Add</EM> button.
+The current line can be deleted via the <EM>Delete</EM> button.
+Existing lines can be exchanged and reordered by moving the row-header (containing the row-number) around.
+All items can be added more than once, even those from above. This is not very usual but allowed.</P>
+
+
+<P>The list of the 7 explicit distinguished name entries may be adjusted in the options dialog
+at 
+<A HREF="xca-12.html#expDN">Explicit subject entries</A></P>
+
+
+
+<H3>Private Key</H3>
+
+
+<P>Keys can be generated here "on the fly" by pressing the button.
+The name of the new key will be preset by the common name of the certificate.
+The newly generated key will be stored in the database and stay there,
+even if the input dialog is canceled. The drop-down list of the keys
+only contains keys that were not used by any other certificate or
+request. The key-list is not available for creating or changing templates.
+By checking <CODE>Used keys too</CODE> the list contains all available
+keys. Use this with care. You're likely doing something wrong when using this
+option.</P>
+
+
+<P>This tab does not appear when signing a request, because the request
+contains all needed data from this tab.
+Select "Modify subject of the request", if you want to modify it anyway.
+The content of the subject Tab will then be preset with the content of the
+request.</P>
+
+<H2><A NAME="ss5.3">5.3</A> <A HREF="xca.html#toc5.3">X509v3 Extensions</A>
+</H2>
+
+
+<P>The next three tabs contain all fields for adjusting the certificate extensions.
+It is not in the focus of this document to explain them all in detail.
+The most important are the <CODE>Basic Constraints</CODE> and the <CODE>Validity</CODE> range.</P>
+
+
+<P>For more information consult the documents in 
+<A HREF="xca-1.html#otherdoc">otherdoc</A>
+.
+If you don't know what this is all about please read those documents before
+creating any certificates.</P>
+
+<H3>Basic Constraints</H3>
+
+
+<P>If the type is set to <CODE>Certification Authority</CODE>,
+the certificate is recognized by XCA and other
+instances as issuer for other certificates.
+Server-certificates or E-Mail certificates should set this extension to
+<CODE>End entity</CODE> (strongly recommended)
+or disable it completely by setting it to <CODE>Not defined</CODE></P>
+
+<H3>Validity Range</H3>
+
+
+<P>The <CODE>Not before</CODE> field is set to the current date and time of the
+operating system and the <CODE>Not after</CODE> field is set to the current
+date and time plus the specified time range.
+When applying time ranges, the expiry date (not after) is calculated by taking
+the currently configured start date (not before) and adding the time range.</P>
+
+
+
+<P>For templates the specified times are not saved, because it does not make much sense.
+Rather the time range is stored and automatically applied when selecting this
+template. Applying the time range means to set notBefore to "now" and notAfter
+to "now + time range". If the <CODE>midnight</CODE> button is set both dates will be
+rounded down and up to midnight.</P>
+
+<H3>Advanced</H3>
+
+
+<P>Any extension, not covered on the other tabs can be added here as
+defined in OpenSSL nconf. The validity can be checked by clicking
+<CODE>Validate</CODE>. All extensions from all tabs will be shown here
+to see them all in their final form. Click on <CODE>Edit</CODE> to continue
+editing the extensions here.</P>
+<P>Refer to the OpenSSL X509v3 configuration for more details: 
+<A HREF="http://www.openssl.org/docs/apps/x509v3_config.html">http://www.openssl.org/docs/apps/x509v3_config.html</A></P>
+
+<H3>Certificate Policies</H3>
+
+
+<P>The following example of <CODE>openssl.txt</CODE> also works in the advanced tab
+to define certificate policies</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+
+certificatePolicies=ia5org,1.2.3.4,1.5.6.7.8,@polsect
+
+[polsect]
+
+policyIdentifier = 1.3.5.8
+CPS.1="http://my.host.name/"
+CPS.2="http://my.your.name/"
+userNotice.1=@notice
+
+[notice]
+
+explicitText="Explicit Text Here"
+organization="Organisation Name"
+noticeNumbers=1,2,3,4
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+<P>Adding more than one AuthorityInfoAccess entry is also possible here:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+authorityInfoAccess=@aia_sect
+
+[aia_sect]
+OCSP;URI.1=http://www.some.responder.org/
+OCSP;URI.2=http://www.some.other-responder.org/
+caIssuers;URI.3=http://server.whatever.org/cert-path
+caIssuers;URI.4=ldap://server.whatever.org/xxx,yyy
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+
+
+<P>When exporting existing Certificates to templates, the extensions will
+be translated to OpenSSL config file format.</P>
+
+
+<HR>
+<A HREF="xca-6.html">Next</A>
+<A HREF="xca-4.html">Previous</A>
+<A HREF="xca.html#toc5">Contents</A>
+</BODY>
+</HTML>

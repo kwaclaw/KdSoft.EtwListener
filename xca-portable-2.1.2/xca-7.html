@@ -1,0 +1,115 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="LinuxDoc-Tools 0.9.72">
+ <TITLE>XCA - X Certificate and key management: RSA, DSA and EC Keys </TITLE>
+ <LINK HREF="xca-8.html" REL=next>
+ <LINK HREF="xca-6.html" REL=previous>
+ <LINK HREF="xca.html#toc7" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="xca-8.html">Next</A>
+<A HREF="xca-6.html">Previous</A>
+<A HREF="xca.html#toc7">Contents</A>
+<HR>
+<H2><A NAME="keys"></A> <A NAME="s7">7.</A> <A HREF="xca.html#toc7">RSA, DSA and EC Keys </A></H2>
+
+
+<P>For creating certificates, keys are needed.
+All keys are stored encrypted in the database using the 3DES algorithm.
+The password can be changed for each key. The password type means:
+<UL>
+<LI>common: The database password provided during database load</LI>
+<LI>private: The key has its own password, which is not stored by XCA. This can be set and reset via the context menu of the key</LI>
+<LI>PIN: Security tokens are usually protected by a PIN</LI>
+<LI>No password: Public keys don't need a password</LI>
+</UL>
+</P>
+
+<P>All keys carry a use counter which counts the times it is used.
+When creating new
+requests or certificates the list of available keys is reduced to
+the keys with a use counter of 0. This can be overridden by the check-box
+next to the key list.</P>
+
+<P>When importing an EC key with explicit curve parameters,
+the corresponding curve OID is searched and set if found.</P>
+
+<P>When exporting the key via SQL from the database,
+see 
+<A HREF="xca-3.html#extract">Extracting items</A> openssl asks for the password,
+which is either the database password or its own password in case the
+password type is <CODE>private</CODE>.</P>
+
+<H2><A NAME="ss7.1">7.1</A> <A HREF="xca.html#toc7.1">Generating Keys</A>
+</H2>
+
+
+<P>The dialog asks for the internal name of the key and the key-size in bits.
+For EC keys, a list of curves is shown. It contains all X9.62 curves and many others.</P>
+
+
+<P>EC Brainpool curves are also supported when linking with OpenSSL 1.0.2.</P>
+
+<P>Even if the drop-down list only shows the most usual key sizes, any other value
+may be set here by editing this box.
+While searching for random prime numbers a progress bar is shown in the
+bottom of the base application.
+After the key generation is done the key will be stored in the database.</P>
+
+
+<P>When checking the <CODE>Remember as default</CODE> box, the settings
+(Key-type, key-size or EC curve) will be remembered and preset for the
+next key generation dialog. This option is not available
+when generating token keys.</P>
+
+
+<P>For every connected token providing the Key-generate facility an entry in the
+drop-down menu of the key-types will be shown.
+It contains the name of the token and the valid key-sizes.</P>
+
+
+<P>In case of EC keys generated on a token, the list of possible curves
+is restricted based on informations provided by the token (Key size and FP/F2M).
+The token may support even less ECParameters / OIDs. When selecting an EC curve
+not supported by the token an error will occur.
+Please consult the documentation of the provider of the PKCS#11 library.</P>
+
+<H2><A NAME="ss7.2">7.2</A> <A HREF="xca.html#toc7.2">Key Export</A>
+</H2>
+
+
+<P>Keys can be exported by either selecting the key and pressing <EM>Export</EM>
+or by using the context-menu.
+It may be chosen to export the key to the clipboard as PEM public, SSH2 public
+or unencrypted PEM private format.
+In case of a file export a dialog-box opens where next to the filename one of the
+following formats may be selected:</P>
+<P>
+<UL>
+<LI><B>PEM public</B> the public part of the key in PEM format</LI>
+<LI><B>DER public</B> the public part of the key in DER format</LI>
+<LI><B>SSH2 public</B> the public part of the key in SSH2 format</LI>
+<LI><B>PEM private</B> the private key unencrypt in PEM format</LI>
+<LI><B>PKCS#8 encrypted</B> the encrypted private key in PKCS#8 format</LI>
+<LI><B>DER private</B> the private key in binary DER format</LI>
+<LI><B>PEM encrypted</B> the private key in PEM format with an OpenSSL specific
+extensions for encryption</LI>
+<LI><B>PKCS#8 unencrypted</B> the private key unencrypted in PKCS#8 format</LI>
+</UL>
+</P>
+<P>The filename is the internal name plus a <CODE>pem</CODE>, <CODE>der</CODE>, <CODE>pk8</CODE> or <CODE>pub</CODE> suffix.
+When changing the file-format, the suffix of the filename changes accordingly.
+Only PKCS#8 or PEM files can be encrypted, because
+the DER format (although it could be encrypted)
+does not support a way to supply the encryption algorithm
+like e.g. <CODE>DES</CODE>.
+Of course, encryption does not make sense if the private part is not exported.</P>
+
+
+<HR>
+<A HREF="xca-8.html">Next</A>
+<A HREF="xca-6.html">Previous</A>
+<A HREF="xca.html#toc7">Contents</A>
+</BODY>
+</HTML>

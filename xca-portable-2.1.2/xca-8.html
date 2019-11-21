@@ -1,0 +1,95 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="LinuxDoc-Tools 0.9.72">
+ <TITLE>XCA - X Certificate and key management: Certificate Signing Requests </TITLE>
+ <LINK HREF="xca-9.html" REL=next>
+ <LINK HREF="xca-7.html" REL=previous>
+ <LINK HREF="xca.html#toc8" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="xca-9.html">Next</A>
+<A HREF="xca-7.html">Previous</A>
+<A HREF="xca.html#toc8">Contents</A>
+<HR>
+<H2><A NAME="csr"></A> <A NAME="s8">8.</A> <A HREF="xca.html#toc8">Certificate Signing Requests </A></H2>
+
+
+<P>Certificate signing requests are described in PKCS#10 standard.
+They are used to supply a Certification Authority with the
+needed information to issue a valid certificate
+without knowing the private key. This
+includes personal information, the public key and additional extensions.</P>
+
+
+<P>It is not necessary to generate a request prior to signing it by your CA
+or before self-signing it. Simply start generating the certificate directly.
+People using the OpenSSL command line tools are used to generate a request
+with "openssl req -new ..." and then signing it .
+This is not necessary with XCA.</P>
+
+
+<P>Tracking signed CSR with XCA can be done by the <EM>Signed</EM> and
+<EM>Certificate count</EM> columns of the certificate signing request
+tab. The <EM>Signed</EM> column is an information stored in the database
+whenever a CSR was used used issue a certificate. Also an automatic comment
+is left in the comment of the CSR.
+It does not depend on the certificate remaining in XCA.
+The <EM>Certificate count</EM> column displays the number of certificates
+with the same public key.</P>
+
+
+<H2><A NAME="ss8.1">8.1</A> <A HREF="xca.html#toc8.1">Generating a new Request</A>
+</H2>
+
+
+<P>After clicking on the <CODE>New Request</CODE> button the Certificate dialog will be started to ask
+all needed information for generating a new Request. See: 
+<A HREF="xca-5.html#wizard">The Certificate input dialog</A></P>
+
+
+<P>The request generation can also be invoked by the context menu of a certificate (Transform->Request).
+This menu point is only available if the private key of the certificate is available.
+In this case all needed data is copied from the certificate and the Certificate dialog is not invoked.</P>
+
+<H2><A NAME="ss8.2">8.2</A> <A HREF="xca.html#toc8.2">Request Export</A>
+</H2>
+
+
+<P>Requests can be exported by the context-menu or by the button on the right.</P>
+<P>
+<UL>
+<LI><B>Clipboard</B> Writes all selected requests in PEM format to the Clipboard.</LI>
+<LI><B>File</B> Write the request into a file in PEM or DER format.</LI>
+<LI><B>OpenSSL config</B> Create and store an OpenSSL configuration file which can be used to generate a similar request with openssl (openssl req -new -config &lt;file&gt;)</LI>
+</UL>
+</P>
+
+<H2><A NAME="ss8.3">8.3</A> <A HREF="xca.html#toc8.3">Request Transformation</A>
+</H2>
+
+
+<P>A request transformation creates a new database entry based on the selected request</P>
+<P>
+<UL>
+<LI><B>Template</B> Create a XCA template with the values of the request.</LI>
+<LI><B>Public Key</B> Extract the public key from the request and store it in the Private Keys Tab.</LI>
+<LI><B>Similar Request</B> Starts the Certificate input dialog preset with all values from the current request to create a new request.</LI>
+</UL>
+</P>
+
+<H2><A NAME="ss8.4">8.4</A> <A HREF="xca.html#toc8.4">Request Details</A>
+</H2>
+
+
+<P>All information contained in the request are shown. If the key-store contains
+the private key corresponding to the request the keys internal name is shown
+in the <CODE>Key</CODE> field.</P>
+
+
+<HR>
+<A HREF="xca-9.html">Next</A>
+<A HREF="xca-7.html">Previous</A>
+<A HREF="xca.html#toc8">Contents</A>
+</BODY>
+</HTML>

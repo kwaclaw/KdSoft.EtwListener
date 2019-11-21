@@ -1,0 +1,328 @@
+<html>
+<head>
+  <title>/home/chris/src/xca-dir/xca-2.1.2/doc/../widgets/database_schema.cpp</title>
+  <LINK rel="stylesheet" href="http://hohnstaedt.de/xca-doc/xca-doc.css">
+</head>
+<body>
+<pre>
+<font color="#008b8b"><i>/* The &quot;32bit hash&quot; in public_keys, x509super, requests, certs and crls
+ * is used to quickly find items in the DB by reference.
+ * It consists of the first 4 bytes of a SHA1 hash.
+ * Collisions are of course possible.
+ *
+ * All binaries are stored Base64 encoded in a column of type
+ * &quot; B64_BLOB &quot; It is defined here as &quot;VARCHAR(10000)&quot;
+ */</i></font>
+
+<font color="0000ff"><strong>#define B64_BLOB <font color="#008000">&quot;VARCHAR(10000)&quot;</font></strong></font>
+
+<font color="#008b8b"><i>/*
+ * The B64(DER(something)) function means DER encode something
+ * and then Base64 encode that.
+ * So finally this is PEM without newlines, header and footer
+ *
+ * Dates are alway stored as 'CHAR(15)' in the
+ * ASN.1 Generalized time 'yyyyMMddHHmmssZ' format
+ */</i></font>
+
+<font color="0000ff"><strong>#define DB_DATE <font color="#008000">&quot;CHAR(15)&quot;</font></strong></font>
+
+<font color="#008b8b"><i>/*
+ * Configuration settings from
+ *  the Options dialog, window size, last export directory,
+ *  default key type and size,
+ *  table column (position, sort order, visibility)
+ */</i></font>
+	<font color="#2040a0">schemas</font><font color="4444FF">[</font><font color="#FF0000">0</font><font color="4444FF">]</font>
+
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE TABLE settings (&quot;</font>
+	<font color="#008000">&quot;key_ CHAR(20) UNIQUE, &quot;</font> <font color="#008b8b"><i>/* mySql does not like &quot;key&quot; or &quot;option&quot; */</i></font>
+	<font color="#008000">&quot;value VARCHAR(1024))&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;INSERT INTO settings (key_, value) VALUES ('schema', '1')&quot;</font>
+
+<font color="#008b8b"><i>/*
+ * All items (keys, tokens, requests, certs, crls, templates)
+ * are stored here with the primary key and some common data
+ * The other tables containing the details reference the &quot;id&quot;
+ * as FOREIGN KEY.
+ */</i></font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE TABLE items(&quot;</font>
+	<font color="#008000">&quot;id INTEGER PRIMARY KEY, &quot;</font>
+	<font color="#008000">&quot;name VARCHAR(128), &quot;</font>	<font color="#008b8b"><i>/* Internal name of the item */</i></font>
+	<font color="#008000">&quot;type INTEGER, &quot;</font>	<font color="#008b8b"><i>/* enum pki_type */</i></font>
+	<font color="#008000">&quot;source INTEGER, &quot;</font>	<font color="#008b8b"><i>/* enum pki_source */</i></font>
+	<font color="#008000">&quot;date &quot;</font> <font color="#2040a0">DB_DATE</font> <font color="#008000">&quot;, &quot;</font>	<font color="#008b8b"><i>/* Time of insertion (creation/import) */</i></font>
+	<font color="#008000">&quot;comment VARCHAR(2048))&quot;</font>
+
+<font color="#008b8b"><i>/*
+ * Storage of public keys. Private keys and tokens also store
+ * their public part here.
+ */</i></font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE TABLE public_keys (&quot;</font>
+	<font color="#008000">&quot;item INTEGER, &quot;</font>	<font color="#008b8b"><i>/* reference to items(id) */</i></font>
+	<font color="#008000">&quot;type CHAR(4), &quot;</font>	<font color="#008b8b"><i>/* RSA DSA EC (as text) */</i></font>
+	<font color="#008000">&quot;hash INTEGER, &quot;</font>	<font color="#008b8b"><i>/* 32 bit hash */</i></font>
+	<font color="#008000">&quot;len INTEGER, &quot;</font>		<font color="#008b8b"><i>/* key size in bits */</i></font>
+	<font color="#008000">&quot;public &quot;</font> <font color="#2040a0">B64_BLOB</font> <font color="#008000">&quot;, &quot;</font>	<font color="#008b8b"><i>/* B64(DER(public key)) */</i></font>
+	<font color="#008000">&quot;FOREIGN KEY (item) REFERENCES items (id))&quot;</font>
+
+<font color="#008b8b"><i>/*
+ * The private part of RSA, DSA, EC keys.
+ * references to &quot;items&quot; and &quot;public_keys&quot;
+ */</i></font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE TABLE private_keys (&quot;</font>
+	<font color="#008000">&quot;item INTEGER, &quot;</font>	<font color="#008b8b"><i>/* reference to items(id) */</i></font>
+	<font color="#008000">&quot;ownPass INTEGER, &quot;</font>	<font color="#008b8b"><i>/* Encrypted by DB pwd or own pwd */</i></font>
+	<font color="#008000">&quot;private &quot;</font> <font color="#2040a0">B64_BLOB</font> <font color="#008000">&quot;, &quot;</font>	<font color="#008b8b"><i>/* B64(Encrypt(DER(private key))) */</i></font>
+	<font color="#008000">&quot;FOREIGN KEY (item) REFERENCES items (id))&quot;</font>
+
+<font color="#008b8b"><i>/*
+ * Smart cards or other PKCS#11 tokens
+ * references to &quot;items&quot; and &quot;public_keys&quot;
+ */</i></font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE TABLE tokens (&quot;</font>
+	<font color="#008000">&quot;item INTEGER, &quot;</font>	<font color="#008b8b"><i>/* reference to items(id) */</i></font>
+	<font color="#008000">&quot;card_manufacturer VARCHAR(64), &quot;</font> <font color="#008b8b"><i>/* Card location data */</i></font>
+	<font color="#008000">&quot;card_serial VARCHAR(64), &quot;</font>	  <font color="#008b8b"><i>/* as text */</i></font>
+	<font color="#008000">&quot;card_model VARCHAR(64), &quot;</font>
+	<font color="#008000">&quot;card_label VARCHAR(64), &quot;</font>
+	<font color="#008000">&quot;slot_label VARCHAR(64), &quot;</font>
+	<font color="#008000">&quot;object_id VARCHAR(64), &quot;</font>	  <font color="#008b8b"><i>/* Unique ID on the token */</i></font>
+	<font color="#008000">&quot;FOREIGN KEY (item) REFERENCES items (id))&quot;</font>
+
+<font color="#008b8b"><i>/*
+ * Encryption and hash mechanisms supported by a token
+ */</i></font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE TABLE token_mechanism (&quot;</font>
+	<font color="#008000">&quot;item INTEGER, &quot;</font>	<font color="#008b8b"><i>/* reference to items(id) */</i></font>
+	<font color="#008000">&quot;mechanism INTEGER, &quot;</font>	<font color="#008b8b"><i>/* PKCS#11: CK_MECHANISM_TYPE */</i></font>
+	<font color="#008000">&quot;FOREIGN KEY (item) REFERENCES items (id))&quot;</font>
+
+<font color="#008b8b"><i>/*
+ * An X509 Super class, consisting of a
+ *  - Distinguishd name hash
+ *  - Referenced key in the database
+ *  - hash of the public key, used for lookups if there
+ *    is no key to reference
+ * used by Requests and certificates and the use-counter of keys:
+ * &quot;SELECT from x509super WHERE pkey=?&quot;
+ */</i></font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE TABLE x509super (&quot;</font>
+	<font color="#008000">&quot;item INTEGER, &quot;</font>	<font color="#008b8b"><i>/* reference to items(id) */</i></font>
+	<font color="#008000">&quot;subj_hash INTEGER, &quot;</font>	<font color="#008b8b"><i>/* 32 bit hash of the Distinguished name */</i></font>
+	<font color="#008000">&quot;pkey INTEGER, &quot;</font>	<font color="#008b8b"><i>/* reference to the key items(id) */</i></font>
+	<font color="#008000">&quot;key_hash INTEGER, &quot;</font>	<font color="#008b8b"><i>/* 32 bit hash of the public key */</i></font>
+	<font color="#008000">&quot;FOREIGN KEY (item) REFERENCES items (id), &quot;</font>
+	<font color="#008000">&quot;FOREIGN KEY (pkey) REFERENCES items (id)) &quot;</font>
+
+<font color="#008b8b"><i>/*
+ * PKCS#10 Certificate request details
+ * also takes information from the &quot;x509super&quot; table.
+ */</i></font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE TABLE requests (&quot;</font>
+	<font color="#008000">&quot;item INTEGER, &quot;</font>	<font color="#008b8b"><i>/* reference to items(id) */</i></font>
+	<font color="#008000">&quot;hash INTEGER, &quot;</font>	<font color="#008b8b"><i>/* 32 bit hash of the request */</i></font>
+	<font color="#008000">&quot;signed INTEGER, &quot;</font>	<font color="#008b8b"><i>/* Whether it was once signed. */</i></font>
+	<font color="#008000">&quot;request &quot;</font> <font color="#2040a0">B64_BLOB</font> <font color="#008000">&quot;, &quot;</font>	<font color="#008b8b"><i>/* B64(DER(PKCS#10 request)) */</i></font>
+	<font color="#008000">&quot;FOREIGN KEY (item) REFERENCES items (id)) &quot;</font>
+
+<font color="#008b8b"><i>/*
+ * X509 certificate details
+ * also takes information from the &quot;x509super&quot; table.
+ * The content of the columns: hash, iss_hash, serial, ca
+ * can also be retrieved directly from the certificate, but are good
+ * to lurk around for faster lookup
+ */</i></font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE TABLE certs (&quot;</font>
+	<font color="#008000">&quot;item INTEGER, &quot;</font>	<font color="#008b8b"><i>/* reference to items(id) */</i></font>
+	<font color="#008000">&quot;hash INTEGER, &quot;</font>	<font color="#008b8b"><i>/* 32 bit hash of the cert */</i></font>
+	<font color="#008000">&quot;iss_hash INTEGER, &quot;</font>	<font color="#008b8b"><i>/* 32 bit hash of the issuer DN */</i></font>
+	<font color="#008000">&quot;serial VARCHAR(64), &quot;</font>	<font color="#008b8b"><i>/* Serial number of the certificate */</i></font>
+	<font color="#008000">&quot;issuer INTEGER, &quot;</font>	<font color="#008b8b"><i>/* The items(id) of the issuer or NULL */</i></font>
+	<font color="#008000">&quot;ca INTEGER, &quot;</font>		<font color="#008b8b"><i>/* CA: yes / no from BasicConstraints */</i></font>
+	<font color="#008000">&quot;cert &quot;</font> <font color="#2040a0">B64_BLOB</font> <font color="#008000">&quot;, &quot;</font>	<font color="#008b8b"><i>/* B64(DER(certificate)) */</i></font>
+	<font color="#008000">&quot;FOREIGN KEY (item) REFERENCES items (id), &quot;</font>
+	<font color="#008000">&quot;FOREIGN KEY (issuer) REFERENCES items (id)) &quot;</font>
+
+<font color="#008b8b"><i>/*
+ * X509 cartificate Authority data
+ */</i></font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE TABLE authority (&quot;</font>
+	<font color="#008000">&quot;item INTEGER, &quot;</font>	<font color="#008b8b"><i>/* reference to items(id) */</i></font>
+	<font color="#008000">&quot;template INTEGER, &quot;</font>	<font color="#008b8b"><i>/* reference to items(id) of the default template*/</i></font>
+	<font color="#008000">&quot;crlExpire &quot;</font> <font color="#2040a0">DB_DATE</font> <font color="#008000">&quot;, &quot;</font>	<font color="#008b8b"><i>/* CRL expiry date */</i></font>
+	<font color="#008000">&quot;crlNo INTEGER, &quot;</font>	<font color="#008b8b"><i>/* Last CRL Number */</i></font>
+	<font color="#008000">&quot;crlDays INTEGER, &quot;</font>	<font color="#008b8b"><i>/* CRL days until renewal */</i></font>
+	<font color="#008000">&quot;dnPolicy VARCHAR(1024), &quot;</font>	<font color="#008b8b"><i>/* DistinguishedName policy (UNUSED) */</i></font>
+	<font color="#008000">&quot;FOREIGN KEY (item) REFERENCES items (id), &quot;</font>
+	<font color="#008000">&quot;FOREIGN KEY (template) REFERENCES items (id)) &quot;</font>
+
+<font color="#008b8b"><i>/*
+ * Storage of CRLs
+ */</i></font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE TABLE crls (&quot;</font>
+	<font color="#008000">&quot;item INTEGER, &quot;</font>	<font color="#008b8b"><i>/* reference to items(id) */</i></font>
+	<font color="#008000">&quot;hash INTEGER, &quot;</font>	<font color="#008b8b"><i>/* 32 bit hash of the CRL */</i></font>
+	<font color="#008000">&quot;num INTEGER, &quot;</font>		<font color="#008b8b"><i>/* Number of revoked certificates */</i></font>
+	<font color="#008000">&quot;iss_hash INTEGER, &quot;</font>	<font color="#008b8b"><i>/* 32 bit hash of the issuer DN */</i></font>
+	<font color="#008000">&quot;issuer INTEGER, &quot;</font>	<font color="#008b8b"><i>/* The items(id) of the issuer or NULL */</i></font>
+	<font color="#008000">&quot;crl &quot;</font> <font color="#2040a0">B64_BLOB</font> <font color="#008000">&quot;, &quot;</font>	<font color="#008b8b"><i>/* B64(DER(revocation list)) */</i></font>
+	<font color="#008000">&quot;FOREIGN KEY (item) REFERENCES items (id), &quot;</font>
+	<font color="#008000">&quot;FOREIGN KEY (issuer) REFERENCES items (id)) &quot;</font>
+
+<font color="#008b8b"><i>/*
+ * Revocations (serial, date, reason, issuer) used to create new
+ * CRLs. &quot;Manage revocations&quot;
+ */</i></font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE TABLE revocations (&quot;</font>
+	<font color="#008000">&quot;caId INTEGER, &quot;</font>        <font color="#008b8b"><i>/* reference to certs(item) */</i></font>
+	<font color="#008000">&quot;serial VARCHAR(64), &quot;</font>	<font color="#008b8b"><i>/* Serial number of the revoked certificate */</i></font>
+	<font color="#008000">&quot;date &quot;</font> <font color="#2040a0">DB_DATE</font> <font color="#008000">&quot;, &quot;</font>	<font color="#008b8b"><i>/* Time of creating the revocation */</i></font>
+	<font color="#008000">&quot;invaldate &quot;</font> <font color="#2040a0">DB_DATE</font> <font color="#008000">&quot;, &quot;</font>	<font color="#008b8b"><i>/* Time of invalidation */</i></font>
+	<font color="#008000">&quot;crlNo INTEGER, &quot;</font>	<font color="#008b8b"><i>/* Crl Number of CRL of first appearance */</i></font>
+	<font color="#008000">&quot;reasonBit INTEGER, &quot;</font>	<font color="#008b8b"><i>/* Bit number of the revocation reason */</i></font>
+	<font color="#008000">&quot;FOREIGN KEY (caId) REFERENCES items (id))&quot;</font>
+
+<font color="#008b8b"><i>/*
+ * Templates
+ */</i></font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE TABLE templates (&quot;</font>
+	<font color="#008000">&quot;item INTEGER, &quot;</font>        <font color="#008b8b"><i>/* reference to items(id) */</i></font>
+	<font color="#008000">&quot;version INTEGER, &quot;</font>	<font color="#008b8b"><i>/* Version of the template format */</i></font>
+	<font color="#008000">&quot;template &quot;</font> <font color="#2040a0">B64_BLOB</font> <font color="#008000">&quot;, &quot;</font>	<font color="#008b8b"><i>/* The base64 encoded template */</i></font>
+	<font color="#008000">&quot;FOREIGN KEY (item) REFERENCES items (id))&quot;</font>
+
+	<font color="4444FF">;</font>
+<font color="#008b8b"><i>/* Schema Version 2: Views added to quickly load the data */</i></font>
+	<font color="#2040a0">schemas</font><font color="4444FF">[</font><font color="#FF0000">1</font><font color="4444FF">]</font>
+
+<font color="#008b8b"><i>/* Views */</i></font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE VIEW view_public_keys AS SELECT &quot;</font>
+	<font color="#008000">&quot;items.id, items.name, items.type AS item_type, items.date, &quot;</font>
+	<font color="#008000">&quot;items.source, items.comment, &quot;</font>
+	<font color="#008000">&quot;public_keys.type as key_type, public_keys.len, public_keys.public, &quot;</font>
+	<font color="#008000">&quot;private_keys.ownPass, &quot;</font>
+	<font color="#008000">&quot;tokens.card_manufacturer, tokens.card_serial, tokens.card_model, &quot;</font>
+	<font color="#008000">&quot;tokens.card_label, tokens.slot_label, tokens.object_id &quot;</font>
+	<font color="#008000">&quot;FROM public_keys LEFT JOIN items ON public_keys.item = items.id &quot;</font>
+	<font color="#008000">&quot;LEFT JOIN private_keys ON private_keys.item = public_keys.item &quot;</font>
+	<font color="#008000">&quot;LEFT JOIN tokens ON public_keys.item = tokens.item&quot;</font>
+
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE VIEW view_certs AS SELECT &quot;</font>
+	<font color="#008000">&quot;items.id, items.name, items.type, items.date AS item_date, &quot;</font>
+	<font color="#008000">&quot;items.source, items.comment, &quot;</font>
+	<font color="#008000">&quot;x509super.pkey, &quot;</font>
+	<font color="#008000">&quot;certs.serial AS certs_serial, certs.issuer, certs.ca, certs.cert, &quot;</font>
+	<font color="#008000">&quot;authority.template, authority.crlExpire, &quot;</font>
+	<font color="#008000">&quot;authority.crlNo AS auth_crlno, authority.crlDays, authority.dnPolicy, &quot;</font>
+	<font color="#008000">&quot;revocations.serial, revocations.date, revocations.invaldate, &quot;</font>
+	<font color="#008000">&quot;revocations.crlNo, revocations.reasonBit &quot;</font>
+	<font color="#008000">&quot;FROM certs LEFT JOIN items ON certs.item = items.id &quot;</font>
+	<font color="#008000">&quot;LEFT JOIN x509super ON x509super.item = certs.item &quot;</font>
+	<font color="#008000">&quot;LEFT JOIN authority ON authority.item = certs.item &quot;</font>
+	<font color="#008000">&quot;LEFT JOIN revocations ON revocations.caId = certs.issuer &quot;</font>
+				<font color="#008000">&quot;AND revocations.serial = certs.serial&quot;</font>
+
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE VIEW view_requests AS SELECT &quot;</font>
+	<font color="#008000">&quot;items.id, items.name, items.type, items.date, &quot;</font>
+	<font color="#008000">&quot;items.source, items.comment, &quot;</font>
+	<font color="#008000">&quot;x509super.pkey, &quot;</font>
+	<font color="#008000">&quot;requests.request, requests.signed &quot;</font>
+	<font color="#008000">&quot;FROM requests LEFT JOIN items ON requests.item = items.id &quot;</font>
+	<font color="#008000">&quot;LEFT JOIN x509super ON x509super.item = requests.item&quot;</font>
+
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE VIEW view_crls AS SELECT &quot;</font>
+	<font color="#008000">&quot;items.id, items.name, items.type, items.date, &quot;</font>
+	<font color="#008000">&quot;items.source, items.comment, &quot;</font>
+	<font color="#008000">&quot;crls.num, crls.issuer, crls.crl &quot;</font>
+	<font color="#008000">&quot;FROM crls LEFT JOIN items ON crls.item = items.id &quot;</font>
+
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE VIEW view_templates AS SELECT &quot;</font>
+	<font color="#008000">&quot;items.id, items.name, items.type, items.date, &quot;</font>
+	<font color="#008000">&quot;items.source, items.comment, &quot;</font>
+	<font color="#008000">&quot;templates.version, templates.template &quot;</font>
+	<font color="#008000">&quot;FROM templates LEFT JOIN items ON templates.item = items.id&quot;</font>
+
+
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;UPDATE settings SET value='2' WHERE key_='schema'&quot;</font>
+
+	<font color="4444FF">;</font>
+<font color="#008b8b"><i>/* Schema Version 3: Add indexes over hashes and primary, foreign keys */</i></font>
+	<font color="#2040a0">schemas</font><font color="4444FF">[</font><font color="#FF0000">2</font><font color="4444FF">]</font>
+
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_settings_key_ ON settings (key_)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_items_id ON items (id)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_public_keys_item ON public_keys (item)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_public_keys_hash ON public_keys (hash)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_private_keys_item ON private_keys (item)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_tokens_item ON tokens (item)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_token_mechanism_item ON token_mechanism (item)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_x509super_item ON x509super (item)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_x509super_subj_hash ON x509super (subj_hash)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_x509super_key_hash ON x509super (key_hash)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_x509super_pkey ON x509super (pkey)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_requests_item ON requests (item)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_requests_hash ON requests (hash)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_certs_item ON certs (item)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_certs_hash ON certs (hash)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_certs_iss_hash ON certs (iss_hash)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_certs_serial ON certs (serial)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_certs_issuer ON certs (issuer)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_certs_ca ON certs (ca)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_authority_item ON authority (item)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_crls_item ON crls (item)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_crls_hash ON crls (hash)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_crls_iss_hash ON crls (iss_hash)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_crls_issuer ON crls (issuer)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_revocations_caId_serial ON revocations (caId, serial)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_templates_item ON templates (item)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;UPDATE settings SET value='3' WHERE key_='schema'&quot;</font>
+
+	<font color="4444FF">;</font>
+<font color="#008b8b"><i>/* Schema Version 4: Add private key view to extract a private key with:
+	mysql:      mysql -sNp -u xca xca_msq -e
+	or sqlite:  sqlite3 ~/sqlxdb.xdb
+	or psql:    psql -t -h 192.168.140.7 -U xca -d xca_pg -c
+		&quot;SELECT private FROM view_private WHERE name='pk8key';&quot; |\
+		base64 -d | openssl pkcs8 -inform DER
+ * First mysql/psql will ask for a password and then OpenSSL will ask for
+ * the database password.
+ */</i></font>
+	<font color="#2040a0">schemas</font><font color="4444FF">[</font><font color="#FF0000">3</font><font color="4444FF">]</font>
+
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE VIEW view_private AS SELECT &quot;</font>
+	<font color="#008000">&quot;name, private FROM private_keys JOIN items ON &quot;</font>
+	<font color="#008000">&quot;items.id = private_keys.item&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;UPDATE settings SET value='4' WHERE key_='schema'&quot;</font>
+	<font color="4444FF">;</font>
+
+	<font color="#2040a0">schemas</font><font color="4444FF">[</font><font color="#FF0000">4</font><font color="4444FF">]</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;ALTER TABLE items ADD stamp INTEGER NOT NULL DEFAULT 0&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE INDEX i_items_stamp ON items (stamp)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;UPDATE settings SET value='5' WHERE key_='schema'&quot;</font>
+	<font color="4444FF">;</font>
+
+<font color="#008b8b"><i>/* Extend settings value size from 1024 to B64_BLOB
+ * SQLite does not support &quot;ALTER TABLE settings MODIFY ...&quot;
+ */</i></font>
+	<font color="#2040a0">schemas</font><font color="4444FF">[</font><font color="#FF0000">5</font><font color="4444FF">]</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;ALTER TABLE settings RENAME TO __settings&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;CREATE TABLE settings (&quot;</font>
+	<font color="#008000">&quot;key_ CHAR(20) UNIQUE, &quot;</font> <font color="#008b8b"><i>/* mySql does not like &quot;key&quot; or &quot;option&quot; */</i></font>
+	<font color="#008000">&quot;value &quot;</font> <font color="#2040a0">B64_BLOB</font> <font color="#008000">&quot;)&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;INSERT INTO settings(key_, value) &quot;</font>
+	<font color="#008000">&quot;SELECT key_, value &quot;</font>
+	<font color="#008000">&quot;FROM __settings&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;DROP TABLE __settings&quot;</font>
+<font color="4444FF">&lt;</font><font color="4444FF">&lt;</font> <font color="#008000">&quot;UPDATE settings SET value='6' WHERE key_='schema'&quot;</font>
+	<font color="4444FF">;</font>
+
+<font color="#008b8b"><i>/* When adding new tables or views, also add them to the list
+ * in XSqlQuery::rewriteQuery(QString) in lib/sql.cpp
+ */</i></font>
+
+</pre>
+<hr>
+syntax highlighted by <a href="http://www.palfrader.org/code2html">Code2HTML</a>, v. 0.9.1
+</body>
+</html>

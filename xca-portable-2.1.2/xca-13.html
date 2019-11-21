@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="LinuxDoc-Tools 0.9.72">
+ <TITLE>XCA - X Certificate and key management: Object IDs</TITLE>
+ <LINK HREF="xca-14.html" REL=next>
+ <LINK HREF="xca-12.html" REL=previous>
+ <LINK HREF="xca.html#toc13" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="xca-14.html">Next</A>
+<A HREF="xca-12.html">Previous</A>
+<A HREF="xca.html#toc13">Contents</A>
+<HR>
+<H2><A NAME="objectids"></A> <A NAME="s13">13.</A> <A HREF="xca.html#toc13">Object IDs</A></H2>
+
+
+<P>Private Object IDs and OID lists for the distinguished name or extended key
+usage can be added in files listed below.
+The files are:</P>
+<P>
+<UL>
+<LI><B>oids.txt</B> additional Object IDs</LI>
+<LI><B>eku.txt</B> Content of <CODE>ExtendedKeyUsage</CODE></LI>
+<LI><B>dn.txt</B> Content of <CODE>DistinguishedName</CODE></LI>
+</UL>
+</P>
+<P>The search path for all the files is listed below.
+All files except <EM>oids.txt</EM> are searched in the order listed below
+and search stops at the first file found.
+The <EM>oids.txt</EM> file is searched in reversed order and all
+<EM>oids.txt</EM> files found are loaded.</P>
+
+
+<P><B>Unix</B></P>
+<P>
+<UL>
+<LI>$HOME/.xca/</LI>
+<LI>/etc/xca/</LI>
+<LI>PREFIX/share/xca/ <BR>PREFIX is usually /usr or /usr/local</LI>
+</UL>
+</P>
+
+
+<P><B>Windows</B></P>
+<P>
+<UL>
+<LI>CSIDL_APPDATA\xca, which is something like<BR>
+C:\Documents and Settings\username\Application Data\xca<BR>
+or C:\Users\username\AppData\Roaming\xca</LI>
+<LI>Installation directory <BR>e.g.: C:\Programs\xca</LI>
+</UL>
+</P>
+
+
+<P><B>MacOSX</B></P>
+<P>
+<UL>
+<LI>$HOME/Library/Application Support/data/xca</LI>
+<LI>/Applications/xca.app/Resources</LI>
+</UL>
+</P>
+<P>The path of the user settings directory depends on the
+operating system and version.
+The path where XCA looks for this file is shown in the
+<CODE>About</CODE> dialog of XCA as <CODE>User settings path</CODE>.</P>
+
+
+
+<H2><A NAME="new_oids"></A> <A NAME="ss13.1">13.1</A> <A HREF="xca.html#toc13.1">New OIDs </A>
+</H2>
+
+<P>All Object IDs that are not official, but belong to your company
+or organisation can be added in the file <CODE>oids.txt</CODE>.
+All possible locations for this file are searched and all <CODE>oids.txt</CODE> files
+found are loaded. This way the application-installer adds
+some in /usr/share/xca, the Administrator in /etc/xca and the user in
+$HOME/.xca. The format of this file is:<BR>
+<B>OID</B>:<B>shortname</B>:<B>longname</B><BR>
+Leading and trailing spaces between the colons and the text are ignored.
+Lines starting with a <B>#</B> are ignored.</P>
+
+
+
+<H2><A NAME="ss13.2">13.2</A> <A HREF="xca.html#toc13.2">OID lists</A>
+</H2>
+
+
+<P>The files containing OID lists (<CODE>eku.txt, dn.txt</CODE>)
+are handled in a different way, only the first one found is used.
+The format of this files is one entry per line. The entry can be either the
+numerical OID like <CODE>1.3.6.1.5.5.8.2.2</CODE>, the short name like
+<CODE>iKEIntermediate</CODE> or the long name <CODE>IP security end entity</CODE>.
+Lines starting with a <B>#</B> are ignored.
+If this files shall contain new in-official OIDs, they must be also mentioned
+in one of the <CODE>oids.txt</CODE> files.</P>
+
+
+
+<H2><A NAME="ss13.3">13.3</A> <A HREF="xca.html#toc13.3">Adding your company specific Subject entry</A>
+</H2>
+
+
+<P>If you want to / need to add your own company specific subject
+entry to your certificate it can be done without recompiling XCA.</P>
+<P>
+<OL>
+<LI>Add its OID with short name and long name to one
+of the <CODE>oids.txt</CODE> file listed in 
+<A HREF="#new_oids">New OIDs</A> like:<BR>
+<CODE>1.3.6.1.4.1.12345.1: zodiacSign: Zodiac Sign</CODE></LI>
+<LI>Add the OID, short name or long name to the first read <CODE>dn.txt</CODE>
+On Linux: <CODE>cp /usr/share/xca/dn.txt ~/.xca/dn.txt &amp;&amp; echo "zodiacSign" >> ~/.xca/dn.txt</CODE></LI>
+<LI>Start XCA, open your database and goto <CODE>Options->Distinguished name</CODE>. In the <CODE>Explicit subject entries</CODE> select <CODE>Zodiac Sign</CODE>, click <CODE>Add</CODE>, move it by dragging it in the list and click OK when satisfied.</LI>
+<LI>Create a new certificate and see.</LI>
+</OL>
+</P>
+
+<HR>
+<A HREF="xca-14.html">Next</A>
+<A HREF="xca-12.html">Previous</A>
+<A HREF="xca.html#toc13">Contents</A>
+</BODY>
+</HTML>
