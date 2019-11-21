@@ -1,10 +1,6 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Diagnostics.Tracing.Session;
 using Microsoft.Extensions.Hosting;
 
@@ -29,6 +25,18 @@ namespace EtwEvents.Server
                     webBuilder.UseStartup<Startup>();
                     webBuilder.ConfigureKestrel((context, options) => {
                         options.Limits.MinRequestBodyDataRate = null;
+                        //options.ConfigureHttpsDefaults(o => o.ClientCertificateMode = ClientCertificateMode.AllowCertificate);
+                        options.ConfigureHttpsDefaults(opts => {
+                            opts.ClientCertificateMode = ClientCertificateMode.RequireCertificate;
+                            opts.ClientCertificateValidation = (cert, chain, errors) => {
+                                var thumbprint = context.Configuration["ClientValidation:RootCertificateThumbprint"];
+                                foreach (var chainElement in chain.ChainElements) {
+                                    if (chainElement.Certificate.Thumbprint.ToLowerInvariant() == thumbprint.ToLowerInvariant())
+                                        return true;
+                                }
+                                return false;
+                            };
+                        });
                     });
                 });
     }
