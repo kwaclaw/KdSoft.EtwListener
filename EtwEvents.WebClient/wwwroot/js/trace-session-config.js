@@ -247,7 +247,10 @@ class TraceSessionConfig extends LitMvvmElement {
           <section id="general" class="${this._sectionActive('general')}">
             <fieldset>
               <label for="name">Name</label>
-              <input id="name" name="name" type="text" required class="form-input" .value=${this.model.name} />
+              <div class="flex flex-col">
+                <input id="name" name="name" type="text" required class="form-input" .value=${this.model.name} />
+                <span class="text-gray-600 text-sm italic">Modifying the name creates a clone of the current profile.</span>
+              </div>
             </fieldset>
             <fieldset>
               <label for="host">Host</label>
