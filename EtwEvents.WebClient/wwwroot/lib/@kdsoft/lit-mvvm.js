@@ -192,8 +192,9 @@ class LitMvvmElement extends LitBaseElement {
   set model(value) {
     const oldModel = _model.get(this);
     _model.set(this, value);
-    if (oldModel !== value) {
-      // need to re-initialize rendering for a new model, old observers are now useless
+    // need to re-initialize rendering for a new model when we are already connected;
+    // old observers are now useless, and connectedCallback might not get called anymore
+    if (oldModel !== value && this.isConnected) {
       this._initialRender();
     }
   }

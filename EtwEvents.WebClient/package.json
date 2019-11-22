@@ -11,7 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@kdsoft/lit-mvvm": "^0.9.93",
+    "@kdsoft/lit-mvvm": "^0.9.94",
     "@nx-js/observer-util": "4.2.2",
     "@nx-js/queue-util": "1.1.1",
     "lit-html": "1.1.2",
