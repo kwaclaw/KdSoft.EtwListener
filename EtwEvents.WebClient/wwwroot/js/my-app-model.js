@@ -40,8 +40,10 @@ class MyAppModel {
   }
 
   async openSessionFromSelectedProfile() {
-    const profile = utils.first(this.profileCheckListModel.selectedEntries).item;
-    if (!profile) return;
+    const profileEntry = utils.first(this.profileCheckListModel.selectedEntries);
+    if (!profileEntry) return;
+
+    const profile = profileEntry.item;
 
     if (this.traceSessions.has(profile.name)) return;
 
@@ -68,8 +70,8 @@ class MyAppModel {
   }
 
   getConfigModelFromSelectedProfile() {
-    const profile = utils.first(this.profileCheckListModel.selectedEntries).item;
-    if (!profile) return null;
+    const profileEntry = utils.first(this.profileCheckListModel.selectedEntries);
+    const profile = profileEntry ? profileEntry.item : new TraceSessionProfile('New Profile');
     return new TraceSessionConfigModel(profile);
   }
 
