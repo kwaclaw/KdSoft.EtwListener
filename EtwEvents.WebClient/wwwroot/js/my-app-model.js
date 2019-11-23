@@ -35,8 +35,9 @@ class MyAppModel {
     sessionProfiles.sort((x, y) => String.prototype.localeCompare.call(x.name, y.name));
     let selectIndex = sessionProfiles.findIndex(p => p.name === selectName);
     if (selectIndex < 0) selectIndex = 0;
+    const selectedIndexes = sessionProfiles.length > 0 ? [selectIndex] : [];
 
-    this.profileCheckListModel = new KdSoftCheckListModel(sessionProfiles, [selectIndex], false);
+    this.profileCheckListModel = new KdSoftCheckListModel(sessionProfiles, selectedIndexes, false);
   }
 
   async openSessionFromSelectedProfile() {
