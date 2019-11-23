@@ -9,6 +9,9 @@ using Grpc.Core;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Grpc.Net.Client;
+using System.Net.Http;
+using System.Security.Cryptography.X509Certificates;
 
 namespace EtwEvents.WebClient
 {
@@ -25,7 +28,7 @@ namespace EtwEvents.WebClient
 
     public sealed class TraceSession: IAsyncDisposable, IDisposable
     {
-        readonly Channel _channel;
+        readonly GrpcChannel _channel;
         readonly EtwListener.EtwListenerClient _etwClient;
         readonly ILogger<TraceSession> _logger;
         EventSession? _eventSession;
@@ -36,7 +39,7 @@ namespace EtwEvents.WebClient
             string name,
             List<string> enabledProviders,
             List<string> restartedProviders,
-            Channel channel,
+            GrpcChannel channel,
             EtwListener.EtwListenerClient etwClient,
             ILogger<TraceSession> logger
         ) {
@@ -55,12 +58,20 @@ namespace EtwEvents.WebClient
         public static async Task<TraceSession> Create(
             string name,
             string host,
-            ChannelCredentials credentials,
+            X509Certificate2 clientCertificate,
             IReadOnlyList<ProviderSetting> providers,
             Duration lifeTime,
             ILogger<TraceSession> logger
         ) {
-            var channel = new Channel(host, credentials);
+#pragma warning disable CA2000 // Dispose objects before losing scope
+            var handler = new HttpClientHandler();
+#pragma warning restore CA2000 // Dispose objects before losing scope
+            handler.ClientCertificates.Add(clientCertificate);
+            var channel = GrpcChannel.ForAddress(host, new GrpcChannelOptions {
+                HttpClient = new HttpClient(handler, true),
+                DisposeHttpClient = true
+            });
+
             try {
                 var client = new EtwListener.EtwListenerClient(channel);
 
@@ -78,7 +89,7 @@ namespace EtwEvents.WebClient
                 return new TraceSession(name, enabledProviders, restartedProviders, channel, client, logger);
             }
             catch {
-                await channel.ShutdownAsync().ConfigureAwait(false);
+                channel.Dispose();
                 throw;
             }
         }
@@ -162,7 +173,7 @@ namespace EtwEvents.WebClient
                 await StopEvents().ConfigureAwait(false);
             }
             finally {
-                await _channel.ShutdownAsync().ConfigureAwait(false);
+                _channel.Dispose();
             }
         }
 

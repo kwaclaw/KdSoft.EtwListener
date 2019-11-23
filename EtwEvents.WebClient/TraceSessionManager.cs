@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
-using Grpc.Core;
 using KdSoft.EtwLogging;
 using KdSoft.Utils;
 using Microsoft.Extensions.Configuration;
@@ -28,7 +28,7 @@ namespace EtwEvents.WebClient
         public Task<TraceSession> OpenSession(
             string name,
             string host,
-            ChannelCredentials credentials,
+            X509Certificate2 clientCertificate,
             IReadOnlyList<ProviderSetting> providers,
             Duration lifeTime
         ) {
@@ -36,7 +36,7 @@ namespace EtwEvents.WebClient
             //       if this is a problem then we need to use Lazy<T> instead.
             var entry = this.GetOrAdd(name, sessionName => {
                 var sessionLogger = _loggerFactory.CreateLogger<TraceSession>();
-                var createTask = TraceSession.Create(sessionName, host, credentials, providers, lifeTime, sessionLogger);
+                var createTask = TraceSession.Create(sessionName, host, clientCertificate, providers, lifeTime, sessionLogger);
                 var checkedTask = createTask.ContinueWith(ct => {
                     if (!ct.IsCompletedSuccessfully) {
                         _ = this.TryRemove(sessionName, out var failedEntry);

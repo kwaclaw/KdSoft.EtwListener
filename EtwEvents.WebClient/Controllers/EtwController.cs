@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using EtwEvents.WebClient.Models;
 using Google.Protobuf.WellKnownTypes;
@@ -20,13 +21,31 @@ namespace EtwEvents.WebClient
             this._optionsMonitor = optionsMonitor;
         }
 
+        //const string _certPath = @"D:\PlayPen\EtwListener";
+
         [HttpPost]
         public async Task<IActionResult> OpenSession(TraceSessionRequest request) {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
-            var credentials = ChannelCredentials.Insecure;
+
+            //TODO we can get thumbprint from HttpContext.Connection (for local use - web server and browser  on same machine),
+            //     or we can get thumbprint from configuration (when web server is remote), or we can specify cert file+password,
+            // which should be stored with DataProtection
+
+            X509Certificate2 clientCertificate;
+
+            using (var store = new X509Store(StoreLocation.CurrentUser)) {
+                store.Open(OpenFlags.ReadOnly);
+                var certs = store.Certificates.Find(X509FindType.FindByThumbprint, this.HttpContext.Connection.ClientCertificate?.Thumbprint, true);
+                if (certs.Count == 0)
+                    return Problem(title: "Failure to open session", detail: "Cannot find matching client certificate");
+                clientCertificate = certs[0];
+            }
+
+            //var clientCertificate = new X509Certificate2(Path.Combine(_certPath, "karl@waclawek.net.p12"), "schroedinger_2");
+
             try {
-                var session = await _sessionManager.OpenSession(request.Name, request.Host, credentials, request.Providers, request.LifeTime.ToDuration()).ConfigureAwait(false);
+                var session = await _sessionManager.OpenSession(request.Name, request.Host, clientCertificate, request.Providers, request.LifeTime.ToDuration()).ConfigureAwait(false);
                 return Ok(new SessionResult(session.EnabledProviders, session.RestartedProviders));
             }
             catch (Exception ex) {

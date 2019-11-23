@@ -74,7 +74,7 @@ class TraceSession {
     let evs = this._eventSession;
     if (!evs) {
       // scroll bug in Chrome - will not show more than about 1000 items, works fine with FireFox
-      evs = new EventSession(`ws://${window.location.host}/Etw/StartEvents?sessionName=${this.profile.name}`, 900);
+      evs = new EventSession(`wss://${window.location.host}/Etw/StartEvents?sessionName=${this.profile.name}`, 900);
       this._eventSession = evs;
     }
     if (!evs.open) {
