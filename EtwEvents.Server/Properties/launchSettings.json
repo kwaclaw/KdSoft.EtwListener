@@ -3,7 +3,7 @@
     "EtwListenerService": {
       "commandName": "Project",
       "launchBrowser": false,
-      "applicationUrl": "http://localhost:50051",
+      "applicationUrl": "https://localhost:50052",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
