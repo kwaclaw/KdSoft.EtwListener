@@ -26,11 +26,6 @@ class FilterFormModel {
     if (result.success) {
       if (result.details.diagnostics.length === 0) {
         this.postFormData();
-        const evt = new CustomEvent('kdsoft-done', {
-          // composed allows bubbling beyond shadow root
-          bubbles: true, composed: true, cancelable: true, detail: { canceled: false, model: this.model }
-        });
-        this.dispatchEvent(evt);
         return true;
       }
       filterModel.diagnostics = result.details.diagnostics;
