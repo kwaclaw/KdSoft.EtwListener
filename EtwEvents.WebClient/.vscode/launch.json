@@ -19,7 +19,7 @@
                 "action": "openExternally",
                 // "pattern": "^\\s*Now listening on:\\s+(https?://\\S+)" ,
                 "pattern": "^\\s*Now listening on:\\s+https?://\\S+:([0-9]+)" ,
-                "uriFormat": "http://localhost:%s"               
+                "uriFormat": "https://localhost:%s"               
             },
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
