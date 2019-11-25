@@ -34,3 +34,5 @@ packages/
 node_modules/
 wwwroot/css/
 wwwroot/lib
+
+*/publish/
