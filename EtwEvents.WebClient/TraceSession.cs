@@ -55,14 +55,7 @@ namespace EtwEvents.WebClient
         public List<string> EnabledProviders { get; }
         public List<string> RestartedProviders { get; }
 
-        public static async Task<TraceSession> Create(
-            string name,
-            string host,
-            X509Certificate2 clientCertificate,
-            IReadOnlyList<ProviderSetting> providers,
-            Duration lifeTime,
-            ILogger<TraceSession> logger
-        ) {
+        static GrpcChannel CreateChannel(string host, X509Certificate2 clientCertificate) {
 #pragma warning disable CA2000 // Dispose objects before losing scope
             var handler = new HttpClientHandler();
 #pragma warning restore CA2000 // Dispose objects before losing scope
@@ -71,6 +64,18 @@ namespace EtwEvents.WebClient
                 HttpClient = new HttpClient(handler, true),
                 DisposeHttpClient = true
             });
+            return channel;
+        }
+
+        public static async Task<TraceSession> Create(
+            string name,
+            string host,
+            X509Certificate2 clientCertificate,
+            IReadOnlyList<ProviderSetting> providers,
+            Duration lifeTime,
+            ILogger<TraceSession> logger
+        ) {
+            var channel = CreateChannel(host, clientCertificate);
 
             try {
                 var client = new EtwListener.EtwListenerClient(channel);
@@ -155,8 +160,8 @@ namespace EtwEvents.WebClient
             return result;
         }
 
-        public static async Task<BuildFilterResult> TestCSharpFilter(string host, ChannelCredentials credentials, string csharpFilter) {
-            var channel = new Channel(host, credentials);
+        public static async Task<BuildFilterResult> TestCSharpFilter(string host, X509Certificate2 clientCertificate, string csharpFilter) {
+            var channel = CreateChannel(host, clientCertificate);
             try {
                 var client = new EtwListener.EtwListenerClient(channel);
                 var testFilterRequest = new KdSoft.EtwLogging.TestFilterRequest { CsharpFilter = csharpFilter };
@@ -164,7 +169,7 @@ namespace EtwEvents.WebClient
                 return result;
             }
             finally {
-                await channel.ShutdownAsync().ConfigureAwait(false);
+                channel.Dispose();
             }
         }
 

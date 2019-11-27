@@ -21,6 +21,16 @@ namespace EtwEvents.WebClient
             this._optionsMonitor = optionsMonitor;
         }
 
+        static X509Certificate2? GetClientCertificate(string thumbprint) {
+            using (var store = new X509Store(StoreLocation.CurrentUser)) {
+                store.Open(OpenFlags.ReadOnly);
+                var certs = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, true);
+                if (certs.Count == 0)
+                    return null;
+                return certs[0];
+            }
+        }
+
         //const string _certPath = @"D:\PlayPen\EtwListener";
 
         [HttpPost]
@@ -32,15 +42,11 @@ namespace EtwEvents.WebClient
             //     or we can get thumbprint from configuration (when web server is remote), or we can specify cert file+password,
             // which should be stored with DataProtection
 
-            X509Certificate2 clientCertificate;
+            var currentCert = this.HttpContext.Connection.ClientCertificate;
+            var clientCertificate = currentCert != null ? GetClientCertificate(currentCert.Thumbprint) : null;
 
-            using (var store = new X509Store(StoreLocation.CurrentUser)) {
-                store.Open(OpenFlags.ReadOnly);
-                var certs = store.Certificates.Find(X509FindType.FindByThumbprint, this.HttpContext.Connection.ClientCertificate?.Thumbprint, true);
-                if (certs.Count == 0)
-                    return Problem(title: "Failure to open session", detail: "Cannot find matching client certificate");
-                clientCertificate = certs[0];
-            }
+            if (clientCertificate == null)
+                return Problem(title: "Authentication failure", detail: "Cannot find matching client certificate");
 
             //var clientCertificate = new X509Certificate2(Path.Combine(_certPath, "karl@waclawek.net.p12"), "schroedinger_2");
 
@@ -120,12 +126,17 @@ namespace EtwEvents.WebClient
             if (string.IsNullOrWhiteSpace(request.Host))
                 return BadRequest("Host must be specified.");
 
+            var currentCert = this.HttpContext.Connection.ClientCertificate;
+            var clientCertificate = currentCert != null ? GetClientCertificate(currentCert.Thumbprint) : null;
+
+            if (clientCertificate == null)
+                return Problem(title: "Authentication failure", detail: "Cannot find matching client certificate");
+
             string csharpFilter = string.Empty;  // protobuf does not allow nulls
             if (!string.IsNullOrWhiteSpace(request.CSharpFilter)) {
                 csharpFilter = request.CSharpFilter;
             }
-            var credentials = ChannelCredentials.Insecure;
-            var result = await TraceSession.TestCSharpFilter(request.Host, credentials, csharpFilter).ConfigureAwait(false);
+            var result = await TraceSession.TestCSharpFilter(request.Host, clientCertificate, csharpFilter).ConfigureAwait(false);
             return Ok(result);
         }
     }
