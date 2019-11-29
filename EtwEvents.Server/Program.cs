@@ -32,7 +32,7 @@ namespace EtwEvents.Server
                             opts.ClientCertificateValidation = (cert, chain, errors) => {
                                 var thumbprint = context.Configuration["ClientValidation:RootCertificateThumbprint"];
                                 foreach (var chainElement in chain.ChainElements) {
-                                    if (chainElement.Certificate.Thumbprint.ToLowerInvariant() == thumbprint.ToLowerInvariant())
+                                    if (chainElement.Certificate.Thumbprint.ToUpperInvariant() == thumbprint.ToUpperInvariant())
                                         return true;
                                 }
                                 return false;

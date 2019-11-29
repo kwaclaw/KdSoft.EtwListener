@@ -3,12 +3,13 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using EtwEvents.WebClient.Models;
 using Google.Protobuf.WellKnownTypes;
-using Grpc.Core;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
 namespace EtwEvents.WebClient
 {
+    [Authorize]
     [ApiController]
     [Route("[controller]/[action]")]
     public class EtwController: ControllerBase

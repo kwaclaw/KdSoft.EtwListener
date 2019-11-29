@@ -1,17 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Net.WebSockets;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using EtwEvents.WebClient.Models;
 using Google.Protobuf.WellKnownTypes;
-using Grpc.Core;
+using Grpc.Net.Client;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Grpc.Net.Client;
-using System.Net.Http;
-using System.Security.Cryptography.X509Certificates;
 
 namespace EtwEvents.WebClient
 {
