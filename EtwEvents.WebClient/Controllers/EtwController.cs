@@ -16,14 +16,34 @@ namespace EtwEvents.WebClient
     {
         readonly TraceSessionManager _sessionManager;
         readonly IOptionsMonitor<EventSessionOptions> _optionsMonitor;
+        readonly IOptions<ClientCertOptions> _clientCertOptions;
 
-        public EtwController(TraceSessionManager sessionManager, IOptionsMonitor<EventSessionOptions> optionsMonitor) {
+        public EtwController(
+            TraceSessionManager sessionManager,
+            IOptionsMonitor<EventSessionOptions> optionsMonitor,
+            IOptions<ClientCertOptions> clientCertOptions
+        ) {
             this._sessionManager = sessionManager;
             this._optionsMonitor = optionsMonitor;
+            this._clientCertOptions = clientCertOptions;
         }
 
-        static X509Certificate2? GetClientCertificate(string thumbprint) {
-            using (var store = new X509Store(StoreLocation.CurrentUser)) {
+        X509Certificate2? GetClientCertificate() {
+            string thumbprint = "";
+            StoreLocation location = StoreLocation.CurrentUser;
+            var currentCert = this.HttpContext.Connection.ClientCertificate;
+            if (currentCert != null) {
+                thumbprint = currentCert.Thumbprint;
+            }
+            else if (_clientCertOptions.Value.Thumbprint.Length > 0) {
+                thumbprint = _clientCertOptions.Value.Thumbprint;
+                location = _clientCertOptions.Value.Location;
+            }
+
+            if (thumbprint.Length == 0)
+                return null;
+
+            using (var store = new X509Store(location)) {
                 store.Open(OpenFlags.ReadOnly);
                 var certs = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, true);
                 if (certs.Count == 0)
@@ -31,8 +51,6 @@ namespace EtwEvents.WebClient
                 return certs[0];
             }
         }
-
-        //const string _certPath = @"D:\PlayPen\EtwListener";
 
         [HttpPost]
         public async Task<IActionResult> OpenSession(TraceSessionRequest request) {
@@ -42,10 +60,7 @@ namespace EtwEvents.WebClient
             //TODO we can get thumbprint from HttpContext.Connection (for local use - web server and browser  on same machine),
             //     or we can get thumbprint from configuration (when web server is remote), or we can specify cert file+password,
             // which should be stored with DataProtection
-
-            var currentCert = this.HttpContext.Connection.ClientCertificate;
-            var clientCertificate = currentCert != null ? GetClientCertificate(currentCert.Thumbprint) : null;
-
+            var clientCertificate = GetClientCertificate();
             if (clientCertificate == null)
                 return Problem(title: "Authentication failure", detail: "Cannot find matching client certificate");
 
@@ -127,9 +142,7 @@ namespace EtwEvents.WebClient
             if (string.IsNullOrWhiteSpace(request.Host))
                 return BadRequest("Host must be specified.");
 
-            var currentCert = this.HttpContext.Connection.ClientCertificate;
-            var clientCertificate = currentCert != null ? GetClientCertificate(currentCert.Thumbprint) : null;
-
+            var clientCertificate = GetClientCertificate();
             if (clientCertificate == null)
                 return Problem(title: "Authentication failure", detail: "Cannot find matching client certificate");
 

@@ -66,6 +66,7 @@ namespace EtwEvents.WebClient
             });
 
             services.Configure<EventSessionOptions>(Configuration.GetSection("EventSessionOptions"));
+            services.Configure<ClientCertOptions>(Configuration.GetSection("ClientCertificate"));
 
             services.AddSingleton<TraceSessionManager>();
 
