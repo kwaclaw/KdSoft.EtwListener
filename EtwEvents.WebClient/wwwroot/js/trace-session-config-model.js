@@ -65,13 +65,31 @@ class TraceSessionConfigModel extends TraceSessionProfile {
     return result;
   }
 
+  static get traceLevelList() { return observable(traceLevelList.slice(0)); }
+
   cloneAsProfile() {
     const result = utils.cloneObject({}, this);
     Reflect.setPrototypeOf(result, TraceSessionProfile.prototype);
     return result;
   }
 
-  static get traceLevelList() { return observable(traceLevelList.slice(0)); }
+  exportProfile(savePath) {
+    const profileToExport = new TraceSessionProfile();
+    utils.setTargetProperties(profileToExport, this);
+    const profileString = JSON.stringify(profileToExport, null, 2);
+    const profileURL = `data:text/plain,${profileString}`;
+
+    const a = document.createElement('a');
+    try {
+      a.style.display = 'none';
+      a.href = profileURL;
+      a.download = `${savePath || ''}${profileToExport.name}.json`;
+      document.body.appendChild(a);
+      a.click();
+    } finally {
+      document.body.removeChild(a);
+    }
+  }
 }
 
 export default TraceSessionConfigModel;

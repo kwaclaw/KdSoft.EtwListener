@@ -85,6 +85,10 @@ class TraceSessionConfig extends LitMvvmElement {
     this.dispatchEvent(evt);
   }
 
+  _exportProfile(e) {
+    this.model.exportProfile();
+  }
+
   _profileChange(e) {
     e.stopPropagation();
     this.model[e.target.name] = e.target.value;
@@ -203,7 +207,6 @@ class TraceSessionConfig extends LitMvvmElement {
         }
 
         #ok-cancel-buttons {
-          align-self: flex-end;
           margin-top: auto;
         }
 
@@ -307,9 +310,10 @@ class TraceSessionConfig extends LitMvvmElement {
           </section>
         </div>
         <hr class="mb-4" />
-        <div id="ok-cancel-buttons" class="flex flex-wrap justify-end mt-2 bt-1">
-          <button type="button" class="py-1 px-2" @click=${this._apply}><i class="fas fa-lg fa-check text-green-500"></i></button>
-          <button type="button" class="py-1 px-2" @click=${this._cancel}><i class="fas fa-lg fa-times text-red-500"></i></button>
+        <div id="ok-cancel-buttons" class="flex flex-wrap mt-2 bt-1">
+          <button type="button" class="py-1 px-2" @click=${this._exportProfile} title="Import"><i class="fas fa-lg fa-file-import text-gray-600"></i></button>
+          <button type="button" class="py-1 px-2 ml-auto" @click=${this._apply} title="Save"><i class="fas fa-lg fa-check text-green-500"></i></button>
+          <button type="button" class="py-1 px-2" @click=${this._cancel} title="Cancel"><i class="fas fa-lg fa-times text-red-500"></i></button>
         </div>
       </form>
     `;
