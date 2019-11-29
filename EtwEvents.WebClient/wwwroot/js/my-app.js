@@ -128,6 +128,15 @@ class MyApp extends LitMvvmElement {
     dlg.showModal();
   }
 
+  _importProfilesClick(e) {
+    const fileDlg = this.renderRoot.getElementById('import-profiles');
+    fileDlg.click();
+  }
+
+  _importProfilesSelected(e) {
+    this.model.importProfiles(e.currentTarget.files);
+  }
+
   _deleteProfileClick(e, profileName) {
     e.stopPropagation();
     this.model.deleteProfile(profileName);
@@ -276,6 +285,7 @@ class MyApp extends LitMvvmElement {
           </kdsoft-dropdown>
           <button class="px-2 py-1" @click=${this._sessionFromProfileClick}><i class="fas fa-lg fa-wifi text-gray-500"></i></button>
           <button class="px-2 py-1" @click=${this._editProfileClick}><i class="fas fa-lg fa-edit text-gray-500"></i></button>
+          <button class="px-2 py-1" @click=${this._importProfilesClick} title="Import Profiles"><i class="fas fa-lg fa-file-import text-gray-500"></i></button>
 
           <div class="block lg:hidden">
             <button id="nav-toggle" @click=${this._toggleNav}
@@ -313,6 +323,8 @@ class MyApp extends LitMvvmElement {
             </ul>
           </div>
         </nav>
+
+        <input id="import-profiles" type="file" @change=${this._importProfilesSelected} multiple class="hidden"></input>
 
         <!-- Main content -->
         <div class="flex-grow relative">

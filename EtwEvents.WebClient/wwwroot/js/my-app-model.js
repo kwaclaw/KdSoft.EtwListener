@@ -125,7 +125,21 @@ class MyAppModel {
     this._loadSessionProfiles(selectProfileName);
   }
 
+  async importProfiles(files) {
+    const selectedProfileEntry = utils.first(this.profileCheckListModel.selectedEntries);
+
+    for (let i = 0; i < files.length; i += 1) {
+      const file = files[i];
+      const json = await file.text();
+      try {
+        const profile = JSON.parse(json);
+        this.saveProfile(profile);
+      } catch (err) {
+        console.log(err);
+      }
     }
+    
+    this._loadSessionProfiles(selectedProfileEntry ? selectedProfileEntry.item.name : null);
   }
 }
 
