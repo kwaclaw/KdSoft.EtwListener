@@ -1,5 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 using EtwEvents.WebClient.Models;
+using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -16,8 +20,46 @@ namespace EtwEvents.WebClient
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services) {
+            // for IIS
+            //services.AddCertificateForwarding(options => {
+            //    options.CertificateHeader = "X-ARR-ClientCert";
+            //    options.HeaderConverter = (headerValue) => {
+            //        X509Certificate2? clientCertificate = null;
+            //        if (!string.IsNullOrWhiteSpace(headerValue)) {
+            //            var bytes = Encoding.ASCII.GetBytes(headerValue);
+            //            clientCertificate = new X509Certificate2(bytes);
+            //        }
+
+            //        return clientCertificate;
+            //    };
+            //});
+
+            services.AddAuthorization();
+            services.AddAuthentication(CertificateAuthenticationDefaults.AuthenticationScheme).AddCertificate(options => {
+                options.AllowedCertificateTypes = CertificateTypes.Chained;
+                // my custom certificates can't be checked, so they would not be validated
+                options.RevocationMode = X509RevocationMode.NoCheck;
+                // my custom certificates may not have the enhanced key usage flags set
+                options.ValidateCertificateUse = false;
+                options.Events = new CertificateAuthenticationEvents {
+                    //OnAuthenticationFailed = context => {
+                    //    return Task.CompletedTask;
+                    //},
+                    OnCertificateValidated = context => {
+                        var authService = context.HttpContext.RequestServices.GetService<AuthService>();
+                        if (authService.IsAuthorized(context.Principal))
+                            context.Success();
+                        else
+                            context.Fail("User not authorized.");
+                        return Task.CompletedTask;
+                    }
+                };
+            });
+
+            var authorizedNames = Configuration.GetSection("ClientValidation:AuthorizedCommonNames").Get<HashSet<string>>();
+            services.AddSingleton(new AuthService(authorizedNames));
+
             services.Configure<CookiePolicyOptions>(options => {
                 // This lambda determines whether user consent for non-essential cookies is needed for a given request.
                 options.CheckConsentNeeded = context => true;
@@ -36,7 +78,6 @@ namespace EtwEvents.WebClient
                 });
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
             if (env.IsDevelopment()) {
                 app.UseDeveloperExceptionPage();
@@ -60,6 +101,8 @@ namespace EtwEvents.WebClient
 
             app.UseRouting();
 
+            // app.UseCertificateForwarding();  // for IIS
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints => {

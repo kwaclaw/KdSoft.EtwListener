@@ -19,7 +19,12 @@ namespace EtwEvents.WebClient
                         options.ConfigureHttpsDefaults(opts => {
                             opts.ClientCertificateMode = ClientCertificateMode.RequireCertificate;
                             opts.ClientCertificateValidation = (cert, chain, errors) => {
-                                return true;
+                                var thumbprint = context.Configuration["ClientValidation:RootCertificateThumbprint"];
+                                foreach (var chainElement in chain.ChainElements) {
+                                    if (chainElement.Certificate.Thumbprint.ToUpperInvariant() == thumbprint.ToUpperInvariant())
+                                        return true;
+                                }
+                                return false;
                             };
                         });
                     });
