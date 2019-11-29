@@ -28,14 +28,15 @@ class TraceSession {
         headers: { 'Content-Type': 'application/json' }
       });
 
-      const jobj = await response.json();
-      const status = jobj.status || 200;
-      if (response.ok && (status >= 200 && status < 300)) {
+      if (response.ok) {
+        const jobj = await response.json();
+        const status = jobj.status || 200;
+        if (status >= 200 && status < 300) {
+          console.log('Success:', JSON.stringify(jobj));
+        } else {
+          console.log('Error:', JSON.stringify(jobj));
+        }
         this._open = false;
-        console.log('Success:', JSON.stringify(jobj));
-      } else {
-        this._open = false;
-        console.log('Error:', JSON.stringify(jobj));
       }
     } catch (error) {
       console.error('Error:', error);
@@ -54,16 +55,18 @@ class TraceSession {
         headers: { 'Content-Type': 'application/json' }
       });
 
-      const jobj = await response.json();
-      const status = jobj.status || 200;
-      if (response.ok && (status >= 200 && status < 300)) {
-        this._enabledProviders = jobj.enabledProviders;
-        this._restartedProviders = jobj.restartedProviders;
-        this._open = true;
-        console.log('Success:', JSON.stringify(jobj));
-        return true;
+      if (response.ok) {
+        const jobj = await response.json();
+        const status = jobj.status || 200;
+        if (status >= 200 && status < 300) {
+          this._enabledProviders = jobj.enabledProviders;
+          this._restartedProviders = jobj.restartedProviders;
+          this._open = true;
+          console.log('Success:', JSON.stringify(jobj));
+          return true;
+        }
+        console.log('Error:', JSON.stringify(jobj));
       }
-      console.log('Error:', JSON.stringify(jobj));
     } catch (error) {
       console.error('Error:', error);
     }
@@ -93,14 +96,16 @@ class TraceSession {
         headers: { 'Content-Type': 'application/json' }
       });
 
-      const jobj = await response.json();
-      const status = jobj.status || 200;
-      if (response.ok && (status >= 200 && status < 300)) {
-        console.log('Success:', JSON.stringify(jobj));
-        return { success: true, details: jobj };
+      if (response.ok) {
+        const jobj = await response.json();
+        const status = jobj.status || 200;
+        if (status >= 200 && status < 300) {
+          console.log('Success:', JSON.stringify(jobj));
+          return { success: true, details: jobj };
+        }
+        console.log('Error:', JSON.stringify(jobj));
+        return { success: false, details: jobj };
       }
-      console.log('Error:', JSON.stringify(jobj));
-      return { success: false, details: jobj };
     } catch (error) {
       console.error('Error:', error);
       throw error;
