@@ -87,18 +87,32 @@ class MyAppModel {
     return new TraceSessionConfigModel(profile);
   }
 
+  saveProfile(profileModel) {
+    const profileToSave = new TraceSessionProfile();
+    // save profile with only the properties that are defined in the class
+    utils.setTargetProperties(profileToSave, profileModel);
+    localStorage.setItem(`session-profile-${profileToSave.name}`, JSON.stringify(profileToSave));
+  }
+
   saveSelectedProfile(profileConfigModel) {
     const selectedProfileEntry = utils.first(this.profileCheckListModel.selectedEntries);
+    let profileModel = null;
+
     if (selectedProfileEntry) {
-      const profile = selectedProfileEntry.item;
-      utils.setTargetProperties(profile, profileConfigModel);
-      localStorage.setItem(`session-profile-${profile.name}`, JSON.stringify(profile));
-    } else {
-      const newProfile = profileConfigModel.cloneAsProfile();
-      this.profileCheckListModel.items.push(newProfile);
-      localStorage.setItem(`session-profile-${newProfile.name}`, JSON.stringify(newProfile));
+      // copy changes to our selected profile
+      profileModel = selectedProfileEntry.item;
+      if (profileConfigModel) {
+        utils.setTargetProperties(profileModel, profileConfigModel);
+      }
+    } else if (profileConfigModel) {
+      profileModel = profileConfigModel.cloneAsProfile();
+      this.profileCheckListModel.items.push(profileModel);
     }
-    this._loadSessionProfiles(selectedProfileEntry ? selectedProfileEntry.item.name : null);
+
+    if (profileModel) {
+      this.saveProfile(profileModel);
+      this._loadSessionProfiles(selectedProfileEntry ? selectedProfileEntry.item.name : null);
+    }
   }
 
   deleteProfile(profileName) {
@@ -111,10 +125,6 @@ class MyAppModel {
     this._loadSessionProfiles(selectProfileName);
   }
 
-  saveSelectedProfileFilters(filterFormModel) {
-    const profile = utils.first(this.profileCheckListModel.selectedEntries).item;
-    if (profile) {
-      localStorage.setItem(`session-profile-${profile.name}`, JSON.stringify(profile));
     }
   }
 }

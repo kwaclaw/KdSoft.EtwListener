@@ -30,7 +30,7 @@ const classList = {
 function formDoneHandler(e) {
   if (!e.detail.canceled) {
     if (e.target.localName === 'filter-form') {
-      this.model.saveSelectedProfileFilters(e.detail.model);
+      this.model.saveSelectedProfile();
     } else if (e.target.localName === 'trace-session-config') {
       this.model.saveSelectedProfile(e.detail.model);
     }
@@ -42,7 +42,7 @@ function formDoneHandler(e) {
 
 function formSaveHandler(e) {
   if (e.target.localName === 'filter-form') {
-    this.model.saveSelectedProfileFilters(e.detail.model);
+    this.model.saveSelectedProfile();
   } else if (e.target.localName === 'trace-session-config') {
     this.model.saveSelectedProfile(e.detail.model);
   }
