@@ -50,9 +50,20 @@ class MyAppModel {
 
     const session = new TraceSession(profile);
     const success = await session.openSession();
-    if (success) {
-      this.traceSessions.set(profile.name, session);
-      this.activeSessionName = profile.name;
+    if (!success) return;
+
+    this.traceSessions.set(profile.name, session);
+    this.activeSessionName = profile.name;
+
+    const filter = profile.activeFilter;
+    if (filter) {
+      const result = await session.applyFilter(filter);
+      if (result.success) {
+        if (result.details.diagnostics.length > 0) {
+          //TODO show the error somehow
+          console.log(JSON.stringify(result.details.diagnostics));
+        }
+      }
     }
   }
 
