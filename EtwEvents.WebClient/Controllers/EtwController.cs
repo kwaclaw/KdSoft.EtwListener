@@ -31,13 +31,14 @@ namespace EtwEvents.WebClient
         X509Certificate2? GetClientCertificate() {
             string thumbprint = "";
             StoreLocation location = StoreLocation.CurrentUser;
+
             var currentCert = this.HttpContext.Connection.ClientCertificate;
-            if (currentCert != null) {
-                thumbprint = currentCert.Thumbprint;
-            }
-            else if (_clientCertOptions.Value.Thumbprint.Length > 0) {
+            if (_clientCertOptions.Value.Thumbprint.Length > 0) {
                 thumbprint = _clientCertOptions.Value.Thumbprint;
                 location = _clientCertOptions.Value.Location;
+            }
+            else if (currentCert != null) {
+                thumbprint = currentCert.Thumbprint;
             }
 
             if (thumbprint.Length == 0)
