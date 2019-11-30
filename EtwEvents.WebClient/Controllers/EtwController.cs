@@ -28,16 +28,20 @@ namespace EtwEvents.WebClient
             this._clientCertOptions = clientCertOptions;
         }
 
+        //TODO we can specify cert file (incl. key) + password, which should be stored with DataProtection
+        // e.g. var clientCertificate = new X509Certificate2(Path.Combine(_certPath, "cert.p12"), "pwd");
+
         X509Certificate2? GetClientCertificate() {
             string thumbprint = "";
             StoreLocation location = StoreLocation.CurrentUser;
+
             var currentCert = this.HttpContext.Connection.ClientCertificate;
-            if (currentCert != null) {
-                thumbprint = currentCert.Thumbprint;
-            }
-            else if (_clientCertOptions.Value.Thumbprint.Length > 0) {
+            if (_clientCertOptions.Value.Thumbprint.Length > 0) {
                 thumbprint = _clientCertOptions.Value.Thumbprint;
                 location = _clientCertOptions.Value.Location;
+            }
+            else if (currentCert != null) {
+                thumbprint = currentCert.Thumbprint;
             }
 
             if (thumbprint.Length == 0)
@@ -57,14 +61,10 @@ namespace EtwEvents.WebClient
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
-            //TODO we can get thumbprint from HttpContext.Connection (for local use - web server and browser  on same machine),
-            //     or we can get thumbprint from configuration (when web server is remote), or we can specify cert file+password,
-            // which should be stored with DataProtection
+
             var clientCertificate = GetClientCertificate();
             if (clientCertificate == null)
                 return Problem(title: "Authentication failure", detail: "Cannot find matching client certificate");
-
-            //var clientCertificate = new X509Certificate2(Path.Combine(_certPath, "karl@waclawek.net.p12"), "schroedinger_2");
 
             try {
                 var session = await _sessionManager.OpenSession(request.Name, request.Host, clientCertificate, request.Providers, request.LifeTime.ToDuration()).ConfigureAwait(false);
