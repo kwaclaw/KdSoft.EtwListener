@@ -5,6 +5,7 @@ import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
 import { observe, unobserve } from '../lib/@nx-js/observer-util.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { css } from '../styles/css-tag.js';
+import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
 
 const arrowBase = { far: true, 'fa-lg': true, 'text-gray-500': true, 'align-text-bottom': true };
@@ -316,8 +317,7 @@ class KdSoftCheckList extends LitMvvmElement {
     const allowDragAndDrop = this.allowDragDrop;
 
     const result = html`
-      <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
-      <link rel="stylesheet" type="text/css" href=${styleLinks.fontawesome} />
+      ${sharedStyles}
       <link rel="stylesheet" type="text/css" href=${styleLinks.checkbox} />
       <style>
       </style>

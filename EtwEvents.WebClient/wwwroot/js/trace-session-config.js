@@ -4,6 +4,7 @@ import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
 import { observe, unobserve } from '../lib/@nx-js/observer-util.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { css } from '../styles/css-tag.js';
+import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
 import * as utils from './utils.js';
 import EventProvider from './eventProvider.js';
@@ -231,8 +232,7 @@ class TraceSessionConfig extends LitMvvmElement {
     }
 
     const result = html`
-      <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
-      <link rel="stylesheet" type="text/css" href=${styleLinks.fontawesome} />
+      ${sharedStyles}
       <link rel="stylesheet" type="text/css" href=${styleLinks.checkbox} />
       <style>
         :host {

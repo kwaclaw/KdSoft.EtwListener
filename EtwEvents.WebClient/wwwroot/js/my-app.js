@@ -12,7 +12,7 @@ import './kdsoft-tree-node.js';
 import './trace-session-view.js';
 import './trace-session-config.js';
 import './filter-form.js';
-import styleLinks from '../styles/kdsoft-style-links.js';
+import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import myappStyleLinks from '../styles/my-app-style-links.js';
 
 const runBtnBase = { fas: true };
@@ -263,8 +263,7 @@ class MyApp extends LitMvvmElement {
 
   render() {
     return html`
-      <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
-      <link rel="stylesheet" type="text/css" href=${styleLinks.fontawesome} />
+      ${sharedStyles}
       <link rel="stylesheet" type="text/css" href=${myappStyleLinks.myapp} />
       <style>
         :host {

@@ -3,7 +3,7 @@ import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { classMap } from '../lib/lit-html/directives/class-map.js';
 import { css } from '../styles/css-tag.js';
-import styleLinks from '../styles/kdsoft-style-links.js';
+import sharedStyles from '../styles/kdsoft-shared-styles.js';
 
 const expanderBase = { fas: true, 'fa-lg': true, 'text-blue-500': true };
 
@@ -166,8 +166,7 @@ class KdSoftTreeNode extends LitMvvmElement {
     const expanderClasses = this.expanded ? classList.expanderDown : classList.expanderUp;
     const childrenClass = this.expanded ? 'children' : 'children-hidden';
     const result = html`
-      <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
-      <link rel="stylesheet" type="text/css" href=${styleLinks.fontawesome} />
+      ${sharedStyles}
       <style>
         :host {
           display: block;

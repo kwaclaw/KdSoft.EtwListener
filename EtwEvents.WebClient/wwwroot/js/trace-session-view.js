@@ -3,7 +3,7 @@ import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
 import { repeat } from '../lib/lit-html/directives/repeat.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { css } from '../styles/css-tag.js';
-import styleLinks from '../styles/kdsoft-style-links.js';
+import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import { KdSoftGridStyle } from '../styles/kdsoft-grid-style.js';
 import * as utils from './utils.js';
 
@@ -107,8 +107,7 @@ class TraceSessionView extends LitMvvmElement {
     const itemIterator = (ts && ts.eventSession) ? ts.eventSession.itemIterator() : utils.emptyIterator();
 
     const result = html`
-      <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
-      <link rel="stylesheet" type="text/css" href=${styleLinks.fontawesome} />
+      ${sharedStyles}
       <style>
         :host {
           display: block;

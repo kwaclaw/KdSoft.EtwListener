@@ -2,7 +2,7 @@ import { html } from '../lib/lit-html.js';
 import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { css } from '../styles/css-tag.js';
-import styleLinks from '../styles/kdsoft-style-links.js';
+import sharedStyles from '../styles/kdsoft-shared-styles.js';
 
 function isChildOf(parent, child) {
   if (!child) {
@@ -130,8 +130,7 @@ class KdSoftDropDown extends LitMvvmElement {
   render() {
     const selText = this.model.selectedText;
     const result = html`
-      <link rel="stylesheet" type="text/css" href=${styleLinks.tailwind} />
-      <link rel="stylesheet" type="text/css" href=${styleLinks.fontawesome} />
+      ${sharedStyles}
       <style>
         :host {
           display: inline-block;
