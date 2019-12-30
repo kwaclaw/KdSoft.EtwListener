@@ -30,13 +30,10 @@ class TraceSession {
 
       if (response.ok) {
         const jobj = await response.json();
-        const status = jobj.status || 200;
-        if (status >= 200 && status < 300) {
-          console.log('Success:', JSON.stringify(jobj));
-        } else {
-          console.log('Error:', JSON.stringify(jobj));
-        }
         this._open = false;
+        console.log('Success:', JSON.stringify(jobj));
+      } else {
+        console.log('Error:', await response.text());
       }
     } catch (error) {
       console.error('Error:', error);
@@ -57,15 +54,13 @@ class TraceSession {
 
       if (response.ok) {
         const jobj = await response.json();
-        const status = jobj.status || 200;
-        if (status >= 200 && status < 300) {
-          this._enabledProviders = jobj.enabledProviders;
-          this._restartedProviders = jobj.restartedProviders;
-          this._open = true;
-          console.log('Success:', JSON.stringify(jobj));
-          return true;
-        }
-        console.log('Error:', JSON.stringify(jobj));
+        this._enabledProviders = jobj.enabledProviders;
+        this._restartedProviders = jobj.restartedProviders;
+        this._open = true;
+        console.log('Success:', JSON.stringify(jobj));
+        return true;
+      } else {
+        console.log('Error:', await response.text());
       }
     } catch (error) {
       console.error('Error:', error);
@@ -98,14 +93,13 @@ class TraceSession {
 
       if (response.ok) {
         const jobj = await response.json();
-        const status = jobj.status || 200;
-        if (status >= 200 && status < 300) {
-          console.log('Success:', JSON.stringify(jobj));
-          return { success: true, details: jobj };
-        }
-        console.log('Error:', JSON.stringify(jobj));
-        return { success: false, details: jobj };
+        console.log('Success:', JSON.stringify(jobj));
+        return { success: true, details: jobj };
       }
+      
+      const msg = await response.text();
+      console.log('Error:', msg);
+      return { success: false, details: msg };
     } catch (error) {
       console.error('Error:', error);
       throw error;
