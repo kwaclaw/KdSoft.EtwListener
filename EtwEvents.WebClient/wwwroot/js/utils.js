@@ -129,6 +129,8 @@ export function cloneObject(target, source) {
       target[key] = descriptor.value.slice(0);
     } else if (descriptor.value instanceof Array) {
       target[key] = cloneObject([], descriptor.value);
+    } else if (descriptor.value instanceof Function) {
+      Object.defineProperty(target, key, descriptor);
     } else if (descriptor.value instanceof Object) {
       const prototype = Reflect.getPrototypeOf(descriptor.value);
       const cloneObj = cloneObject({}, descriptor.value);
