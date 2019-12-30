@@ -311,7 +311,7 @@ class TraceSessionConfig extends LitMvvmElement {
         </div>
         <hr class="mb-4" />
         <div id="ok-cancel-buttons" class="flex flex-wrap mt-2 bt-1">
-          <button type="button" class="py-1 px-2" @click=${this._exportProfile} title="Import"><i class="fas fa-lg fa-file-import text-gray-600"></i></button>
+          <button type="button" class="py-1 px-2" @click=${this._exportProfile} title="Export"><i class="fas fa-lg fa-file-export text-gray-600"></i></button>
           <button type="button" class="py-1 px-2 ml-auto" @click=${this._apply} title="Save"><i class="fas fa-lg fa-check text-green-500"></i></button>
           <button type="button" class="py-1 px-2" @click=${this._cancel} title="Cancel"><i class="fas fa-lg fa-times text-red-500"></i></button>
         </div>
