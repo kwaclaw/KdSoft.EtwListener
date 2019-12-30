@@ -1,8 +1,8 @@
 ﻿
 import { html } from '../lib/lit-html.js';
 import { observable, observe } from '../lib/@nx-js/observer-util.js';
-import * as utils from './utils.js';
-import TraceSessionProfile from './traceSessionProfile.js';
+import * as utils from '../js/utils.js';
+import TraceSessionProfile from '../js/traceSessionProfile.js';
 import FilterCarouselModel from './filter-carousel-model.js';
 import KdSoftCheckListModel from './kdsoft-checklist-model.js';
 

@@ -5,7 +5,7 @@ import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { css } from '../styles/css-tag.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import { KdSoftGridStyle } from '../styles/kdsoft-grid-style.js';
-import * as utils from './utils.js';
+import * as utils from '../js/utils.js';
 
 function renderColumn(colValue, colType) {
   // variable != null checks for both, != undefined and != null, without being falsy for 0

@@ -1,10 +1,9 @@
-import { html } from '../lib/lit-html.js';
 import { observable } from '../lib/@nx-js/observer-util.js';
 import KdSoftCheckListModel from './kdsoft-checklist-model.js';
 import KdSoftDropdownModel from './kdsoft-dropdown-model.js';
 import TraceSession from './traceSession.js';
-import TraceSessionProfile from './traceSessionProfile.js';
-import * as utils from './utils.js';
+import TraceSessionProfile from '../js/traceSessionProfile.js';
+import * as utils from '../js/utils.js';
 import TraceSessionConfigModel from './trace-session-config-model.js';
 
 class MyAppModel {

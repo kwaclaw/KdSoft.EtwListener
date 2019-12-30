@@ -6,12 +6,12 @@ import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { css } from '../styles/css-tag.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
-import * as utils from './utils.js';
-import EventProvider from './eventProvider.js';
+import * as utils from '../js/utils.js';
+import EventProvider from '../js/eventProvider.js';
 import './provider-config.js';
 import './filter-edit.js';
 import './kdsoft-checklist.js';
-import TraceSessionProfile from './traceSessionProfile.js';
+import TraceSessionProfile from '../js/traceSessionProfile.js';
 
 const tabBase = {
   'text-gray-600': true,

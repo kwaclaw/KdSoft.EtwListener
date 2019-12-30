@@ -1,5 +1,5 @@
 ﻿import { observable } from '../lib/@nx-js/observer-util.js';
-import EventSession from './eventSession.js';
+import EventSession from '../js/eventSession.js';
 
 class TraceSession {
   constructor(profile) {
