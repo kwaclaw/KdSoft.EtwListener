@@ -40,6 +40,25 @@
   <ItemGroup>
     <Content Remove="src/css/fontawesome/metadata/**/*" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\views\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Resource.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resource.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Resource.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resource.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
   
   <Target Name="PostCSS" BeforeTargets="Build">
     <Exec Command="postcss_prebuild.cmd"></Exec>

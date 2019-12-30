@@ -64,26 +64,16 @@ namespace EtwEvents.WebClient
 
             var clientCertificate = GetClientCertificate();
             if (clientCertificate == null)
-                return Problem(title: "Authentication failure", detail: "Cannot find matching client certificate");
+                return Problem(title: "Authentication failure", instance: nameof(OpenSession), detail: "Cannot find matching client certificate");
 
-            try {
-                var session = await _sessionManager.OpenSession(request.Name, request.Host, clientCertificate, request.Providers, request.LifeTime.ToDuration()).ConfigureAwait(false);
-                return Ok(new SessionResult(session.EnabledProviders, session.RestartedProviders));
-            }
-            catch (Exception ex) {
-                return Problem(title: "Failure to open session", detail: ex.Message);
-            }
+            var session = await _sessionManager.OpenSession(request.Name, request.Host, clientCertificate, request.Providers, request.LifeTime.ToDuration()).ConfigureAwait(false);
+            return Ok(new SessionResult(session.EnabledProviders, session.RestartedProviders));
         }
 
         [HttpPost]
         public async Task<IActionResult> CloseRemoteSession([FromQuery]string name) {
-            try {
-                var success = await _sessionManager.CloseRemoteSession(name).ConfigureAwait(false);
-                return Ok(success);
-            }
-            catch (Exception ex) {
-                return Problem(title: "Failure to close session", detail: ex.Message);
-            }
+            var success = await _sessionManager.CloseRemoteSession(name).ConfigureAwait(false);
+            return Ok(success);
         }
 
         [HttpGet]
@@ -96,7 +86,7 @@ namespace EtwEvents.WebClient
                     return new EmptyResult();  // OkResult not right here, tries to set status code which is not good in this scenario
                 }
                 else {
-                    return Problem(title: "Session not found", detail: "Session may have been closed already.");
+                    return Problem(title: "Session not found", instance: nameof(StartEvents), detail: "Session may have been closed already.");
                 }
             }
             else {
@@ -112,7 +102,7 @@ namespace EtwEvents.WebClient
                 return Ok();
             }
             else {
-                return Problem(title: "Session not found", detail: "Session may have been closed already.");
+                return Problem(title: "Session not found", instance: nameof(StopEvents), detail: "Session may have been closed already.");
             }
         }
 
@@ -131,7 +121,7 @@ namespace EtwEvents.WebClient
                 return Ok(result);
             }
             else {
-                return Problem(title: "Session not found", detail: "Session may have been closed already.");
+                return Problem(title: "Session not found", instance: nameof(SetCSharpFilter), detail: "Session may have been closed already.");
             }
         }
 
@@ -144,7 +134,7 @@ namespace EtwEvents.WebClient
 
             var clientCertificate = GetClientCertificate();
             if (clientCertificate == null)
-                return Problem(title: "Authentication failure", detail: "Cannot find matching client certificate");
+                return Problem(title: "Authentication failure", instance: nameof(TestCSharpFilter), detail: "Cannot find matching client certificate");
 
             string csharpFilter = string.Empty;  // protobuf does not allow nulls
             if (!string.IsNullOrWhiteSpace(request.CSharpFilter)) {
