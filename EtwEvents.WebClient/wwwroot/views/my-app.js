@@ -72,8 +72,8 @@ class MyApp extends LitMvvmElement {
     super();
     // setting model property here because we cannot reliable set it from a non-lit-html rendered HTML page
     this.scheduler = new Queue(priorities.HIGH);
-    // we must assign the model *after* the scheduler
-    this.model = new MyAppModel();
+    // we must assign the model *after* the scheduler, or assign it externally
+    // this.model = new MyAppModel(); --
 
     // this allows us to unregister the event handlers, because we maintain references to their instances
     this._formDoneHandler = formDoneHandler.bind(this);

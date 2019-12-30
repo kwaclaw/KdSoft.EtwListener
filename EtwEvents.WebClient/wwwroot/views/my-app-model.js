@@ -7,7 +7,8 @@ import * as utils from '../js/utils.js';
 import TraceSessionConfigModel from './trace-session-config-model.js';
 
 class MyAppModel {
-  constructor() {
+  constructor(resource) {
+    this.resource = resource;
     this._traceSessions = new Map();
     this.activeSessionName = null;
 

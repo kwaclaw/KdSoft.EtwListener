@@ -10,6 +10,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
+#pragma warning disable CA1822 // Mark members as static
+
 namespace EtwEvents.WebClient
 {
     public class Startup
@@ -89,6 +91,8 @@ namespace EtwEvents.WebClient
                 app.UseHsts();
                 app.UseHttpsRedirection();
             }
+
+            app.UseRequestLocalization();
 
             var webSocketOptions = new WebSocketOptions() {
                 KeepAliveInterval = TimeSpan.FromSeconds(120),

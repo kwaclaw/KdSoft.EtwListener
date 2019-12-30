@@ -16,6 +16,16 @@
 
 @section Scripts {
     <script type="module" src="~/views/my-app.js"></script>
+    <script type="module">
+        import MyAppModel from '/views/my-app-model.js';
+
+        const resourceBase64 = '@Html.Raw(Model.ResourceBase64())';
+        const resourceJson = window.atob(resourceBase64);
+        const resource = JSON.parse(resourceJson);
+
+        const myapp = document.querySelector('my-app');
+        myapp.model = new MyAppModel(resource);
+    </script>
 }
 
 <my-app appTitle="ETW Listener"></my-app>
