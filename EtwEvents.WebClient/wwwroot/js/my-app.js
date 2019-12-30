@@ -330,6 +330,8 @@ class MyApp extends LitMvvmElement {
           <trace-session-view .model=${this.model.activeSession}></trace-session-view>
         </div>
 
+        <footer class="flex p-2 border bg-gray-800 text-white">Karl Waclawek<span class="ml-auto">Errors</span></footer>
+
         <dialog id="dlg-config">
           <trace-session-config class="h-full"></trace-session-config>
         </dialog>
