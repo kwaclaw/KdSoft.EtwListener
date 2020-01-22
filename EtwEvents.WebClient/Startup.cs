@@ -72,6 +72,8 @@ namespace EtwEvents.WebClient
 
             services.AddSingleton<TraceSessionManager>();
 
+            services.AddPortableObjectLocalization(options => options.ResourcesPath = "Resources");
+
             services.AddRazorPages();
 
             services.AddControllers()

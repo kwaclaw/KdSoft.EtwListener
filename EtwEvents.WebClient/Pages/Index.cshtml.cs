@@ -24,13 +24,13 @@ namespace EtwEvents.WebClient.Pages
 
         }
 
-        public string ResourceBase64() {
-            // Retrieves the requested culture
-            var rqf = Request.HttpContext.Features.Get<IRequestCultureFeature>();
-            var culture = rqf.RequestCulture.Culture;
-            var rs = Resource.ResourceManager.GetResourceSet(culture, true, true);
-            var resourceBytes = rs != null ? JsonSerializer.SerializeToUtf8Bytes<ResourceSet>(rs) : Array.Empty<byte>();
-            return Convert.ToBase64String(resourceBytes);
-        }
+        //public string ResourceBase64() {
+        //    // Retrieves the requested culture
+        //    var rqf = Request.HttpContext.Features.Get<IRequestCultureFeature>();
+        //    var culture = rqf.RequestCulture.Culture;
+        //    var rs = Resource.ResourceManager.GetResourceSet(culture, true, true);
+        //    var resourceBytes = rs != null ? JsonSerializer.SerializeToUtf8Bytes<ResourceSet>(rs) : Array.Empty<byte>();
+        //    return Convert.ToBase64String(resourceBytes);
+        //}
     }
 }

@@ -3,14 +3,22 @@ using System.Net;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace EtwEvents.WebClient
 {
     public class ErrorController: Controller {
+        readonly IStringLocalizer<ErrorController> _;
+
+        public ErrorController(IStringLocalizer<ErrorController> localizer) {
+            this._ = localizer;
+        }
+
+
         [Route("/error-local-development")]
         public IActionResult ErrorLocalDevelopment([FromServices] IWebHostEnvironment webHostEnvironment) {
             if (!"Development".Equals(webHostEnvironment?.EnvironmentName, StringComparison.OrdinalIgnoreCase)) {
-                throw new InvalidOperationException(Resource.Err_NonDevEnvironment);
+                throw new InvalidOperationException(_.GetString("Error - NonDevEnvironment"));
             }
 
             var feature = HttpContext.Features.Get<IExceptionHandlerPathFeature>();
@@ -19,7 +27,7 @@ namespace EtwEvents.WebClient
             var problemDetails = new ProblemDetails {
                 Status = (int)HttpStatusCode.InternalServerError,
                 Instance = feature?.Path,
-                Title = ex?.Message ?? "Unexpected Error",
+                Title = ex?.Message ?? _.GetString("Unexpected Error"),
                 Detail = ex?.StackTrace,
             };
 
@@ -34,7 +42,7 @@ namespace EtwEvents.WebClient
             var problemDetails = new ProblemDetails {
                 Status = (int)HttpStatusCode.InternalServerError,
                 Instance = feature?.Path,
-                Title = "Unexpected Error",
+                Title = _.GetString("Unexpected Error"),
                 Detail = null,
             };
 

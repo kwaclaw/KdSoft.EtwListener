@@ -1,11 +1,15 @@
 ﻿using System;
+using System.Resources;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using EtwEvents.WebClient.Models;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
+using OrchardCore.Localization;
 
 namespace EtwEvents.WebClient
 {
@@ -17,15 +21,18 @@ namespace EtwEvents.WebClient
         readonly TraceSessionManager _sessionManager;
         readonly IOptionsMonitor<EventSessionOptions> _optionsMonitor;
         readonly IOptions<ClientCertOptions> _clientCertOptions;
+        readonly IStringLocalizer<EtwController> _;
 
         public EtwController(
             TraceSessionManager sessionManager,
             IOptionsMonitor<EventSessionOptions> optionsMonitor,
-            IOptions<ClientCertOptions> clientCertOptions
+            IOptions<ClientCertOptions> clientCertOptions,
+            IStringLocalizer<EtwController> localize
         ) {
             this._sessionManager = sessionManager;
             this._optionsMonitor = optionsMonitor;
             this._clientCertOptions = clientCertOptions;
+            this._ = localize;
         }
 
         //TODO we can specify cert file (incl. key) + password, which should be stored with DataProtection
@@ -61,10 +68,13 @@ namespace EtwEvents.WebClient
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
-
             var clientCertificate = GetClientCertificate();
             if (clientCertificate == null)
-                return Problem(title: "Authentication failure", instance: nameof(OpenSession), detail: "Cannot find matching client certificate");
+                return Problem(
+                    title: _.GetString("Authentication failure"),
+                    instance: nameof(OpenSession),
+                    detail: _.GetString("Cannot find matching client certificate")
+                );
 
             var session = await _sessionManager.OpenSession(request.Name, request.Host, clientCertificate, request.Providers, request.LifeTime.ToDuration()).ConfigureAwait(false);
             return Ok(new SessionResult(session.EnabledProviders, session.RestartedProviders));
@@ -86,7 +96,11 @@ namespace EtwEvents.WebClient
                     return new EmptyResult();  // OkResult not right here, tries to set status code which is not good in this scenario
                 }
                 else {
-                    return Problem(title: "Session not found", instance: nameof(StartEvents), detail: "Session may have been closed already.");
+                    return Problem(
+                        title: _.GetString("Session not found"),
+                        instance: nameof(StartEvents),
+                        detail: _.GetString("Session may have been closed already.")
+                    );
                 }
             }
             else {
@@ -102,7 +116,11 @@ namespace EtwEvents.WebClient
                 return Ok();
             }
             else {
-                return Problem(title: "Session not found", instance: nameof(StopEvents), detail: "Session may have been closed already.");
+                return Problem(
+                    title: _.GetString("Session not found"),
+                    instance: nameof(StopEvents),
+                    detail: _.GetString("Session may have been closed already.")
+                );
             }
         }
 
@@ -134,7 +152,11 @@ namespace EtwEvents.WebClient
 
             var clientCertificate = GetClientCertificate();
             if (clientCertificate == null)
-                return Problem(title: "Authentication failure", instance: nameof(TestCSharpFilter), detail: "Cannot find matching client certificate");
+                return Problem(
+                    title: _.GetString("Authentication failure"),
+                    instance: nameof(TestCSharpFilter),
+                    detail: _.GetString("Cannot find matching client certificate")
+                );
 
             string csharpFilter = string.Empty;  // protobuf does not allow nulls
             if (!string.IsNullOrWhiteSpace(request.CSharpFilter)) {

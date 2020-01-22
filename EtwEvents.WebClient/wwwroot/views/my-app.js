@@ -1,10 +1,11 @@
+/* global i18n */
+
 import { html } from '../lib/lit-html.js';
 import { classMap } from '../lib/lit-html/directives/class-map.js';
 import { observe, unobserve } from '../lib/@nx-js/observer-util.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
 import { css, unsafeCSS } from '../styles/css-tag.js';
-import MyAppModel from './my-app-model.js';
 import FilterFormModel from './filter-form-model.js';
 import './kdsoft-checklist.js';
 import './kdsoft-dropdown.js';
@@ -330,7 +331,9 @@ class MyApp extends LitMvvmElement {
           <trace-session-view .model=${this.model.activeSession}></trace-session-view>
         </div>
 
-        <footer class="flex p-2 border bg-gray-800 text-white">Karl Waclawek<span class="ml-auto">Errors</span></footer>
+        <footer class="flex p-2 border bg-gray-800 text-white">&copy; Karl Waclawek
+          <span class="ml-auto">${this.model.fetchErrors.length} ${i18n.__('Errors')}</span>
+        </footer>
 
         <dialog id="dlg-config">
           <trace-session-config class="h-full"></trace-session-config>

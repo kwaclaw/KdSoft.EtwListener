@@ -1,4 +1,6 @@
 ﻿
+/* global i18n */
+
 import { html } from '../lib/lit-html.js';
 import { observable, observe } from '../lib/@nx-js/observer-util.js';
 import * as utils from '../js/utils.js';
@@ -6,13 +8,13 @@ import TraceSessionProfile from '../js/traceSessionProfile.js';
 import FilterCarouselModel from './filter-carousel-model.js';
 import KdSoftCheckListModel from './kdsoft-checklist-model.js';
 
-const traceLevelList = [
-  { name: 'Always', value: 0 },
-  { name: 'Critical', value: 1 },
-  { name: 'Error', value: 2 },
-  { name: 'Warning', value: 3 },
-  { name: 'Informational', value: 4 },
-  { name: 'Verbose', value: 5 }
+const traceLevelList = () => [
+  { name: i18n.__('Always'), value: 0 },
+  { name: i18n.__('Critical'), value: 1 },
+  { name: i18n.__('Error'), value: 2 },
+  { name: i18n.__('Warning'), value: 3 },
+  { name: i18n.__('Informational'), value: 4 },
+  { name: i18n.__('Verbose'), value: 5 }
 ];
 
 class TraceSessionConfigModel extends TraceSessionProfile {
@@ -65,7 +67,7 @@ class TraceSessionConfigModel extends TraceSessionProfile {
     return result;
   }
 
-  static get traceLevelList() { return observable(traceLevelList.slice(0)); }
+  static get traceLevelList() { return observable(traceLevelList()); }
 
   cloneAsProfile() {
     const result = utils.cloneObject({}, this);
