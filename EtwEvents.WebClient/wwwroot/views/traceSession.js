@@ -1,5 +1,6 @@
 ﻿import { observable } from '../lib/@nx-js/observer-util.js';
 import EventSession from '../js/eventSession.js';
+import FetchHelper from '../js/fetchHelper.js';
 
 class TraceSession {
   constructor(profile) {
@@ -10,6 +11,7 @@ class TraceSession {
     this._restartedProviders = [];
     this._eventSession = null;
     this._open = false;
+    this.fetcher = new FetchHelper('/Etw');
     return observable(this);
   }
 
@@ -21,50 +23,31 @@ class TraceSession {
 
   get eventSession() { return this._eventSession; }
 
-  async closeRemoteSession() {
+  async closeRemoteSession(progress) {
     try {
-      const response = await fetch(`/Etw/CloseRemoteSession?name=${this._profile.name}`, {
-        method: 'POST', // or 'PUT'
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (response.ok) {
-        const jobj = await response.json();
-        this._open = false;
-        console.log('Success:', JSON.stringify(jobj));
-      } else {
-        console.log('Error:', await response.text());
-      }
+      await this.fetcher.withProgress(progress)
+        .post('CloseRemoteSession', { name: this._profile.name });
+      this._open = false;
+      //console.log(response);
     } catch (error) {
-      console.error('Error:', error);
+      window.myapp.defaultHandleError(error);
     }
   }
 
-  async openSession() {
+  async openSession(progress) {
     const p = this._profile;
     const request = { name: p.name, host: p.host, providers: this.providers, lifeTime: p.lifeTime };
-    const requestJson = JSON.stringify(request);
 
     try {
-      const response = await fetch('/Etw/OpenSession', {
-        method: 'POST', // or 'PUT'
-        body: requestJson, // data can be `string` or {object}!
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (response.ok) {
-        const jobj = await response.json();
-        this._enabledProviders = jobj.enabledProviders;
-        this._restartedProviders = jobj.restartedProviders;
-        this._open = true;
-        console.log('Success:', JSON.stringify(jobj));
-        return true;
-      } else {
-        console.log('Error:', await response.text());
-      }
+      const response = await this.fetcher.withProgress(progress).postJson('OpenSession', null, request);
+      this._enabledProviders = response.enabledProviders;
+      this._restartedProviders = response.restartedProviders;
+      this._open = true;
+      return true;
     } catch (error) {
-      console.error('Error:', error);
+      window.myapp.defaultHandleError(error);
     }
+
     return false;
   }
 

@@ -15,6 +15,7 @@ import './trace-session-config.js';
 import './filter-form.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import myappStyleLinks from '../styles/my-app-style-links.js';
+import Spinner from '../js/spinner.js';
 
 const runBtnBase = { fas: true };
 const tabBase = { 'inline-block': true, 'py-2': true, 'no-underline': true };
@@ -79,6 +80,8 @@ class MyApp extends LitMvvmElement {
     // this allows us to unregister the event handlers, because we maintain references to their instances
     this._formDoneHandler = formDoneHandler.bind(this);
     this._formSaveHandler = formSaveHandler.bind(this);
+
+    window.myapp = this;
   }
 
   connectDropdownSessionlist(checkListId, singleSelect) {
@@ -115,8 +118,9 @@ class MyApp extends LitMvvmElement {
     return [checkListModelObserver, selectObserver, searchObserver, droppedObserver];
   }
 
-  async _sessionFromProfileClick() {
-    await this.model.openSessionFromSelectedProfile();
+  async _sessionFromProfileClick(e) {
+    const spinner = new Spinner(e.currentTarget);
+    await this.model.openSessionFromSelectedProfile(spinner);
   }
 
   _editProfileClick() {
@@ -158,7 +162,8 @@ class MyApp extends LitMvvmElement {
     const { session, sessionName } = this._getClickSession(e);
     if (!session) return;
 
-    this.model.closeSession(session);
+    const spinner = new Spinner(e.currentTarget);
+    await this.model.closeSession(session, spinner);
   }
 
   _filterSessionClick(e) {
@@ -210,6 +215,11 @@ class MyApp extends LitMvvmElement {
     this._sessionListObservers = this.connectDropdownSessionlist('sessionProfiles', true);
     this._addDialogHandlers(this.renderRoot.getElementById('dlg-filter'));
     this._addDialogHandlers(this.renderRoot.getElementById('dlg-config'));
+  }
+
+  // assumes error is problem details object - see https://tools.ietf.org/html/rfc7807
+  defaultHandleError(error) {
+    this.model.handleFetchError(error);
   }
 
   static get styles() {
@@ -266,6 +276,7 @@ class MyApp extends LitMvvmElement {
     return html`
       ${sharedStyles}
       <link rel="stylesheet" type="text/css" href=${myappStyleLinks.myapp} />
+      <link rel="stylesheet" type="text/css" href="css/spinner.css" />
       <style>
         :host {
 

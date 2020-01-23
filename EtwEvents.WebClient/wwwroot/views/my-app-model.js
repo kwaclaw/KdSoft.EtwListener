@@ -6,14 +6,35 @@ import TraceSessionProfile from '../js/traceSessionProfile.js';
 import * as utils from '../js/utils.js';
 import TraceSessionConfigModel from './trace-session-config-model.js';
 
+function loadSessionProfileModel(selectName) {
+  const sessionProfiles = [];
+  for (let i = 0; i < localStorage.length; i += 1) {
+    const key = localStorage.key(i);
+    if (key.startsWith('session-profile-')) {
+      const item = JSON.parse(localStorage.getItem(key));
+      const profile = new TraceSessionProfile();
+      utils.setTargetProperties(profile, item);
+      sessionProfiles.push(profile);
+    }
+  }
+  sessionProfiles.sort((x, y) => String.prototype.localeCompare.call(x.name, y.name));
+  let selectIndex = sessionProfiles.findIndex(p => p.name === selectName);
+  if (selectIndex < 0) selectIndex = 0;
+  const selectedIndexes = sessionProfiles.length > 0 ? [selectIndex] : [];
+
+  return new KdSoftCheckListModel(sessionProfiles, selectedIndexes, false);
+}
+
 class MyAppModel {
-  constructor(resource) {
-    this.resource = resource;
+  constructor() {
     this._traceSessions = new Map();
     this.activeSessionName = null;
 
-    this._loadSessionProfiles();
+    this.profileCheckListModel = loadSessionProfileModel();
     this.sessionDropdownModel = new KdSoftDropdownModel();
+
+    this.fetchErrors = [];
+    this.activeError = null;
 
     return observable(this);
   }
@@ -21,26 +42,14 @@ class MyAppModel {
   get traceSessions() { return this._traceSessions; }
   get activeSession() { return this._traceSessions.get(this.activeSessionName); }
 
-  _loadSessionProfiles(selectName) {
-    const sessionProfiles = [];
-    for (let i = 0; i < localStorage.length; i += 1) {
-      const key = localStorage.key(i);
-      if (key.startsWith('session-profile-')) {
-        const item = JSON.parse(localStorage.getItem(key));
-        const profile = new TraceSessionProfile();
-        utils.setTargetProperties(profile, item);
-        sessionProfiles.push(profile);
-      }
-    }
-    sessionProfiles.sort((x, y) => String.prototype.localeCompare.call(x.name, y.name));
-    let selectIndex = sessionProfiles.findIndex(p => p.name === selectName);
-    if (selectIndex < 0) selectIndex = 0;
-    const selectedIndexes = sessionProfiles.length > 0 ? [selectIndex] : [];
-
-    this.profileCheckListModel = new KdSoftCheckListModel(sessionProfiles, selectedIndexes, false);
+  handleFetchError(error) {
+    error.timeStamp = new Date();
+    this.fetchErrors.push(error);
+    this.activeError = error;
+    window.setTimeout(() => { this.activeError = null; }, 3000);
   }
 
-  async openSessionFromSelectedProfile() {
+  async openSessionFromSelectedProfile(progress) {
     const profileEntry = utils.first(this.profileCheckListModel.selectedEntries);
     if (!profileEntry) return;
 
@@ -49,7 +58,7 @@ class MyAppModel {
     if (this.traceSessions.has(profile.name)) return;
 
     const session = new TraceSession(profile);
-    const success = await session.openSession();
+    const success = await session.openSession(progress);
     if (!success) return;
 
     this.traceSessions.set(profile.name, session);
@@ -67,13 +76,13 @@ class MyAppModel {
     }
   }
 
-  async closeSession(session) {
+  async closeSession(session, progress) {
     // find they key that was inserted before (or after) the current key
     const prevKey = utils.closest(this.traceSessions.keys(), session.profile.name);
 
     try {
       if (session.open) {
-        await session.closeRemoteSession();
+        await session.closeRemoteSession(progress);
       }
     } finally {
       this.traceSessions.delete(session.profile.name);
@@ -111,7 +120,7 @@ class MyAppModel {
 
     if (profileModel) {
       this.saveProfile(profileModel);
-      this._loadSessionProfiles(selectedProfileEntry ? selectedProfileEntry.item.name : null);
+      this.profileCheckListModel = loadSessionProfileModel(selectedProfileEntry ? selectedProfileEntry.item.name : null);
     }
   }
 
@@ -122,24 +131,29 @@ class MyAppModel {
       selectProfileName = null;
     }
     localStorage.removeItem(`session-profile-${profileName}`);
-    this._loadSessionProfiles(selectProfileName);
+    this.profileCheckListModel = loadSessionProfileModel(selectProfileName);
   }
 
   async importProfiles(files) {
     const selectedProfileEntry = utils.first(this.profileCheckListModel.selectedEntries);
+    const promises = [];
 
     for (let i = 0; i < files.length; i += 1) {
       const file = files[i];
-      const json = await file.text();
+      promises.push(file.text());
+    }
+
+    const jsonResults = await Promise.all(promises);
+    for (let i = 0; i < jsonResults.length; i += 1) {
       try {
-        const profile = JSON.parse(json);
+        const profile = JSON.parse(jsonResults[i]);
         this.saveProfile(profile);
       } catch (err) {
         console.log(err);
       }
     }
-    
-    this._loadSessionProfiles(selectedProfileEntry ? selectedProfileEntry.item.name : null);
+
+    this.profileCheckListModel = loadSessionProfileModel(selectedProfileEntry ? selectedProfileEntry.item.name : null);
   }
 }
 
