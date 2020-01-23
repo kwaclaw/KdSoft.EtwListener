@@ -3,6 +3,17 @@ export function* emptyIterator() {
   //
 }
 
+window.uft8Decoder = window.uft8Decoder || new TextDecoder();
+
+export function b64DecodeUnicode(base64) {
+  const binStr = window.atob(base64);
+  const binView = new Uint8Array(binStr.length);
+  for (let idx = 0; idx < binView.length; idx += 1) {
+    binView[idx] = binStr.charCodeAt(idx);
+  }
+  return window.uft8Decoder.decode(binView.buffer);
+}
+
 // LINQ-like Single() for iterators
 export function first(iterator) {
   const iterated = iterator[Symbol.iterator]().next();
@@ -94,31 +105,6 @@ export const dateFormat = new Intl.DateTimeFormat('default', {
 //   return result;
 // }
 
-// export function cloneObject(target, source) {
-//   for (const key in source) {
-//     // Use getOwnPropertyDescriptor instead of source[key] to prevent from trigering setter/getter.
-//     const descriptor = Object.getOwnPropertyDescriptor(source, key);
-//     if (descriptor.value instanceof String) {
-//       target[key] = new String(descriptor.value);
-//     }
-//     else if (descriptor.value instanceof Array) {
-//       target[key] = cloneObject([], descriptor.value);
-//     }
-//     else if (descriptor.value instanceof Object) {
-//       const prototype = Reflect.getPrototypeOf(descriptor.value);
-//       const cloneObj = cloneObject({}, descriptor.value);
-//       Reflect.setPrototypeOf(cloneObj, prototype);
-//       target[key] = cloneObj;
-//     }
-//     else {
-//       Object.defineProperty(target, key, descriptor);
-//     }
-//   }
-//   const prototype = Reflect.getPrototypeOf(source);
-//   Reflect.setPrototypeOf(target, prototype);
-//   return target;
-// }
-
 // this performs a full clone of a Javascript object or array
 export function cloneObject(target, source) {
   // eslint-disable-next-line guard-for-in
@@ -174,4 +160,28 @@ export function spliceStr(str, index, count, add) {
   }
 
   return str.slice(0, index) + (add || '') + str.slice(index + count);
+}
+
+// Useful for FormData encoding, see https://github.com/mifi/form-encode-object
+export function flattenObject(obj, inRet, inPrefix) {
+  const ret = inRet || {};
+  const prefix = inPrefix || '';
+  if (typeof obj === 'object' && obj != null) {
+    Object.keys(obj).forEach(key => {
+      flattenObject(obj[key], ret, prefix === '' ? key : `${prefix}[${key}]`);
+    });
+  } else if (prefix !== '') {
+    ret[prefix] = obj;
+  }
+
+  return ret;
+}
+
+export function objectToFormData(obj) {
+  const formData = new FormData();
+  const flattened = flattenObject(obj);
+  Object.keys(flattened)
+    .forEach(key => formData.append(key, flattened[key]));
+
+  return formData;
 }
