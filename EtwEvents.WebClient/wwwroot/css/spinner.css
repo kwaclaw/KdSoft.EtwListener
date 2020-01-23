@@ -1,0 +1,35 @@
+.spinning {
+    animation-play-state: running;
+    opacity: 0.8;
+    position: relative;
+  }
+
+  @keyframes spinner {
+    0% {
+        transform: rotateZ(0deg);
+    }
+    100% {
+        transform: rotateZ(360deg);
+    }
+  }
+
+  .spinning::after {
+    box-sizing: border-box;
+    position: absolute;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+    content: "";
+    background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40" stroke="%23DEDEDE" stroke-width="10" fill="transparent"/><circle cx="50" cy="50" r="40" stroke="%23EF6565" stroke-width="10" stroke-dasharray="80 171" fill="transparent"/></svg>');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-blend-mode: overlay;
+    opacity: inherit;
+
+    animation: 1.5s linear infinite spinner;
+    animation-play-state: inherit;
+    will-change: transform;
+  }
+  
