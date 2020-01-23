@@ -303,6 +303,9 @@ class KdSoftCheckList extends LitMvvmElement {
         .list-item {
           position: relative;
         }
+        .list-item:hover {
+          background-color: lightblue;
+        }
         .droppable {
           outline: 2px solid darkgray;
         }
