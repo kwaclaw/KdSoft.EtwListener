@@ -4,6 +4,7 @@ import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { css } from '../styles/css-tag.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import './filter-carousel.js';
+import Spinner from '../js/spinner.js';
 
 class FilterForm extends LitMvvmElement {
   constructor() {
@@ -20,7 +21,8 @@ class FilterForm extends LitMvvmElement {
   }
 
   _apply(e) {
-    const success = this.model.applyActiveFilter();
+    const spinner = new Spinner(e.currentTarget);
+    const success = this.model.applyActiveFilter(spinner);
     if (success) {
       const evt = new CustomEvent('kdsoft-done', {
         // composed allows bubbling beyond shadow root
@@ -31,7 +33,8 @@ class FilterForm extends LitMvvmElement {
   }
 
   _test(e) {
-    this.model.testActiveFilter();
+    const spinner = new Spinner(e.currentTarget);
+    this.model.testActiveFilter(spinner);
   }
 
   _save(e) {

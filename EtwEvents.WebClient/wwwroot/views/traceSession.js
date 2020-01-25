@@ -65,36 +65,23 @@ class TraceSession {
     }
   }
 
-  async _callFilter(method, data) {
-    const url = new URL(`/Etw/${method}`, window.location);
+  async _callFilter(method, data, progress) {
+    //const url = new URL(`/Etw/${method}`, window.location);
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        body: JSON.stringify(data),
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (response.ok) {
-        const jobj = await response.json();
-        console.log('Success:', JSON.stringify(jobj));
-        return { success: true, details: jobj };
-      }
-      
-      const msg = await response.text();
-      console.log('Error:', msg);
-      return { success: false, details: msg };
+      const response = await this.fetcher.withProgress(progress).postJson(method, null, data);
+      return { success: true, details: response };
     } catch (error) {
-      console.error('Error:', error);
-      throw error;
+      console.error(error);
+      return { success: false, error };
     }
   }
 
-  applyFilter(filter) {
-    return this._callFilter('SetCSharpFilter', { sessionName: this.profile.name, csharpFilter: filter || null });
+  applyFilter(filter, progress) {
+    return this._callFilter('SetCSharpFilter', { sessionName: this.profile.name, csharpFilter: filter || null }, progress);
   }
 
-  testFilter(filter) {
-    return this._callFilter('TestCSharpFilter', { host: this.profile.host, csharpFilter: filter || null });
+  testFilter(filter, progress) {
+    return this._callFilter('TestCSharpFilter', { host: this.profile.host, csharpFilter: filter || null }, progress);
   }
 }
 

@@ -19,10 +19,10 @@ class FilterFormModel {
     profile.filters.length = filterModels.length;
   }
 
-  async applyActiveFilter() {
+  async applyActiveFilter(progress) {
     const filterModel = this.filterCarousel.activeFilterModel;
     filterModel.diagnostics = [];
-    const result = await this.session.applyFilter(filterModel.filter);
+    const result = await this.session.applyFilter(filterModel.filter, progress);
     if (result.success) {
       if (result.details.diagnostics.length === 0) {
         this.postFormData();
@@ -33,10 +33,10 @@ class FilterFormModel {
     return false;
   }
 
-  async testActiveFilter() {
+  async testActiveFilter(progress) {
     const filterModel = this.filterCarousel.activeFilterModel;
     filterModel.diagnostics = [];
-    const result = await this.session.testFilter(filterModel.filter);
+    const result = await this.session.testFilter(filterModel.filter, progress);
     if (result.success) {
       filterModel.diagnostics = result.details.diagnostics;
     } else {

@@ -66,7 +66,7 @@ class MyAppModel {
 
     const filter = profile.activeFilter;
     if (filter) {
-      const result = await session.applyFilter(filter);
+      const result = await session.applyFilter(filter, progress);
       if (result.success) {
         if (result.details.diagnostics.length > 0) {
           //TODO show the error somehow
