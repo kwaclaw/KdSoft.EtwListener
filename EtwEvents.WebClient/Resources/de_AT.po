@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2020-01-22 12:08-0500\n"
-"PO-Revision-Date: 2020-01-22 12:09-0500\n"
+"POT-Creation-Date: 2020-01-25 12:02-0500\n"
+"PO-Revision-Date: 2020-01-25 12:03-0500\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: de_AT\n"
@@ -21,11 +21,19 @@ msgstr ""
 "X-Poedit-SearchPathExcluded-4: obj\n"
 "X-Poedit-SearchPathExcluded-5: out\n"
 
-#: Controllers/EtwController.cs:74
+#: Controllers/ErrorController.cs:21
+msgid "Error - NonDevEnvironment"
+msgstr "Fehler - Keine Entwicklerumgebung"
+
+#: Controllers/ErrorController.cs:30 Controllers/ErrorController.cs:45
+msgid "Unexpected Error"
+msgstr "Unerwarteter Fehler"
+
+#: Controllers/EtwController.cs:74 Controllers/EtwController.cs:156
 msgid "Authentication failure"
 msgstr "Authentifizierungsfehler"
 
-#: Controllers/EtwController.cs:76
+#: Controllers/EtwController.cs:76 Controllers/EtwController.cs:158
 msgid "Cannot find matching client certificate"
 msgstr "Passendes Clientzertifikat nicht gefunden"
 

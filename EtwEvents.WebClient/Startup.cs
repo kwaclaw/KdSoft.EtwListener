@@ -8,7 +8,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Localization;
 
 #pragma warning disable CA1822 // Mark members as static
 
@@ -73,6 +75,8 @@ namespace EtwEvents.WebClient
             services.AddSingleton<TraceSessionManager>();
 
             services.AddPortableObjectLocalization(options => options.ResourcesPath = "Resources");
+            // workaround for bug in OrchardCore
+            services.TryAddTransient(typeof(IStringLocalizer<>), typeof(StringLocalizer<>));
 
             services.AddRazorPages();
 
