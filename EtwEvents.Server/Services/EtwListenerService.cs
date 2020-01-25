@@ -77,7 +77,7 @@ namespace EtwEvents.Server
                         return Task.CompletedTask;
                     }
             }
-            responseStream.WriteOptions = new WriteOptions(WriteFlags.NoCompress);
+            responseStream.WriteOptions = new WriteOptions(WriteFlags.NoCompress | WriteFlags.BufferHint);
 
             var tcs = new TaskCompletionSource<object>();
             var session = GetSession(request.SessionName);
