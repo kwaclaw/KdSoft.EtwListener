@@ -295,13 +295,18 @@ class KdSoftCheckList extends LitMvvmElement {
         #item-list {
           display: inline-block;
           -webkit-overflow-scrolling: touch; /* Lets it scroll lazy */
-          padding: 5px;
+          padding-top: 5px;
+          padding-bottom: 5px;
           box-sizing: border-box;
           max-height: var(--max-scroll-height, 300px);
           min-width: 100%;
         }
         .list-item {
           position: relative;
+          padding-top: 2px;
+          padding-bottom: 2px;
+          padding-left: 5px;
+          padding-right: 5px;
         }
         .list-item:hover {
           background-color: lightblue;
