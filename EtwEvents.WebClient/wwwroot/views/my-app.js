@@ -201,14 +201,17 @@ class MyApp extends LitMvvmElement {
     //this.renderRoot.getElementById('dlg-errors').show();
   }
 
-  _errDragStart(e) {
-    e.stopPropagation();
+  _errDown(e) {
+    if (e.buttons !== 1) return;
+
     this._resizeEl = this.renderRoot.getElementById('active-error');
+    this.model.keepActiveErrorOpen();
+
+    e.currentTarget.setPointerCapture(e.pointerId);
+    e.currentTarget.onpointermove = (e) => this._errMove(e);
   }
 
-  _errDrag(e) {
-    e.preventDefault();
-
+  _errMove(e) {
     if (!this._resizeEl) return;
 
     const h = this._resizeEl.offsetHeight;
@@ -217,40 +220,14 @@ class MyApp extends LitMvvmElement {
 
     const newHeightStyle = `${h - dy}px`;
     this._resizeEl.style.height = newHeightStyle;
-    this._resizeEl.parentNode.style.cursor = 'row-resize';
-    //console.log(h, dy, e.y, h-dy);
+    console.log(h, dy, e.y, h-dy);
   }
 
-  // _errDragOver(e) {
-  //   //e.preventDefault();
-  // }
-
-  _errDragEnd(e) {
-    e.preventDefault();
+  _errUp(e) {
     this._resizeEl = null;
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    e.currentTarget.onpointermove = null;
   }
-
-  // _errDown(e) {
-  //   this._resizeEl = this.renderRoot.getElementById('active-error');
-  //   // e.dataTransfer.dropEffect = 'move';
-  //   // e.dataTransfer.effectAllowed = 'all';
-  // }
-
-  // _errMove(e) {
-  //   if (!this._resizeEl) return;
-
-  //   const h = this._resizeEl.offsetHeight;
-  //   const dy = e.offsetY;
-  //   if (e.y === 0 || dy === 0) return;
-
-  //   const newHeightStyle = `${h - dy}px`;
-  //   this._resizeEl.style.height = newHeightStyle;
-  //   //console.log(h, dy, e.y, h-dy);
-  // }
-
-  // _errUp(e) {
-  //   this._resizeEl = null;
-  // }
 
   _closeError() {
     this.model.activeError = null;
@@ -420,11 +397,7 @@ class MyApp extends LitMvvmElement {
         <footer class="relative">
           ${this.model.activeError
             ? html`
-                <div id="active-error-resize" draggable="true"
-                  @dragstart=${this._errDragStart}
-                  @drag=${this._errDrag}
-                  @dragend=${this._errDragEnd}>
-                </div>
+                <div id="active-error-resize" @pointerdown=${this._errDown} @pointerup=${this._errUp}></div>
                 <div id="active-error" class="p-4 bg-red-300" @click=${() => this.model.keepActiveErrorOpen()}>
                   <button class="sticky float-right top-0 text-gray-500" @click=${this._closeError}>
                     <span aria-hidden="true" class="fas fa-lg fa-times"></span>
