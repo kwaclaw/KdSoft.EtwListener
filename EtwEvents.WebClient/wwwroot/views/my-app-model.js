@@ -46,7 +46,14 @@ class MyAppModel {
     error.timeStamp = new Date();
     this.fetchErrors.push(error);
     this.activeError = error;
-    window.setTimeout(() => { this.activeError = null; }, 3000);
+    if (this._errorTimeout) window.clearTimeout(this._errorTimeout);
+    this._errorTimeout = window.setTimeout(() => { this.activeError = null; }, 9000);
+  }
+
+  keepActiveErrorOpen() {
+    if (this._errorTimeout) {
+      window.clearTimeout(this._errorTimeout);
+    }
   }
 
   async openSessionFromSelectedProfile(progress) {

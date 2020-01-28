@@ -1,6 +1,6 @@
 /* global i18n */
 
-import { html } from '../lib/lit-html.js';
+import { html, nothing } from '../lib/lit-html.js';
 import { classMap } from '../lib/lit-html/directives/class-map.js';
 import { observe, unobserve } from '../lib/@nx-js/observer-util.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
@@ -197,6 +197,65 @@ class MyApp extends LitMvvmElement {
     dlg.removeEventListener('kdsoft-save', this._formSaveHandler);
   }
 
+  _showErrors() {
+    //this.renderRoot.getElementById('dlg-errors').show();
+  }
+
+  _errDragStart(e) {
+    e.stopPropagation();
+    this._resizeEl = this.renderRoot.getElementById('active-error');
+  }
+
+  _errDrag(e) {
+    e.preventDefault();
+
+    if (!this._resizeEl) return;
+
+    const h = this._resizeEl.offsetHeight;
+    const dy = e.offsetY;
+    if (e.y === 0 || dy === 0) return;
+
+    const newHeightStyle = `${h - dy}px`;
+    this._resizeEl.style.height = newHeightStyle;
+    this._resizeEl.parentNode.style.cursor = 'row-resize';
+    //console.log(h, dy, e.y, h-dy);
+  }
+
+  // _errDragOver(e) {
+  //   //e.preventDefault();
+  // }
+
+  _errDragEnd(e) {
+    e.preventDefault();
+    this._resizeEl = null;
+  }
+
+  // _errDown(e) {
+  //   this._resizeEl = this.renderRoot.getElementById('active-error');
+  //   // e.dataTransfer.dropEffect = 'move';
+  //   // e.dataTransfer.effectAllowed = 'all';
+  // }
+
+  // _errMove(e) {
+  //   if (!this._resizeEl) return;
+
+  //   const h = this._resizeEl.offsetHeight;
+  //   const dy = e.offsetY;
+  //   if (e.y === 0 || dy === 0) return;
+
+  //   const newHeightStyle = `${h - dy}px`;
+  //   this._resizeEl.style.height = newHeightStyle;
+  //   //console.log(h, dy, e.y, h-dy);
+  // }
+
+  // _errUp(e) {
+  //   this._resizeEl = null;
+  // }
+
+  _closeError() {
+    this.model.activeError = null;
+  }
+
   connectedCallback() {
     super.connectedCallback();
   }
@@ -260,9 +319,25 @@ class MyApp extends LitMvvmElement {
           width: 80ch;
         }
 
+        #active-error {
+          box-sizing: border-box;
+          height: 12ex;
+          overflow: auto;
+        }
+
+        #active-error-resize {
+          height: 4px;
+          /* position: absolute;
+          top: 0; */
+          width: 100%;
+          background-color: gray;
+          cursor: row-resize;
+        }
+
         #sessionDropDown {
           width: 250px;
         }
+
         #sessionProfiles {
           width: 275px;
         }
@@ -294,11 +369,11 @@ class MyApp extends LitMvvmElement {
           <kdsoft-dropdown id="sessionDropDown" class="py-0 text-white" .model=${this.model.sessionDropdownModel}>
             <kdsoft-checklist id="sessionProfiles" class="text-black leading-normal" .model=${this.model.profileCheckListModel}></kdsoft-checklist>
           </kdsoft-dropdown>
-          <button class="px-2 py-1" @click=${this._sessionFromProfileClick}><i class="fas fa-lg fa-wifi text-gray-500"></i></button>
-          <button class="px-2 py-1" @click=${this._editProfileClick}><i class="fas fa-lg fa-edit text-gray-500"></i></button>
-          <button class="px-2 py-1" @click=${this._importProfilesClick} title="Import Profiles"><i class="fas fa-lg fa-file-import text-gray-500"></i></button>
+          <button class="text-gray-500 px-2 py-1" @click=${this._sessionFromProfileClick}><i class="fas fa-lg fa-wifi"></i></button>
+          <button class="text-gray-500 px-2 py-1" @click=${this._editProfileClick}><i class="fas fa-lg fa-edit"></i></button>
+          <button class="text-gray-500 px-2 py-1" @click=${this._importProfilesClick} title="Import Profiles"><i class="fas fa-lg fa-file-import"></i></button>
 
-          <div class="block lg:hidden">
+          <div class="block lg:hidden ml-auto pr-2">
             <button id="nav-toggle" @click=${this._toggleNav}
                     class="flex items-center px-3 py-2 border rounded text-gray-500 border-gray-600 hover:text-white hover:border-white">
               <i class="fas fa-bars"></i>
@@ -306,7 +381,7 @@ class MyApp extends LitMvvmElement {
             </button>
           </div>
 
-          <div class="w-full flex-grow lg:flex lg:items-center lg:w-auto hidden lg:block pt-6 lg:pt-0" id="nav-content">
+          <div id="nav-content" class="w-full flex-grow lg:flex lg:items-center lg:w-auto hidden lg:block pt-6 lg:pt-0">
             <ul class="list-reset lg:flex justify-end flex-1 items-center">
             ${[...this.model.traceSessions.values()].map(ses => {
               const isActiveTab = this.model.activeSession === ses;
@@ -320,11 +395,11 @@ class MyApp extends LitMvvmElement {
                     <button type="button" @click=${this._eventsClick}>
                       <i class=${classMap(eventsClasses)}></i>
                     </button>
-                    <button type="button" @click=${this._filterSessionClick}>
-                      <i class="fas fa-filter text-gray-500"></i>
+                    <button type="button" class="text-gray-500" @click=${this._filterSessionClick}>
+                      <i class="fas fa-filter"></i>
                     </button>
-                    <button type="button" @click=${this._closeSessionClick}>
-                      <i class="fas fa-lg fa-times text-gray-500"></i>
+                    <button type="button" class="text-gray-500" @click=${this._closeSessionClick}>
+                      <i class="fas fa-lg fa-times"></i>
                     </button>
                   </div>
                 </li>
@@ -342,8 +417,29 @@ class MyApp extends LitMvvmElement {
           <trace-session-view .model=${this.model.activeSession}></trace-session-view>
         </div>
 
-        <footer class="flex p-2 border bg-gray-800 text-white">&copy; Karl Waclawek
-          <span class="ml-auto">${this.model.fetchErrors.length} ${i18n.__('Errors')}</span>
+        <footer class="relative">
+          ${this.model.activeError
+            ? html`
+                <div id="active-error-resize" draggable="true"
+                  @dragstart=${this._errDragStart}
+                  @drag=${this._errDrag}
+                  @dragend=${this._errDragEnd}>
+                </div>
+                <div id="active-error" class="p-4 bg-red-300" @click=${() => this.model.keepActiveErrorOpen()}>
+                  <button class="sticky float-right top-0 text-gray-500" @click=${this._closeError}>
+                    <span aria-hidden="true" class="fas fa-lg fa-times"></span>
+                  </button>
+                  <p class="font-semibold">${this.model.activeError.title}</p>
+                  <pre>${this.model.activeError.detail}</pre>
+                </div>
+              `
+            : nothing
+          }
+          <div class="flex p-2 border bg-gray-800 text-white">&copy; Karl Waclawek
+            <button class="ml-auto" @click=${this._showErrors}>
+              ${this.model.fetchErrors.length} ${i18n.__('Errors')}
+            </button>
+          </div>
         </footer>
 
         <dialog id="dlg-config">
