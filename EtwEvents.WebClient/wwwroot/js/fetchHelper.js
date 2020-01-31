@@ -64,9 +64,7 @@ function unpackTextResponse(response) {
 
 const defaultOptions = {
   credentials: 'same-origin',
-  headers: {
-    'X-Requested-With': 'XMLHttpRequest'
-  }
+  headers: { 'X-Requested-With': 'XMLHttpRequest' }
 };
 
 function buildUrl(route, url, params) {
