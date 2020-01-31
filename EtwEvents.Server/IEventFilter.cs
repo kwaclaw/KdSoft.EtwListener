@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.Diagnostics.Tracing;
+﻿using Microsoft.Diagnostics.Tracing;
 
 namespace EtwEvents
 {

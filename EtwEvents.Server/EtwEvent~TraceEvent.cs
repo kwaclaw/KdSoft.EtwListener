@@ -5,7 +5,11 @@ namespace KdSoft.EtwLogging
 {
     public partial class EtwEvent
     {
-        public EtwEvent(TraceEvent evt) : this() {
+        internal EtwEvent(TraceEvent evt) : this() {
+            SetTraceEvent(evt);
+        }
+
+        internal void SetTraceEvent(TraceEvent evt) {
             this.EventName = evt.EventName;
             this.ProviderName = evt.ProviderName;
             this.Channel = (uint)evt.Channel;

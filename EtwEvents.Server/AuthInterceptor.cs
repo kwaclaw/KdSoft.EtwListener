@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
@@ -14,6 +15,9 @@ namespace EtwEvents.Server
         }
 
         void CheckAuthorized(ServerCallContext context) {
+            if (context == null)
+                throw new ArgumentNullException(nameof(context));
+
             if (context.AuthContext.IsPeerAuthenticated) {
                 foreach (var peer in context.AuthContext.PeerIdentity) {
                     if (_authorizedNames.Contains(peer.Value))
@@ -30,7 +34,7 @@ namespace EtwEvents.Server
 
         public override Task<TResponse> UnaryServerHandler<TRequest, TResponse>(TRequest request, ServerCallContext context, UnaryServerMethod<TRequest, TResponse> continuation) {
             CheckAuthorized(context);
-            return continuation(request, context);
+            return continuation?.Invoke(request, context);
         }
 
         public override Task ServerStreamingServerHandler<TRequest, TResponse>(TRequest request, IServerStreamWriter<TResponse> responseStream, ServerCallContext context, ServerStreamingServerMethod<TRequest, TResponse> continuation) {

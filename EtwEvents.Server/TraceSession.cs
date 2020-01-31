@@ -58,7 +58,7 @@ namespace EtwEvents.Server
             if (inst != null) {
                 this._instance = null;
                 try { inst.Dispose(); }
-                catch { }
+                catch { /* ignore */ }
             }
 
             var rts = this._realTimeSource;
@@ -66,7 +66,7 @@ namespace EtwEvents.Server
                 this._realTimeSource = null;
                 if (rts.IsValueCreated) {
                     try { rts.Value.Source.Dispose(); }
-                    catch { }
+                    catch { /* ignore */ }
                 }
             }
 
