@@ -1,7 +1,10 @@
 ﻿const standardColumnList = [
   { name: 'sequenceNo', label: 'Sequence No', type: 'number' },
+  { name: 'id', label: 'Id', type: 'number' },
+  { name: 'keywords', label: 'Keywords', type: 'number' },
   { name: 'taskName', label: 'Task', type: 'string' },
-  { name: 'opCode', label: 'OpCode', type: 'number' },
+  { name: 'opcode', label: 'Opcode', type: 'number' },
+  { name: 'opcodeName', label: 'Opcode Name', type: 'string' },
   { name: 'timeStamp', label: 'TimeStamp', type: 'date' },
   { name: 'level', label: 'Level', type: 'number' },
   { name: 'payload', label: 'Payload', type: 'object' }

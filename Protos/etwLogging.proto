@@ -67,10 +67,10 @@ message EtwEventRequest {
 
 message EtwEvent {
   string provider_name = 1;
-  string event_name = 2;
-  uint32 id = 3;
-  string task_name = 4;
-  uint32 opcode = 5;
+  uint32 id = 2;
+  string task_name = 3;
+  uint32 opcode = 4;
+  string opcode_name = 5;
   TraceEventLevel level = 6;
   int32 version = 7;
   int64 keywords = 8;

@@ -104,6 +104,7 @@ namespace EtwEvents.WebClient
                             jsonWriter.WriteNumber("keywords", evt.Keywords);
                             jsonWriter.WriteNumber("level", (uint)evt.Level);
                             jsonWriter.WriteNumber("opcode", evt.Opcode);
+                            jsonWriter.WriteString("opcodeName", evt.OpcodeName);
                             jsonWriter.WriteString("taskName", evt.TaskName);
                             // timeStamp will be passed as milliseconds to Javascript
                             var timeStamp = (evt.TimeStamp.Seconds * 1000) + (evt.TimeStamp.Nanos / 1000000);

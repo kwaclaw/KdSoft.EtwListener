@@ -10,13 +10,13 @@ namespace KdSoft.EtwLogging
         }
 
         internal void SetTraceEvent(TraceEvent evt) {
-            this.EventName = evt.EventName;
             this.ProviderName = evt.ProviderName;
             this.Channel = (uint)evt.Channel;
             this.Id = (uint)evt.ID;
             this.Keywords = (long)evt.Keywords;
             this.Level = (TraceEventLevel)evt.Level;
             this.Opcode = (uint)evt.Opcode;
+            this.OpcodeName = evt.OpcodeName;
             this.TaskName = evt.TaskName;
             this.TimeStamp = evt.TimeStamp.ToUniversalTime().ToTimestamp();
             this.Version = evt.Version;
