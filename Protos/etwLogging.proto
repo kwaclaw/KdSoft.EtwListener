@@ -11,6 +11,7 @@ package KdSoft.EtwLogging;
 service EtwListener {
   rpc OpenSession (OpenEtwSession) returns (EnableProvidersResult);
   rpc CloseSession (CloseEtwSession) returns (google.protobuf.Empty);
+  rpc GetActiveSessionNames (google.protobuf.Empty) returns (SessionNamesResult);
   rpc EnableProviders (EnableProvidersRequest) returns (EnableProvidersResult);
   rpc DisableProviders (DisableProvidersRequest) returns (google.protobuf.Empty);
   rpc GetEvents (EtwEventRequest) returns (stream EtwEvent);
@@ -29,6 +30,10 @@ message OpenEtwSession {
 
 message CloseEtwSession {
   string name = 1;
+}
+
+message SessionNamesResult {
+    repeated string session_names = 1;
 }
 
 message EnableProvidersRequest {

@@ -1,8 +1,10 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using KdSoft.EtwLogging;
+using Microsoft.Diagnostics.Tracing.Session;
 using tracing = Microsoft.Diagnostics.Tracing;
 
 namespace EtwEvents.Server
@@ -62,6 +64,12 @@ namespace EtwEvents.Server
                 session.Instance.DisableProvider(provider);
             }
             return emptyTask;
+        }
+
+        public override Task<SessionNamesResult> GetActiveSessionNames(Empty request, ServerCallContext context) {
+            var result = new SessionNamesResult();
+            result.SessionNames.AddRange(TraceEventSession.GetActiveSessionNames());
+            return Task.FromResult(result);
         }
 
         public override async Task GetEvents(EtwEventRequest request, IServerStreamWriter<EtwEvent> responseStream, ServerCallContext context) {
