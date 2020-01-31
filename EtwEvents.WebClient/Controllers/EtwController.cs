@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Resources;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
@@ -89,14 +90,16 @@ namespace EtwEvents.WebClient
         [HttpGet]
         public async Task<IActionResult> StartEvents(string sessionName) {
             if (HttpContext.WebSockets.IsWebSocketRequest) {
-                var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
                 if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
+                    var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
                     var session = await sessionEntry.CreateTask.ConfigureAwait(false);
                     await session.StartEvents(webSocket, _optionsMonitor).ConfigureAwait(false);
                     return new EmptyResult();  // OkResult not right here, tries to set status code which is not good in this scenario
                 }
                 else {
+                	//TODO  should we not return a WebSocket close status?
                     return Problem(
+                        statusCode: (int)HttpStatusCode.NotFound,
                         title: _.GetString("Session not found"),
                         instance: nameof(StartEvents),
                         detail: _.GetString("Session may have been closed already.")
