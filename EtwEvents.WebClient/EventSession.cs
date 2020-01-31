@@ -87,6 +87,12 @@ namespace EtwEvents.WebClient
                             if (_webSocket.CloseStatus.HasValue)
                                 break;
 
+                            var evt = streamer.ResponseStream.Current;
+
+                            // ignore empty messages
+                            if (evt.TimeStamp == null)
+                                continue;
+
                             bufferWriter.Clear();
 
                             if (startNewMessage) {
@@ -96,7 +102,6 @@ namespace EtwEvents.WebClient
 
                             jsonWriter.WriteStartObject();
 
-                            var evt = streamer.ResponseStream.Current;
                             jsonWriter.WriteNumber("sequenceNo", sequenceNo++);
                             jsonWriter.WriteString("providerName", evt.ProviderName);
                             jsonWriter.WriteNumber("channel", evt.Channel);
