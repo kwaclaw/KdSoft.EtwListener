@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.WebSockets;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using System.Threading.Tasks;
 using EtwEvents.WebClient.Models;
 using Google.Protobuf.WellKnownTypes;
@@ -30,7 +31,9 @@ namespace EtwEvents.WebClient
         readonly GrpcChannel _channel;
         readonly EtwListener.EtwListenerClient _etwClient;
         readonly ILogger<TraceSession> _logger;
+
         EventSession? _eventSession;
+        CancellationTokenSource _eventCts;
 
         readonly object _syncObj = new object();
 
@@ -50,6 +53,7 @@ namespace EtwEvents.WebClient
             _channel = channel;
             _etwClient = etwClient;
             _logger = logger;
+            _eventCts = new CancellationTokenSource();
         }
 
         public string Name { get; }
@@ -124,13 +128,18 @@ namespace EtwEvents.WebClient
             };
 
             EventSession eventSession;
-            Task? stopTask = null;
+            Task<bool>? stopTask = null;
+            CancellationTokenSource? stopEventCts = null;
+
             lock (_syncObj) {
                 if (_eventSession != null) {
-                    stopTask = _eventSession.Stop(true, 0);
+                    stopEventCts = _eventCts;
+                    stopEventCts.Cancel();
+                    stopTask = _eventSession.Stop(true);
                 }
-                eventSession = new EventSession(_etwClient, webSocket, request, optionsMonitor, StopTimeoutMilliseconds);
+                eventSession = new EventSession(_etwClient, webSocket, request, optionsMonitor);
                 _eventSession = eventSession;
+                _eventCts = new CancellationTokenSource();
             }
 
             if (stopTask != null) {
@@ -140,28 +149,50 @@ namespace EtwEvents.WebClient
                 catch {
                     // ignore errors and continue
                 }
+                finally {
+                    if (stopEventCts != null)
+                        stopEventCts.Dispose();
+                }
             }
 
             try {
-                if (eventSession.Start())
+                if (eventSession.Start(_eventCts.Token))
                     await Task.WhenAll(eventSession.ReceiveTask, eventSession.RunTask!).ConfigureAwait(false);
                 else
-                    await eventSession.ReceiveTask.ConfigureAwait(false);
+                    throw new InvalidOperationException("Event session already started.");
             }
             catch (OperationCanceledException) {
                 // typically ignored in this scenario
             }
         }
 
-        public Task<bool> StopEvents() {
+        public async Task<bool> StopEvents() {
+            Task<bool>? stopTask = null;
+            CancellationTokenSource? stopEventCts = null;
+
             lock (_syncObj) {
                 if (_eventSession != null) {
-                    var result = _eventSession.Stop(true, StopTimeoutMilliseconds);
+                    stopEventCts = _eventCts;
+                    stopEventCts.CancelAfter(StopTimeoutMilliseconds);
+                    stopTask = _eventSession.Stop(true);
                     _eventSession = null;
-                    return result;
                 }
             }
-            return Task.FromResult(false);
+
+            if (stopTask != null) {
+                try {
+                    return await stopTask.ConfigureAwait(false);
+                }
+                catch {
+                    // ignore errors and continue
+                }
+                finally {
+                    if (stopEventCts != null)
+                        stopEventCts.Dispose();
+                }
+            }
+
+            return false;
         }
 
         public async Task<BuildFilterResult> SetCSharpFilter(string csharpFilter) {
