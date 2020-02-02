@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using EtwEvents.WebClient.Models;
+using Grpc.Core;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Options;
 
@@ -16,10 +17,10 @@ namespace EtwEvents.WebClient
         readonly EtwListener.EtwListenerClient _etwClient;
         readonly WebSocket _webSocket;
         readonly EtwEventRequest _request;
-        readonly CancellationTokenSource _stoppingCts;
 
         TimeSpan _pushFrequency;
         IDisposable _pushFrequencyMonitor;
+        AsyncServerStreamingCall<EtwEvent>? _streamer;
 
         public EventSession(
             EtwListener.EtwListenerClient etwClient,
@@ -30,7 +31,6 @@ namespace EtwEvents.WebClient
             this._etwClient = etwClient;
             this._webSocket = webSocket;
             this._request = request;
-            this._stoppingCts = new CancellationTokenSource();
             this._pushFrequency = optionsMonitor.CurrentValue.PushFrequency;
             this._pushFrequencyMonitor = optionsMonitor.OnChange((opts, name) => {
                 Interlocked.MemoryBarrier();
@@ -39,22 +39,24 @@ namespace EtwEvents.WebClient
             });
         }
 
+        // we only expect to receive Close messages
         async Task KeepReceiving(CancellationToken stoppingToken) {
-            var recBuf = new byte[2048];
-            var receiveSegment = new ArraySegment<byte>(recBuf);
+            var receiveSegment = WebSocket.CreateServerBuffer(4096);
             WebSocketReceiveResult response;
             try {
-                while (!_webSocket.CloseStatus.HasValue) {
+                while (_webSocket.State != WebSocketState.Closed && _webSocket.State != WebSocketState.Aborted && !stoppingToken.IsCancellationRequested) {
                     response = await _webSocket.ReceiveAsync(receiveSegment, stoppingToken).ConfigureAwait(false);
-                    switch (response.MessageType) {
-                        case WebSocketMessageType.Close:
-                            await _webSocket.CloseAsync(response.CloseStatus ?? WebSocketCloseStatus.NormalClosure, response.CloseStatusDescription, CancellationToken.None).ConfigureAwait(false);
-                            break;
-                        case WebSocketMessageType.Text:
-                            continue;
-                        case WebSocketMessageType.Binary:
-                            // ignore
-                            continue;
+                    if (!stoppingToken.IsCancellationRequested) {
+                        switch (response.MessageType) {
+                            case WebSocketMessageType.Close:
+                                await Stop(false).ConfigureAwait(false);
+                                break;
+                            case WebSocketMessageType.Text:
+                                continue;
+                            case WebSocketMessageType.Binary:
+                                // ignore
+                                continue;
+                        }
                     }
                 };
             }
@@ -62,7 +64,6 @@ namespace EtwEvents.WebClient
                 //
             }
         }
-
 
         async Task Run(CancellationToken stoppingToken) {
             var jsonOptions = new JsonWriterOptions {
@@ -78,16 +79,23 @@ namespace EtwEvents.WebClient
 
                 using (var jsonWriter = new Utf8JsonWriter(bufferWriter, jsonOptions)) {
 
-                    using (var streamer = _etwClient.GetEvents(_request)) {
+                    var streamer = _streamer = _etwClient.GetEvents(_request);
+                    var responseStream = streamer.ResponseStream;
+
+                    try {
                         stw.Restart();
                         bool startNewMessage = true;
                         jsonWriter.Reset();
 
-                        while (await streamer.ResponseStream.MoveNext(default(CancellationToken)).ConfigureAwait(false)) {
-                            if (_webSocket.CloseStatus.HasValue)
+                        while (await responseStream.MoveNext(default(CancellationToken)).ConfigureAwait(false)) {
+                            var evt = responseStream.Current;
+
+                            // we should not call CloseAsync while still sending
+                            if (stopped == 1 || _streamer == null)
                                 break;
 
-                            var evt = streamer.ResponseStream.Current;
+                            if (_webSocket.State != WebSocketState.Open)
+                                break;
 
                             // ignore empty messages
                             if (evt.TimeStamp == null)
@@ -145,10 +153,18 @@ namespace EtwEvents.WebClient
                             }
                         }
                     }
+                    catch (RpcException rex) when (rex.StatusCode == StatusCode.Cancelled) {
+                        // expected, happens when we Dispose the AsyncServerStreamingCall<EtwEvent>
+                    }
+                    finally {
+                        var st = _streamer;
+                        if (st != null)
+                            st.Dispose();
+                    }
                 }
             }
             catch (WebSocketException wsex) when (wsex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely) {
-                //
+                Debug.WriteLine("Premature");
             }
         }
 
@@ -158,24 +174,15 @@ namespace EtwEvents.WebClient
         Task? _runTask;
         public Task? RunTask => _runTask;
 
-        ValueTask _disposeTask;
-        public ValueTask DisposeTask => _disposeTask;
-
         int started = 0;
-        public bool Start() {
+        public bool Start(CancellationToken cancelToken) {
             var oldStarted = Interlocked.CompareExchange(ref started, 1, 0);
             if (oldStarted == 1)
                 return false;
 
-            if (_stoppingCts.IsCancellationRequested)
-                return false;
-
             try {
-                _stoppingCts.Token.Register(() => {
-                    this._disposeTask = DisposeAsync();
-                });
-                this._receiveTask = KeepReceiving(_stoppingCts.Token);
-                this._runTask = Run(_stoppingCts.Token);
+                this._receiveTask = KeepReceiving(cancelToken);
+                this._runTask = Run(cancelToken);
                 return true;
             }
             catch {
@@ -185,36 +192,48 @@ namespace EtwEvents.WebClient
         }
 
         int stopped = 0;
-        // await RunTask after calling stop
-        public bool Stop(TimeSpan? delay = null) {
+        public async Task<bool> Stop(bool initiate) {
             var oldStopped = Interlocked.CompareExchange(ref stopped, 1, 0);
             if (oldStopped == 1)
                 return false;
 
-            if (delay == null)
-                _stoppingCts.Cancel();
-            else
-                _stoppingCts.CancelAfter(delay.Value);
+            await Close(initiate, WebSocketCloseStatus.NormalClosure).ConfigureAwait(false);
             return true;
         }
 
-        public async ValueTask DisposeAsync() {
+        // Warning: ValueTasks should not be awaited multiple times
+        async ValueTask Close(bool initiate, WebSocketCloseStatus status = WebSocketCloseStatus.Empty) {
             try {
-                await _webSocket.CloseAsync(WebSocketCloseStatus.Empty, string.Empty, default(CancellationToken)).ConfigureAwait(false);
+                // Dispose Grpc response stream, this is the only way to end the call from the client side
+                var oldStreamer = Interlocked.Exchange(ref _streamer, null);
+                if (oldStreamer != null)
+                    oldStreamer.Dispose();
+
+                if (initiate)
+                    await _webSocket.CloseAsync(status, "Close", default(CancellationToken)).ConfigureAwait(false);
+                else
+                    await _webSocket.CloseOutputAsync(status, "ACK Close", default(CancellationToken)).ConfigureAwait(false);
             }
-            catch {
-                //
+            catch (OperationCanceledException) {
+                // typically ignored in this scenario
             }
             finally {
+                // don't leave the socket in any potentially connected state
+                if (_webSocket.State != WebSocketState.Closed)
+                    _webSocket.Abort();
                 this.Dispose();
             }
+        }
+
+        // Warning: ValueTasks should not be awaited multiple times
+        public ValueTask DisposeAsync() {
+            return this.Close(_webSocket.State != WebSocketState.Closed, 0);
         }
 
         public void Dispose() {
             try {
                 _pushFrequencyMonitor?.Dispose();
                 _webSocket.Dispose();
-                _stoppingCts.Dispose();
                 GC.SuppressFinalize(this);
             }
             catch {

@@ -1,16 +1,14 @@
 ﻿using System;
-using System.Net;
-using System.Resources;
+using System.Net.WebSockets;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using System.Threading.Tasks;
 using EtwEvents.WebClient.Models;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
-using OrchardCore.Localization;
 
 namespace EtwEvents.WebClient
 {
@@ -87,23 +85,28 @@ namespace EtwEvents.WebClient
             return Ok(success);
         }
 
+        public const int SessionNotFoundWebSocketStatus = 4901;
+
         [HttpGet]
         public async Task<IActionResult> StartEvents(string sessionName) {
             if (HttpContext.WebSockets.IsWebSocketRequest) {
+                var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
                 if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
-                    var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
                     var session = await sessionEntry.CreateTask.ConfigureAwait(false);
                     await session.StartEvents(webSocket, _optionsMonitor).ConfigureAwait(false);
-                    return new EmptyResult();  // OkResult not right here, tries to set status code which is not good in this scenario
+                    // OkResult not right here, tries to set status code which is not good in this scenario
+                    return new EmptyResult();
                 }
                 else {
-                	//TODO  should we not return a WebSocket close status?
-                    return Problem(
-                        statusCode: (int)HttpStatusCode.NotFound,
-                        title: _.GetString("Session not found"),
-                        instance: nameof(StartEvents),
-                        detail: _.GetString("Session may have been closed already.")
-                    );
+                    // Returning HTTP status codes does not work with WebSockets, we need to close
+                    // the WebSocket again with a custom status code in the range 40000 - 4999
+                    await webSocket.CloseAsync
+                        ((WebSocketCloseStatus)SessionNotFoundWebSocketStatus,
+                        _.GetString("Session not found"),
+                        CancellationToken.None
+                    ).ConfigureAwait(false);
+                    // OkResult not right here, tries to set status code which is not good in this scenario
+                    return new EmptyResult();
                 }
             }
             else {
@@ -142,7 +145,11 @@ namespace EtwEvents.WebClient
                 return Ok(result);
             }
             else {
-                return Problem(title: "Session not found", instance: nameof(SetCSharpFilter), detail: "Session may have been closed already.");
+                return Problem(
+                    title: _.GetString("Session not found"),
+                    instance: nameof(SetCSharpFilter),
+                    detail: _.GetString("Session may have been closed already.")
+                );
             }
         }
 

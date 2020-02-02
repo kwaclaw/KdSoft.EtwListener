@@ -34,6 +34,8 @@ namespace EtwEvents.WebClient
 
         readonly object _syncObj = new object();
 
+        public const int StopTimeoutMilliseconds = 3000;
+
         TraceSession(
             string name,
             List<string> enabledProviders,
@@ -111,7 +113,7 @@ namespace EtwEvents.WebClient
             }
         }
 
-        public Task StartEvents(WebSocket webSocket, IOptionsMonitor<EventSessionOptions> optionsMonitor) {
+        public async Task StartEvents(WebSocket webSocket, IOptionsMonitor<EventSessionOptions> optionsMonitor) {
             if (webSocket == null)
                 throw new ArgumentNullException(nameof(webSocket));
             if (optionsMonitor == null)
@@ -122,35 +124,44 @@ namespace EtwEvents.WebClient
             };
 
             EventSession eventSession;
+            Task? stopTask = null;
             lock (_syncObj) {
                 if (_eventSession != null) {
-                    _eventSession.Stop();
+                    stopTask = _eventSession.Stop(true, 0);
                 }
-                eventSession = new EventSession(_etwClient, webSocket, request, optionsMonitor);
+                eventSession = new EventSession(_etwClient, webSocket, request, optionsMonitor, StopTimeoutMilliseconds);
                 _eventSession = eventSession;
             }
 
-            if (eventSession.Start())
-                return Task.WhenAll(eventSession.ReceiveTask, eventSession.RunTask!);
-            else
-                return eventSession.ReceiveTask;
-        }
-
-        public Task StopEvents() {
-            Task? runTask = null;
-            Task? receiveTask = null;
-            lock (_syncObj) {
-                if (_eventSession != null) {
-                    _eventSession.Stop();
-                    runTask = _eventSession.RunTask;
-                    receiveTask = _eventSession.ReceiveTask;
-                    _eventSession = null;
+            if (stopTask != null) {
+                try {
+                    await stopTask.ConfigureAwait(false);
+                }
+                catch {
+                    // ignore errors and continue
                 }
             }
-            if (runTask == null)
-                return receiveTask ?? Task.CompletedTask;
-            else
-                return Task.WhenAll(receiveTask!, runTask);
+
+            try {
+                if (eventSession.Start())
+                    await Task.WhenAll(eventSession.ReceiveTask, eventSession.RunTask!).ConfigureAwait(false);
+                else
+                    await eventSession.ReceiveTask.ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) {
+                // typically ignored in this scenario
+            }
+        }
+
+        public Task<bool> StopEvents() {
+            lock (_syncObj) {
+                if (_eventSession != null) {
+                    var result = _eventSession.Stop(true, StopTimeoutMilliseconds);
+                    _eventSession = null;
+                    return result;
+                }
+            }
+            return Task.FromResult(false);
         }
 
         public async Task<BuildFilterResult> SetCSharpFilter(string csharpFilter) {
