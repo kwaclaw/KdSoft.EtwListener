@@ -1,18 +1,20 @@
 ﻿import { observable } from '../lib/@nx-js/observer-util.js';
 import RingBuffer from './ringBuffer.js';
 
+const SessionNotFoundCode = 4901;
+const NormalClosureCode = 1000;
+
 class EventSession {
-  constructor(wsUrl, bufferSize) {
+  constructor(wsUrl, bufferSize, handleError) {
     this.wsUrl = wsUrl;
     this.ws = null;
-    this._open = false;
-    this._error = '';
+    this._openCount = 0;
+    this._handleError = handleError;
     this._buffer = new RingBuffer(bufferSize);
     return observable(this);
   }
 
-  get open() { return this._open; }
-  get error() { return this._error; }
+  get open() { return this._openCount > 0; }
 
   itemIterator() { return this._buffer.itemIterator(); }
 
@@ -22,16 +24,29 @@ class EventSession {
     this.ws = new WebSocket(this.wsUrl);
 
     this.ws.onclose = (e) => {
-      this._open = false;
       this.ws = null;
+      this._openCount -= 1;
+      if (e.code > NormalClosureCode) {
+        if (e.code == 1006)  // not of interest to user
+          console.log(e);
+        else {
+          const error = { title: e.reason || 'websocket error', statusCode: e.code };
+          this._handleError(error);
+        }
+      }
     };
 
     this.ws.onopen = (e) => {
-      this._open = true;
+      this._openCount += 1;
     };
 
-    this.ws.onerror = (e) => {
-      this._error = 'Web socket error';
+    this.ws.onerror = (error) => {
+      if (error && error instanceof Error) {
+        error = { title: error.message || 'WebSocket error' };
+      } else if (!error || typeof error !== 'object') {
+        error = { title: error || 'WebSocket error' };
+      }
+      this._handleError(error);
     };
 
     this.ws.onmessage = (ev) => {
@@ -48,8 +63,7 @@ class EventSession {
 
   disconnect() {
     if (this.ws === null) return;
-    this.ws.close();
-    this._open = false;
+    this.ws.close(NormalClosureCode);
     this.ws = null;
   }
 }
