@@ -25,7 +25,7 @@ class KdSoftCheckList extends LitMvvmElement {
 
   constructor() {
     super();
-    this._internals = this.attachInternals();
+    this._internals = this.attachInternals ? this.attachInternals() : null;
     this.scheduler = new Queue(priorities.HIGH);
     //this.scheduler = new BatchScheduler(0);
   }
@@ -83,7 +83,8 @@ class KdSoftCheckList extends LitMvvmElement {
       for (const entry of this.model.selectedEntries) {
         entries.append(n, entry.item.value);
       }
-      this._internals.setFormValue(entries);
+      if (this._internals)
+        this._internals.setFormValue(entries);
     });
   }
 
