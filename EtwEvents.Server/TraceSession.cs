@@ -1,12 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Dynamic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using KdSoft.EtwLogging;
 using KdSoft.Utils;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -21,9 +24,20 @@ namespace EtwEvents.Server
         object _syncObj = new object();
 
         TraceEventSession _instance;
-        public TraceEventSession Instance => CheckDisposed();
+        TraceEventSession Instance => CheckDisposed();
 
         Lazy<RealTimeTraceEventSource> _realTimeSource;
+
+        ImmutableDictionary<string, ProviderSetting> _enabledProviders = ImmutableDictionary<string, ProviderSetting>.Empty;
+        public IEnumerable<ProviderSetting> EnabledProviders {
+            get {
+                lock (_syncObj) {
+                    return _enabledProviders.Values;
+                }
+            }
+        }
+
+        public string SessionName => Instance.SessionName;
 
         TraceEventSession CheckDisposed() {
             var inst = this._instance;
@@ -52,6 +66,21 @@ namespace EtwEvents.Server
         }
 
         public bool IsCreated { get; private set; }
+
+        public bool EnableProvider(ProviderSetting setting) {
+            lock (_syncObj) {
+                var result = Instance.EnableProvider(setting.Name, (tracing.TraceEventLevel)setting.Level, setting.MatchKeywords);
+                _enabledProviders = _enabledProviders.SetItem(setting.Name, setting);
+                return result;
+            }
+        }
+
+        public void DisableProvider(string provider) {
+            lock (_syncObj) {
+                Instance.DisableProvider(provider);
+                _enabledProviders = _enabledProviders.Remove(provider);
+            }
+        }
 
         protected override void Close() {
             var inst = this._instance;
@@ -177,7 +206,7 @@ namespace EtwEvents.Server
         }
 
         public static CSharpCompilation CompileFilter(string filterBody) {
-            var sourceCode = string.Format(filterTemplate, filterBody);
+            var sourceCode = string.Format(CultureInfo.InvariantCulture,  filterTemplate, filterBody);
             var sourceText = SourceText.From(sourceCode);
             var options = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest);
 

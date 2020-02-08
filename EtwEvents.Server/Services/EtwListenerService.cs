@@ -33,7 +33,7 @@ namespace EtwEvents.Server
 
             if (session.IsCreated) {  // can only enable providers when new session was created
                 foreach (var setting in request.ProviderSettings) {
-                    var restarted = session.Instance.EnableProvider(setting.Name, (tracing.TraceEventLevel)setting.Level, setting.MatchKeywords);
+                    var restarted = session.EnableProvider(setting);
                     result.Results.Add(new ProviderSettingResult { Name = setting.Name, Restarted = restarted });
                 }
             }
@@ -52,7 +52,7 @@ namespace EtwEvents.Server
             var result = new EnableProvidersResult();
             var session = GetSession(request.SessionName);
             foreach (var setting in request.ProviderSettings) {
-                var restarted = session.Instance.EnableProvider(setting.Name, (tracing.TraceEventLevel)setting.Level, setting.MatchKeywords);
+                var restarted = session.EnableProvider(setting);
                 result.Results.Add(new ProviderSettingResult { Name = setting.Name, Restarted = restarted });
             }
             return Task.FromResult(result);
@@ -61,7 +61,7 @@ namespace EtwEvents.Server
         public override Task<Empty> DisableProviders(DisableProvidersRequest request, ServerCallContext context) {
             var session = GetSession(request.SessionName);
             foreach (var provider in request.ProviderNames) {
-                session.Instance.DisableProvider(provider);
+                session.DisableProvider(provider);
             }
             return emptyTask;
         }
@@ -69,6 +69,17 @@ namespace EtwEvents.Server
         public override Task<SessionNamesResult> GetActiveSessionNames(Empty request, ServerCallContext context) {
             var result = new SessionNamesResult();
             result.SessionNames.AddRange(TraceEventSession.GetActiveSessionNames());
+            return Task.FromResult(result);
+        }
+
+        public override Task<EtwSession> GetSession(StringValue request, ServerCallContext context) {
+            var session = GetSession(request.Value);
+            var result = new EtwSession {
+                SessionName = request.Value,
+                IsCreated = session.IsCreated
+            };
+            result.EnabledProviders.AddRange(session.EnabledProviders);
+
             return Task.FromResult(result);
         }
 

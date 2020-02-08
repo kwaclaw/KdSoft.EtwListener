@@ -19,7 +19,7 @@ namespace EtwEvents.Server
         ) {
             var filter = session.GetFilter();
 
-            Source = new ETWTraceEventSource(session.Instance.SessionName, TraceEventSourceType.Session);
+            Source = new ETWTraceEventSource(session.SessionName, TraceEventSourceType.Session);
 
             Action<TraceEvent> handleEvent = async (TraceEvent evt) => {
                 if (cancelToken.IsCancellationRequested) {
