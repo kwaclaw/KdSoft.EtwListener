@@ -29,13 +29,7 @@ namespace EtwEvents.Server
         Lazy<RealTimeTraceEventSource> _realTimeSource;
 
         ImmutableDictionary<string, ProviderSetting> _enabledProviders = ImmutableDictionary<string, ProviderSetting>.Empty;
-        public IEnumerable<ProviderSetting> EnabledProviders {
-            get {
-                lock (_syncObj) {
-                    return _enabledProviders.Values;
-                }
-            }
-        }
+        public IEnumerable<ProviderSetting> EnabledProviders => _enabledProviders.Values;
 
         public string SessionName => Instance.SessionName;
 
@@ -68,18 +62,14 @@ namespace EtwEvents.Server
         public bool IsCreated { get; private set; }
 
         public bool EnableProvider(ProviderSetting setting) {
-            lock (_syncObj) {
-                var result = Instance.EnableProvider(setting.Name, (tracing.TraceEventLevel)setting.Level, setting.MatchKeywords);
-                _enabledProviders = _enabledProviders.SetItem(setting.Name, setting);
-                return result;
-            }
+            var result = Instance.EnableProvider(setting.Name, (tracing.TraceEventLevel)setting.Level, setting.MatchKeywords);
+            _enabledProviders = _enabledProviders.SetItem(setting.Name, setting);
+            return result;
         }
 
         public void DisableProvider(string provider) {
-            lock (_syncObj) {
-                Instance.DisableProvider(provider);
-                _enabledProviders = _enabledProviders.Remove(provider);
-            }
+            Instance.DisableProvider(provider);
+            _enabledProviders = _enabledProviders.Remove(provider);
         }
 
         protected override void Close() {
