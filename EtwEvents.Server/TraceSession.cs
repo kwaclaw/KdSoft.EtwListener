@@ -19,7 +19,7 @@ using tracing = Microsoft.Diagnostics.Tracing;
 
 namespace EtwEvents.Server
 {
-    class TraceSession: TimedLifeCycleAware
+    class TraceSession: TimedLifeCycleAware, IDisposable
     {
         object _syncObj = new object();
 
@@ -72,6 +72,7 @@ namespace EtwEvents.Server
             _enabledProviders = _enabledProviders.Remove(provider);
         }
 
+        // will be called through life cycle management
         protected override void Close() {
             var inst = this._instance;
             if (inst != null) {
@@ -90,6 +91,11 @@ namespace EtwEvents.Server
             }
 
             SetFilter(null, null);
+        }
+
+        // not necessary to call explicitly as life cycle management already does it
+        public void Dispose() {
+            Close();
         }
 
         #region Filters
