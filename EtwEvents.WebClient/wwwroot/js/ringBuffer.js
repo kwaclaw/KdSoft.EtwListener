@@ -79,6 +79,39 @@ class RingBuffer {
       }
     };
   }
+
+  // iterate over ringbuffer
+  reverseItemIterator() {
+    const self = this;
+
+    return {
+      [Symbol.iterator]() {
+        this.current = self._itemOffset;
+        this.limit = self._itemOffset;
+        return this;
+      },
+
+      next() {
+        let itemIndex = this.current;
+        for (let indx = 0; indx < self._items.length; indx += 1) {
+          const item = self._items[itemIndex];
+
+          itemIndex -= 1;
+          if (itemIndex < 0) itemIndex = self._items.length - 1;
+
+          if (itemIndex === this.limit) {
+            break;
+          }
+
+          if (typeof item !== 'undefined') {
+            this.current = itemIndex;
+            return { done: false, value: item };
+          }
+        }
+        return { done: true };
+      }
+    };
+  }
 }
 
 export default RingBuffer;
