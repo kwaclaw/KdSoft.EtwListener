@@ -19,11 +19,6 @@ namespace EtwEvents.Server
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services) {
-            services.AddGrpc(opts => {
-                var authorizedNames = Configuration.GetSection("ClientValidation:AuthorizedCommonNames").Get<HashSet<string>>();
-                opts.Interceptors.Add<AuthInterceptor>(authorizedNames);
-            });
-
             // NOTE: None of this seems to work with Grpc, OnCertificateValidated is never called
             //       and consequently we cannot use the standard Authorize attribute and authorization policies.
             //       Therefore we are using an interceptor instead, which is likely more efficient - see above.
@@ -57,6 +52,11 @@ namespace EtwEvents.Server
             //        }
             //    };
             //});
+
+            services.AddGrpc(opts => {
+                var authorizedNames = Configuration.GetSection("ClientValidation:AuthorizedCommonNames").Get<HashSet<string>>();
+                opts.Interceptors.Add<AuthInterceptor>(authorizedNames);
+            });
 
             services.AddSingleton<TraceSessionManager>(new TraceSessionManager(TimeSpan.FromMinutes(3)));
 
