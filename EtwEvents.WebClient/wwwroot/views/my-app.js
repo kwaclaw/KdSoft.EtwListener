@@ -1,6 +1,7 @@
 /* global i18n */
 
 import { html, nothing } from '../lib/lit-html.js';
+import { repeat } from '../lib/lit-html/directives/repeat.js';
 import { classMap } from '../lib/lit-html/directives/class-map.js';
 import { observe, unobserve } from '../lib/@nx-js/observer-util.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
@@ -14,6 +15,7 @@ import './trace-session-view.js';
 import './trace-session-config.js';
 import './filter-form.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
+import { KdSoftGridStyle } from '../styles/kdsoft-grid-style.js';
 import myappStyleLinks from '../styles/my-app-style-links.js';
 import Spinner from '../js/spinner.js';
 
@@ -198,20 +200,20 @@ class MyApp extends LitMvvmElement {
   }
 
   _showErrors() {
-    //this.renderRoot.getElementById('dlg-errors').show();
+    this.model.showErrors = true;
   }
 
-  _errDown(e) {
+  _errSizeDown(e) {
     if (e.buttons !== 1) return;
 
-    this._resizeEl = this.renderRoot.getElementById('active-error');
-    this.model.keepActiveErrorOpen();
+    this._resizeEl = this.renderRoot.getElementById('error-resizable');
+    this.model.keepErrorsOpen();
 
     e.currentTarget.setPointerCapture(e.pointerId);
-    e.currentTarget.onpointermove = (e) => this._errMove(e);
+    e.currentTarget.onpointermove = ev => this._errSizeChange(ev);
   }
 
-  _errMove(e) {
+  _errSizeChange(e) {
     if (!this._resizeEl) return;
 
     const h = this._resizeEl.offsetHeight;
@@ -223,14 +225,23 @@ class MyApp extends LitMvvmElement {
     console.log(h, dy, e.y, h-dy);
   }
 
-  _errUp(e) {
+  _errSizeUp(e) {
     this._resizeEl = null;
     e.currentTarget.releasePointerCapture(e.pointerId);
     e.currentTarget.onpointermove = null;
   }
 
+  _errorGridDown(e) {
+    this.model.keepErrorsOpen();
+  }
+
+  _errorDetailClick(e) {
+    e.currentTarget.classList.toggle('show-detail');
+  }
+
   _closeError() {
-    this.model.activeError = null;
+    this.model.showErrors = false;
+    this.model.showLastError = false;
   }
 
   connectedCallback() {
@@ -260,6 +271,7 @@ class MyApp extends LitMvvmElement {
 
   static get styles() {
     return [
+      KdSoftGridStyle,
       css`
         :host {
           display: block;
@@ -296,19 +308,53 @@ class MyApp extends LitMvvmElement {
           width: 80ch;
         }
 
-        #active-error {
-          box-sizing: border-box;
-          height: 12ex;
-          overflow: auto;
+        #error-resize {
+          height: 3px;
+          border-top: solid gray 1px;
+          border-bottom: solid gray 1px;
+          width: 100%;
+          cursor: n-resize;
         }
 
-        #active-error-resize {
-          height: 4px;
-          /* position: absolute;
-          top: 0; */
-          width: 100%;
-          background-color: gray;
-          cursor: row-resize;
+        #error-resizable {
+          position: relative;
+        }
+
+        #error-grid {
+          box-sizing: border-box;
+          position: absolute;
+          left: 0;
+          right: 0;
+          top: 0;
+          bottom: 0;
+          grid-template-columns: fit-content(14em) 1fr;
+        }
+
+        #error-close {
+          position: sticky;
+          top: 0;
+          justify-self: end;
+          grid-column: 1/-1;
+        }
+
+        #error-grid .kds-row > div {
+          background-color: #feb2b2;
+        }
+
+        #error-grid .kds-row > pre {
+          grid-column: 1/-1;
+          margin-left: 3em;
+          padding: 8px 4px;
+          outline: 1px solid #c8c8c8;
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+        }
+
+        #error-grid .kds-row > .show-detail {
+          max-height: 300px;
+          overflow: scroll;
+          white-space: pre;
         }
 
         #sessionDropDown {
@@ -395,22 +441,35 @@ class MyApp extends LitMvvmElement {
         </div>
 
         <footer class="relative">
-          ${this.model.activeError
+          ${(this.model.showLastError || this.model.showErrors)
             ? html`
-                <div id="active-error-resize" @pointerdown=${this._errDown} @pointerup=${this._errUp}></div>
-                <div id="active-error" class="p-4 bg-red-300" @click=${() => this.model.keepActiveErrorOpen()}>
-                  <button class="sticky float-right top-0 text-gray-500" @click=${this._closeError}>
+                <div id="error-resize" @pointerdown=${this._errSizeDown} @pointerup=${this._errSizeUp}></div>
+                <div id="error-resizable">
+                  <div id="error-grid" class="kds-container px-2 pt-0 pb-2" @pointerdown=${this._errorGridDown}>
+                  <button id="error-close" class="p-1 text-gray-500" @click=${this._closeError}>
                     <span aria-hidden="true" class="fas fa-lg fa-times"></span>
                   </button>
-                  <p class="font-semibold">${this.model.activeError.title}</p>
-                  <pre>${this.model.activeError.detail}</pre>
+                  ${repeat(
+                    this.model.fetchErrors.reverseItemIterator(),
+                    item => item.sequenceNo,
+                    (item, indx) => {
+                      return html`
+                        <div class="kds-row">
+                        <div>${item.timeStamp}</div>
+                        <div>${item.title}</div>
+                        <pre @click=${this._errorDetailClick}>${item.detail}</pre>
+                        </div>
+                      `;
+                    }
+                  )}
+                  </div>
                 </div>
               `
             : nothing
           }
           <div class="flex p-2 border bg-gray-800 text-white">&copy; Karl Waclawek
             <button class="ml-auto" @click=${this._showErrors}>
-              ${this.model.fetchErrors.length} ${i18n.__('Errors')}
+              ${this.model.fetchErrors.count()} ${i18n.__('Errors')}
             </button>
           </div>
         </footer>
@@ -426,7 +485,33 @@ class MyApp extends LitMvvmElement {
   }
 
   rendered() {
-    //
+    let newHeightStyle = null;
+    if (this.model.showErrors) {
+      newHeightStyle = `${300}px`;
+    } else if (this.model.showLastError) {
+      // Calculate the height of the first row in errors, and resize the errors
+      // container to show just that row, as it contains the most recent error.
+      const topRow = this.renderRoot.querySelector('#error-grid div.kds-row');
+      if (topRow) {
+        let minTop = 0;
+        let maxBottom = 0;
+        // topRow has CSS rule "display: contents", so it has no height of its own
+        for (let indx = 0; indx < topRow.children.length; indx += 1) {
+          const child = topRow.children[indx];
+          const ot = child.offsetTop;
+          const ob = ot + child.offsetHeight;
+          if (ot < minTop) minTop = ot;
+          if (ob > maxBottom) maxBottom = ob;
+        }
+        const topRowHeight = maxBottom - minTop;
+        newHeightStyle = `${topRowHeight}px`;
+      }
+    }
+
+    if (newHeightStyle) {
+      const errContainer = this.renderRoot.getElementById('error-resizable');
+      errContainer.style.height = newHeightStyle;
+    }
   }
 }
 

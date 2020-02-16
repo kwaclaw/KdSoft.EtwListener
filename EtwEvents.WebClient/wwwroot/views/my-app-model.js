@@ -5,6 +5,7 @@ import TraceSession from './traceSession.js';
 import TraceSessionProfile from '../js/traceSessionProfile.js';
 import * as utils from '../js/utils.js';
 import TraceSessionConfigModel from './trace-session-config-model.js';
+import RingBuffer from '../js/ringBuffer.js';
 
 function loadSessionProfileModel(selectName) {
   const sessionProfiles = [];
@@ -33,8 +34,10 @@ class MyAppModel {
     this.profileCheckListModel = loadSessionProfileModel();
     this.sessionDropdownModel = new KdSoftDropdownModel();
 
-    this.fetchErrors = [];
-    this.activeError = null;
+    this._errorSequenceNo = 0;
+    this.fetchErrors = new RingBuffer(50);
+    this.showLastError = false;
+    this.showErrors = false;
 
     return observable(this);
   }
@@ -43,14 +46,17 @@ class MyAppModel {
   get activeSession() { return this._traceSessions.get(this.activeSessionName); }
 
   handleFetchError(error) {
+    this._errorSequenceNo += 1;
     error.timeStamp = new Date();
-    this.fetchErrors.push(error);
-    this.activeError = error;
+    error.sequenceNo = this._errorSequenceNo;
+
+    this.fetchErrors.addItem(error);
+    this.showLastError = true;
     if (this._errorTimeout) window.clearTimeout(this._errorTimeout);
-    this._errorTimeout = window.setTimeout(() => { this.activeError = null; }, 9000);
+    this._errorTimeout = window.setTimeout(() => { this.showLastError = false; }, 9000);
   }
 
-  keepActiveErrorOpen() {
+  keepErrorsOpen() {
     if (this._errorTimeout) {
       window.clearTimeout(this._errorTimeout);
     }
