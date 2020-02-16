@@ -55,25 +55,34 @@ class RingBuffer {
       [Symbol.iterator]() {
         this.current = self._itemOffset;
         this.limit = self._itemOffset;
+        this.done = false;
         return this;
       },
 
       next() {
+        if (this.done) {
+          return { done: true };
+        }
+
         let itemIndex = this.current;
         for (let indx = 0; indx < self._items.length; indx += 1) {
           const item = self._items[itemIndex];
 
           itemIndex += 1;
-          if (itemIndex >= self._items.length) itemIndex = 0;
+          if (itemIndex >= self._items.length) {
+            itemIndex = 0;
+          }
 
           if (itemIndex === this.limit) {
-            break;
+            this.done = true;
           }
 
           if (typeof item !== 'undefined') {
             this.current = itemIndex;
             return { done: false, value: item };
           }
+
+          if (this.done) break;
         }
         return { done: true };
       }
@@ -92,25 +101,40 @@ class RingBuffer {
       },
 
       next() {
+        if (this.done) {
+          return { done: true };
+        }
+
         let itemIndex = this.current;
         for (let indx = 0; indx < self._items.length; indx += 1) {
           const item = self._items[itemIndex];
 
           itemIndex -= 1;
-          if (itemIndex < 0) itemIndex = self._items.length - 1;
+          if (itemIndex < 0) {
+            itemIndex = self._items.length - 1;
+          }
 
           if (itemIndex === this.limit) {
-            break;
+            this.done = true;
           }
 
           if (typeof item !== 'undefined') {
             this.current = itemIndex;
             return { done: false, value: item };
           }
+
+          if (this.done) break;
         }
         return { done: true };
       }
     };
+  }
+
+  count() {
+    let result = 0;
+    const iterator = this.itemIterator()[Symbol.iterator]();
+    while (!iterator.next().done) result += 1;
+    return result;
   }
 }
 
