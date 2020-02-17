@@ -135,9 +135,10 @@ namespace EtwEvents.WebClient
                 if (_eventSession != null) {
                     stopEventCts = _eventCts;
                     stopEventCts.Cancel();
-                    stopTask = _eventSession.Stop(true);
+                    stopTask = _eventSession.Stop();
                 }
-                eventSession = new EventSession(_etwClient, webSocket, request, optionsMonitor);
+                var webSocketSink = new WebSocketSink(webSocket, optionsMonitor);
+                eventSession = new EventSession(_etwClient, webSocketSink, request);
                 _eventSession = eventSession;
                 _eventCts = new CancellationTokenSource();
             }
@@ -156,9 +157,8 @@ namespace EtwEvents.WebClient
             }
 
             try {
-                if (eventSession.Start(_eventCts.Token))
-                    await Task.WhenAll(eventSession.ReceiveTask, eventSession.RunTask!).ConfigureAwait(false);
-                else
+                bool newlyStarted = await eventSession.Run(_eventCts.Token).ConfigureAwait(false);
+                if (!newlyStarted)
                     throw new InvalidOperationException("Event session already started.");
             }
             catch (OperationCanceledException) {
@@ -174,7 +174,7 @@ namespace EtwEvents.WebClient
                 if (_eventSession != null) {
                     stopEventCts = _eventCts;
                     stopEventCts.CancelAfter(StopTimeoutMilliseconds);
-                    stopTask = _eventSession.Stop(true);
+                    stopTask = _eventSession.Stop();
                     _eventSession = null;
                 }
             }
