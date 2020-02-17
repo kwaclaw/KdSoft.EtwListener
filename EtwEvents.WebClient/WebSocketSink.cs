@@ -174,6 +174,7 @@ namespace EtwEvents.WebClient
         }
 
         public void Dispose() {
+            _jsonWriter?.Dispose();
             _pushFrequencyMonitor?.Dispose();
             _webSocket.Dispose();
         }
