@@ -123,7 +123,7 @@ namespace EtwEvents.WebClient
             if (optionsMonitor == null)
                 throw new ArgumentNullException(nameof(optionsMonitor));
 
-            var request = new EtwEventRequest {
+            var etwRequest = new EtwEventRequest {
                 SessionName = this.Name
             };
 
@@ -137,8 +137,8 @@ namespace EtwEvents.WebClient
                     stopEventCts.Cancel();
                     stopTask = _eventSession.Stop();
                 }
-                var webSocketSink = new WebSocketSink(webSocket, optionsMonitor);
-                eventSession = new EventSession(_etwClient, webSocketSink, request);
+                var webSocketSink = new WebSocketSink(webSocket);
+                eventSession = new EventSession(_etwClient, webSocketSink, etwRequest, optionsMonitor);
                 _eventSession = eventSession;
                 _eventCts = new CancellationTokenSource();
             }

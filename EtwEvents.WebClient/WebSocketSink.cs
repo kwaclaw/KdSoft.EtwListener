@@ -5,28 +5,24 @@ using System.Net.WebSockets;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using EtwEvents.WebClient.Models;
 using KdSoft.EtwLogging;
-using Microsoft.Extensions.Options;
 
 namespace EtwEvents.WebClient
 {
-    class WebSocketSink: IEventSink, IDisposable
+    class WebSocketSink: IEventSink
     {
         readonly WebSocket _webSocket;
         readonly JsonWriterOptions _jsonOptions;
         readonly ArrayBufferWriter<byte> _bufferWriter;
         readonly Utf8JsonWriter _jsonWriter;
-        readonly Stopwatch _stw;
 
         bool _startNewMessage;
-        TimeSpan _pushFrequency;
-        IDisposable _pushFrequencyMonitor;
+        CancellationToken _cancelToken;
 
         Task _receiveTask = Task.CompletedTask;
         public Task ReceiveTask => _receiveTask;
 
-        public WebSocketSink(WebSocket webSocket, IOptionsMonitor<EventSessionOptions> optionsMonitor) {
+        public WebSocketSink(WebSocket webSocket) {
             this._webSocket = webSocket;
             _jsonOptions = new JsonWriterOptions {
                 Indented = false,
@@ -34,14 +30,6 @@ namespace EtwEvents.WebClient
             };
             _bufferWriter = new ArrayBufferWriter<byte>(512);
             _jsonWriter = new Utf8JsonWriter(_bufferWriter, _jsonOptions);
-            _stw = new Stopwatch();
-
-            this._pushFrequency = optionsMonitor.CurrentValue.PushFrequency;
-            this._pushFrequencyMonitor = optionsMonitor.OnChange((opts, name) => {
-                Interlocked.MemoryBarrier();
-                this._pushFrequency = opts.PushFrequency;
-                Interlocked.MemoryBarrier();
-            });
         }
 
         // we only expect to receive Close messages
@@ -70,16 +58,18 @@ namespace EtwEvents.WebClient
             }
         }
 
-        public void Initialize(CancellationToken stoppingToken) {
-            _stw.Restart();
+        public void Initialize(CancellationToken cancelToken) {
             _startNewMessage = true;
             _jsonWriter.Reset();
-            this._receiveTask = KeepReceiving(stoppingToken);
+            this._cancelToken = cancelToken;
+            this._receiveTask = KeepReceiving(cancelToken);
         }
 
-        async Task<bool> WriteAsync(ReadOnlyMemory<byte> buffered, bool endOfMessage, CancellationToken stoppingToken) {
+        async Task<bool> WriteAsync(bool endOfMessage) {
             try {
-                await _webSocket.SendAsync(buffered, WebSocketMessageType.Text, endOfMessage, stoppingToken).ConfigureAwait(false);
+                _jsonWriter.Flush();
+                var written = _bufferWriter.WrittenMemory;
+                await _webSocket.SendAsync(written, WebSocketMessageType.Text, endOfMessage, this._cancelToken).ConfigureAwait(false);
                 return true;
             }
             catch (WebSocketException wsex) when (wsex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely) {
@@ -88,9 +78,9 @@ namespace EtwEvents.WebClient
             }
         }
 
-        public async Task<bool> WriteAsync(EtwEvent evt, long sequenceNo, CancellationToken stoppingToken) {
+        public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
             if (_webSocket.State != WebSocketState.Open)
-                return false;
+                return new ValueTask<bool>(false);
 
             _bufferWriter.Clear();
 
@@ -123,30 +113,7 @@ namespace EtwEvents.WebClient
 
             _jsonWriter.WriteEndObject();
 
-            Interlocked.MemoryBarrier();
-            if (_stw.Elapsed > _pushFrequency) {
-                Interlocked.MemoryBarrier();
-                _startNewMessage = true;
-                _jsonWriter.WriteEndArray();
-                _jsonWriter.Flush();
-
-                var written = _bufferWriter.WrittenMemory;
-                bool isOpen = await WriteAsync(written, true, stoppingToken).ConfigureAwait(false);
-                if (!isOpen)
-                    return false;
-
-                _jsonWriter.Reset();
-                _stw.Restart();
-            }
-            else {
-                _jsonWriter.Flush();
-
-                var written = _bufferWriter.WrittenMemory;
-                bool isOpen = await WriteAsync(written, false, stoppingToken).ConfigureAwait(false);
-                if (!isOpen)
-                    return false;
-            }
-            return true;
+            return new ValueTask<bool>(WriteAsync(false));
         }
 
         // Warning: ValueTasks should not be awaited multiple times
@@ -173,9 +140,23 @@ namespace EtwEvents.WebClient
             }
         }
 
+        async Task<bool> FlushAsyncInternal() {
+            _startNewMessage = true;
+            _jsonWriter.WriteEndArray();
+            bool isOpen = await WriteAsync(true).ConfigureAwait(false);
+            if (!isOpen)
+                return false;
+
+            _jsonWriter.Reset();
+            return true;
+        }
+
+        public ValueTask<bool> FlushAsync() {
+            return new ValueTask<bool>(FlushAsyncInternal());
+        }
+
         public void Dispose() {
             _jsonWriter?.Dispose();
-            _pushFrequencyMonitor?.Dispose();
             _webSocket.Dispose();
         }
 
