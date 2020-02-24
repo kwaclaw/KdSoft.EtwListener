@@ -61,9 +61,7 @@ namespace EtwEvents.WebClient
         public List<string> RestartedProviders { get; }
 
         static GrpcChannel CreateChannel(string host, X509Certificate2 clientCertificate) {
-#pragma warning disable CA2000 // Dispose objects before losing scope
             var handler = new HttpClientHandler();
-#pragma warning restore CA2000 // Dispose objects before losing scope
             handler.ClientCertificates.Add(clientCertificate);
             var channel = GrpcChannel.ForAddress(host, new GrpcChannelOptions {
                 HttpClient = new HttpClient(handler, true),
@@ -157,10 +155,12 @@ namespace EtwEvents.WebClient
 
             var webSocketSink = new WebSocketSink("websocket", webSocket, _eventCts.Token);
             try {
-                    bool newlyStarted = await eventSession.Run(_eventCts.Token, webSocketSink).ConfigureAwait(false);
-                    if (!newlyStarted)
-                        throw new InvalidOperationException("Event session already started.");
-                    //TODO how should we handle eventSession.FailedEventSinks?
+                // remove event sink when it gets closed for whatever reason
+                var rt = webSocketSink.ReceiveTask.ContinueWith(rt_ => eventSession.RemoveEventSink(webSocketSink), TaskScheduler.Default);
+                bool newlyStarted = await eventSession.Run(_eventCts.Token, webSocketSink).ConfigureAwait(false);
+                if (!newlyStarted)
+                    throw new InvalidOperationException(_.GetString("Event session already started."));
+                //TODO how should we handle eventSession.FailedEventSinks?
             }
             catch (OperationCanceledException) {
                 // typically ignored in this scenario

@@ -37,9 +37,6 @@ namespace EtwEvents.WebClient
             Initialize(cancelToken);
         }
 
-        //TODO when websocket gets closed remottely without caling StopEvents,
-        // how should we make sure it gets removed immedtialty from the EventSession?
-
         // we only expect to receive Close messages
         async Task KeepReceiving(CancellationToken stoppingToken) {
             var receiveSegment = WebSocket.CreateServerBuffer(4096);
