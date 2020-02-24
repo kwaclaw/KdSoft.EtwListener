@@ -10,6 +10,7 @@ using EtwEvents.WebClient.Models;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Net.Client;
 using KdSoft.EtwLogging;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -31,6 +32,7 @@ namespace EtwEvents.WebClient
         readonly GrpcChannel _channel;
         readonly EtwListener.EtwListenerClient _etwClient;
         readonly ILogger<TraceSession> _logger;
+        readonly IStringLocalizer<TraceSession> _;
 
         EventSession? _eventSession;
         CancellationTokenSource _eventCts;
@@ -45,7 +47,8 @@ namespace EtwEvents.WebClient
             List<string> restartedProviders,
             GrpcChannel channel,
             EtwListener.EtwListenerClient etwClient,
-            ILogger<TraceSession> logger
+            ILogger<TraceSession> logger,
+            IStringLocalizer<TraceSession> localizer
         ) {
             this.Name = name;
             this.EnabledProviders = enabledProviders;
@@ -53,6 +56,7 @@ namespace EtwEvents.WebClient
             _channel = channel;
             _etwClient = etwClient;
             _logger = logger;
+            _ = localizer;
             _eventCts = new CancellationTokenSource();
         }
 
@@ -76,7 +80,8 @@ namespace EtwEvents.WebClient
             X509Certificate2 clientCertificate,
             IReadOnlyList<ProviderSetting> providers,
             Duration lifeTime,
-            ILogger<TraceSession> logger
+            ILogger<TraceSession> logger,
+            IStringLocalizer<TraceSession> localizer
         ) {
             var channel = CreateChannel(host, clientCertificate);
 
@@ -94,7 +99,8 @@ namespace EtwEvents.WebClient
                 var enabledProviders = reply.Results.Select(r => r.Name).ToList();
                 var restartedProviders = reply.Results.Where(r => r.Restarted).Select(r => r.Name).ToList();
 
-                return new TraceSession(name, enabledProviders, restartedProviders, channel, client, logger);
+                return new TraceSession(
+                    name, enabledProviders, restartedProviders, channel, client, logger, localizer);
             }
             catch {
                 channel.Dispose();
@@ -108,7 +114,7 @@ namespace EtwEvents.WebClient
                 var reply = await _etwClient.CloseSessionAsync(closeEtwSession);
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Close Session error");
+                _logger.LogError(ex, _.GetString("Close Session error"));
             }
             finally {
                 await DisposeAsync().ConfigureAwait(false);

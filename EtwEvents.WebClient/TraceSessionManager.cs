@@ -6,6 +6,7 @@ using Google.Protobuf.WellKnownTypes;
 using KdSoft.EtwLogging;
 using KdSoft.Utils;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 
 namespace EtwEvents.WebClient
@@ -15,12 +16,19 @@ namespace EtwEvents.WebClient
         readonly IServiceProvider _services;
         readonly ILoggerFactory _loggerFactory;
         readonly TimeSpan _sessionIdleTime;
+        readonly IStringLocalizer<TraceSession> _localizer;
 
-        public TraceSessionManager(IConfiguration config, IServiceProvider services, ILoggerFactory loggerFactory): 
-            base(TimeSpan.TryParse(config?["ReapPeriod"], out var reapPeriod) ? reapPeriod : TimeSpan.FromMinutes(5))
+
+        public TraceSessionManager(
+            IConfiguration config,
+            IServiceProvider services,
+            ILoggerFactory loggerFactory,
+            IStringLocalizer<TraceSession> localizer
+        ) : base(TimeSpan.TryParse(config?["ReapPeriod"], out var reapPeriod) ? reapPeriod : TimeSpan.FromMinutes(5))
         {
             this._services = services;
             this._loggerFactory = loggerFactory;
+            this._localizer = localizer;
             if (!TimeSpan.TryParse(config?["SessionIdleTime"], out this._sessionIdleTime))
                 this._sessionIdleTime = TimeSpan.FromMinutes(5);
         }
@@ -36,7 +44,8 @@ namespace EtwEvents.WebClient
             //       if this is a problem then we need to use Lazy<T> instead.
             var entry = this.GetOrAdd(name, sessionName => {
                 var sessionLogger = _loggerFactory.CreateLogger<TraceSession>();
-                var createTask = TraceSession.Create(sessionName, host, clientCertificate, providers, lifeTime, sessionLogger);
+                var createTask = TraceSession.Create(
+                    sessionName, host, clientCertificate, providers, lifeTime, sessionLogger, _localizer);
                 var checkedTask = createTask.ContinueWith(ct => {
                     if (!ct.IsCompletedSuccessfully) {
                         _ = this.TryRemove(sessionName, out var failedEntry);
