@@ -51,21 +51,26 @@ class TraceSession {
     return false;
   }
 
-  toggleEvents() {
+  async toggleEvents(progress) {
     let evs = this._eventSession;
-    if (!evs) {
+    if (evs) {
+      try {
+        await this.fetcher.withProgress(progress).post('StopEvents', { sessionName: this._profile.name });
+        if (evs.open)
+          evs.disconnect();
+        this._eventSession = null;
+      } catch (error) {
+        window.myapp.defaultHandleError(error);
+      }
+    } else {
       // scroll bug in Chrome - will not show more than about 1000 items, works fine with FireFox
       evs = new EventSession(
         `wss://${window.location.host}/Etw/StartEvents?sessionName=${this.profile.name}`,
         900,
         error => window.myapp.defaultHandleError(error)
       );
-      this._eventSession = evs;
-    }
-    if (!evs.open) {
       evs.connect();
-    } else {
-      evs.disconnect();
+      this._eventSession = evs;
     }
   }
 

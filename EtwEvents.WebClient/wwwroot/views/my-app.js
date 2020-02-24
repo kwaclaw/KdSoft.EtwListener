@@ -182,7 +182,8 @@ class MyApp extends LitMvvmElement {
     const { session, sessionName } = this._getClickSession(e);
     if (!session) return;
 
-    session.toggleEvents();
+    const spinner = new Spinner(e.currentTarget);
+    session.toggleEvents(spinner);
   }
 
   _toggleNav() {
