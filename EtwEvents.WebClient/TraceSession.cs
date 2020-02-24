@@ -137,8 +137,7 @@ namespace EtwEvents.WebClient
                     stopEventCts.Cancel();
                     stopTask = _eventSession.Stop();
                 }
-                var webSocketSink = new WebSocketSink(webSocket);
-                eventSession = new EventSession(_etwClient, webSocketSink, etwRequest, optionsMonitor);
+                eventSession = new EventSession(_etwClient, etwRequest, optionsMonitor);
                 _eventSession = eventSession;
                 _eventCts = new CancellationTokenSource();
             }
@@ -156,13 +155,18 @@ namespace EtwEvents.WebClient
                 }
             }
 
+            var webSocketSink = new WebSocketSink("websocket", webSocket, _eventCts.Token);
             try {
-                bool newlyStarted = await eventSession.Run(_eventCts.Token).ConfigureAwait(false);
-                if (!newlyStarted)
-                    throw new InvalidOperationException("Event session already started.");
+                    bool newlyStarted = await eventSession.Run(_eventCts.Token, webSocketSink).ConfigureAwait(false);
+                    if (!newlyStarted)
+                        throw new InvalidOperationException("Event session already started.");
+                    //TODO how should we handle eventSession.FailedEventSinks?
             }
             catch (OperationCanceledException) {
                 // typically ignored in this scenario
+            }
+            finally {
+                await webSocketSink.DisposeAsync().ConfigureAwait(false);
             }
         }
 

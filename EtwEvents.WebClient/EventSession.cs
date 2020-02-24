@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -12,28 +14,32 @@ namespace EtwEvents.WebClient
     sealed class EventSession: IAsyncDisposable, IDisposable
     {
         readonly EtwListener.EtwListenerClient _etwClient;
-        readonly IEventSink _eventSink;
         readonly EtwEventRequest _etwRequest;
         readonly Timer _flushTimer;
+        readonly object _eventSinkLock = new object();
+        readonly object _failedEventSinkLock = new object();
 
+        ImmutableList<IEventSink> _eventSinks;
         AsyncServerStreamingCall<EtwEvent>? _streamingCall;
         int _pushFrequencyMillisecs;
         IDisposable _pushFrequencyMonitor;
         ActionBlock<(EtwEvent?, long)> _jobQueue;
-        int _writeFailed = 0;
 
         int _started = 0;
         int _stopped = 0;
 
+        ImmutableList<(IEventSink, Exception?)> _failedEventSinks;
+        public ImmutableList<(IEventSink, Exception?)> FailedEventSinks => _failedEventSinks;
+
         public EventSession(
             EtwListener.EtwListenerClient etwClient,
-            IEventSink webSocketSink,  // responsible for disposing it
             EtwEventRequest etwRequest,
             IOptionsMonitor<EventSessionOptions> optionsMonitor
         ) {
             this._etwClient = etwClient;
-            this._eventSink = webSocketSink;
             this._etwRequest = etwRequest;
+            this._eventSinks = ImmutableList<IEventSink>.Empty;
+            this._failedEventSinks = ImmutableList<(IEventSink, Exception?)>.Empty;
 
             this._jobQueue = new ActionBlock<(EtwEvent?, long)>(ProcessResponse, new ExecutionDataflowBlockOptions {
                 EnsureOrdered = true,
@@ -50,33 +56,115 @@ namespace EtwEvents.WebClient
             });
         }
 
-        async Task ProcessResponse((EtwEvent? evt, long sequenceNo) args) {
-            Interlocked.MemoryBarrier();
-            if (this._writeFailed != 0)
-                return;
-
-            bool success;
-            if (args.evt == null) {
-                success = await this._eventSink.FlushAsync().ConfigureAwait(false);
-                if (success) {
-                    var pushFrequency = this._pushFrequencyMillisecs;
-                    this._flushTimer?.Change(pushFrequency, Timeout.Infinite);
-                }
-            }
-            else {
-                success = await this._eventSink.WriteAsync(args.evt, args.sequenceNo).ConfigureAwait(false);
-            }
-
-            if (!success) {
-                Interlocked.MemoryBarrier();
-                this._writeFailed = 99;
+        /// <summary>
+        /// Adds new <see cref="IEventSink"/> to processing loop. 
+        /// </summary>
+        /// <param name="sink">New <see cref="IEventSink"></see> to add.</param>
+        /// <remarks>The event sink must have been initialized already!.</remarks>
+        public void AddEventSink(IEventSink sink) {
+            // We use a lock here to prevent race conditions, so that
+            // if two concurrent updates happen, none will get lost.
+            lock (_eventSinkLock) {
+                this._eventSinks = this._eventSinks.Add(sink);
                 Interlocked.MemoryBarrier();
             }
         }
 
-        async Task ProcessResponseStream(CancellationToken cancelToken) {
-            this._eventSink.Initialize(cancelToken);
+        /// <summary>
+        /// Removes <see cref="IEventSink"/> instance from processing loop.
+        /// </summary>
+        /// <param name="id">Identifier of <see cref="IEventSink"/> to remove.</param>
+        /// <returns>The <see cref="IEventSink"/> instance that was removed, or <c>null</c> if it was not found.</returns>
+        /// <remarks>It is the responsibility of the caller to dispose the <see cref="IEventSink"/> instance!</remarks>
+        public IEventSink? RemoveEventSink(string id) {
+            // We use a lock here to prevent race conditions, so that
+            // if two concurrent updates happen, none will get lost.
+            lock (_eventSinkLock) {
+                var eventSinks = this._eventSinks;
+                var sinkIndex = eventSinks.FindIndex(sink => id.Equals(sink.Id, StringComparison.Ordinal));
+                if (sinkIndex < 0)
+                    return null;
+                var oldSink = eventSinks[sinkIndex];
+                this._eventSinks = eventSinks.RemoveAt(sinkIndex);
+                return oldSink;
+            }
+        }
 
+        /// <summary>
+        /// Removes given <see cref="IEventSink"/> instance from processing loop.
+        /// </summary>
+        /// <param name="sink"><see cref="IEventSink"/> instance to remove.</param>
+        /// <returns><c>true</c> if instance was found and removed, <c>false</c> otherwise.</returns>
+        public bool RemoveEventSink(IEventSink sink) {
+            // We use a lock here to prevent race conditions, so that
+            // if two concurrent updates happen, none will get lost.
+            lock (_eventSinkLock) {
+                var eventSinks = this._eventSinks;
+                this._eventSinks = eventSinks.Remove(sink);
+                return !object.ReferenceEquals(eventSinks, this._eventSinks);
+            }
+        }
+
+        //async Task WriteResponse(IEventSink eventSink, EtwEvent? evt, long sequenceNo) {
+        //    bool success;
+        //    if (evt == null) {
+        //        success = await eventSink.FlushAsync().ConfigureAwait(false);
+        //        if (success) {
+        //            var pushFrequency = this._pushFrequencyMillisecs;
+        //            this._flushTimer?.Change(pushFrequency, Timeout.Infinite);
+        //        }
+        //    }
+        //    else {
+        //        success = await eventSink.WriteAsync(evt, sequenceNo).ConfigureAwait(false);
+        //    }
+        //}
+
+        void HandleFailedEventSink(IEventSink failedSink, Exception? ex) {
+            if (RemoveEventSink(failedSink))
+                lock (_failedEventSinkLock) {
+                    this._failedEventSinks = this._failedEventSinks.Add((failedSink, ex));
+                }
+        }
+
+        async Task ProcessResponse((EtwEvent? evt, long sequenceNo) args) {
+            var taskList = new List<ValueTask<bool>>();
+
+            // We do not use a lock here because reference field access is atomic
+            // and we do not exactly care which version of the field value we get. 
+            var eventSinks = this._eventSinks;
+
+            if (args.evt == null) {
+                for (int indx = 0; indx < eventSinks.Count; indx++) {
+                    var writeTask = eventSinks[indx].FlushAsync();
+                    taskList.Add(writeTask);
+                }
+            }
+            else {
+                for (int indx = 0; indx < eventSinks.Count; indx++) {
+                    var writeTask = eventSinks[indx].WriteAsync(args.evt, args.sequenceNo);
+                    taskList.Add(writeTask);
+                }
+            }
+
+            for (int indx = 0; indx < taskList.Count; indx++) {
+                try {
+                    var success = await taskList[indx].ConfigureAwait(false);
+                    if (!success) {
+                        HandleFailedEventSink(eventSinks[indx], null);
+                    }
+                }
+                catch (Exception ex) {
+                    HandleFailedEventSink(eventSinks[indx], ex);
+                }
+            }
+
+            if (args.evt == null) {
+                var pushFrequency = this._pushFrequencyMillisecs;
+                this._flushTimer?.Change(pushFrequency, Timeout.Infinite);
+            }
+        }
+
+        async Task ProcessResponseStream(CancellationToken cancelToken) {
             long sequenceNo = 0;
             var streamer = _streamingCall = _etwClient.GetEvents(_etwRequest);
             var responseStream = streamer.ResponseStream;
@@ -84,11 +172,11 @@ namespace EtwEvents.WebClient
             var pushFrequency = this._pushFrequencyMillisecs;
             this._flushTimer?.Change(pushFrequency, Timeout.Infinite);
             try {
-                while (await responseStream.MoveNext(default(CancellationToken)).ConfigureAwait(false)) {
+                while (await responseStream.MoveNext(cancelToken).ConfigureAwait(false)) {
 
                     // we should not call CloseAsync while still sending
                     Interlocked.MemoryBarrier();
-                    if (_stopped != 0 || _streamingCall == null || _writeFailed != 0)
+                    if (_stopped != 0 || _streamingCall == null)
                         break;
 
                     var evt = responseStream.Current;
@@ -112,10 +200,14 @@ namespace EtwEvents.WebClient
             }
         }
 
-        public async Task<bool> Run(CancellationToken cancelToken) {
+        public async Task<bool> Run(CancellationToken cancelToken, params IEventSink[] eventSinks) {
             var oldStarted = Interlocked.CompareExchange(ref _started, 1, 0);
             if (oldStarted == 1)
                 return false;
+
+            lock(_eventSinkLock) {
+                this._eventSinks = this._eventSinks.AddRange(eventSinks);
+            }
 
             try {
                 await ProcessResponseStream(cancelToken).ConfigureAwait(false);
@@ -136,25 +228,18 @@ namespace EtwEvents.WebClient
             if (oldStopped == 1)
                 return false;
 
+            lock (_eventSinkLock) {
+                this._eventSinks = ImmutableList<IEventSink>.Empty;
+            }
+
             await DisposeAsync().ConfigureAwait(false);
             return true;
         }
 
         // Warning: ValueTasks should not be awaited multiple times
         public ValueTask DisposeAsync() {
-            _pushFrequencyMonitor?.Dispose();
-            _flushTimer?.Dispose();
-            var oldStreamer = Interlocked.Exchange(ref _streamingCall, null);
-            if (oldStreamer != null)
-                try {
-                    // Dispose Grpc response stream, this is the only way to end the call from the client side
-                    oldStreamer.Dispose();
-                }
-                catch (OperationCanceledException) {
-                    // typically ignored in this scenario
-                }
-
-            return _eventSink.DisposeAsync();
+            Dispose();
+            return default;
         }
 
         public void Dispose() {
@@ -168,8 +253,6 @@ namespace EtwEvents.WebClient
                 catch (OperationCanceledException) {
                     // typically ignored in this scenario
                 }
-
-            _eventSink.Dispose();
         }
     }
 }

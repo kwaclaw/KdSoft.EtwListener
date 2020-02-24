@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Net.WebSockets;
 using System.Text.Json;
 using System.Threading;
@@ -22,7 +23,10 @@ namespace EtwEvents.WebClient
         Task _receiveTask = Task.CompletedTask;
         public Task ReceiveTask => _receiveTask;
 
-        public WebSocketSink(WebSocket webSocket) {
+        public string Id { get; }
+
+        public WebSocketSink(string id, WebSocket webSocket, CancellationToken cancelToken) {
+            this.Id = id;
             this._webSocket = webSocket;
             _jsonOptions = new JsonWriterOptions {
                 Indented = false,
@@ -30,7 +34,11 @@ namespace EtwEvents.WebClient
             };
             _bufferWriter = new ArrayBufferWriter<byte>(512);
             _jsonWriter = new Utf8JsonWriter(_bufferWriter, _jsonOptions);
+            Initialize(cancelToken);
         }
+
+        //TODO when websocket gets closed remottely without caling StopEvents,
+        // how should we make sure it gets removed immedtialty from the EventSession?
 
         // we only expect to receive Close messages
         async Task KeepReceiving(CancellationToken stoppingToken) {
@@ -141,6 +149,9 @@ namespace EtwEvents.WebClient
         }
 
         async Task<bool> FlushAsyncInternal() {
+            if (_webSocket.State != WebSocketState.Open)
+                return false;
+
             _startNewMessage = true;
             _jsonWriter.WriteEndArray();
             bool isOpen = await WriteAsync(true).ConfigureAwait(false);
@@ -162,6 +173,14 @@ namespace EtwEvents.WebClient
 
         public ValueTask DisposeAsync() {
             return CloseAsync(true /*, WebSocketCloseStatus.Empty */);
+        }
+
+        public bool Equals([AllowNull] IEventSink other) {
+            if (object.ReferenceEquals(this, other))
+                return true;
+            if (other == null)
+                return false;
+            return StringComparer.Ordinal.Equals(this.Id, other.Id);
         }
     }
 }
