@@ -20,8 +20,8 @@ namespace EtwEvents.WebClient
         bool _startNewMessage;
         CancellationToken _cancelToken;
 
-        Task _receiveTask = Task.CompletedTask;
-        public Task ReceiveTask => _receiveTask;
+        Task<bool> _receiveTask = Task.FromResult(false);
+        public Task<bool> RunTask => _receiveTask;
 
         public string Id { get; }
 
@@ -38,8 +38,9 @@ namespace EtwEvents.WebClient
         }
 
         // we only expect to receive Close messages
-        async Task KeepReceiving(CancellationToken stoppingToken) {
+        async Task<bool> KeepReceiving(CancellationToken stoppingToken) {
             var receiveSegment = WebSocket.CreateServerBuffer(4096);
+            bool result = false;
             WebSocketReceiveResult response;
             try {
                 while (_webSocket.State != WebSocketState.Closed && _webSocket.State != WebSocketState.Aborted && !stoppingToken.IsCancellationRequested) {
@@ -48,6 +49,7 @@ namespace EtwEvents.WebClient
                         switch (response.MessageType) {
                             case WebSocketMessageType.Close:
                                 await CloseAsync(false).ConfigureAwait(false);
+                                result = true;
                                 break;
                             case WebSocketMessageType.Text:
                                 continue;
@@ -57,13 +59,15 @@ namespace EtwEvents.WebClient
                         }
                     }
                 };
+                result = _webSocket.State == WebSocketState.Closed || _webSocket.State == WebSocketState.Aborted;
             }
             catch (WebSocketException wsex) when (wsex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely) {
-                //
+                result = false;
             }
+            return result;
         }
 
-        public void Initialize(CancellationToken cancelToken) {
+        void Initialize(CancellationToken cancelToken) {
             _startNewMessage = true;
             _jsonWriter.Reset();
             this._cancelToken = cancelToken;
@@ -168,8 +172,13 @@ namespace EtwEvents.WebClient
             _webSocket.Dispose();
         }
 
-        public ValueTask DisposeAsync() {
-            return CloseAsync(true /*, WebSocketCloseStatus.Empty */);
+        public async ValueTask DisposeAsync() {
+            try {
+                await CloseAsync(true /*, WebSocketCloseStatus.Empty */).ConfigureAwait(false);
+            }
+            catch (Exception ex) {
+                //TODO log exception somewhere
+            }
         }
 
         public bool Equals([AllowNull] IEventSink other) {

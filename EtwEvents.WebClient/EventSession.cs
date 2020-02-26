@@ -105,22 +105,9 @@ namespace EtwEvents.WebClient
             }
         }
 
-        //async Task WriteResponse(IEventSink eventSink, EtwEvent? evt, long sequenceNo) {
-        //    bool success;
-        //    if (evt == null) {
-        //        success = await eventSink.FlushAsync().ConfigureAwait(false);
-        //        if (success) {
-        //            var pushFrequency = this._pushFrequencyMillisecs;
-        //            this._flushTimer?.Change(pushFrequency, Timeout.Infinite);
-        //        }
-        //    }
-        //    else {
-        //        success = await eventSink.WriteAsync(evt, sequenceNo).ConfigureAwait(false);
-        //    }
-        //}
-
         void HandleFailedEventSink(IEventSink failedSink, Exception? ex) {
             if (RemoveEventSink(failedSink))
+                //TODO should we dospose the event sink here or somehow notify the owner of this session
                 lock (_failedEventSinkLock) {
                     this._failedEventSinks = this._failedEventSinks.Add((failedSink, ex));
                 }

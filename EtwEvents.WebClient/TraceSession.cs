@@ -121,6 +121,19 @@ namespace EtwEvents.WebClient
             }
         }
 
+        static Task HandleEventSinkClosure(IEventSink sink, EventSession session) {
+            return sink.RunTask.ContinueWith(async rt => {
+                try {
+                    session.RemoveEventSink(sink);
+                    if (!rt.Result)  // was not disposed
+                        await sink.DisposeAsync().ConfigureAwait(false);
+                }
+                catch (Exception ex) {
+                    //TODO log error somewhere
+                }
+            }, TaskScheduler.Default);
+        }
+
         public async Task StartEvents(WebSocket webSocket, IOptionsMonitor<EventSessionOptions> optionsMonitor) {
             if (webSocket == null)
                 throw new ArgumentNullException(nameof(webSocket));
@@ -161,8 +174,8 @@ namespace EtwEvents.WebClient
 
             var webSocketSink = new WebSocketSink("websocket", webSocket, _eventCts.Token);
             try {
-                // remove event sink when it gets closed for whatever reason
-                var rt = webSocketSink.ReceiveTask.ContinueWith(rt_ => eventSession.RemoveEventSink(webSocketSink), TaskScheduler.Default);
+                // remove and dispose event sink when it gets closed for whatever reason
+                var rt = HandleEventSinkClosure(webSocketSink, eventSession);
                 bool newlyStarted = await eventSession.Run(_eventCts.Token, webSocketSink).ConfigureAwait(false);
                 if (!newlyStarted)
                     throw new InvalidOperationException(_.GetString("Event session already started."));
@@ -170,9 +183,6 @@ namespace EtwEvents.WebClient
             }
             catch (OperationCanceledException) {
                 // typically ignored in this scenario
-            }
-            finally {
-                await webSocketSink.DisposeAsync().ConfigureAwait(false);
             }
         }
 

@@ -14,14 +14,14 @@ namespace EtwEvents.WebClient
         public string Id { get; }
 
         /// <summary>
-        /// Initializes sink instance for writing. 
+        /// Task that completes when <see cref="IEventSink"/> is finished/closed.
         /// </summary>
-        /// <param name="cancelToken">Cancellation token to stop ongoing operations.</param>
-        //void Initialize(CancellationToken cancelToken);
+        /// <returns><c>true</c> when already disposed, <c>false</c> otherwise.</returns>
+        public Task<bool> RunTask { get; }
 
         /// <summary>
         /// Writes event asynchronously. This may queue event for batched writing and may return synchronously.
-        /// Must not be called concurrently with <see cref="FlushAsync"/>.
+        /// Must not be called concurrently with itself or <see cref="FlushAsync"/>.
         /// </summary>
         /// <param name="evt">Event to write.</param>
         /// <param name="sequenceNo">Incrementing sequence number for event.</param>
@@ -30,7 +30,7 @@ namespace EtwEvents.WebClient
 
         /// <summary>
         /// Flushes queue, performs pending writes.
-        /// Must not be called concurrently with <see cref="WriteAsync(EtwEvent, long)"/>.
+        /// Must not be called concurrently with itself or <see cref="WriteAsync(EtwEvent, long)"/>.
         /// </summary>
         /// <returns><c>true</c> if flushing was successful (and can continue), <c>false</c> otherwise.</returns>
         ValueTask<bool> FlushAsync();
