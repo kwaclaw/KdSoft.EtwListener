@@ -1,10 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Net.WebSockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using EtwEvents.WebClient.Models;
 using Google.Protobuf.WellKnownTypes;
+using KdSoft.EtwLogging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
@@ -22,7 +26,7 @@ namespace EtwEvents.WebClient
         readonly IOptions<ClientCertOptions> _clientCertOptions;
         readonly IStringLocalizer<EtwController> _;
 
-        public EtwController(
+        internal EtwController(
             TraceSessionManager sessionManager,
             IOptionsMonitor<EventSessionOptions> optionsMonitor,
             IOptions<ClientCertOptions> clientCertOptions,
@@ -87,13 +91,113 @@ namespace EtwEvents.WebClient
 
         public const int SessionNotFoundWebSocketStatus = 4901;
 
+        class DummySink: IEventSink
+        {
+            public string Id => throw new NotImplementedException();
+
+            public Task<bool> RunTask => Task<bool>.FromResult(true);
+
+            public void Dispose() {
+                //
+            }
+
+            public ValueTask DisposeAsync() {
+                return default;
+            }
+
+            public bool Equals([AllowNull] IEventSink other) {
+                throw new NotImplementedException();
+            }
+
+            public ValueTask<bool> FlushAsync() {
+                throw new NotImplementedException();
+            }
+
+            public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
+                throw new NotImplementedException();
+            }
+        }
+        IEventSink CreateEventSink(string sinkType) {
+            IEventSink result;
+            switch (sinkType) {
+                default:
+                    result = new DummySink();
+                    break;
+            }
+            HandleEventSinkClosure(result);
+            return result;
+        }
+
+        Task HandleEventSinkClosure(IEventSink sink) {
+            return sink.RunTask.ContinueWith(async rt => {
+                try {
+                    if (!rt.Result)  // was not disposed
+                        await sink.DisposeAsync().ConfigureAwait(false);
+                }
+                catch (Exception ex) {
+                    //_logger.LogError(ex);
+                }
+            }, TaskScheduler.Default);
+        }
+
+        [HttpGet, HttpPost]
+        public async Task<IActionResult> StartEvents(string sessionName, IEnumerable<string> sinkNames) {
+            if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
+                var traceSession = await sessionEntry.CreateTask.ConfigureAwait(false);
+                var sinkList = sinkNames.Select(st => CreateEventSink(st));
+                // If this is a WebSocket request we add a WebSocket sink
+                if (HttpContext.WebSockets.IsWebSocketRequest) {
+                    var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
+                    await using (var webSocketSink = new WebSocketSink("websocket", webSocket, CancellationToken.None)) {
+                        traceSession.EventSinks.AddEventSink(webSocketSink);
+                        traceSession.EventSinks.AddEventSinks(sinkList);
+                        var eventSession = await traceSession.StartEvents(_optionsMonitor).ConfigureAwait(false);
+                    }
+                    // OkResult not right here, tries to set status code which is not good in this scenario
+                    return new EmptyResult();
+                }
+                else {
+                    traceSession.EventSinks.AddEventSinks(sinkList);
+                    await traceSession.StartEvents(_optionsMonitor).ConfigureAwait(false);
+                    return Ok();
+                }
+            }
+            else {
+                return Problem(
+                    title: _.GetString("Session not found"),
+                    instance: nameof(StartEvents),
+                    detail: _.GetString("Session may have been closed already.")
+                );
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> StopEvents(string sessionName) {
+            if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
+                var session = await sessionEntry.CreateTask.ConfigureAwait(false);
+                await session.StopEvents().ConfigureAwait(false);
+                return Ok();
+            }
+            else {
+                return Problem(
+                    title: _.GetString("Session not found"),
+                    instance: nameof(StopEvents),
+                    detail: _.GetString("Session may have been closed already.")
+                );
+            }
+        }
+
         [HttpGet]
-        public async Task<IActionResult> StartEvents(string sessionName) {
+        public async Task<IActionResult> ObserveEvents(string sessionName) {
             if (HttpContext.WebSockets.IsWebSocketRequest) {
                 var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
                 if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
-                    var session = await sessionEntry.CreateTask.ConfigureAwait(false);
-                    await session.StartEvents(webSocket, _optionsMonitor).ConfigureAwait(false);
+                    var traceSession = await sessionEntry.CreateTask.ConfigureAwait(false);
+                    // the WebSocketSink has a life-cycle tied to the EventSession, while other sinks can be added and removed dynamically
+                    await using (var webSocketSink = new WebSocketSink("websocket", webSocket, CancellationToken.None)) {
+                        traceSession.EventSinks.AddEventSink(webSocketSink);
+                        await traceSession.EventStream.ConfigureAwait(false);
+                    }
                     // OkResult not right here, tries to set status code which is not good in this scenario
                     return new EmptyResult();
                 }
@@ -115,23 +219,44 @@ namespace EtwEvents.WebClient
         }
 
         [HttpPost]
-        public async Task<IActionResult> StopEvents(string sessionName) {
+        public async Task<IActionResult> OpenEventSinks(string sessionName, IEnumerable<string> sinkNames) {
             if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
-                var session = await sessionEntry.CreateTask.ConfigureAwait(false);
-                await session.StopEvents().ConfigureAwait(false);
+                var traceSession = await sessionEntry.CreateTask.ConfigureAwait(false);
+                var sinkList = sinkNames.Select(st => CreateEventSink(st));
+                traceSession.EventSinks.AddEventSinks(sinkList);
                 return Ok();
             }
             else {
                 return Problem(
                     title: _.GetString("Session not found"),
-                    instance: nameof(StopEvents),
+                    instance: nameof(OpenEventSinks),
                     detail: _.GetString("Session may have been closed already.")
                 );
             }
         }
 
         [HttpPost]
-        public async Task<IActionResult> SetCSharpFilter([FromBody]SetFilterRequest request) {
+        public async Task<IActionResult> CloseEventSinks(string sessionName, IEnumerable<string> sinkNames) {
+            if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
+                var traceSession = await sessionEntry.CreateTask.ConfigureAwait(false);
+                var closedSinks = traceSession.EventSinks.RemoveEventSinks(sinkNames);
+                var disposeTasks = closedSinks.Select(sink => sink.DisposeAsync()).ToArray();
+                foreach (var disposeTask in disposeTasks) {
+                    await disposeTask.ConfigureAwait(false);
+                }
+                return Ok();
+            }
+            else {
+                return Problem(
+                    title: _.GetString("Session not found"),
+                    instance: nameof(CloseEventSinks),
+                    detail: _.GetString("Session may have been closed already.")
+                );
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SetCSharpFilter([FromBody]Models.SetFilterRequest request) {
             if (request == null)
                 return BadRequest();
             string csharpFilter = string.Empty;  // protobuf does not allow nulls
@@ -154,7 +279,7 @@ namespace EtwEvents.WebClient
         }
 
         [HttpPost]
-        public async Task<IActionResult> TestCSharpFilter([FromBody]TestFilterRequest request) {
+        public async Task<IActionResult> TestCSharpFilter([FromBody]Models.TestFilterRequest request) {
             if (request == null)
                 return BadRequest();
             if (string.IsNullOrWhiteSpace(request.Host))

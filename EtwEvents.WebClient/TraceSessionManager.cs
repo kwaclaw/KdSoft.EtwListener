@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 
 namespace EtwEvents.WebClient
 {
-    public class TraceSessionManager: ConcurrentTimedLifeCycleManager<string, TraceSessionEntry>
+    class TraceSessionManager: ConcurrentTimedLifeCycleManager<string, TraceSessionEntry>
     {
         readonly IServiceProvider _services;
         readonly ILoggerFactory _loggerFactory;

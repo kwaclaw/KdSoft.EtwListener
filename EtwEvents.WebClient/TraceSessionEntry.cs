@@ -5,7 +5,7 @@ using KdSoft.Utils;
 
 namespace EtwEvents.WebClient
 {
-    public class TraceSessionEntry: ILifeCycleAware<ITimedLifeCycle>
+    class TraceSessionEntry: ILifeCycleAware<ITimedLifeCycle>
     {
         readonly TimedLifeCycle _lifeCycle;
 

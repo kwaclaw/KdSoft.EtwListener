@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Net.WebSockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,12 +26,13 @@ namespace EtwEvents.WebClient
         public List<string> FailedProviders { get; }
     }
 
-    public sealed class TraceSession: IAsyncDisposable, IDisposable
+    sealed class TraceSession: IAsyncDisposable, IDisposable
     {
         readonly GrpcChannel _channel;
         readonly EtwListener.EtwListenerClient _etwClient;
         readonly ILogger<TraceSession> _logger;
         readonly IStringLocalizer<TraceSession> _;
+        readonly EventSinkHolder _eventSinks;
 
         EventSession? _eventSession;
         CancellationTokenSource _eventCts;
@@ -57,12 +57,15 @@ namespace EtwEvents.WebClient
             _etwClient = etwClient;
             _logger = logger;
             _ = localizer;
+            _eventSinks = new EventSinkHolder();
             _eventCts = new CancellationTokenSource();
         }
 
         public string Name { get; }
         public List<string> EnabledProviders { get; }
         public List<string> RestartedProviders { get; }
+        public EventSinkHolder EventSinks => this._eventSinks;
+        public Task EventStream { get; private set; } = Task.CompletedTask;
 
         static GrpcChannel CreateChannel(string host, X509Certificate2 clientCertificate) {
             var handler = new HttpClientHandler();
@@ -121,22 +124,7 @@ namespace EtwEvents.WebClient
             }
         }
 
-        static Task HandleEventSinkClosure(IEventSink sink, EventSession session) {
-            return sink.RunTask.ContinueWith(async rt => {
-                try {
-                    session.RemoveEventSink(sink);
-                    if (!rt.Result)  // was not disposed
-                        await sink.DisposeAsync().ConfigureAwait(false);
-                }
-                catch (Exception ex) {
-                    //TODO log error somewhere
-                }
-            }, TaskScheduler.Default);
-        }
-
-        public async Task StartEvents(WebSocket webSocket, IOptionsMonitor<EventSessionOptions> optionsMonitor) {
-            if (webSocket == null)
-                throw new ArgumentNullException(nameof(webSocket));
+        async Task<EventSession> StartEventsInternal(IOptionsMonitor<EventSessionOptions> optionsMonitor) {
             if (optionsMonitor == null)
                 throw new ArgumentNullException(nameof(optionsMonitor));
 
@@ -154,7 +142,7 @@ namespace EtwEvents.WebClient
                     stopEventCts.Cancel();
                     stopTask = _eventSession.Stop();
                 }
-                eventSession = new EventSession(_etwClient, etwRequest, optionsMonitor);
+                eventSession = new EventSession(_etwClient, etwRequest, optionsMonitor, _eventSinks);
                 _eventSession = eventSession;
                 _eventCts = new CancellationTokenSource();
             }
@@ -172,11 +160,8 @@ namespace EtwEvents.WebClient
                 }
             }
 
-            var webSocketSink = new WebSocketSink("websocket", webSocket, _eventCts.Token);
             try {
-                // remove and dispose event sink when it gets closed for whatever reason
-                var rt = HandleEventSinkClosure(webSocketSink, eventSession);
-                bool newlyStarted = await eventSession.Run(_eventCts.Token, webSocketSink).ConfigureAwait(false);
+                bool newlyStarted = await eventSession.Run(_eventCts.Token).ConfigureAwait(false);
                 if (!newlyStarted)
                     throw new InvalidOperationException(_.GetString("Event session already started."));
                 //TODO how should we handle eventSession.FailedEventSinks?
@@ -184,6 +169,14 @@ namespace EtwEvents.WebClient
             catch (OperationCanceledException) {
                 // typically ignored in this scenario
             }
+
+            return eventSession;
+        }
+
+        public Task<EventSession> StartEvents(IOptionsMonitor<EventSessionOptions> optionsMonitor) {
+            var eventsTask = StartEventsInternal(optionsMonitor);
+            this.EventStream = eventsTask;
+            return eventsTask;
         }
 
         public async Task<bool> StopEvents() {
