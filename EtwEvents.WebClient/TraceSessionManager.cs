@@ -15,7 +15,6 @@ namespace EtwEvents.WebClient
     {
         readonly IServiceProvider _services;
         readonly ILoggerFactory _loggerFactory;
-        readonly TimeSpan _sessionIdleTime;
         readonly IStringLocalizer<TraceSession> _localizer;
 
 
@@ -29,8 +28,6 @@ namespace EtwEvents.WebClient
             this._services = services;
             this._loggerFactory = loggerFactory;
             this._localizer = localizer;
-            if (!TimeSpan.TryParse(config?["SessionIdleTime"], out this._sessionIdleTime))
-                this._sessionIdleTime = TimeSpan.FromMinutes(5);
         }
 
         public Task<TraceSession> OpenSession(
@@ -52,7 +49,7 @@ namespace EtwEvents.WebClient
                     }
                     return ct.Result;
                 }, TaskScheduler.Default);
-                return new TraceSessionEntry(checkedTask, _sessionIdleTime);
+                return new TraceSessionEntry(checkedTask, lifeTime.ToTimeSpan());
             });
 
             return entry.CreateTask;
