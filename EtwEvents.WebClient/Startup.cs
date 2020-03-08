@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using EtwEvents.WebClient.Models;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -84,6 +86,9 @@ namespace EtwEvents.WebClient
                 .AddJsonOptions(opts => {
                     opts.JsonSerializerOptions.Converters.Add(new TimeSpanISO8601JsonConverter());
                     opts.JsonSerializerOptions.Converters.Add(new NullableTimeSpanISO8601JsonConverter());
+                })
+                .ConfigureApplicationPartManager(manager => {
+                    manager.FeatureProviders.Add(new EtwControllerFeatureProvider());
                 });
         }
 
@@ -120,6 +125,14 @@ namespace EtwEvents.WebClient
                 endpoints.MapRazorPages();
                 endpoints.MapControllers();
             });
+        }
+    }
+
+    class EtwControllerFeatureProvider: ControllerFeatureProvider
+    {
+        protected override bool IsController(TypeInfo typeInfo) {
+            var isController = !typeInfo.IsAbstract && typeof(EtwController).IsAssignableFrom(typeInfo);
+            return isController || base.IsController(typeInfo);
         }
     }
 }

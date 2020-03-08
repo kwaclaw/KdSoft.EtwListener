@@ -22,6 +22,7 @@ namespace EtwEvents.WebClient
         /// <summary>
         /// Writes event asynchronously. This may queue event for batched writing and may return synchronously.
         /// Must not be called concurrently with itself or <see cref="FlushAsync"/>.
+        /// Must not throw exception before <see cref="ValueTask"/> is returned.
         /// </summary>
         /// <param name="evt">Event to write.</param>
         /// <param name="sequenceNo">Incrementing sequence number for event.</param>
@@ -31,6 +32,7 @@ namespace EtwEvents.WebClient
         /// <summary>
         /// Flushes queue, performs pending writes.
         /// Must not be called concurrently with itself or <see cref="WriteAsync(EtwEvent, long)"/>.
+        /// Must not throw exception before <see cref="ValueTask"/> is returned.
         /// </summary>
         /// <returns><c>true</c> if flushing was successful (and can continue), <c>false</c> otherwise.</returns>
         ValueTask<bool> FlushAsync();

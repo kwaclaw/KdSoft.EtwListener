@@ -19,14 +19,14 @@ namespace EtwEvents.WebClient
     [Authorize]
     [ApiController]
     [Route("[controller]/[action]")]
-    public class EtwController: ControllerBase
+    class EtwController: ControllerBase
     {
         readonly TraceSessionManager _sessionManager;
         readonly IOptionsMonitor<EventSessionOptions> _optionsMonitor;
         readonly IOptions<ClientCertOptions> _clientCertOptions;
         readonly IStringLocalizer<EtwController> _;
 
-        internal EtwController(
+        public EtwController(
             TraceSessionManager sessionManager,
             IOptionsMonitor<EventSessionOptions> optionsMonitor,
             IOptions<ClientCertOptions> clientCertOptions,
@@ -110,11 +110,11 @@ namespace EtwEvents.WebClient
             }
 
             public ValueTask<bool> FlushAsync() {
-                throw new NotImplementedException();
+                return new ValueTask<bool>(true);
             }
 
             public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
-                throw new NotImplementedException();
+                return new ValueTask<bool>(true);
             }
         }
         IEventSink CreateEventSink(string sinkType) {
@@ -140,19 +140,27 @@ namespace EtwEvents.WebClient
             }, TaskScheduler.Default);
         }
 
-        [HttpGet, HttpPost]
-        public async Task<IActionResult> StartEvents(string sessionName, IEnumerable<string> sinkNames) {
+        [HttpGet]
+        public async Task<IActionResult> StartEvents([FromQuery]string sessionName, [FromQuery]string[] sinkNames) {
+            if (sinkNames == null)
+                sinkNames = Array.Empty<string>();
             if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
                 var traceSession = await sessionEntry.CreateTask.ConfigureAwait(false);
                 var sinkList = sinkNames.Select(st => CreateEventSink(st));
                 // If this is a WebSocket request we add a WebSocket sink
                 if (HttpContext.WebSockets.IsWebSocketRequest) {
                     var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
-                    await using (var webSocketSink = new WebSocketSink("websocket", webSocket, CancellationToken.None)) {
+                    // the WebSocketSink has a life-cycle tied to the EventSession, while other sinks can be added and removed dynamically
+                    var webSocketSink = new WebSocketSink("websocket", webSocket, CancellationToken.None);
+                    try {
                         traceSession.EventSinks.AddEventSink(webSocketSink);
                         traceSession.EventSinks.AddEventSinks(sinkList);
                         var eventSession = await traceSession.StartEvents(_optionsMonitor).ConfigureAwait(false);
                     }
+                    finally {
+                        await webSocketSink.DisposeAsync().ConfigureAwait(false);
+                    }
+
                     // OkResult not right here, tries to set status code which is not good in this scenario
                     return new EmptyResult();
                 }
