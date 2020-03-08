@@ -35,7 +35,7 @@ message CloseEtwSession {
 }
 
 message SessionNamesResult {
-    repeated string session_names = 1;
+  repeated string session_names = 1;
 }
 
 message EnableProvidersRequest {

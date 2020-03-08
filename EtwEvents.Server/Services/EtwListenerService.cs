@@ -23,7 +23,7 @@ namespace EtwEvents.Server
                 session.GetLifeCycle().Used();
                 return session;
             }
-            throw new InvalidOperationException("Session not found.");
+            throw new RpcException(new Status(StatusCode.NotFound, "Session"), "Session not found.");
         }
 
         public override Task<EnableProvidersResult> OpenSession(OpenEtwSession request, ServerCallContext context) {

@@ -49,14 +49,17 @@ namespace EtwEvents.Server
                 }
                 catch (FileNotFoundException) {
                     _instance = new TraceEventSession(name, TraceEventSessionOptions.Create);
-                    _instance.EnableProvider(TplActivities.TplEventSourceGuid, tracing.TraceEventLevel.Always, TplActivities.TaskFlowActivityIdsKeyword);
                 }
             }
             else {
                 _instance = new TraceEventSession(name, TraceEventSessionOptions.Create);
+            }
+
+            if (IsCreated) {
+                _instance.EnableProviderTimeoutMSec = 10000;
+                _instance.StopOnDispose = false;
                 _instance.EnableProvider(TplActivities.TplEventSourceGuid, tracing.TraceEventLevel.Always, TplActivities.TaskFlowActivityIdsKeyword);
             }
-            _instance.EnableProviderTimeoutMSec = 10000;
         }
 
         public bool IsCreated { get; private set; }
