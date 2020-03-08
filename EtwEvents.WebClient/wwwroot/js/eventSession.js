@@ -40,11 +40,16 @@ class EventSession {
       this._openCount += 1;
     };
 
-    this.ws.onerror = (error) => {
-      if (error && error instanceof Error) {
-        error = { title: error.message || 'WebSocket error' };
-      } else if (!error || typeof error !== 'object') {
-        error = { title: error || 'WebSocket error' };
+    this.ws.onerror = (errorEvent) => {
+      let error;
+      if (errorEvent && errorEvent instanceof Error) {
+        error = { title: errorEvent.message || 'WebSocket error' };
+      } else if (!errorEvent || typeof errorEvent !== 'object') {
+        error = { title: errorEvent || 'WebSocket error' };
+      } else {
+        error = {
+          title: errorEvent.message || 'WebSocket error'
+        };
       }
       this._handleError(error);
     };

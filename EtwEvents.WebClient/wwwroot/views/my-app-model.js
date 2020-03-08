@@ -47,7 +47,7 @@ class MyAppModel {
 
   handleFetchError(error) {
     this._errorSequenceNo += 1;
-    error.timeStamp = new Date();
+    if (!error.timeStamp) error.timeStamp = new Date();
     error.sequenceNo = this._errorSequenceNo;
 
     this.fetchErrors.addItem(error);

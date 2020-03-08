@@ -1,4 +1,4 @@
-﻿import { observable } from '../lib/@nx-js/observer-util.js';
+﻿import { observable, observe } from '../lib/@nx-js/observer-util.js';
 import EventSession from '../js/eventSession.js';
 import FetchHelper from '../js/fetchHelper.js';
 
@@ -56,21 +56,21 @@ class TraceSession {
     if (evs) {
       try {
         await this.fetcher.withProgress(progress).post('StopEvents', { sessionName: this._profile.name });
-        if (evs.open)
-          evs.disconnect();
-        this._eventSession = null;
       } catch (error) {
         window.myapp.defaultHandleError(error);
       }
     } else {
       // scroll bug in Chrome - will not show more than about 1000 items, works fine with FireFox
       evs = new EventSession(
-        `wss://${window.location.host}/Etw/StartEvents?sessionName=${this.profile.name}`,
+        `wss://${window.location.host}/Etw/StartEvents?sessionName=${this.profile.name}&sinkNames=`,
         900,
         error => window.myapp.defaultHandleError(error)
       );
       evs.connect();
-      this._eventSession = evs;
+      observe(() => {
+        if (evs.Open) this._eventSession = evs;
+        else this._eventSession = null;
+      });
     }
   }
 
