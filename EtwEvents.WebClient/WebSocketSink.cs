@@ -69,6 +69,7 @@ namespace EtwEvents.WebClient
 
         void Initialize(CancellationToken cancelToken) {
             _startNewMessage = true;
+            _bufferWriter.Clear();
             _jsonWriter.Reset();
             this._cancelToken = cancelToken;
             this._receiveTask = KeepReceiving(cancelToken);
@@ -79,6 +80,7 @@ namespace EtwEvents.WebClient
                 _jsonWriter.Flush();
                 var written = _bufferWriter.WrittenMemory;
                 await _webSocket.SendAsync(written, WebSocketMessageType.Text, endOfMessage, this._cancelToken).ConfigureAwait(false);
+                _bufferWriter.Clear();
                 return true;
             }
             catch (WebSocketException wsex) when (wsex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely) {
@@ -90,8 +92,6 @@ namespace EtwEvents.WebClient
         public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
             if (_webSocket.State != WebSocketState.Open)
                 return new ValueTask<bool>(false);
-
-            _bufferWriter.Clear();
 
             if (_startNewMessage) {
                 _startNewMessage = false;
@@ -153,8 +153,13 @@ namespace EtwEvents.WebClient
             if (_webSocket.State != WebSocketState.Open)
                 return false;
 
+            // don't write an end-of-message if nothing has accumulated
+            if (_startNewMessage)
+                return true;
+
             _startNewMessage = true;
             _jsonWriter.WriteEndArray();
+
             bool isOpen = await WriteAsync(true).ConfigureAwait(false);
             if (!isOpen)
                 return false;
