@@ -260,7 +260,6 @@ namespace EtwEvents.Server
         }
     }
 
-
     public static class TplActivities
     {
         public static readonly Guid TplEventSourceGuid = new Guid("2e5dba47-a3d2-4d16-8ee0-6671ffdcd7b5");
