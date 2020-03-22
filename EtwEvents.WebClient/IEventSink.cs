@@ -11,7 +11,7 @@ namespace EtwEvents.WebClient
         /// <summary>
         /// Identifier for event sink.
         /// </summary>
-        public string Id { get; }
+        public string Name { get; }
 
         /// <summary>
         /// Task that completes when <see cref="IEventSink"/> is finished/closed.
@@ -47,11 +47,11 @@ namespace EtwEvents.WebClient
                 return true;
             if (x == null || y == null)
                 return false;
-            return StringComparer.Ordinal.Equals(x.Id, y.Id);
+            return StringComparer.Ordinal.Equals(x.Name, y.Name);
         }
 
         public int GetHashCode([DisallowNull] IEventSink obj) {
-            return obj?.Id?.GetHashCode(StringComparison.Ordinal) ?? 0;
+            return obj?.Name?.GetHashCode(StringComparison.Ordinal) ?? 0;
         }
     }
 }

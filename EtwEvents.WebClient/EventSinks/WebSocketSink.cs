@@ -2,13 +2,14 @@
 using System.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Net.WebSockets;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using KdSoft.EtwLogging;
 
-namespace EtwEvents.WebClient
+namespace EtwEvents.WebClient.EventSinks
 {
     class WebSocketSink: IEventSink
     {
@@ -23,10 +24,10 @@ namespace EtwEvents.WebClient
         Task<bool> _receiveTask = Task.FromResult(false);
         public Task<bool> RunTask => _receiveTask;
 
-        public string Id { get; }
+        public string Name { get; }
 
-        public WebSocketSink(string id, WebSocket webSocket, CancellationToken cancelToken) {
-            this.Id = id;
+        public WebSocketSink(string name, WebSocket webSocket, CancellationToken cancelToken) {
+            this.Name = name;
             this._webSocket = webSocket;
             _jsonOptions = new JsonWriterOptions {
                 Indented = false,
@@ -191,7 +192,7 @@ namespace EtwEvents.WebClient
                 return true;
             if (other == null)
                 return false;
-            return StringComparer.Ordinal.Equals(this.Id, other.Id);
+            return StringComparer.Ordinal.Equals(this.Name, other.Name);
         }
     }
 }

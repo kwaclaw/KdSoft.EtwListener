@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net.WebSockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
+using EtwEvents.WebClient.EventSinks;
 using EtwEvents.WebClient.Models;
 using Google.Protobuf.WellKnownTypes;
-using KdSoft.EtwLogging;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
@@ -79,8 +79,11 @@ namespace EtwEvents.WebClient
                     detail: _.GetString("Cannot find matching client certificate")
                 );
 
-            var session = await _sessionManager.OpenSession(request.Name, request.Host, clientCertificate, request.Providers, request.LifeTime.ToDuration()).ConfigureAwait(false);
-            return Ok(new SessionResult(session.EnabledProviders, session.RestartedProviders));
+            var openSessionState = await _sessionManager.OpenSession(
+                request.Name, request.Host, clientCertificate, request.Providers, request.LifeTime.ToDuration()
+            ).ConfigureAwait(false);
+
+            return Ok(openSessionState);
         }
 
         [HttpPost]
@@ -91,48 +94,26 @@ namespace EtwEvents.WebClient
 
         public const int SessionNotFoundWebSocketStatus = 4901;
 
-        class DummySink: IEventSink
-        {
-            public string Id => throw new NotImplementedException();
-
-            public Task<bool> RunTask => Task<bool>.FromResult(true);
-
-            public void Dispose() {
-                //
-            }
-
-            public ValueTask DisposeAsync() {
-                return default;
-            }
-
-            public bool Equals([AllowNull] IEventSink other) {
-                throw new NotImplementedException();
-            }
-
-            public ValueTask<bool> FlushAsync() {
-                return new ValueTask<bool>(true);
-            }
-
-            public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
-                return new ValueTask<bool>(true);
-            }
-        }
-        IEventSink CreateEventSink(string sinkType) {
+        IEventSink CreateEventSink(EventSinkRequest request) {
             IEventSink result;
-            switch (sinkType) {
+            switch (request.SinkType) {
+                case nameof(DummySink):
                 default:
-                    result = new DummySink();
+                    result = new DummySink(request.Name);
                     break;
+
             }
-            HandleEventSinkClosure(result);
+            ConfigureEventSinkClosure(result);
             return result;
         }
 
-        Task HandleEventSinkClosure(IEventSink sink) {
+        Task ConfigureEventSinkClosure(IEventSink sink) {
             return sink.RunTask.ContinueWith(async rt => {
                 try {
-                    if (!rt.Result)  // was not disposed
+                    if (!rt.Result) { // was not disposed
                         await sink.DisposeAsync().ConfigureAwait(false);
+                        await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
+                    }
                 }
                 catch (Exception ex) {
                     //_logger.LogError(ex);
@@ -141,32 +122,33 @@ namespace EtwEvents.WebClient
         }
 
         [HttpGet]
-        public async Task<IActionResult> StartEvents([FromQuery]string sessionName, [FromQuery]string[] sinkNames) {
-            if (sinkNames == null)
-                sinkNames = Array.Empty<string>();
+        public async Task<IActionResult> StartEvents(string sessionName) {
             if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
-                var traceSession = await sessionEntry.CreateTask.ConfigureAwait(false);
-                var sinkList = sinkNames.Select(st => CreateEventSink(st));
+                var traceSession = await sessionEntry.SessionTask.ConfigureAwait(false);
                 // If this is a WebSocket request we add a WebSocket sink
                 if (HttpContext.WebSockets.IsWebSocketRequest) {
                     var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
                     // the WebSocketSink has a life-cycle tied to the EventSession, while other sinks can be added and removed dynamically
-                    var webSocketSink = new WebSocketSink("websocket", webSocket, CancellationToken.None);
+                    var webSocketName = Guid.NewGuid().ToString();
+                    var webSocketSink = new WebSocketSink(webSocketName, webSocket, CancellationToken.None);
                     try {
                         traceSession.EventSinks.AddEventSink(webSocketSink);
-                        traceSession.EventSinks.AddEventSinks(sinkList);
-                        var eventSession = await traceSession.StartEvents(_optionsMonitor).ConfigureAwait(false);
+                        var eventSessionTask = traceSession.StartEvents(_optionsMonitor);
+                        await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
+                        var eventSession = await eventSessionTask.ConfigureAwait(false);
                     }
                     finally {
                         await webSocketSink.DisposeAsync().ConfigureAwait(false);
+                        await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
                     }
 
                     // OkResult not right here, tries to set status code which is not good in this scenario
                     return new EmptyResult();
                 }
                 else {
-                    traceSession.EventSinks.AddEventSinks(sinkList);
-                    await traceSession.StartEvents(_optionsMonitor).ConfigureAwait(false);
+                    var eventSessionTask = traceSession.StartEvents(_optionsMonitor);
+                    await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
+                    var eventSession = await eventSessionTask.ConfigureAwait(false);
                     return Ok();
                 }
             }
@@ -182,8 +164,9 @@ namespace EtwEvents.WebClient
         [HttpPost]
         public async Task<IActionResult> StopEvents(string sessionName) {
             if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
-                var session = await sessionEntry.CreateTask.ConfigureAwait(false);
-                await session.StopEvents().ConfigureAwait(false);
+                var traceSession = await sessionEntry.SessionTask.ConfigureAwait(false);
+                await traceSession.StopEvents().ConfigureAwait(false);
+                await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
                 return Ok();
             }
             else {
@@ -200,10 +183,12 @@ namespace EtwEvents.WebClient
             if (HttpContext.WebSockets.IsWebSocketRequest) {
                 var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
                 if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
-                    var traceSession = await sessionEntry.CreateTask.ConfigureAwait(false);
+                    var traceSession = await sessionEntry.SessionTask.ConfigureAwait(false);
                     // the WebSocketSink has a life-cycle tied to the EventSession, while other sinks can be added and removed dynamically
-                    await using (var webSocketSink = new WebSocketSink("websocket", webSocket, CancellationToken.None)) {
+                    var webSocketName = Guid.NewGuid().ToString();
+                    await using (var webSocketSink = new WebSocketSink(webSocketName, webSocket, CancellationToken.None)) {
                         traceSession.EventSinks.AddEventSink(webSocketSink);
+                        await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
                         await traceSession.EventStream.ConfigureAwait(false);
                     }
                     // OkResult not right here, tries to set status code which is not good in this scenario
@@ -227,11 +212,12 @@ namespace EtwEvents.WebClient
         }
 
         [HttpPost]
-        public async Task<IActionResult> OpenEventSinks(string sessionName, IEnumerable<string> sinkNames) {
+        public async Task<IActionResult> OpenEventSinks(string sessionName, IEnumerable<EventSinkRequest> sinkRequests) {
             if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
-                var traceSession = await sessionEntry.CreateTask.ConfigureAwait(false);
-                var sinkList = sinkNames.Select(st => CreateEventSink(st));
+                var traceSession = await sessionEntry.SessionTask.ConfigureAwait(false);
+                var sinkList = sinkRequests.Select(sr => CreateEventSink(sr));
                 traceSession.EventSinks.AddEventSinks(sinkList);
+                await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
                 return Ok();
             }
             else {
@@ -246,12 +232,13 @@ namespace EtwEvents.WebClient
         [HttpPost]
         public async Task<IActionResult> CloseEventSinks(string sessionName, IEnumerable<string> sinkNames) {
             if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
-                var traceSession = await sessionEntry.CreateTask.ConfigureAwait(false);
+                var traceSession = await sessionEntry.SessionTask.ConfigureAwait(false);
                 var closedSinks = traceSession.EventSinks.RemoveEventSinks(sinkNames);
                 var disposeTasks = closedSinks.Select(sink => sink.DisposeAsync()).ToArray();
                 foreach (var disposeTask in disposeTasks) {
                     await disposeTask.ConfigureAwait(false);
                 }
+                await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
                 return Ok();
             }
             else {
@@ -260,6 +247,38 @@ namespace EtwEvents.WebClient
                     instance: nameof(CloseEventSinks),
                     detail: _.GetString("Session may have been closed already.")
                 );
+            }
+        }
+
+        const string EventStreamHeaderValue = "text/event-stream";
+
+        //see https://stackoverflow.com/questions/36227565/aspnet-core-server-sent-events-response-flush
+        //also, maybe better: https://github.com/tpeczek/Lib.AspNetCore.ServerSentEvents and https://github.com/tpeczek/Demo.AspNetCore.ServerSentEvents
+
+        async Task<IActionResult> GetSessionStateEventStream(CancellationToken cancelToken) {
+            var resp = Response;
+            resp.Headers.Add("Cache-Control-Type", "no-cache");
+            resp.Headers.Add("Content-Type", EventStreamHeaderValue);
+
+            var changes = _sessionManager.GetSessionStateChanges();
+            await foreach (var change in changes.WithCancellation(cancelToken)) {
+                var statusJson = System.Text.Json.JsonSerializer.Serialize(change);
+                await resp.WriteAsync($"data:{statusJson}\n\n").ConfigureAwait(false);
+                await resp.Body.FlushAsync().ConfigureAwait(false);
+            }
+
+            return Ok();
+        }
+
+        [HttpGet]
+        public Task<IActionResult> GetSessionStates(CancellationToken cancelToken) {
+            var req = Request;
+            if (req.Headers["Accept"].Equals(EventStreamHeaderValue)) {
+                return GetSessionStateEventStream(cancelToken);
+            }
+            else {
+                IActionResult objResult = new ObjectResult(_sessionManager.GetSessionStates());
+                return Task.FromResult(objResult);
             }
         }
 
@@ -273,8 +292,9 @@ namespace EtwEvents.WebClient
             }
 
             if (_sessionManager.TryGetValue(request.SessionName!, out var sessionEntry)) {
-                var session = await sessionEntry.CreateTask.ConfigureAwait(false);
+                var session = await sessionEntry.SessionTask.ConfigureAwait(false);
                 var result = await session.SetCSharpFilter(csharpFilter).ConfigureAwait(false);
+                await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
                 return Ok(result);
             }
             else {

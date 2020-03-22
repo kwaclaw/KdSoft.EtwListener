@@ -2,27 +2,29 @@
 using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Threading.Tasks;
 using KdSoft.EtwLogging;
 
 namespace EtwEvents.WebClient
 {
-    public class EventSinkHolder
+    class EventSinkHolder
     {
         readonly object _eventSinkLock = new object();
         readonly object _failedEventSinkLock = new object();
-        readonly ArrayPool<ValueTask<bool>> _taskArrayPool;
+        readonly ArrayPool<(IEventSink sink, ValueTask<bool> task)> _eventSinkTaskPool;
 
-        ImmutableList<IEventSink> _eventSinks;
-        ImmutableList<(IEventSink, Exception?)> _failedEventSinks;
 
-        public ImmutableList<IEventSink> ActiveEventSinks => _eventSinks;
-        public ImmutableList<(IEventSink, Exception?)> FailedEventSinks => _failedEventSinks;
+        ImmutableDictionary<string, IEventSink> _eventSinks;
+        ImmutableDictionary<string, (IEventSink, Exception?)> _failedEventSinks;
+
+        public IImmutableDictionary<string, IEventSink> ActiveEventSinks => _eventSinks;
+        public IImmutableDictionary<string, (IEventSink sink, Exception? error)> FailedEventSinks => _failedEventSinks;
 
         public EventSinkHolder() {
-            this._eventSinks = ImmutableList<IEventSink>.Empty;
-            this._failedEventSinks = ImmutableList<(IEventSink, Exception?)>.Empty;
-            this._taskArrayPool = ArrayPool<ValueTask<bool>>.Create();
+            this._eventSinks = ImmutableDictionary<string, IEventSink>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
+            this._failedEventSinks = ImmutableDictionary<string, (IEventSink, Exception?)>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
+            this._eventSinkTaskPool = ArrayPool<(IEventSink, ValueTask<bool>)>.Create();
         }
 
         /// <summary>
@@ -34,7 +36,7 @@ namespace EtwEvents.WebClient
             // We use a lock here to prevent race conditions, so that
             // if two concurrent updates happen, none will get lost.
             lock (_eventSinkLock) {
-                this._eventSinks = this._eventSinks.Add(sink);
+                this._eventSinks = this._eventSinks.SetItem(sink.Name, sink);
             }
         }
 
@@ -47,7 +49,7 @@ namespace EtwEvents.WebClient
             // We use a lock here to prevent race conditions, so that
             // if two concurrent updates happen, none will get lost.
             lock (_eventSinkLock) {
-                this._eventSinks = this._eventSinks.AddRange(sinks);
+                this._eventSinks = this._eventSinks.SetItems(sinks.Select(sink => new KeyValuePair<string, IEventSink>(sink.Name, sink)));
             }
         }
 
@@ -61,7 +63,7 @@ namespace EtwEvents.WebClient
             // if two concurrent updates happen, none will get lost.
             lock (_eventSinkLock) {
                 var oldEventSinks = this._eventSinks;
-                this._eventSinks = oldEventSinks.Remove(sink);
+                this._eventSinks = oldEventSinks.Remove(sink.Name);
                 return !object.ReferenceEquals(oldEventSinks, this._eventSinks);
             }
         }
@@ -69,43 +71,40 @@ namespace EtwEvents.WebClient
         /// <summary>
         /// Removes <see cref="IEventSink"/> instance from processing loop.
         /// </summary>
-        /// <param name="id">Identifier of <see cref="IEventSink"/> to remove.</param>
+        /// <param name="name">Identifier of <see cref="IEventSink"/> to remove.</param>
         /// <returns>The <see cref="IEventSink"/> instance that was removed, or <c>null</c> if it was not found.</returns>
         /// <remarks>It is the responsibility of the caller to dispose the <see cref="IEventSink"/> instance!</remarks>
-        public IEventSink? RemoveEventSink(string id) {
+        public IEventSink? RemoveEventSink(string name) {
             // We use a lock here to prevent race conditions, so that
             // if two concurrent updates happen, none will get lost.
+            IEventSink? result = null;
             lock (_eventSinkLock) {
-                var eventSinks = this._eventSinks;
-                var sinkIndex = eventSinks.FindIndex(sink => id.Equals(sink.Id, StringComparison.Ordinal));
-                if (sinkIndex < 0)
-                    return null;
-                var oldSink = eventSinks[sinkIndex];
-                this._eventSinks = eventSinks.RemoveAt(sinkIndex);
-                return oldSink;
+                var oldEventSinks = this._eventSinks;
+                if (oldEventSinks.TryGetValue(name, out result))
+                    this._eventSinks = oldEventSinks.Remove(name);
             }
+            return result;
         }
 
         /// <summary>
         /// Removes <see cref="IEventSink"/> instances from processing loop.
         /// </summary>
-        /// <param name="ids">Identifiers of <see cref="IEventSink">event sinks</see>/to remove.</param>
+        /// <param name="names">Identifiers of <see cref="IEventSink">event sinks</see>/to remove.</param>
         /// <returns>The <see cref="IEventSink"/> instances that were removed, or an empty collection if none were found.</returns>
         /// <remarks>It is the responsibility of the caller to dispose the <see cref="IEventSink"/> instances!</remarks>
-        public IEnumerable<IEventSink> RemoveEventSinks(IEnumerable<string> ids) {
-            if (ids == null)
-                throw new ArgumentNullException(nameof(ids));
+        public IEnumerable<IEventSink> RemoveEventSinks(IEnumerable<string> names) {
+            if (names == null)
+                throw new ArgumentNullException(nameof(names));
             // We use a lock here to prevent race conditions, so that
             // if two concurrent updates happen, none will get lost.
             var oldSinks = new List<IEventSink>();
             lock (_eventSinkLock) {
-                var eventSinks = this._eventSinks;
-                foreach (var id in ids) {
-                    var oldSink = eventSinks.Find(sink => id.Equals(sink.Id, StringComparison.Ordinal));
-                    if (oldSink != null)
+                var oldEventSinks = this._eventSinks;
+                foreach (var name in names) {
+                    if (oldEventSinks.TryGetValue(name, out var oldSink))
                         oldSinks.Add(oldSink);
                 }
-                this._eventSinks = eventSinks.RemoveRange(oldSinks);
+                this._eventSinks = oldEventSinks.RemoveRange(names);
             }
             return oldSinks;
         }
@@ -119,27 +118,24 @@ namespace EtwEvents.WebClient
             // if two concurrent updates happen, none will get lost.
             lock (_eventSinkLock) {
                 var oldEventSinks = this._eventSinks;
-                this._eventSinks = oldEventSinks.RemoveRange(sinks);
+                this._eventSinks = oldEventSinks.RemoveRange(sinks.Select(sink => sink.Name));
             }
         }
 
-        public (ImmutableList<IEventSink> active, ImmutableList<(IEventSink, Exception?)> failed) ClearEventSInks() {
-            ImmutableList<IEventSink> active;
-            ImmutableList<(IEventSink, Exception?)> failed;
+        public (IImmutableDictionary<string, IEventSink> active, IImmutableDictionary<string, (IEventSink, Exception?)> failed) ClearEventSinks() {
             lock (_eventSinkLock) {
-                active = this._eventSinks;
-                failed = this._failedEventSinks;
-                this._eventSinks = ImmutableList<IEventSink>.Empty;
-                this._failedEventSinks = ImmutableList<(IEventSink, Exception?)>.Empty;
+                var active = this._eventSinks;
+                var failed = this._failedEventSinks;
+                this._eventSinks = ImmutableDictionary<string, IEventSink>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
+                this._failedEventSinks = ImmutableDictionary<string, (IEventSink, Exception?)>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
+                return (active, failed);
             }
-            return (active, failed);
         }
 
         void HandleFailedEventSink(IEventSink failedSink, Exception? ex) {
             if (RemoveEventSink(failedSink))
-                //TODO should we dospose the event sink here or somehow notify the owner of this session
                 lock (_failedEventSinkLock) {
-                    this._failedEventSinks = this._failedEventSinks.Add((failedSink, ex));
+                    this._failedEventSinks = this._failedEventSinks.SetItem(failedSink.Name, (failedSink, ex));
                 }
         }
 
@@ -148,35 +144,35 @@ namespace EtwEvents.WebClient
             // and we do not exactly care which version of the field value we get. 
             var eventSinks = this._eventSinks;
 
-            var taskList = this._taskArrayPool.Rent(eventSinks.Count);
+            var taskList = this._eventSinkTaskPool.Rent(eventSinks.Count);
             try {
+                int indx = 0;
                 if (evt == null) {
-                    for (int indx = 0; indx < eventSinks.Count; indx++) {
-                        var writeTask = eventSinks[indx].FlushAsync();
-                        taskList[indx] = writeTask;
+                    foreach (var entry in eventSinks) {
+                        taskList[indx++] = (entry.Value, entry.Value.FlushAsync());
                     }
                 }
                 else {
-                    for (int indx = 0; indx < eventSinks.Count; indx++) {
-                        var writeTask = eventSinks[indx].WriteAsync(evt, sequenceNo);
-                        taskList[indx] = writeTask;
+                    foreach (var entry in eventSinks) {
+                        taskList[indx++] = (entry.Value, entry.Value.WriteAsync(evt, sequenceNo));
                     }
                 }
 
-                for (int indx = 0; indx < eventSinks.Count; indx++) {
+                for (indx = 0; indx < eventSinks.Count; indx++) {
+                    var entry = taskList[indx];
                     try {
-                        var success = await taskList[indx].ConfigureAwait(false);
+                        var success = await entry.task.ConfigureAwait(false);
                         if (!success) {
-                            HandleFailedEventSink(eventSinks[indx], null);
+                            HandleFailedEventSink(entry.sink, null);
                         }
                     }
                     catch (Exception ex) {
-                        HandleFailedEventSink(eventSinks[indx], ex);
+                        HandleFailedEventSink(entry.sink, ex);
                     }
                 }
             }
             finally {
-                this._taskArrayPool.Return(taskList);
+                this._eventSinkTaskPool.Return(taskList);
             }
         }
     }

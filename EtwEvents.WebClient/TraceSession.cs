@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
@@ -15,17 +16,6 @@ using Microsoft.Extensions.Options;
 
 namespace EtwEvents.WebClient
 {
-    public class SessionResult
-    {
-        public SessionResult(List<string> enabled, List<string> failed) {
-            EnabledProviders = enabled;
-            FailedProviders = failed;
-        }
-
-        public List<string> EnabledProviders { get; }
-        public List<string> FailedProviders { get; }
-    }
-
     sealed class TraceSession: IAsyncDisposable, IDisposable
     {
         readonly GrpcChannel _channel;
@@ -43,8 +33,7 @@ namespace EtwEvents.WebClient
 
         TraceSession(
             string name,
-            List<string> enabledProviders,
-            List<string> restartedProviders,
+            ImmutableList<string> enabledProviders,
             GrpcChannel channel,
             EtwListener.EtwListenerClient etwClient,
             ILogger<TraceSession> logger,
@@ -52,7 +41,6 @@ namespace EtwEvents.WebClient
         ) {
             this.Name = name;
             this.EnabledProviders = enabledProviders;
-            this.RestartedProviders = restartedProviders;
             _channel = channel;
             _etwClient = etwClient;
             _logger = logger;
@@ -62,8 +50,7 @@ namespace EtwEvents.WebClient
         }
 
         public string Name { get; }
-        public List<string> EnabledProviders { get; }
-        public List<string> RestartedProviders { get; }
+        public ImmutableList<string> EnabledProviders { get; private set; }
         public EventSinkHolder EventSinks => this._eventSinks;
         public Task EventStream { get; private set; } = Task.CompletedTask;
 
@@ -77,7 +64,7 @@ namespace EtwEvents.WebClient
             return channel;
         }
 
-        public static async Task<TraceSession> Create(
+        public static async Task<(TraceSession traceSession, IImmutableList<string> restartedProviders)> Create(
             string name,
             string host,
             X509Certificate2 clientCertificate,
@@ -99,11 +86,11 @@ namespace EtwEvents.WebClient
                 openEtwSession.ProviderSettings.AddRange(providers);
 
                 var reply = await client.OpenSessionAsync(openEtwSession);
-                var enabledProviders = reply.Results.Select(r => r.Name).ToList();
-                var restartedProviders = reply.Results.Where(r => r.Restarted).Select(r => r.Name).ToList();
+                var enabledProviders = reply.Results.Select(r => r.Name).ToImmutableList();
+                var restartedProviders = reply.Results.Where(r => r.Restarted).Select(r => r.Name).ToImmutableList();
 
-                return new TraceSession(
-                    name, enabledProviders, restartedProviders, channel, client, logger, localizer);
+                var traceSession =  new TraceSession(name, enabledProviders, channel, client, logger, localizer);
+                return (traceSession, restartedProviders);
             }
             catch {
                 channel.Dispose();
@@ -122,6 +109,11 @@ namespace EtwEvents.WebClient
             finally {
                 await DisposeAsync().ConfigureAwait(false);
             }
+        }
+
+        public async Task UpdateSessionState() {
+            var etwSession = await _etwClient.GetSessionAsync(new StringValue { Value = Name });
+            this.EnabledProviders = etwSession.EnabledProviders.Select(r => r.Name).ToImmutableList();
         }
 
         async Task<EventSession> StartEventsInternal(IOptionsMonitor<EventSessionOptions> optionsMonitor) {

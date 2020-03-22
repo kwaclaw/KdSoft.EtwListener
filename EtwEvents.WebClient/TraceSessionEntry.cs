@@ -10,15 +10,15 @@ namespace EtwEvents.WebClient
         readonly TimedLifeCycle _lifeCycle;
 
         public TraceSessionEntry(Task<TraceSession> createTask, TimeSpan lifeTime) {
-            this.CreateTask = createTask;
+            this.SessionTask = createTask;
             _lifeCycle = new TimedLifeCycle(lifeTime);
             _lifeCycle.Ended += _lifeCycle_Ended;
         }
 
         void _lifeCycle_Ended(object? sender, EventArgs e) {
-            _disposeTask = CreateTask.ContinueWith(async t => {
+            _disposeTask = SessionTask.ContinueWith(async t => {
                 try {
-                    await t.Result.DisposeAsync();
+                    await t.Result.DisposeAsync().ConfigureAwait(false);
                 }
                 catch (Exception ex) {
                     //_logger.LogError(new EventId(0, "session-dispose"), ex, "");
@@ -31,9 +31,7 @@ namespace EtwEvents.WebClient
         }
 
         Task? _disposeTask;
-        public Task<TraceSession> CreateTask { get; }
+        public Task<TraceSession> SessionTask { get; }
         public Task? DisposeTask => _disposeTask;
-
-        public TraceSession Instance => CreateTask.Result;
     }
 }
