@@ -267,7 +267,8 @@ namespace EtwEvents.WebClient
                 await resp.Body.FlushAsync().ConfigureAwait(false);
             }
 
-            return Ok();
+            // OkResult not right here, tries to set status code which is not allowed once the response has started
+            return new EmptyResult();
         }
 
         [HttpGet]
