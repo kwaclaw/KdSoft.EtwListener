@@ -22,18 +22,16 @@ namespace EtwEvents.WebClient
         readonly EtwListener.EtwListenerClient _etwClient;
         readonly ILogger<TraceSession> _logger;
         readonly IStringLocalizer<TraceSession> _;
-        readonly EventSinkHolder _eventSinks;
+        readonly object _syncObj = new object();
 
         EventSession? _eventSession;
         CancellationTokenSource _eventCts;
-
-        readonly object _syncObj = new object();
 
         public const int StopTimeoutMilliseconds = 3000;
 
         TraceSession(
             string name,
-            ImmutableList<string> enabledProviders,
+            ImmutableList<ProviderSetting> enabledProviders,
             GrpcChannel channel,
             EtwListener.EtwListenerClient etwClient,
             ILogger<TraceSession> logger,
@@ -45,13 +43,14 @@ namespace EtwEvents.WebClient
             _etwClient = etwClient;
             _logger = logger;
             _ = localizer;
-            _eventSinks = new EventSinkHolder();
             _eventCts = new CancellationTokenSource();
+            EventSinks = new EventSinkHolder();
         }
 
         public string Name { get; }
-        public ImmutableList<string> EnabledProviders { get; private set; }
-        public EventSinkHolder EventSinks => this._eventSinks;
+        public string Host => $"https://{_channel.Target}";
+        public ImmutableList<ProviderSetting> EnabledProviders { get; private set; }
+        public EventSinkHolder EventSinks { get; }
         public Task EventStream { get; private set; } = Task.CompletedTask;
 
         static GrpcChannel CreateChannel(string host, X509Certificate2 clientCertificate) {
@@ -86,10 +85,14 @@ namespace EtwEvents.WebClient
                 openEtwSession.ProviderSettings.AddRange(providers);
 
                 var reply = await client.OpenSessionAsync(openEtwSession);
-                var enabledProviders = reply.Results.Select(r => r.Name).ToImmutableList();
+
+                var enabledProviders = reply.Results.Select(r =>
+                    providers.FirstOrDefault(s => string.Equals(s.Name, r.Name, StringComparison.CurrentCultureIgnoreCase))
+                ).Where(p => !(p is null)).ToImmutableList();
+
                 var restartedProviders = reply.Results.Where(r => r.Restarted).Select(r => r.Name).ToImmutableList();
 
-                var traceSession =  new TraceSession(name, enabledProviders, channel, client, logger, localizer);
+                var traceSession = new TraceSession(name, enabledProviders, channel, client, logger, localizer);
                 return (traceSession, restartedProviders);
             }
             catch {
@@ -113,7 +116,7 @@ namespace EtwEvents.WebClient
 
         public async Task UpdateSessionState() {
             var etwSession = await _etwClient.GetSessionAsync(new StringValue { Value = Name });
-            this.EnabledProviders = etwSession.EnabledProviders.Select(r => r.Name).ToImmutableList();
+            this.EnabledProviders = etwSession.EnabledProviders.ToImmutableList();
         }
 
         async Task<EventSession> StartEventsInternal(IOptionsMonitor<EventSessionOptions> optionsMonitor) {
@@ -134,7 +137,7 @@ namespace EtwEvents.WebClient
                     stopEventCts.Cancel();
                     stopTask = _eventSession.Stop();
                 }
-                eventSession = new EventSession(_etwClient, etwRequest, optionsMonitor, _eventSinks);
+                eventSession = new EventSession(_etwClient, etwRequest, optionsMonitor, EventSinks);
                 _eventSession = eventSession;
                 _eventCts = new CancellationTokenSource();
             }

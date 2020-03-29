@@ -2,14 +2,16 @@
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
+using KdSoft.EtwLogging;
 
 namespace EtwEvents.WebClient.Models
 {
     public class TraceSessionState
     {
         public string Name { get; set; } = string.Empty;
+        public string Host { get; set; } = string.Empty;
         public bool IsRunning { get; set; }
-        public IImmutableList<string> EnabledProviders { get; set; } = ImmutableList<string>.Empty;
+        public IImmutableList<ProviderSetting> EnabledProviders { get; set; } = ImmutableList<ProviderSetting>.Empty;
         public ImmutableArray<EventSinkState> EventSinks { get; set; }
     }
 
@@ -45,6 +47,7 @@ namespace EtwEvents.WebClient.Models
                 throw new ArgumentNullException(nameof(session));
             var result = new T { 
                 Name = session.Name ?? string.Empty,
+                Host = session.Host,
                 IsRunning = !session.EventStream.IsCompleted,
                 EnabledProviders = session.EnabledProviders
             };
