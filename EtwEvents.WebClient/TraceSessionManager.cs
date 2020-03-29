@@ -27,7 +27,7 @@ namespace EtwEvents.WebClient
             IServiceProvider services,
             ILoggerFactory loggerFactory,
             IStringLocalizer<TraceSession> localizer
-        ) : base(TimeSpan.TryParse(config?["ReapPeriod"], out var reapPeriod) ? reapPeriod : TimeSpan.FromMinutes(5))
+        ) : base(TimeSpan.TryParse(config?["ReapPeriod"], out var reapPeriod) ? reapPeriod : TimeSpan.FromMinutes(5), StringComparer.CurrentCultureIgnoreCase)
         {
             this._services = services;
             this._loggerFactory = loggerFactory;
