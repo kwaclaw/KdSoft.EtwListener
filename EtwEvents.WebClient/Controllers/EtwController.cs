@@ -24,17 +24,20 @@ namespace EtwEvents.WebClient
         readonly TraceSessionManager _sessionManager;
         readonly IOptionsMonitor<EventSessionOptions> _optionsMonitor;
         readonly IOptions<ClientCertOptions> _clientCertOptions;
+        readonly IOptions<JsonOptions> _jsonOptions;
         readonly IStringLocalizer<EtwController> _;
 
         public EtwController(
             TraceSessionManager sessionManager,
             IOptionsMonitor<EventSessionOptions> optionsMonitor,
             IOptions<ClientCertOptions> clientCertOptions,
+            IOptions<JsonOptions> jsonOptions,
             IStringLocalizer<EtwController> localize
         ) {
             this._sessionManager = sessionManager;
             this._optionsMonitor = optionsMonitor;
             this._clientCertOptions = clientCertOptions;
+            this._jsonOptions = jsonOptions;
             this._ = localize;
         }
 
@@ -260,9 +263,11 @@ namespace EtwEvents.WebClient
             resp.Headers.Add("Cache-Control-Type", "no-cache");
             resp.Headers.Add("Content-Type", EventStreamHeaderValue);
 
+            var jsonSerializerOptions = _jsonOptions.Value.JsonSerializerOptions;
+
             var changes = _sessionManager.GetSessionStateChanges();
             await foreach (var change in changes.WithCancellation(cancelToken)) {
-                var statusJson = System.Text.Json.JsonSerializer.Serialize(change);
+                var statusJson = System.Text.Json.JsonSerializer.Serialize(change, jsonSerializerOptions);
                 await resp.WriteAsync($"data:{statusJson}\n\n").ConfigureAwait(false);
                 await resp.Body.FlushAsync().ConfigureAwait(false);
             }
