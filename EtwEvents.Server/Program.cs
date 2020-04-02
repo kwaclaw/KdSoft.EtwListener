@@ -6,7 +6,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace EtwEvents.Server
 {
-    public class Program
+    public static class Program
     {
         public static void Main(string[] args) {
             // Today you have to be Admin to turn on ETW events (anyone can write ETW events).   
