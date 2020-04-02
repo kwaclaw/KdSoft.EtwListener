@@ -28,7 +28,7 @@ namespace EtwEvents.WebClient
         }
 
         public override void Write(Utf8JsonWriter writer, TimeSpan value, JsonSerializerOptions options) {
-            writer?.WriteStringValue(XmlConvert.ToString(value));
+            writer.WriteStringValue(XmlConvert.ToString(value));
         }
     }
 
@@ -51,9 +51,9 @@ namespace EtwEvents.WebClient
 
         public override void Write(Utf8JsonWriter writer, TimeSpan? value, JsonSerializerOptions options) {
             if (value == null)
-                writer?.WriteNullValue();
+                writer.WriteNullValue();
             else
-                writer?.WriteStringValue(XmlConvert.ToString(value.Value));
+                writer.WriteStringValue(XmlConvert.ToString(value.Value));
         }
     }
 }
