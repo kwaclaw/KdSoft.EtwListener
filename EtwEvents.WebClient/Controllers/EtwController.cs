@@ -277,14 +277,14 @@ namespace EtwEvents.WebClient
         }
 
         [HttpGet]
-        public Task<IActionResult> GetSessionStates(CancellationToken cancelToken) {
+        public async Task<IActionResult> GetSessionStates(CancellationToken cancelToken) {
             var req = Request;
             if (req.Headers["Accept"].Equals(EventStreamHeaderValue)) {
-                return GetSessionStateEventStream(cancelToken);
+                return await GetSessionStateEventStream(cancelToken).ConfigureAwait(false);
             }
             else {
-                IActionResult objResult = new ObjectResult(_sessionManager.GetSessionStates());
-                return Task.FromResult(objResult);
+                var change = await _sessionManager.GetSessionStates().ConfigureAwait(false);
+                return Ok(change);
             }
         }
 
