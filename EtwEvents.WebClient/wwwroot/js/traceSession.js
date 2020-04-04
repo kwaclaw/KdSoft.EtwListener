@@ -1,33 +1,29 @@
 ﻿import { observable, observe } from '../lib/@nx-js/observer-util.js';
-import EventSession from '../js/eventSession.js';
-import FetchHelper from '../js/fetchHelper.js';
+import EventSession from './eventSession.js';
+import FetchHelper from './fetchHelper.js';
 
 class TraceSession {
-  constructor(profile) {
+  constructor(profile, state) {
     this._profile = profile;
-    this.providers = profile.providers.slice(0);
+    this._state = state || {};
     this.filter = profile.activeFilter;
-    this._enabledProviders = [];
-    this._restartedProviders = [];
     this._eventSession = null;
-    this._open = false;
     this.fetcher = new FetchHelper('/Etw');
     return observable(this);
   }
 
+  get name() { return this._state ? this._state.name : (this._profile ? this._profile.name : '<unknown>'); }
   get profile() { return this._profile; }
-  get enabledProviders() { return this._enabledProviders; }
-  get restartedProviders() { return this._restartedProviders; }
-
-  get open() { return this._open; }
-
+  get state() { return this._state; }
   get eventSession() { return this._eventSession; }
+
+  updateState(newState) {
+    this._state = newState;
+  }
 
   async closeRemoteSession(progress) {
     try {
-      await this.fetcher.withProgress(progress)
-        .post('CloseRemoteSession', { name: this._profile.name });
-      this._open = false;
+      await this.fetcher.withProgress(progress).post('CloseRemoteSession', { name: this._profile.name });
       //console.log(response);
     } catch (error) {
       window.myapp.defaultHandleError(error);
@@ -36,13 +32,12 @@ class TraceSession {
 
   async openSession(progress) {
     const p = this._profile;
-    const request = { name: p.name, host: p.host, providers: this.providers, lifeTime: p.lifeTime };
+    const request = { name: p.name, host: p.host, providers: p.providers, lifeTime: p.lifeTime };
 
     try {
       const response = await this.fetcher.withProgress(progress).postJson('OpenSession', null, request);
-      this._enabledProviders = response.enabledProviders;
+      this._state = response;
       this._restartedProviders = response.restartedProviders;
-      this._open = true;
       return true;
     } catch (error) {
       window.myapp.defaultHandleError(error);

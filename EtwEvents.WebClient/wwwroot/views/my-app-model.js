@@ -1,13 +1,12 @@
 import { observable } from '../lib/@nx-js/observer-util.js';
-import KdSoftCheckListModel from './kdsoft-checklist-model.js';
-import KdSoftDropdownModel from './kdsoft-dropdown-model.js';
-import TraceSession from './traceSession.js';
+// import KdSoftCheckListModel from './kdsoft-checklist-model.js';
+import TraceSession from '../js/traceSession.js';
 import TraceSessionProfile from '../js/traceSessionProfile.js';
 import * as utils from '../js/utils.js';
-import TraceSessionConfigModel from './trace-session-config-model.js';
 import RingBuffer from '../js/ringBuffer.js';
+import FetchHelper from '../js/fetchHelper.js';
 
-function loadSessionProfileModel(selectName) {
+function loadSessionProfiles() {
   const sessionProfiles = [];
   for (let i = 0; i < localStorage.length; i += 1) {
     const key = localStorage.key(i);
@@ -19,31 +18,92 @@ function loadSessionProfileModel(selectName) {
     }
   }
   sessionProfiles.sort((x, y) => String.prototype.localeCompare.call(x.name, y.name));
-  let selectIndex = sessionProfiles.findIndex(p => p.name === selectName);
-  if (selectIndex < 0) selectIndex = 0;
-  const selectedIndexes = sessionProfiles.length > 0 ? [selectIndex] : [];
+  return sessionProfiles;
+}
 
-  return new KdSoftCheckListModel(sessionProfiles, selectedIndexes, false);
+function getProfileFromState(state) {
+  return new TraceSessionProfile(state.name, state.host, state.enabledProviders);
 }
 
 class MyAppModel {
   constructor() {
-    this._traceSessions = new Map();
+    this._traceSessions = observable(new Map());
+    this._visibleSessionNames = observable(new Set());
     this.activeSessionName = null;
 
-    this.profileCheckListModel = loadSessionProfileModel();
-    this.sessionDropdownModel = new KdSoftDropdownModel();
+    this.sessionProfiles = loadSessionProfiles();
 
     this._errorSequenceNo = 0;
     this.fetchErrors = new RingBuffer(50);
     this.showLastError = false;
     this.showErrors = false;
 
+    // this._openSessions = [];
+    this.fetcher = new FetchHelper('/Etw');
+    this.fetcher.getJson('GetSessionStates')
+      .then(st => this._updateTraceSessions(st.sessions))
+      .catch(error => window.myapp.defaultHandleError(error));
+
+    const es = new EventSource('Etw/GetSessionStates');
+    es.onmessage = e => {
+      console.log(e.data);
+      const st = JSON.parse(e.data);
+      this._updateTraceSessions(st.sessions);
+    };
+    es.onerror = err => {
+      console.error(err);
+    };
+
     return observable(this);
   }
 
   get traceSessions() { return this._traceSessions; }
   get activeSession() { return this._traceSessions.get(this.activeSessionName); }
+
+  get visibleSessions() {
+    const result = [];
+    this._visibleSessionNames.forEach(sessionName => {
+      const session = this._traceSessions.get(sessionName);
+      if (session) result.push(session);
+    });
+    return result;
+  }
+
+  showSession(sessionName) {
+    this._visibleSessionNames.add(sessionName.toLowerCase());
+  }
+
+  hideSession(sessionName) {
+    this._visibleSessionNames.delete(sessionName.toLowerCase());
+  }
+
+  _updateTraceSessions(sessionStates) {
+    const localSessionKeys = new Set(this.traceSessions.keys());
+    const profiles = this.sessionProfiles;
+
+    // sessionStates have unique names (case-insensitive) - //TODO server culture vs local culture?
+    for (const state of (sessionStates || [])) {
+      const profileIndex = profiles.findIndex(p => String.prototype.localeCompare.call(p.name, state.name) === 0);
+      const sessionName = state.name.toLowerCase();
+      let traceSession = this.traceSessions.get(sessionName);
+
+      if (traceSession) {
+        traceSession.updateState(state);
+      } else {
+        const profile = profileIndex >= 0 ? profiles[profileIndex] : getProfileFromState(state);
+        if (profileIndex < 0) this.saveProfile(profile);
+        traceSession = new TraceSession(profile, state);
+        this.traceSessions.set(sessionName, traceSession);
+      }
+
+      localSessionKeys.delete(sessionName);
+    }
+
+    // remove sessions not present on the server
+    for (const sessionKey of localSessionKeys) {
+      this.traceSessions.delete(sessionKey);
+    }
+  }
 
   handleFetchError(error) {
     this._errorSequenceNo += 1;
@@ -62,24 +122,20 @@ class MyAppModel {
     }
   }
 
-  async openSessionFromSelectedProfile(progress) {
-    const profileEntry = utils.first(this.profileCheckListModel.selectedEntries);
-    if (!profileEntry) return;
+  async openSessionFromProfile(profile, progress) {
+    const sessionName = profile.name.toLowerCase();
+    const ses = this.traceSessions.get(sessionName);
+    if (ses) return;
 
-    const profile = profileEntry.item;
-
-    if (this.traceSessions.has(profile.name)) return;
-
-    const session = new TraceSession(profile);
-    const success = await session.openSession(progress);
+    const newSession = new TraceSession(profile);
+    const success = await newSession.openSession(progress);
     if (!success) return;
 
-    this.traceSessions.set(profile.name, session);
-    this.activeSessionName = profile.name;
+    this.activeSessionName = sessionName;
 
-    const filter = profile.activeFilter;
+    const filter = newSession.profile.activeFilter;
     if (filter) {
-      const result = await session.applyFilter(filter, progress);
+      const result = await newSession.applyFilter(filter, progress);
       if (result.success) {
         if (result.details.diagnostics.length > 0) {
           //TODO show the error somehow
@@ -90,65 +146,37 @@ class MyAppModel {
   }
 
   async closeSession(session, progress) {
+    const sessionName = session.name.toLowerCase();
     // find they key that was inserted before (or after) the current key
-    const prevKey = utils.closest(this.traceSessions.keys(), session.profile.name);
+    const prevKey = utils.closest(this.traceSessions.keys(), sessionName);
 
     try {
-      if (session.open) {
-        await session.closeRemoteSession(progress);
-      }
+      await session.closeRemoteSession(progress);
     } finally {
-      this.traceSessions.delete(session.profile.name);
       this.activeSessionName = prevKey;
     }
   }
 
-  getConfigModelFromSelectedProfile() {
-    const profileEntry = utils.first(this.profileCheckListModel.selectedEntries);
-    const profile = profileEntry ? profileEntry.item : new TraceSessionProfile('New Profile');
-    return new TraceSessionConfigModel(profile);
-  }
-
   saveProfile(profileModel) {
-    const profileToSave = new TraceSessionProfile();
-    // save profile with only the properties that are defined in the class
-    utils.setTargetProperties(profileToSave, profileModel);
-    localStorage.setItem(`session-profile-${profileToSave.name}`, JSON.stringify(profileToSave));
-  }
-
-  saveSelectedProfile(profileConfigModel) {
-    const selectedProfileEntry = utils.first(this.profileCheckListModel.selectedEntries);
-    let profileModel = null;
-
-    if (selectedProfileEntry) {
-      // copy changes to our selected profile
-      profileModel = selectedProfileEntry.item;
-      if (profileConfigModel) {
-        utils.setTargetProperties(profileModel, profileConfigModel);
-      }
-    } else if (profileConfigModel) {
-      profileModel = profileConfigModel.cloneAsProfile();
-      this.profileCheckListModel.items.push(profileModel);
+    let profileToSave;
+    if (profileModel instanceof TraceSessionProfile) {
+      profileToSave = profileModel;
+    } else {
+      profileToSave = new TraceSessionProfile();
+      // save profile with only the properties that are defined in the class
+      utils.setTargetProperties(profileToSave, profileModel);
     }
-
-    if (profileModel) {
-      this.saveProfile(profileModel);
-      this.profileCheckListModel = loadSessionProfileModel(selectedProfileEntry ? selectedProfileEntry.item.name : null);
-    }
+    localStorage.setItem(`session-profile-${profileToSave.name.toLowerCase()}`, JSON.stringify(profileToSave));
+    this.sessionProfiles = loadSessionProfiles();
   }
 
   deleteProfile(profileName) {
-    const selectedProfileEntry = utils.first(this.profileCheckListModel.selectedEntries);
-    let selectProfileName = selectedProfileEntry != null ? selectedProfileEntry.item.name : null;
-    if (selectProfileName === profileName) {
-      selectProfileName = null;
-    }
     localStorage.removeItem(`session-profile-${profileName}`);
-    this.profileCheckListModel = loadSessionProfileModel(selectProfileName);
+    this.sessionProfiles = loadSessionProfiles();
   }
 
+  // should create TraceSessions with a profile
   async importProfiles(files) {
-    const selectedProfileEntry = utils.first(this.profileCheckListModel.selectedEntries);
     const promises = [];
 
     for (let i = 0; i < files.length; i += 1) {
@@ -165,8 +193,6 @@ class MyAppModel {
         console.log(err);
       }
     }
-
-    this.profileCheckListModel = loadSessionProfileModel(selectedProfileEntry ? selectedProfileEntry.item.name : null);
   }
 }
 

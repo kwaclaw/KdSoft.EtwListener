@@ -14,6 +14,7 @@ import './kdsoft-tree-node.js';
 import './trace-session-view.js';
 import './trace-session-config.js';
 import './filter-form.js';
+import TraceSessionConfigModel from './trace-session-config-model.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import { KdSoftGridStyle } from '../styles/kdsoft-grid-style.js';
 import myappStyleLinks from '../styles/my-app-style-links.js';
@@ -34,9 +35,9 @@ const classList = {
 function formDoneHandler(e) {
   if (!e.detail.canceled) {
     if (e.target.localName === 'filter-form') {
-      this.model.saveSelectedProfile();
+      this.model.saveProfile(e.detail.model.session.profile);
     } else if (e.target.localName === 'trace-session-config') {
-      this.model.saveSelectedProfile(e.detail.model);
+      this.model.saveProfile(e.detail.model.cloneAsProfile());
     }
   }
 
@@ -46,19 +47,10 @@ function formDoneHandler(e) {
 
 function formSaveHandler(e) {
   if (e.target.localName === 'filter-form') {
-    this.model.saveSelectedProfile();
+    this.model.saveProfile(e.detail.model.session.profile);
   } else if (e.target.localName === 'trace-session-config') {
-    this.model.saveSelectedProfile(e.detail.model);
+    this.model.saveProfile(e.detail.model.cloneAsProfile());
   }
-}
-
-function getProfileItemTemplate(item) {
-  return html`
-    <div class="inline-block w-4\/5 truncate" title=${item.name}>${item.name}</div>
-    <span class="ml-auto flex-end text-gray-600 cursor-pointer" @click=${e => this._deleteProfileClick(e, item.name)}>
-      <i class="far fa-trash-alt"></i>
-    </span>
-  `;
 }
 
 
@@ -86,48 +78,13 @@ class MyApp extends LitMvvmElement {
     window.myapp = this;
   }
 
-  connectDropdownSessionlist(checkListId, singleSelect) {
-    // react to changes in checklistModel, re-assign getItemTemplate when model changes
-    const checkListModelObserver = observe(() => {
-      const checkListModel = this.model.profileCheckListModel;
-      checkListModel.getItemTemplate = getProfileItemTemplate.bind(this);
-      checkListModel.getItemId = item => item.name;
-    });
-
-    // react to selection changes in checklist
-    const selectObserver = observe(() => {
-      const checkListModel = this.model.profileCheckListModel;
-      const checkList = this.shadowRoot.getElementById(checkListId);
-      this.model.sessionDropdownModel.selectedText = MyApp._getSelectedText(checkListModel);
-      // single select: always close up on selecting an item
-      if (singleSelect) checkList.blur();
-    });
-
-    // react to search text changes in dropdown
-    const searchObserver = observe(() => {
-      const regex = new RegExp(this.model.sessionDropdownModel.searchText, 'i');
-      this.model.profileCheckListModel.filter = item => regex.test(item.name);
-    });
-
-    const droppedObserver = observe(() => {
-      if (this.model.sessionDropdownModel.dropped) {
-        const checkList = this.shadowRoot.getElementById(checkListId);
-        // queue this at the end of updates to be rendered correctly
-        checkList.scheduler.add(() => checkList.initView());
-      }
-    });
-
-    return [checkListModelObserver, selectObserver, searchObserver, droppedObserver];
-  }
-
-  async _sessionFromProfileClick(e) {
+  async _openSessionFromProfileClick(e, profile) {
     const spinner = new Spinner(e.currentTarget);
-    await this.model.openSessionFromSelectedProfile(spinner);
+    await this.model.openSessionFromProfile(profile, spinner);
   }
 
-  _editProfileClick() {
-    const configModel = this.model.getConfigModelFromSelectedProfile();
-    if (!configModel) return;
+  _editSessionProfileClick(e, profile) {
+    const configModel = new TraceSessionConfigModel(profile);
 
     const dlg = this.renderRoot.getElementById('dlg-config');
     const cfg = dlg.getElementsByTagName('trace-session-config')[0];
@@ -146,30 +103,33 @@ class MyApp extends LitMvvmElement {
 
   _deleteProfileClick(e, profileName) {
     e.stopPropagation();
-    this.model.deleteProfile(profileName);
+    this.model.deleteProfile(profileName.toLowerCase());
   }
 
-  _getClickSession(e) {
-    const linkElement = e.currentTarget.closest('li');
-    const sessionName = linkElement.dataset.sessionName;
-    return { session: this.model.traceSessions.get(sessionName), sessionName };
-  }
 
-  _sessionClick(e) {
+  _sessionTabClick(e) {
     const linkElement = e.currentTarget.closest('li');
     this.model.activeSessionName = linkElement.dataset.sessionName;
   }
 
-  async _closeSessionClick(e) {
-    const { session, sessionName } = this._getClickSession(e);
+  async _closeSessionClick(e, session) {
     if (!session) return;
 
     const spinner = new Spinner(e.currentTarget);
     await this.model.closeSession(session, spinner);
   }
 
-  _filterSessionClick(e) {
-    const { session, sessionName } = this._getClickSession(e);
+  _showSessionClick(e, session) {
+    if (!session) return;
+    this.model.showSession(session.name);
+  }
+
+  _hideSessionClick(e, session) {
+    if (!session) return;
+    this.model.hideSession(session.name);
+  }
+
+  _filterSessionClick(e, session) {
     if (!session) return;
 
     const dlg = this.renderRoot.getElementById('dlg-filter');
@@ -178,13 +138,13 @@ class MyApp extends LitMvvmElement {
     dlg.showModal();
   }
 
-  _eventsClick(e) {
-    const { session, sessionName } = this._getClickSession(e);
+  _toggleSessionEvents(e, session) {
     if (!session) return;
 
     const spinner = new Spinner(e.currentTarget);
     session.toggleEvents(spinner);
   }
+
 
   _toggleNav() {
     this.renderRoot.getElementById('nav-content').classList.toggle('hidden');
@@ -256,18 +216,49 @@ class MyApp extends LitMvvmElement {
     this._removeDialogHandlers(this.renderRoot.getElementById('dlg-config'));
   }
 
+  // assumes error is problem details object - see https://tools.ietf.org/html/rfc7807
+  defaultHandleError(error) {
+    this.model.handleFetchError(error);
+  }
+
   // called at most once every time after connectedCallback was executed
   firstRendered() {
     super.firstRendered();
     this.appTitle = this.getAttribute('appTitle');
-    this._sessionListObservers = this.connectDropdownSessionlist('sessionProfiles', true);
+
+    //this._sessionListObservers = this.connectDropdownSessionlist('sessionProfiles', true);
     this._addDialogHandlers(this.renderRoot.getElementById('dlg-filter'));
     this._addDialogHandlers(this.renderRoot.getElementById('dlg-config'));
   }
 
-  // assumes error is problem details object - see https://tools.ietf.org/html/rfc7807
-  defaultHandleError(error) {
-    this.model.handleFetchError(error);
+  rendered() {
+    let newHeightStyle = null;
+    if (this.model.showErrors) {
+      newHeightStyle = `${300}px`;
+    } else if (this.model.showLastError) {
+      // Calculate the height of the first row in errors, and resize the errors
+      // container to show just that row, as it contains the most recent error.
+      const topRow = this.renderRoot.querySelector('#error-grid div.kds-row');
+      if (topRow) {
+        let minTop = 0;
+        let maxBottom = 0;
+        // topRow has CSS rule "display: contents", so it has no height of its own
+        for (let indx = 0; indx < topRow.children.length; indx += 1) {
+          const child = topRow.children[indx];
+          const ot = child.offsetTop;
+          const ob = ot + child.offsetHeight;
+          if (ot < minTop) minTop = ot;
+          if (ob > maxBottom) maxBottom = ob;
+        }
+        const topRowHeight = maxBottom - minTop;
+        newHeightStyle = `${topRowHeight}px`;
+      }
+    }
+
+    if (newHeightStyle) {
+      const errContainer = this.renderRoot.getElementById('error-resizable');
+      errContainer.style.height = newHeightStyle;
+    }
   }
 
   static get styles() {
@@ -278,7 +269,27 @@ class MyApp extends LitMvvmElement {
           display: block;
         }
         
+        #container {
+          position: relative;
+          height: 100%;
+          display: grid;
+          grid-template-columns: minmax(2rem, 1fr) 3fr;
+          grid-template-rows: 1fr auto;
+        }
+
+        #sidebar {
+          grid-column: 1;
+          grid-row: 1/2;
+          display: flex;
+          flex-direction: column;
+          flex-wrap: nowrap;
+          justify-content: flex-start;
+          align-items: stretch;
+        }
+
         #main {
+          grid-column: 2;
+          grid-row: 1/2;
           height: 100%;
           position: relative;
           display: flex;
@@ -286,6 +297,11 @@ class MyApp extends LitMvvmElement {
           flex-wrap: nowrap;
           justify-content: flex-start;
           align-items: stretch;
+        }
+
+        footer {
+          grid-column: 1/-1;
+          grid-row: 3;
         }
 
         .brand {
@@ -372,57 +388,91 @@ class MyApp extends LitMvvmElement {
   /* eslint-disable indent, no-else-return */
 
   render() {
+    const traceSessionList = [...this.model.traceSessions.values()];
+
     return html`
       ${sharedStyles}
       <link rel="stylesheet" type="text/css" href=${myappStyleLinks.myapp} />
       <link rel="stylesheet" type="text/css" href="css/spinner.css" />
       <style>
         :host {
-
+          position: relative;
         }
       </style>
 
-      <div id="main">
-        <nav class="flex-grow-0 flex items-center justify-between flex-wrap bg-gray-800 py-2 w-full z-30">
-          <div class="flex items-center flex-shrink-0 text-white mr-6">
-            <a class="text-white no-underline hover:text-white hover:no-underline" href="#">
-              <span class="text-2xl pl-2 brand"><i class="brand"></i>KDS</span>
-            </a>
+      <div id="container">
+
+        <nav id="sidebar" class="items-center justify-between text-gray-500 bg-gray-800 pt-2 pb-3 w-full z-30">
+          <div class=flex>
+            <!-- <div class="pr-2"> -->
+              <button id="nav-toggle" @click=${this._toggleNav}
+                      class="flex items-center px-3 py-2 text-gray-500 border-gray-600 hover:text-white hover:border-white">
+                <i class="fas fa-lg fa-bars"></i>
+                <!-- <svg class="fill-current h-3 w-3" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Menu</title><path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"/></svg> -->
+              </button>
+            <!-- </div> -->
+            <!-- <div class="flex items-center flex-shrink-0 text-white mr-6"> -->
+              <a class="text-white no-underline hover:text-white hover:no-underline" href="#">
+                <span class="text-2xl pl-2 brand"><i class="brand"></i>KDS</span>
+              </a>
+            <!-- </div> -->
           </div>
-
-          <kdsoft-dropdown id="sessionDropDown" class="py-0 text-white" .model=${this.model.sessionDropdownModel}>
-            <kdsoft-checklist id="sessionProfiles" class="text-black leading-normal" .model=${this.model.profileCheckListModel}></kdsoft-checklist>
-          </kdsoft-dropdown>
-          <button class="text-gray-500 px-2 py-1" @click=${this._sessionFromProfileClick}><i class="fas fa-lg fa-wifi"></i></button>
-          <button class="text-gray-500 px-2 py-1" @click=${this._editProfileClick}><i class="fas fa-lg fa-edit"></i></button>
-          <button class="text-gray-500 px-2 py-1" @click=${this._importProfilesClick} title="Import Profiles"><i class="fas fa-lg fa-file-import"></i></button>
-
-          <div class="block lg:hidden ml-auto pr-2">
-            <button id="nav-toggle" @click=${this._toggleNav}
-                    class="flex items-center px-3 py-2 border rounded text-gray-500 border-gray-600 hover:text-white hover:border-white">
-              <i class="fas fa-bars"></i>
-              <!-- <svg class="fill-current h-3 w-3" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Menu</title><path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"/></svg> -->
-            </button>
+          <div class="flex pr-1 text-white bg-gray-500">
+            <label class="pl-3 font-bold text-xl">${i18n.gettext('Profiles')}</label>
+            <input id="import-profiles" type="file" @change=${this._importProfilesSelected} multiple class="hidden"></input>
+            <button class="px-1 py-1 ml-auto" @click=${this._importProfilesClick} title="Import Profiles"><i class="fas fa-lg fa-file-import"></i></button>
           </div>
+          ${this.model.sessionProfiles.map(p => {
+            return html`
+              <div class="flex flex-wrap">
+                <label class="pl-3 font-bold text-xl">${p.name}</label>
+                <div class="ml-auto pr-1">
+                  <button type="button" class="px-1 py-1" @click=${e => this._openSessionFromProfileClick(e, p)}><i class="fas fa-lg fa-wifi"></i></button>
+                  <button type="button" class="px-1 py-1" @click=${e => this._editSessionProfileClick(e, p)}><i class="fas fa-lg fa-edit"></i></button>
+                  <button type="button" class="px-1 py-1" @click=${e => this._deleteProfileClick(e, p.name)}><i class="far fa-lg fa-trash-alt"></i></button>
+                </div>
+              </div>
+            `;
+          })}
+          <div class="flex text-white bg-gray-500">
+            <label class="pl-3 font-bold text-xl">${i18n.gettext('Sessions')}</label>
+          </div>
+          ${traceSessionList.map(ses => {
+            const eventsClasses = ses.eventSession && ses.eventSession.open ? classList.stopBtn : classList.startBtn;
+            return html`
+              <div class="flex flex-wrap">
+                <label class="pl-3 font-bold text-xl">${ses.name}</label>
+                <div class="ml-auto">
+                  <button type="button" class="px-1 py-1" @click=${e => this._showSessionClick(e, ses)}><i class="fas fa-lg fa-eye"></i></button>
+                  <button type="button"  class="px-1 py-1" @click=${this._toggleSessionEvents}><i class=${classMap(eventsClasses)}></i></button>
+                  <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._filterSessionClick(e, ses)}><i class="fas fa-filter"></i></button>
+                  <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._closeSessionClick(e, ses)}><i class="far fa-lg fa-trash-alt"></i></button>
+                </div>
+              </div>
+            `;
+          })}
+          <!-- <kdsoft-checklist id="sessionProfiles" class="text-black leading-normal" .model=${this.model.profileCheckListModel}></kdsoft-checklist> -->
+        </nav>
 
-          <div id="nav-content" class="w-full flex-grow lg:flex lg:items-center lg:w-auto hidden lg:block pt-6 lg:pt-0">
+        <div id="main">
+          <div id="nav-content" class="lg:flex lg:items-center lg:w-auto hidden lg:block pt-6 lg:pt-0 bg-gray-500">
             <ul class="list-reset lg:flex justify-end flex-1 items-center">
-            ${[...this.model.traceSessions.values()].map(ses => {
+            ${this.model.visibleSessions.map(ses => {
               const isActiveTab = this.model.activeSession === ses;
               const tabClasses = isActiveTab ? classList.tabActive : classList.tabInactive;
               const eventsClasses = ses.eventSession && ses.eventSession.open ? classList.stopBtn : classList.startBtn;
 
               return html`
-                <li class="mr-2 pr-1 ${isActiveTab ? 'bg-gray-700' : ''}" data-session-name=${ses.profile.name} @click=${this._sessionClick}>
+                <li class="mr-2 pr-1 ${isActiveTab ? 'bg-gray-700' : ''}" data-session-name=${ses.profile.name.toLowerCase()} @click=${this._sessionTabClick}>
                   <a class=${classMap(tabClasses)} href="#">${ses.profile.name}</a>
                   <div id="tab-buttons" class=${classMap(isActiveTab ? classList.tabButtonsActive : classList.tabButtonsInActive)}>
-                    <button type="button" @click=${this._eventsClick}>
+                    <button type="button" @click=${e => this._toggleSessionEvents(e, ses)}>
                       <i class=${classMap(eventsClasses)}></i>
                     </button>
-                    <button type="button" class="text-gray-500" @click=${this._filterSessionClick}>
+                    <button type="button" class="text-gray-500" @click=${e => this._filterSessionClick(e, ses)}>
                       <i class="fas fa-filter"></i>
                     </button>
-                    <button type="button" class="text-gray-500" @click=${this._closeSessionClick}>
+                    <button type="button" class="text-gray-500" @click=${e => this._hideSessionClick(e, ses)}>
                       <i class="fas fa-lg fa-times"></i>
                     </button>
                   </div>
@@ -432,16 +482,14 @@ class MyApp extends LitMvvmElement {
             )}
             </ul>
           </div>
-        </nav>
 
-        <input id="import-profiles" type="file" @change=${this._importProfilesSelected} multiple class="hidden"></input>
-
-        <!-- Main content -->
-        <div class="flex-grow relative">
-          <trace-session-view .model=${this.model.activeSession}></trace-session-view>
+          <!-- Main content -->
+          <div class="flex-grow relative">
+            <trace-session-view .model=${this.model.activeSession}></trace-session-view>
+          </div>
         </div>
 
-        <footer class="relative">
+        <footer>
           ${(this.model.showLastError || this.model.showErrors)
             ? html`
                 <div id="error-resize" @pointerdown=${this._errSizeDown} @pointerup=${this._errSizeUp}></div>
@@ -475,44 +523,15 @@ class MyApp extends LitMvvmElement {
           </div>
         </footer>
 
-        <dialog id="dlg-config">
-          <trace-session-config class="h-full"></trace-session-config>
-        </dialog>
-        <dialog id="dlg-filter">
-          <filter-form></filter-form>
-        </dialog>
       </div>
+
+      <dialog id="dlg-config">
+        <trace-session-config class="h-full"></trace-session-config>
+      </dialog>
+      <dialog id="dlg-filter">
+        <filter-form></filter-form>
+      </dialog>
     `;
-  }
-
-  rendered() {
-    let newHeightStyle = null;
-    if (this.model.showErrors) {
-      newHeightStyle = `${300}px`;
-    } else if (this.model.showLastError) {
-      // Calculate the height of the first row in errors, and resize the errors
-      // container to show just that row, as it contains the most recent error.
-      const topRow = this.renderRoot.querySelector('#error-grid div.kds-row');
-      if (topRow) {
-        let minTop = 0;
-        let maxBottom = 0;
-        // topRow has CSS rule "display: contents", so it has no height of its own
-        for (let indx = 0; indx < topRow.children.length; indx += 1) {
-          const child = topRow.children[indx];
-          const ot = child.offsetTop;
-          const ob = ot + child.offsetHeight;
-          if (ot < minTop) minTop = ot;
-          if (ob > maxBottom) maxBottom = ob;
-        }
-        const topRowHeight = maxBottom - minTop;
-        newHeightStyle = `${topRowHeight}px`;
-      }
-    }
-
-    if (newHeightStyle) {
-      const errContainer = this.renderRoot.getElementById('error-resizable');
-      errContainer.style.height = newHeightStyle;
-    }
   }
 }
 
