@@ -83,8 +83,7 @@ class KdSoftCheckList extends LitMvvmElement {
       for (const entry of this.model.selectedEntries) {
         entries.append(n, entry.item.value);
       }
-      if (this._internals)
-        this._internals.setFormValue(entries);
+      if (this._internals) this._internals.setFormValue(entries);
     });
   }
 

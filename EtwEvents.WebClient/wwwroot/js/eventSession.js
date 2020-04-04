@@ -27,9 +27,9 @@ class EventSession {
       this.ws = null;
       this._openCount -= 1;
       if (e.code > NormalClosureCode) {
-        if (e.code == 1006)  // not of interest to user
+        if (e.code === 1006) { // not of interest to user
           console.log(e);
-        else {
+        } else {
           const error = { title: e.reason || 'websocket error', statusCode: e.code };
           this._handleError(error);
         }
@@ -40,7 +40,7 @@ class EventSession {
       this._openCount += 1;
     };
 
-    this.ws.onerror = (errorEvent) => {
+    this.ws.onerror = errorEvent => {
       let error;
       if (errorEvent && errorEvent instanceof Error) {
         error = { title: errorEvent.message || 'WebSocket error' };
@@ -54,7 +54,7 @@ class EventSession {
       this._handleError(error);
     };
 
-    this.ws.onmessage = (ev) => {
+    this.ws.onmessage = ev => {
       let logEvent;
       try {
         logEvent = JSON.parse(ev.data);
