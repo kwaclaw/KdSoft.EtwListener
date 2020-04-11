@@ -8,11 +8,13 @@ namespace EtwEvents.WebClient
     class TraceSessionEntry: ILifeCycleAware<ITimedLifeCycle>
     {
         readonly TimedLifeCycle _lifeCycle;
+        readonly Func<ValueTask> _onDisposed;
 
-        public TraceSessionEntry(Task<TraceSession> createTask, TimeSpan lifeTime) {
+        public TraceSessionEntry(Task<TraceSession> createTask, TimeSpan lifeTime, Func<ValueTask> onDisposed) {
             this.SessionTask = createTask;
             _lifeCycle = new TimedLifeCycle(lifeTime);
             _lifeCycle.Ended += _lifeCycle_Ended;
+            _onDisposed = onDisposed;
         }
 
         void _lifeCycle_Ended(object? sender, EventArgs e) {
@@ -22,6 +24,9 @@ namespace EtwEvents.WebClient
                 }
                 catch (Exception ex) {
                     //_logger.LogError(new EventId(0, "session-dispose"), ex, "");
+                }
+                finally {
+                    await _onDisposed().ConfigureAwait(false);
                 }
             }, CancellationToken.None, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Current);
         }

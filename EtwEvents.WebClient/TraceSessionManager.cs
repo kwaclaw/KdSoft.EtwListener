@@ -68,7 +68,7 @@ namespace EtwEvents.WebClient
                     PostSessionStateChange().AsTask().ContinueWith(pst => {
                         var ex = pst.Exception;
                         sessionLogger.LogError(ex, "Error in PostSessionStateChange");
-                    }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Current);  //TODO deadlock here
+                    }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Current);
                     return ct.Result.traceSession;
                 }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
 
@@ -80,7 +80,7 @@ namespace EtwEvents.WebClient
                     return openSessionState;
                 }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
 
-                return new TraceSessionEntry(checkedTask, lifeTime.ToTimeSpan());
+                return new TraceSessionEntry(checkedTask, lifeTime.ToTimeSpan(), PostSessionStateChange);
             });
 
             if (result != null)
