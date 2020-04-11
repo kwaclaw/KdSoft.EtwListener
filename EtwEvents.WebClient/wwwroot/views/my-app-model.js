@@ -1,4 +1,4 @@
-import { observable } from '../lib/@nx-js/observer-util.js';
+import { observable, observe, unobserve } from '../lib/@nx-js/observer-util.js';
 // import KdSoftCheckListModel from './kdsoft-checklist-model.js';
 import TraceSession from '../js/traceSession.js';
 import TraceSessionProfile from '../js/traceSessionProfile.js';
@@ -29,6 +29,7 @@ class MyAppModel {
   constructor() {
     this._traceSessions = observable(new Map());
     this._visibleSessionNames = observable(new Set());
+    this._visibleSessionsObserver = null;
     this.activeSessionName = null;
 
     this.sessionProfiles = loadSessionProfiles();
@@ -69,12 +70,52 @@ class MyAppModel {
     return result;
   }
 
-  showSession(sessionName) {
-    this._visibleSessionNames.add(sessionName.toLowerCase());
+  observeVisibleSessions() {
+    this._visibleSessionsObserver = observe(() => {
+      const traceSessionList = [...this.traceSessions.values()];
+      const visibleSessions = new Set();
+      traceSessionList.forEach(ts => {
+        if (ts.eventSession) {
+          visibleSessions.add(ts.name.toLowerCase());
+        }
+      });
+
+      // find they key that was inserted before (or after) the current key
+      if (visibleSessions.has(this._activeSessionNameCandidate)) {
+        this.activeSessionName = this._activeSessionNameCandidate;
+      } else if (!visibleSessions.has(this.activeSessionName)) {
+        const prevKey = utils.closest(this._visibleSessionNames, this._activeSessionNameCandidate || this.activeSessionName);
+        if (visibleSessions.has(prevKey)) {
+          this.activeSessionName = prevKey;
+        } else {
+          this.activeSessionName = visibleSessions.values().next().value;
+        }
+      }
+
+      this._visibleSessionNames = visibleSessions;
+    });
   }
 
-  hideSession(sessionName) {
-    this._visibleSessionNames.delete(sessionName.toLowerCase());
+  unobserveVisibleSessions() {
+    if (this._visibleSessionsObserver) {
+      unobserve(this._visibleSessionsObserver);
+      this._visibleSessionsObserver = null;
+    }
+  }
+
+  watchSession(session) {
+    // _visibleSessionsObserver will be called multiple times, we want to preserver this value across these events
+    this._activeSessionNameCandidate = session.name.toLowerCase();
+    session.observeEvents();
+  }
+
+  unwatchSession(session) {
+    session.unobserveEvents();
+  }
+
+  activateSession(sessionName) {
+    this._activeSessionNameCandidate = null;
+    this.activeSessionName = sessionName.toLowerCase();
   }
 
   _updateTraceSessions(sessionStates) {
@@ -131,8 +172,6 @@ class MyAppModel {
     const success = await newSession.openSession(progress);
     if (!success) return;
 
-    this.activeSessionName = sessionName;
-
     const filter = newSession.profile.activeFilter;
     if (filter) {
       const result = await newSession.applyFilter(filter, progress);
@@ -145,16 +184,8 @@ class MyAppModel {
     }
   }
 
-  async closeSession(session, progress) {
-    const sessionName = session.name.toLowerCase();
-    // find they key that was inserted before (or after) the current key
-    const prevKey = utils.closest(this.traceSessions.keys(), sessionName);
-
-    try {
-      await session.closeRemoteSession(progress);
-    } finally {
-      this.activeSessionName = prevKey;
-    }
+  closeSession(session, progress) {
+    session.closeRemoteSession(progress);
   }
 
   saveProfile(profileModel) {

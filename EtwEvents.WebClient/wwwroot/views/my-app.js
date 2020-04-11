@@ -75,6 +75,8 @@ class MyApp extends LitMvvmElement {
     this._formDoneHandler = formDoneHandler.bind(this);
     this._formSaveHandler = formSaveHandler.bind(this);
 
+    this._watchedSessionsObserver = null;
+
     window.myapp = this;
   }
 
@@ -109,7 +111,7 @@ class MyApp extends LitMvvmElement {
 
   _sessionTabClick(e) {
     const linkElement = e.currentTarget.closest('li');
-    this.model.activeSessionName = linkElement.dataset.sessionName;
+    this.model.activateSession(linkElement.dataset.sessionName);
   }
 
   async _closeSessionClick(e, session) {
@@ -119,14 +121,14 @@ class MyApp extends LitMvvmElement {
     await this.model.closeSession(session, spinner);
   }
 
-  _showSessionClick(e, session) {
+  _watchSessionClick(e, session) {
     if (!session) return;
-    this.model.showSession(session.name);
+    this.model.watchSession(session);
   }
 
-  _hideSessionClick(e, session) {
+  _unwatchSessionClick(e, session) {
     if (!session) return;
-    this.model.hideSession(session.name);
+    this.model.unwatchSession(session);
   }
 
   _filterSessionClick(e, session) {
@@ -140,9 +142,13 @@ class MyApp extends LitMvvmElement {
 
   _toggleSessionEvents(e, session) {
     if (!session) return;
-
     const spinner = new Spinner(e.currentTarget);
     session.toggleEvents(spinner);
+  }
+
+  _observeSessionEvents(e, session) {
+    if (!session) return;
+    session.observeEvents();
   }
 
 
@@ -211,7 +217,9 @@ class MyApp extends LitMvvmElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    this._sessionListObservers.forEach(o => unobserve(o));
+
+    this.model.unobserveVisibleSessions();
+
     this._removeDialogHandlers(this.renderRoot.getElementById('dlg-filter'));
     this._removeDialogHandlers(this.renderRoot.getElementById('dlg-config'));
   }
@@ -226,7 +234,8 @@ class MyApp extends LitMvvmElement {
     super.firstRendered();
     this.appTitle = this.getAttribute('appTitle');
 
-    //this._sessionListObservers = this.connectDropdownSessionlist('sessionProfiles', true);
+    this.model.observeVisibleSessions();
+
     this._addDialogHandlers(this.renderRoot.getElementById('dlg-filter'));
     this._addDialogHandlers(this.renderRoot.getElementById('dlg-config'));
   }
@@ -443,14 +452,14 @@ class MyApp extends LitMvvmElement {
           </div>
           <div>
           ${traceSessionList.map(ses => {
-            const eventsClasses = ses.eventSession && ses.eventSession.open ? classList.stopBtn : classList.startBtn;
+            const eventsClasses = ses.state.isRunning ? classList.stopBtn : classList.startBtn;
             return html`
               <kdsoft-tree-node>
                 <div slot="content" class="flex flex-wrap">
                   <label class="font-bold text-xl">${ses.name}</label>
                   <div class="ml-auto">
-                    <button type="button" class="px-1 py-1" @click=${e => this._showSessionClick(e, ses)}><i class="fas fa-lg fa-eye"></i></button>
-                    <button type="button"  class="px-1 py-1" @click=${this._toggleSessionEvents}><i class=${classMap(eventsClasses)}></i></button>
+                    <button type="button" class="px-1 py-1" @click=${e => this._watchSessionClick(e, ses)}><i class="fas fa-lg fa-eye"></i></button>
+                    <button type="button"  class="px-1 py-1" @click=${e => this._toggleSessionEvents(e, ses)}><i class=${classMap(eventsClasses)}></i></button>
                     <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._filterSessionClick(e, ses)}><i class="fas fa-filter"></i></button>
                     <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._closeSessionClick(e, ses)}><i class="far fa-lg fa-trash-alt"></i></button>
                   </div>
@@ -480,11 +489,11 @@ class MyApp extends LitMvvmElement {
             ${this.model.visibleSessions.map(ses => {
               const isActiveTab = this.model.activeSession === ses;
               const tabClasses = isActiveTab ? classList.tabActive : classList.tabInactive;
-              const eventsClasses = ses.eventSession && ses.eventSession.open ? classList.stopBtn : classList.startBtn;
+              const eventsClasses = ses.state.isRunning ? classList.stopBtn : classList.startBtn;
 
               return html`
-                <li class="mr-2 pr-1 ${isActiveTab ? 'bg-gray-700' : ''}" data-session-name=${ses.profile.name.toLowerCase()} @click=${this._sessionTabClick}>
-                  <a class=${classMap(tabClasses)} href="#">${ses.profile.name}</a>
+                <li class="mr-2 pr-1 ${isActiveTab ? 'bg-gray-700' : ''}" data-session-name=${ses.name.toLowerCase()} @click=${this._sessionTabClick}>
+                  <a class=${classMap(tabClasses)} href="#">${ses.name}</a>
                   <div id="tab-buttons" class=${classMap(isActiveTab ? classList.tabButtonsActive : classList.tabButtonsInActive)}>
                     <button type="button" @click=${e => this._toggleSessionEvents(e, ses)}>
                       <i class=${classMap(eventsClasses)}></i>
@@ -492,7 +501,7 @@ class MyApp extends LitMvvmElement {
                     <button type="button" class="text-gray-500" @click=${e => this._filterSessionClick(e, ses)}>
                       <i class="fas fa-filter"></i>
                     </button>
-                    <button type="button" class="text-gray-500" @click=${e => this._hideSessionClick(e, ses)}>
+                    <button type="button" class="text-gray-500" @click=${e => this._unwatchSessionClick(e, ses)}>
                       <i class="fas fa-lg fa-times"></i>
                     </button>
                   </div>
@@ -510,31 +519,31 @@ class MyApp extends LitMvvmElement {
         </div>
 
         <footer>
-          ${(this.model.showLastError || this.model.showErrors)
-            ? html`
-                <div id="error-resize" @pointerdown=${this._errSizeDown} @pointerup=${this._errSizeUp}></div>
-                <div id="error-resizable">
-                  <div id="error-grid" class="kds-container px-2 pt-0 pb-2" @pointerdown=${this._errorGridDown}>
-                  <button id="error-close" class="p-1 text-gray-500" @click=${this._closeError}>
-                    <span aria-hidden="true" class="fas fa-lg fa-times"></span>
-                  </button>
-                  ${repeat(
-                    this.model.fetchErrors.reverseItemIterator(),
-                    item => item.sequenceNo,
-                    (item, indx) => {
-                      return html`
-                        <div class="kds-row">
-                        <div>${item.timeStamp}</div>
-                        <div>${item.title}</div>
-                        <pre @click=${this._errorDetailClick}>${item.detail}</pre>
-                        </div>
-                      `;
-                    }
-                  )}
-                  </div>
+          ${(!this.model.showLastError && !this.model.showErrors)
+            ? nothing
+            : html`
+              <div id="error-resize" @pointerdown=${this._errSizeDown} @pointerup=${this._errSizeUp}></div>
+              <div id="error-resizable">
+                <div id="error-grid" class="kds-container px-2 pt-0 pb-2" @pointerdown=${this._errorGridDown}>
+                <button id="error-close" class="p-1 text-gray-500" @click=${this._closeError}>
+                  <span aria-hidden="true" class="fas fa-lg fa-times"></span>
+                </button>
+                ${repeat(
+                  this.model.fetchErrors.reverseItemIterator(),
+                  item => item.sequenceNo,
+                  (item, indx) => {
+                    return html`
+                      <div class="kds-row">
+                      <div>${item.timeStamp}</div>
+                      <div>${item.title}</div>
+                      <pre @click=${this._errorDetailClick}>${item.detail}</pre>
+                      </div>
+                    `;
+                  }
+                )}
                 </div>
-              `
-            : nothing
+              </div>
+            `
           }
           <div class="flex p-2 border bg-gray-800 text-white">&copy; Karl Waclawek
             <button class="ml-auto" @click=${this._showErrors}>

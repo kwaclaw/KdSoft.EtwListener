@@ -47,25 +47,47 @@ class TraceSession {
   }
 
   async toggleEvents(progress) {
-    let evs = this._eventSession;
-    if (evs) {
+    if (this.state.isRunning) {
       try {
         await this.fetcher.withProgress(progress).post('StopEvents', { sessionName: this._profile.name });
       } catch (error) {
         window.myapp.defaultHandleError(error);
       }
     } else {
-      // scroll bug in Chrome - will not show more than about 1000 items, works fine with FireFox
-      evs = new EventSession(
-        `wss://${window.location.host}/Etw/StartEvents?sessionName=${this.profile.name}&sinkNames=`,
-        900,
-        error => window.myapp.defaultHandleError(error)
-      );
-      evs.connect();
-      observe(() => {
-        if (evs.Open) this._eventSession = evs;
-        else this._eventSession = null;
-      });
+      try {
+        await this.fetcher.withProgress(progress).get('StartEvents', { sessionName: this._profile.name });
+      } catch (error) {
+        window.myapp.defaultHandleError(error);
+      }
+    }
+  }
+
+  observeEvents() {
+    let evs = this._eventSession;
+    if (evs && evs.open) return;
+
+    if (evs) {
+      evs.disconnect();
+    }
+
+    // scroll bug in Chrome - will not show more than about 1000 items, works fine with FireFox
+    evs = new EventSession(
+      `wss://${window.location.host}/Etw/ObserveEvents?sessionName=${this.profile.name}`,
+      900,
+      error => window.myapp.defaultHandleError(error)
+    );
+    evs.connect();
+    observe(() => {
+      if (evs.open) this._eventSession = evs;
+      else this._eventSession = null;
+    });
+  }
+
+  unobserveEvents() {
+    const evs = this._eventSession;
+    if (evs) {
+      evs.disconnect();
+      this._eventSession = null;
     }
   }
 
