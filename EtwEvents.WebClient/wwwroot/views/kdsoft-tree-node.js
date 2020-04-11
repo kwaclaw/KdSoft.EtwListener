@@ -1,16 +1,35 @@
 import { html } from '../lib/lit-html.js';
 import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
-import { classMap } from '../lib/lit-html/directives/class-map.js';
 import { css } from '../styles/css-tag.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 
-const expanderBase = { fas: true, 'fa-lg': true, 'text-blue-500': true };
+function toggleExpansion(element, doExpand) {
+  // get the height of the element's inner content, regardless of its actual size
+  const height = element.scrollHeight;
+  const style = element.style;
 
-const classList = {
-  expanderUp: { ...expanderBase, 'fa-caret-right': true },
-  expanderDown: { ...expanderBase, 'fa-caret-down': true },
-};
+  style.height = doExpand ? '0px' : `${height}px`;
+
+  // on the next frame (as soon as the previous style change has taken effect), explicitly set
+  // the element's height to its current pixel height, so we aren't transitioning out of 'auto'
+  requestAnimationFrame(() => {
+    style.transition = 'height var(--trans-time, 300ms) ease';
+
+    element.addEventListener('transitionend', function resetHeight() {
+      element.removeEventListener('transitionend', resetHeight);
+      style.height = null;
+      style.transition = null;
+    });
+
+    // on the next frame (as soon as the previous style change has taken effect),
+    // have the element transition to its content height
+    requestAnimationFrame(() => {
+      style.height = doExpand ? `${height}px` : '0px';
+    });
+  });
+}
+
 
 class KdSoftTreeNode extends LitMvvmElement {
   constructor() {
@@ -18,14 +37,14 @@ class KdSoftTreeNode extends LitMvvmElement {
     this.scheduler = new Queue(priorities.HIGH);
   }
 
-  get expanded() { return this.hasAttribute('expanded'); }
-  set expanded(val) {
-    if (val) this.setAttribute('expanded', ''); else this.removeAttribute('expanded');
+  get ariaExpanded() { return this.hasAttribute('aria-expanded'); }
+  set ariaExpanded(val) {
+    if (val) this.setAttribute('aria-expanded', ''); else this.removeAttribute('aria-expanded');
   }
 
   // Observed attributes will trigger an attributeChangedCallback, which in turn will cause a re-render to be scheduled!
   static get observedAttributes() {
-    return [...super.observedAttributes, 'expanded'];
+    return [...super.observedAttributes, 'aria-expanded'];
   }
 
   static get styles() {
@@ -33,41 +52,53 @@ class KdSoftTreeNode extends LitMvvmElement {
       css`
         #container {
           display: grid;
-          grid-template-columns: 30px 1fr;
-          grid-template-rows: auto;
+          grid-template-columns: max-content minmax(0, 1fr);
+          padding: var(--content-padding, 5px);
         }
+
         #container.droppable {
           outline: 2px solid darkgray;
         }
 
-        .expander {
-          grid-area: 1/1/1/1;
-          height: 30px;
+        #expander {
           display: flex;
           justify-content: center;
           align-items: center;
           cursor: pointer;
+          width: var(--left-padding, 2em);
         }
-        .leftbar {
-          grid-area: 2/1/-1/1;
+
+        #expander:focus {
+          outline: none;
         }
-        .node-content {
-          padding: var(--content-padding, 5px);
+
+        #expander i {
+          transition: transform var(--trans-time, 300ms) ease;
         }
-        slot[name="content"] {
-          grid-area: 1/2/1/3;
+
+        :host([aria-expanded]) #expander i {
+          transform: rotate(90deg);
         }
-        slot[name="children"] {
-          grid-area: 2/2/2/3;
+
+        #children-slot {
+          overflow: hidden;
+          height: 0;
         }
-        .children {
-          display: contents;
-        }
-        .children-hidden {
-          display: none;
+
+        :host([aria-expanded]) #children-slot {
+          height: unset;
         }
       `,
     ];
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === 'aria-expanded') {
+      const children = this.renderRoot.getElementById('children-slot');
+      if (!children) return;
+
+      toggleExpansion(children, newValue !== null);
+    }
   }
 
   connectedCallback() {
@@ -102,7 +133,7 @@ class KdSoftTreeNode extends LitMvvmElement {
   }
 
   _expanderClicked(e) {
-    this.expanded = !this.expanded;
+    this.ariaExpanded = !this.ariaExpanded;
   }
 
   _dragStart(e) {
@@ -163,8 +194,6 @@ class KdSoftTreeNode extends LitMvvmElement {
   /* eslint-disable indent, no-else-return */
 
   render() {
-    const expanderClasses = this.expanded ? classList.expanderDown : classList.expanderUp;
-    const childrenClass = this.expanded ? 'children' : 'children-hidden';
     const result = html`
       ${sharedStyles}
       <style>
@@ -173,14 +202,14 @@ class KdSoftTreeNode extends LitMvvmElement {
         }
       </style>
       <div id="container" class="border">
-        <div id="expander" class="expander" tabindex="1" @click=${this._expanderClicked}>
-          <i class=${classMap(expanderClasses)}></i>
+        <div id="expander" tabindex="1" @click=${this._expanderClicked}>
+          <i part="expander-icon" class="fas fa-lg fa-caret-right text-blue"></i>
         </div>
-        <div class="node-content">
+        <div id="content-slot">
           <slot name="content" tabindex="2">No node content provided.</slot>
         </div>
-        <div class=${childrenClass}>
-          <div class="leftbar"></div>
+        <div id="leftbar"></div>
+        <div id="children-slot">
           <slot name="children" tabindex="3">No children provided.</slot>
         </div>
       </div>
