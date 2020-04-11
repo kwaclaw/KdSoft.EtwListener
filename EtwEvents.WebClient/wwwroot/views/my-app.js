@@ -441,20 +441,36 @@ class MyApp extends LitMvvmElement {
           <div class="flex text-white bg-gray-500">
             <label class="pl-3 font-bold text-xl">${i18n.gettext('Sessions')}</label>
           </div>
+          <div>
           ${traceSessionList.map(ses => {
             const eventsClasses = ses.eventSession && ses.eventSession.open ? classList.stopBtn : classList.startBtn;
             return html`
-              <div class="flex flex-wrap">
-                <label class="pl-3 font-bold text-xl">${ses.name}</label>
-                <div class="ml-auto">
-                  <button type="button" class="px-1 py-1" @click=${e => this._showSessionClick(e, ses)}><i class="fas fa-lg fa-eye"></i></button>
-                  <button type="button"  class="px-1 py-1" @click=${this._toggleSessionEvents}><i class=${classMap(eventsClasses)}></i></button>
-                  <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._filterSessionClick(e, ses)}><i class="fas fa-filter"></i></button>
-                  <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._closeSessionClick(e, ses)}><i class="far fa-lg fa-trash-alt"></i></button>
+              <kdsoft-tree-node>
+                <div slot="content" class="flex flex-wrap">
+                  <label class="font-bold text-xl">${ses.name}</label>
+                  <div class="ml-auto">
+                    <button type="button" class="px-1 py-1" @click=${e => this._showSessionClick(e, ses)}><i class="fas fa-lg fa-eye"></i></button>
+                    <button type="button"  class="px-1 py-1" @click=${this._toggleSessionEvents}><i class=${classMap(eventsClasses)}></i></button>
+                    <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._filterSessionClick(e, ses)}><i class="fas fa-filter"></i></button>
+                    <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._closeSessionClick(e, ses)}><i class="far fa-lg fa-trash-alt"></i></button>
+                  </div>
                 </div>
-              </div>
+                <div slot="children">
+                  <p class="font-bold">Providers</p>
+                  ${ses.state.enabledProviders.map(ep => html`
+                    <kdsoft-tree-node>
+                      <div slot="content" class="truncate">${ep.name}</div>
+                      <div slot="children" style="display:grid;grid-gap:0 1em;grid-template-columns:max-content auto;justify-items: start">
+                        <div>Level</div><div>${ep.level}</div>
+                        <div>Keywords</div><div>${ep.matchKeywords}</div>
+                      </div>
+                    </kdsoft-tree-node>
+                  `)}
+                </div>
+              </kdsoft-tree-node>
             `;
           })}
+          </div>
           <!-- <kdsoft-checklist id="sessionProfiles" class="text-black leading-normal" .model=${this.model.profileCheckListModel}></kdsoft-checklist> -->
         </nav>
 
