@@ -14,7 +14,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@kdsoft/lit-mvvm": "^0.9.94",
+    "@kdsoft/lit-mvvm": "^0.9.961",
     "@nx-js/observer-util": "^4.2.2",
     "@nx-js/queue-util": "^1.1.1",
     "gettext.js": "^0.9.0",
@@ -28,7 +28,7 @@
   "devDependencies": {
     "@babel/cli": "^7.8.4",
     "@babel/core": "^7.9.0",
-    "@babel/preset-env": "^7.9.0",
+    "@babel/preset-env": "^7.9.5",
     "@tailwindcss/custom-forms": "^0.2.1",
     "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^14.1.0",

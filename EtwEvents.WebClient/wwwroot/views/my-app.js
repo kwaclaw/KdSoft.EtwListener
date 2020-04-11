@@ -387,6 +387,10 @@ class MyApp extends LitMvvmElement {
 
   /* eslint-disable indent, no-else-return */
 
+  shouldRender() {
+    return !!this.model;
+  }
+
   render() {
     const traceSessionList = [...this.model.traceSessions.values()];
 

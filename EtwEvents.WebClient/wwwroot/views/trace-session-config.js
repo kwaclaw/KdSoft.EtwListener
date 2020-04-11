@@ -225,6 +225,10 @@ class TraceSessionConfig extends LitMvvmElement {
 
   /* eslint-disable indent, no-else-return */
 
+  shouldRender() {
+    return !!this.model;
+  }
+
   render() {
     // we don't have a "beforeFirstRender" event, so we set the item template function here
     if (!this._firstRendered) {

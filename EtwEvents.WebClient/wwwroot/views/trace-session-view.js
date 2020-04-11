@@ -88,6 +88,10 @@ class TraceSessionView extends LitMvvmElement {
 
   /* eslint-disable indent, no-else-return */
 
+  shouldRender() {
+    return !!this.model;
+  }
+
   render() {
     const ts = this.model;
 

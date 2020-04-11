@@ -68,6 +68,10 @@ class FilterForm extends LitMvvmElement {
     ];
   }
 
+  shouldRender() {
+    return !!this.model;
+  }
+
   render() {
     const result = html`
       ${sharedStyles}

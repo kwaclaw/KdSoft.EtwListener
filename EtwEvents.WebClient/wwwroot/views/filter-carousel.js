@@ -110,6 +110,10 @@ class FilterCarousel extends LitMvvmElement {
 
   /* eslint-disable indent, no-else-return */
 
+  shouldRender() {
+    return !!this.model;
+  }
+
   render() {
     const activeFilterIndex = this.model.activeFilterIndex;
     const result = html`
