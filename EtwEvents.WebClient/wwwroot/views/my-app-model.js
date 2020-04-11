@@ -1,4 +1,4 @@
-import { observable, observe, unobserve } from '../lib/@nx-js/observer-util.js';
+import { observable, observe, unobserve, raw } from '../lib/@nx-js/observer-util.js';
 // import KdSoftCheckListModel from './kdsoft-checklist-model.js';
 import TraceSession from '../js/traceSession.js';
 import TraceSessionProfile from '../js/traceSessionProfile.js';
@@ -72,6 +72,7 @@ class MyAppModel {
 
   observeVisibleSessions() {
     this._visibleSessionsObserver = observe(() => {
+      const activeSessionName = raw(this).activeSessionName;
       const traceSessionList = [...this.traceSessions.values()];
       const visibleSessions = new Set();
       traceSessionList.forEach(ts => {
@@ -81,10 +82,8 @@ class MyAppModel {
       });
 
       // find they key that was inserted before (or after) the current key
-      if (visibleSessions.has(this._activeSessionNameCandidate)) {
-        this.activeSessionName = this._activeSessionNameCandidate;
-      } else if (!visibleSessions.has(this.activeSessionName)) {
-        const prevKey = utils.closest(this._visibleSessionNames, this._activeSessionNameCandidate || this.activeSessionName);
+      if (!visibleSessions.has(activeSessionName)) {
+        const prevKey = utils.closest(this._visibleSessionNames, activeSessionName);
         if (visibleSessions.has(prevKey)) {
           this.activeSessionName = prevKey;
         } else {
@@ -104,9 +103,11 @@ class MyAppModel {
   }
 
   watchSession(session) {
-    // _visibleSessionsObserver will be called multiple times, we want to preserver this value across these events
-    this._activeSessionNameCandidate = session.name.toLowerCase();
-    session.observeEvents();
+    // _visibleSessionsObserver will be called multiple times, we want to preserve this value across these events
+    const sessionName = session.name.toLowerCase();
+    session.observeEvents(() => {
+      this.activeSessionName = sessionName;
+    });
   }
 
   unwatchSession(session) {
@@ -114,7 +115,6 @@ class MyAppModel {
   }
 
   activateSession(sessionName) {
-    this._activeSessionNameCandidate = null;
     this.activeSessionName = sessionName.toLowerCase();
   }
 

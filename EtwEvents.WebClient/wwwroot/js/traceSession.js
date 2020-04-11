@@ -62,9 +62,12 @@ class TraceSession {
     }
   }
 
-  observeEvents() {
+  observeEvents(callback) {
     let evs = this._eventSession;
-    if (evs && evs.open) return;
+    if (evs && evs.open) {
+      callback(evs);
+      return;
+    }
 
     if (evs) {
       evs.disconnect();
@@ -78,8 +81,13 @@ class TraceSession {
     );
     evs.connect();
     observe(() => {
-      if (evs.open) this._eventSession = evs;
-      else this._eventSession = null;
+      if (evs.open) {
+        this._eventSession = evs;
+        callback(evs);
+      } else {
+        this._eventSession = null;
+        callback(null);
+      }
     });
   }
 
