@@ -72,6 +72,7 @@ class MyAppModel {
 
   observeVisibleSessions() {
     this._visibleSessionsObserver = observe(() => {
+      // we don't want changes to this.activeSessionName trigger a call to this observer
       const activeSessionName = raw(this).activeSessionName;
       const traceSessionList = [...this.traceSessions.values()];
       const visibleSessions = new Set();
@@ -105,8 +106,8 @@ class MyAppModel {
   watchSession(session) {
     // _visibleSessionsObserver will be called multiple times, we want to preserve this value across these events
     const sessionName = session.name.toLowerCase();
-    session.observeEvents(() => {
-      this.activeSessionName = sessionName;
+    session.observeEvents(eventSession => {
+      if (eventSession) this.activeSessionName = sessionName;
     });
   }
 
