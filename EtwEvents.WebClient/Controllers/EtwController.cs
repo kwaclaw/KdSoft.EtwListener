@@ -193,6 +193,8 @@ namespace EtwEvents.WebClient
                         traceSession.EventSinks.AddEventSink(webSocketSink);
                         await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
                         await traceSession.EventStream.ConfigureAwait(false);
+                        // need a change notification also when the event stream ends
+                        await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
                     }
                     // OkResult not right here, tries to set status code which is not good in this scenario
                     return new EmptyResult();
