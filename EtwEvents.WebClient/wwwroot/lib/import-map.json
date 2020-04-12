@@ -3,6 +3,7 @@
     "@kdsoft/lit-mvvm": "./@kdsoft/lit-mvvm.js",
     "@nx-js/observer-util": "./@nx-js/observer-util.js",
     "@nx-js/queue-util": "./@nx-js/queue-util.js",
+    "dialog-polyfill": "./dialog-polyfill.js",
     "gettext.js": "./gettext.js",
     "lit-html": "./lit-html.js",
     "lit-html/directives/class-map.js": "./lit-html/directives/class-map.js",

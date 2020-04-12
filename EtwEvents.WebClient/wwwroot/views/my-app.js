@@ -7,6 +7,7 @@ import { observe, unobserve } from '../lib/@nx-js/observer-util.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
 import { css, unsafeCSS } from '../styles/css-tag.js';
+import dialogPolyfill from '../lib/dialog-polyfill.js';
 import FilterFormModel from './filter-form-model.js';
 import './kdsoft-checklist.js';
 import './kdsoft-dropdown.js';
@@ -17,8 +18,10 @@ import './filter-form.js';
 import TraceSessionConfigModel from './trace-session-config-model.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import { KdSoftGridStyle } from '../styles/kdsoft-grid-style.js';
+import styleLinks from '../styles/kdsoft-style-links.js';
 import myappStyleLinks from '../styles/my-app-style-links.js';
 import Spinner from '../js/spinner.js';
+import * as utils from '../js/utils.js';
 
 const runBtnBase = { fas: true };
 const tabBase = { 'inline-block': true, 'py-2': true, 'no-underline': true };
@@ -236,8 +239,16 @@ class MyApp extends LitMvvmElement {
 
     this.model.observeVisibleSessions();
 
-    this._addDialogHandlers(this.renderRoot.getElementById('dlg-filter'));
-    this._addDialogHandlers(this.renderRoot.getElementById('dlg-config'));
+    const filterDlg = this.renderRoot.getElementById('dlg-filter');
+    const configDlg = this.renderRoot.getElementById('dlg-config');
+
+    if (!utils.html5DialogSupported) {
+      dialogPolyfill.registerDialog(filterDlg);
+      dialogPolyfill.registerDialog(configDlg);
+    }
+
+    this._addDialogHandlers(filterDlg);
+    this._addDialogHandlers(configDlg);
   }
 
   rendered() {
@@ -402,9 +413,22 @@ class MyApp extends LitMvvmElement {
 
   render() {
     const traceSessionList = [...this.model.traceSessions.values()];
+    const dialogStyle = utils.html5DialogSupported
+      ? nothing
+      : html`
+        <link rel="stylesheet" type="text/css" href=${styleLinks.dialog} />
+        <style>
+          dialog {
+            position: fixed!important;
+            top: 50%;
+            transform: translate(0, -50%);
+          }
+        </style>
+      `;
 
     return html`
       ${sharedStyles}
+      ${dialogStyle}
       <link rel="stylesheet" type="text/css" href=${myappStyleLinks.myapp} />
       <link rel="stylesheet" type="text/css" href="css/spinner.css" />
       <style>

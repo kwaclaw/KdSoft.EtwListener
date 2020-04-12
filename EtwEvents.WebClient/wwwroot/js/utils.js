@@ -185,3 +185,5 @@ export function objectToFormData(obj) {
 
   return formData;
 }
+
+export const html5DialogSupported = typeof HTMLDialogElement === 'function';
