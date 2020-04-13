@@ -1,5 +1,4 @@
 import { observable, observe, unobserve, raw } from '../lib/@nx-js/observer-util.js';
-// import KdSoftCheckListModel from './kdsoft-checklist-model.js';
 import TraceSession from '../js/traceSession.js';
 import TraceSessionProfile from '../js/traceSessionProfile.js';
 import * as utils from '../js/utils.js';
@@ -76,6 +75,7 @@ class MyAppModel {
       const activeSessionName = raw(this).activeSessionName;
       const traceSessionList = [...this.traceSessions.values()];
       const visibleSessions = new Set();
+
       traceSessionList.forEach(ts => {
         if (ts.eventSession) {
           visibleSessions.add(ts.name.toLowerCase());
@@ -104,7 +104,8 @@ class MyAppModel {
   }
 
   watchSession(session) {
-    // _visibleSessionsObserver will be called multiple times, we want to preserve this value across these events
+    // _visibleSessionsObserver will be called multiple times, we want to use the same session name
+    // for the callback across these calls to _visibleSessionsObserver
     const sessionName = session.name.toLowerCase();
     session.observeEvents(eventSession => {
       if (eventSession) this.activeSessionName = sessionName;

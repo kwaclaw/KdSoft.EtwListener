@@ -3,25 +3,17 @@
 import { html, nothing } from '../lib/lit-html.js';
 import { repeat } from '../lib/lit-html/directives/repeat.js';
 import { classMap } from '../lib/lit-html/directives/class-map.js';
-import { observe, unobserve } from '../lib/@nx-js/observer-util.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
 import { css, unsafeCSS } from '../styles/css-tag.js';
-import dialogPolyfill from '../lib/dialog-polyfill.js';
-import FilterFormModel from './filter-form-model.js';
-import './kdsoft-checklist.js';
-import './kdsoft-dropdown.js';
-import './kdsoft-tree-node.js';
+import './my-app-side-bar.js';
 import './trace-session-view.js';
-import './trace-session-config.js';
 import './filter-form.js';
-import TraceSessionConfigModel from './trace-session-config-model.js';
+import FilterFormModel from './filter-form-model.js';
+import Spinner from '../js/spinner.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import { KdSoftGridStyle } from '../styles/kdsoft-grid-style.js';
-import styleLinks from '../styles/kdsoft-style-links.js';
 import myappStyleLinks from '../styles/my-app-style-links.js';
-import Spinner from '../js/spinner.js';
-import * as utils from '../js/utils.js';
 
 const runBtnBase = { fas: true };
 const tabBase = { 'inline-block': true, 'py-2': true, 'no-underline': true };
@@ -35,38 +27,8 @@ const classList = {
   tabButtonsInActive: { hidden: true }
 };
 
-function formDoneHandler(e) {
-  if (!e.detail.canceled) {
-    if (e.target.localName === 'filter-form') {
-      this.model.saveProfile(e.detail.model.session.profile);
-    } else if (e.target.localName === 'trace-session-config') {
-      this.model.saveProfile(e.detail.model.cloneAsProfile());
-    }
-  }
-
-  const dlg = e.currentTarget;
-  dlg.close();
-}
-
-function formSaveHandler(e) {
-  if (e.target.localName === 'filter-form') {
-    this.model.saveProfile(e.detail.model.session.profile);
-  } else if (e.target.localName === 'trace-session-config') {
-    this.model.saveProfile(e.detail.model.cloneAsProfile());
-  }
-}
-
 
 class MyApp extends LitMvvmElement {
-  static _getSelectedText(clm) {
-    let result = null;
-    for (const selEntry of clm.selectedEntries) {
-      if (result) result += `, ${selEntry.item.name}`;
-      else result = selEntry.item.name;
-    }
-    return result;
-  }
-
   constructor() {
     super();
     // setting model property here because we cannot reliable set it from a non-lit-html rendered HTML page
@@ -74,62 +36,19 @@ class MyApp extends LitMvvmElement {
     // we must assign the model *after* the scheduler, or assign it externally
     // this.model = new MyAppModel(); --
 
-    // this allows us to unregister the event handlers, because we maintain references to their instances
-    this._formDoneHandler = formDoneHandler.bind(this);
-    this._formSaveHandler = formSaveHandler.bind(this);
-
-    this._watchedSessionsObserver = null;
-
     window.myapp = this;
   }
 
-  async _openSessionFromProfileClick(e, profile) {
-    const spinner = new Spinner(e.currentTarget);
-    await this.model.openSessionFromProfile(profile, spinner);
-  }
-
-  _editSessionProfileClick(e, profile) {
-    const configModel = new TraceSessionConfigModel(profile);
-
-    const dlg = this.renderRoot.getElementById('dlg-config');
-    const cfg = dlg.getElementsByTagName('trace-session-config')[0];
-    cfg.model = configModel;
-    dlg.showModal();
-  }
-
-  _importProfilesClick(e) {
-    const fileDlg = this.renderRoot.getElementById('import-profiles');
-    fileDlg.click();
-  }
-
-  _importProfilesSelected(e) {
-    this.model.importProfiles(e.currentTarget.files);
-  }
-
-  _deleteProfileClick(e, profileName) {
-    e.stopPropagation();
-    this.model.deleteProfile(profileName.toLowerCase());
-  }
-
+  //#region trace-session
 
   _sessionTabClick(e) {
     const linkElement = e.currentTarget.closest('li');
     this.model.activateSession(linkElement.dataset.sessionName);
   }
 
-  async _closeSessionClick(e, session) {
-    if (!session) return;
-
-    const spinner = new Spinner(e.currentTarget);
-    await this.model.closeSession(session, spinner);
-  }
-
-  _watchSessionClick(e, session) {
-    if (!session) return;
-    this.model.watchSession(session);
-  }
-
   _unwatchSessionClick(e, session) {
+    e.preventDefault();
+    e.stopPropagation();
     if (!session) return;
     this.model.unwatchSession(session);
   }
@@ -149,25 +68,9 @@ class MyApp extends LitMvvmElement {
     session.toggleEvents(spinner);
   }
 
-  _observeSessionEvents(e, session) {
-    if (!session) return;
-    session.observeEvents();
-  }
+  //#endregion
 
-
-  _toggleNav() {
-    this.renderRoot.getElementById('nav-content').classList.toggle('hidden');
-  }
-
-  _addDialogHandlers(dlg) {
-    dlg.addEventListener('kdsoft-done', this._formDoneHandler);
-    dlg.addEventListener('kdsoft-save', this._formSaveHandler);
-  }
-
-  _removeDialogHandlers(dlg) {
-    dlg.removeEventListener('kdsoft-done', this._formDoneHandler);
-    dlg.removeEventListener('kdsoft-save', this._formSaveHandler);
-  }
+  //#region error handling
 
   _showErrors() {
     this.model.showErrors = true;
@@ -214,41 +117,29 @@ class MyApp extends LitMvvmElement {
     this.model.showLastError = false;
   }
 
+  // assumes error is problem details object - see https://tools.ietf.org/html/rfc7807
+  defaultHandleError(error) {
+    this.model.handleFetchError(error);
+  }
+
+  //#endregion
+
+  //#region overrides
+
   connectedCallback() {
     super.connectedCallback();
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
-
     this.model.unobserveVisibleSessions();
-
-    this._removeDialogHandlers(this.renderRoot.getElementById('dlg-filter'));
-    this._removeDialogHandlers(this.renderRoot.getElementById('dlg-config'));
-  }
-
-  // assumes error is problem details object - see https://tools.ietf.org/html/rfc7807
-  defaultHandleError(error) {
-    this.model.handleFetchError(error);
   }
 
   // called at most once every time after connectedCallback was executed
   firstRendered() {
     super.firstRendered();
     this.appTitle = this.getAttribute('appTitle');
-
     this.model.observeVisibleSessions();
-
-    const filterDlg = this.renderRoot.getElementById('dlg-filter');
-    const configDlg = this.renderRoot.getElementById('dlg-config');
-
-    if (!utils.html5DialogSupported) {
-      dialogPolyfill.registerDialog(filterDlg);
-      dialogPolyfill.registerDialog(configDlg);
-    }
-
-    this._addDialogHandlers(filterDlg);
-    this._addDialogHandlers(configDlg);
   }
 
   rendered() {
@@ -300,11 +191,6 @@ class MyApp extends LitMvvmElement {
         #sidebar {
           grid-column: 1;
           grid-row: 1/2;
-          display: flex;
-          flex-direction: column;
-          flex-wrap: nowrap;
-          justify-content: flex-start;
-          align-items: stretch;
         }
 
         #main {
@@ -331,18 +217,6 @@ class MyApp extends LitMvvmElement {
         #tab-buttons button {
           padding-left: 0.25rem;
           padding-right: 0.25rem;
-        }
-
-        #dlg-config {
-          width: 800px;
-          min-height: 400px;
-          height: 500px;
-          max-height: 600px;
-          position: relative;
-        }
-
-        #dlg-filter {
-          width: 80ch;
         }
 
         #error-resize {
@@ -393,14 +267,6 @@ class MyApp extends LitMvvmElement {
           overflow: scroll;
           white-space: pre;
         }
-
-        #sessionDropDown {
-          width: 250px;
-        }
-
-        #sessionProfiles {
-          width: 275px;
-        }
       `
     ];
   }
@@ -412,23 +278,8 @@ class MyApp extends LitMvvmElement {
   }
 
   render() {
-    const traceSessionList = [...this.model.traceSessions.values()];
-    const dialogStyle = utils.html5DialogSupported
-      ? nothing
-      : html`
-        <link rel="stylesheet" type="text/css" href=${styleLinks.dialog} />
-        <style>
-          dialog {
-            position: fixed!important;
-            top: 50%;
-            transform: translate(0, -50%);
-          }
-        </style>
-      `;
-
     return html`
       ${sharedStyles}
-      ${dialogStyle}
       <link rel="stylesheet" type="text/css" href=${myappStyleLinks.myapp} />
       <link rel="stylesheet" type="text/css" href="css/spinner.css" />
       <style>
@@ -439,73 +290,7 @@ class MyApp extends LitMvvmElement {
 
       <div id="container">
 
-        <nav id="sidebar" class="items-center justify-between text-gray-500 bg-gray-800 pt-2 pb-3 w-full z-30">
-          <div class=flex>
-            <!-- <div class="pr-2"> -->
-              <button id="nav-toggle" @click=${this._toggleNav}
-                      class="flex items-center px-3 py-2 text-gray-500 border-gray-600 hover:text-white hover:border-white">
-                <i class="fas fa-lg fa-bars"></i>
-                <!-- <svg class="fill-current h-3 w-3" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Menu</title><path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"/></svg> -->
-              </button>
-            <!-- </div> -->
-            <!-- <div class="flex items-center flex-shrink-0 text-white mr-6"> -->
-              <a class="text-white no-underline hover:text-white hover:no-underline" href="#">
-                <span class="text-2xl pl-2 brand"><i class="brand"></i>KDS</span>
-              </a>
-            <!-- </div> -->
-          </div>
-          <div class="flex pr-1 text-white bg-gray-500">
-            <label class="pl-3 font-bold text-xl">${i18n.gettext('Profiles')}</label>
-            <input id="import-profiles" type="file" @change=${this._importProfilesSelected} multiple class="hidden"></input>
-            <button class="px-1 py-1 ml-auto" @click=${this._importProfilesClick} title="Import Profiles"><i class="fas fa-lg fa-file-import"></i></button>
-          </div>
-          ${this.model.sessionProfiles.map(p => {
-            return html`
-              <div class="flex flex-wrap">
-                <label class="pl-3 font-bold text-xl">${p.name}</label>
-                <div class="ml-auto pr-1">
-                  <button type="button" class="px-1 py-1" @click=${e => this._openSessionFromProfileClick(e, p)}><i class="fas fa-lg fa-wifi"></i></button>
-                  <button type="button" class="px-1 py-1" @click=${e => this._editSessionProfileClick(e, p)}><i class="fas fa-lg fa-edit"></i></button>
-                  <button type="button" class="px-1 py-1" @click=${e => this._deleteProfileClick(e, p.name)}><i class="far fa-lg fa-trash-alt"></i></button>
-                </div>
-              </div>
-            `;
-          })}
-          <div class="flex text-white bg-gray-500">
-            <label class="pl-3 font-bold text-xl">${i18n.gettext('Sessions')}</label>
-          </div>
-          <div>
-          ${traceSessionList.map(ses => {
-            const eventsClasses = ses.state.isRunning ? classList.stopBtn : classList.startBtn;
-            return html`
-              <kdsoft-tree-node>
-                <div slot="content" class="flex flex-wrap">
-                  <label class="font-bold text-xl">${ses.name}</label>
-                  <div class="ml-auto">
-                    <button type="button" class="px-1 py-1" @click=${e => this._watchSessionClick(e, ses)}><i class="fas fa-lg fa-eye"></i></button>
-                    <button type="button"  class="px-1 py-1" @click=${e => this._toggleSessionEvents(e, ses)}><i class=${classMap(eventsClasses)}></i></button>
-                    <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._filterSessionClick(e, ses)}><i class="fas fa-filter"></i></button>
-                    <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._closeSessionClick(e, ses)}><i class="far fa-lg fa-trash-alt"></i></button>
-                  </div>
-                </div>
-                <div slot="children">
-                  <p class="font-bold">Providers</p>
-                  ${ses.state.enabledProviders.map(ep => html`
-                    <kdsoft-tree-node>
-                      <div slot="content" class="truncate">${ep.name}</div>
-                      <div slot="children" style="display:grid;grid-gap:0 1em;grid-template-columns:max-content auto;justify-items: start">
-                        <div>Level</div><div>${ep.level}</div>
-                        <div>Keywords</div><div>${ep.matchKeywords}</div>
-                      </div>
-                    </kdsoft-tree-node>
-                  `)}
-                </div>
-              </kdsoft-tree-node>
-            `;
-          })}
-          </div>
-          <!-- <kdsoft-checklist id="sessionProfiles" class="text-black leading-normal" .model=${this.model.profileCheckListModel}></kdsoft-checklist> -->
-        </nav>
+        <my-app-side-bar id="sidebar" .model=${this.model}></my-app-side-bar>
 
         <div id="main">
           <div id="nav-content" class="lg:flex lg:items-center lg:w-auto hidden lg:block pt-6 lg:pt-0 bg-gray-500">
@@ -577,15 +362,10 @@ class MyApp extends LitMvvmElement {
         </footer>
 
       </div>
-
-      <dialog id="dlg-config">
-        <trace-session-config class="h-full"></trace-session-config>
-      </dialog>
-      <dialog id="dlg-filter">
-        <filter-form></filter-form>
-      </dialog>
     `;
   }
+
+  //#endregion
 }
 
 window.customElements.define('my-app', MyApp);
