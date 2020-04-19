@@ -55,7 +55,7 @@ namespace EtwEvents.WebClient.Models
                 aes => new EventSinkState { SinkType = aes.Value.GetType().Name, Name = aes.Key }
             ).ToImmutableArray();
             var eventSinks = activeEventSinks.AddRange(session.EventSinks.FailedEventSinks.Select(
-                fes => new EventSinkState { SinkType = fes.Value.GetType().Name, Name = fes.Key, Error = fes.Value.error?.Message }
+                fes => new EventSinkState { SinkType = fes.Value.sink.GetType().Name, Name = fes.Key, Error = fes.Value.error?.Message }
             ));
             result.EventSinks = eventSinks;
             return result;

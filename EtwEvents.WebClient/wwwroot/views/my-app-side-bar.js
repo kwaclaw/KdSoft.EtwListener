@@ -236,7 +236,6 @@ class MyAppSideBar extends LitMvvmElement {
           min-height: 400px;
           height: 500px;
           max-height: 600px;
-          position: relative;
         }
 
         #dlg-filter {
@@ -245,6 +244,13 @@ class MyAppSideBar extends LitMvvmElement {
 
         #sessionProfiles {
           width: 275px;
+        }
+
+        kdsoft-tree-node.session-details [slot="children"] {
+          display: grid;
+          grid-gap: 0 1em;
+          grid-template-columns :max-content auto;
+          justify-items: start;
         }
       `
     ];
@@ -262,13 +268,6 @@ class MyAppSideBar extends LitMvvmElement {
       ? nothing
       : html`
         <link rel="stylesheet" type="text/css" href=${styleLinks.dialog} />
-        <style>
-          dialog {
-            position: fixed!important;
-            top: 50%;
-            transform: translate(0, -50%);
-          }
-        </style>
       `;
 
     return html`
@@ -334,11 +333,20 @@ class MyAppSideBar extends LitMvvmElement {
               <div slot="children">
                 <p class="font-bold">Providers</p>
                 ${ses.state.enabledProviders.map(ep => html`
-                  <kdsoft-tree-node>
+                  <kdsoft-tree-node class="session-details">
                     <div slot="content" class="truncate">${ep.name}</div>
-                    <div slot="children" style="display:grid;grid-gap:0 1em;grid-template-columns:max-content auto;justify-items: start">
+                    <div slot="children">
                       <div>Level</div><div>${ep.level}</div>
                       <div>Keywords</div><div>${ep.matchKeywords}</div>
+                    </div>
+                  </kdsoft-tree-node>
+                `)}
+                <p class="font-bold mt-3">Event Sinks</p>
+                ${ses.state.eventSinks.map(ev => html`
+                  <kdsoft-tree-node  class="session-details">
+                    <div slot="content" class="truncate">${ev.sinkType}: ${ev.name}</div>
+                    <div slot="children">
+                      <div>Name</div><div>${ev.name}</div>
                     </div>
                   </kdsoft-tree-node>
                 `)}
@@ -349,10 +357,10 @@ class MyAppSideBar extends LitMvvmElement {
         </div>
       </nav>
 
-      <dialog id="dlg-config">
+      <dialog id="dlg-config" class="${utils.html5DialogSupported ? '' : 'fixed'}">
         <trace-session-config class="h-full"></trace-session-config>
       </dialog>
-      <dialog id="dlg-filter">
+      <dialog id="dlg-filter" class="${utils.html5DialogSupported ? '' : 'fixed'}">
         <filter-form></filter-form>
       </dialog>
     `;
