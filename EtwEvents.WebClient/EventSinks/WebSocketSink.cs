@@ -136,8 +136,6 @@ namespace EtwEvents.WebClient.EventSinks
                     await _webSocket.CloseAsync(status, "Close", default(CancellationToken)).ConfigureAwait(false);
                 else
                     await _webSocket.CloseOutputAsync(status, "ACK Close", default(CancellationToken)).ConfigureAwait(false);
-
-                await this._receiveTask.ConfigureAwait(false);
             }
             catch (OperationCanceledException) {
                 // typically ignored in this scenario
