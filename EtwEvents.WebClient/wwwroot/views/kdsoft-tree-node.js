@@ -83,6 +83,7 @@ class KdSoftTreeNode extends LitMvvmElement {
         #children-slot {
           overflow: hidden;
           height: 0;
+          border-color: darkgray;
         }
 
         :host([aria-expanded]) #children-slot {
@@ -201,7 +202,7 @@ class KdSoftTreeNode extends LitMvvmElement {
           display: block;
         }
       </style>
-      <div id="container" class="border">
+      <div id="container">
         <div id="expander" tabindex="1" @click=${this._expanderClicked}>
           <i part="expander-icon" class="fas fa-lg fa-caret-right text-blue"></i>
         </div>
@@ -209,7 +210,7 @@ class KdSoftTreeNode extends LitMvvmElement {
           <slot name="content" tabindex="2">No node content provided.</slot>
         </div>
         <div id="leftbar"></div>
-        <div id="children-slot">
+        <div id="children-slot" class="border-l-2 pl-2">
           <slot name="children" tabindex="3">No children provided.</slot>
         </div>
       </div>
