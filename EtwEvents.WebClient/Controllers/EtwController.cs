@@ -97,7 +97,7 @@ namespace EtwEvents.WebClient
 
         public const int SessionNotFoundWebSocketStatus = 4901;
 
-        IEventSink CreateEventSink(EventSinkRequest request) {
+        IEventSink CreateEventSink(EventSinkRequest request, EventSinkHolder holder) {
             IEventSink result;
             switch (request.SinkType) {
                 case nameof(DummySink):
@@ -106,20 +106,29 @@ namespace EtwEvents.WebClient
                     break;
 
             }
-            ConfigureEventSinkClosure(result);
+            AddEventSink(result, holder);
             return result;
         }
 
-        Task ConfigureEventSinkClosure(IEventSink sink) {
+        void AddEventSink(IEventSink sink, EventSinkHolder holder) {
+            holder.AddEventSink(sink);
+            ConfigureEventSinkClosure(sink, holder);
+        }
+
+        Task ConfigureEventSinkClosure(IEventSink sink, EventSinkHolder holder) {
             return sink.RunTask.ContinueWith(async rt => {
                 try {
                     if (!rt.Result) { // was not disposed
                         await sink.DisposeAsync().ConfigureAwait(false);
-                        await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
                     }
+                    holder.RemoveEventSink(sink);
+                    await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
                 }
                 catch (Exception ex) {
                     //_logger.LogError(ex);
+                }
+                finally {
+
                 }
             }, TaskScheduler.Default);
         }
@@ -131,17 +140,16 @@ namespace EtwEvents.WebClient
                 // If this is a WebSocket request we add a WebSocket sink
                 if (HttpContext.WebSockets.IsWebSocketRequest) {
                     var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
-                    // the WebSocketSink has a life-cycle tied to the EventSession, while other sinks can be added and removed dynamically
+                    // this WebSocketSink has a life-cycle tied to the EventSession, while other sinks can be added and removed dynamically
                     var webSocketName = Guid.NewGuid().ToString();
                     var webSocketSink = new WebSocketSink(webSocketName, webSocket, CancellationToken.None);
                     try {
-                        traceSession.EventSinks.AddEventSink(webSocketSink);
+                        AddEventSink(webSocketSink, traceSession.EventSinks);
                         var eventSessionTask = traceSession.StartEvents(_optionsMonitor);
                         await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
                         var eventSession = await eventSessionTask.ConfigureAwait(false);
                     }
                     finally {
-                        await webSocketSink.DisposeAsync().ConfigureAwait(false);
                         await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
                     }
 
@@ -190,11 +198,15 @@ namespace EtwEvents.WebClient
                     // the WebSocketSink has a life-cycle tied to the EventSession, while other sinks can be added and removed dynamically
                     var webSocketName = Guid.NewGuid().ToString();
                     await using (var webSocketSink = new WebSocketSink(webSocketName, webSocket, CancellationToken.None)) {
-                        traceSession.EventSinks.AddEventSink(webSocketSink);
+                        AddEventSink(webSocketSink, traceSession.EventSinks);
                         await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
-                        await traceSession.EventStream.ConfigureAwait(false);
-                        // need a change notification also when the event stream ends
-                        await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
+                        try {
+                            await traceSession.EventStream.ConfigureAwait(false);
+                        }
+                        finally {
+                            // need a change notification also when the event stream ends
+                            await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
+                        }
                     }
                     // OkResult not right here, tries to set status code which is not good in this scenario
                     return new EmptyResult();
@@ -220,7 +232,7 @@ namespace EtwEvents.WebClient
         public async Task<IActionResult> OpenEventSinks(string sessionName, IEnumerable<EventSinkRequest> sinkRequests) {
             if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
                 var traceSession = await sessionEntry.SessionTask.ConfigureAwait(false);
-                var sinkList = sinkRequests.Select(sr => CreateEventSink(sr));
+                var sinkList = sinkRequests.Select(sr => CreateEventSink(sr, traceSession.EventSinks));
                 traceSession.EventSinks.AddEventSinks(sinkList);
                 await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
                 return Ok();
