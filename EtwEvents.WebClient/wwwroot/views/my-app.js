@@ -9,7 +9,6 @@ import { css } from '../styles/css-tag.js';
 import './my-app-side-bar.js';
 import './trace-session-view.js';
 import './filter-form.js';
-import FilterFormModel from './filter-form-model.js';
 import Spinner from '../js/spinner.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import { KdSoftGridStyle } from '../styles/kdsoft-grid-style.js';
@@ -55,11 +54,8 @@ class MyApp extends LitMvvmElement {
 
   _filterSessionClick(e, session) {
     if (!session) return;
-
-    const dlg = this.renderRoot.getElementById('dlg-filter');
-    const cfg = dlg.getElementsByTagName('filter-form')[0];
-    cfg.model = new FilterFormModel(session);
-    dlg.showModal();
+    const sidebar = this.renderRoot.getElementById('sidebar');
+    sidebar.showFilterDlg(session);
   }
 
   _toggleSessionEvents(e, session) {

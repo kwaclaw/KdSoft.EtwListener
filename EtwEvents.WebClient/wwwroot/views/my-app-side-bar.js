@@ -60,6 +60,13 @@ class MyAppSideBar extends LitMvvmElement {
     this._formSaveHandler = formSaveHandler.bind(this);
   }
 
+  showFilterDlg(session) {
+    const dlg = this.renderRoot.getElementById('dlg-filter');
+    const cfg = dlg.getElementsByTagName('filter-form')[0];
+    cfg.model = new FilterFormModel(session);
+    dlg.showModal();
+  }
+
   _toggleNav() {
     this.renderRoot.getElementById('nav-content').classList.toggle('hidden');
   }
@@ -117,11 +124,7 @@ class MyAppSideBar extends LitMvvmElement {
 
   _filterSessionClick(e, session) {
     if (!session) return;
-
-    const dlg = this.renderRoot.getElementById('dlg-filter');
-    const cfg = dlg.getElementsByTagName('filter-form')[0];
-    cfg.model = new FilterFormModel(session);
-    dlg.showModal();
+    this.showFilterDlg(session);
   }
 
   _toggleSessionEvents(e, session) {
