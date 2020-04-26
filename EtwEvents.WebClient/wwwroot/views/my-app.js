@@ -5,7 +5,7 @@ import { repeat } from '../lib/lit-html/directives/repeat.js';
 import { classMap } from '../lib/lit-html/directives/class-map.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
-import { css, unsafeCSS } from '../styles/css-tag.js';
+import { css } from '../styles/css-tag.js';
 import './my-app-side-bar.js';
 import './trace-session-view.js';
 import './filter-form.js';
@@ -95,7 +95,6 @@ class MyApp extends LitMvvmElement {
 
     const newHeightStyle = `${h - dy}px`;
     this._resizeEl.style.height = newHeightStyle;
-    console.log(h, dy, e.y, h-dy);
   }
 
   _errSizeUp(e) {
@@ -340,16 +339,14 @@ class MyApp extends LitMvvmElement {
                 ${repeat(
                   this.model.fetchErrors.reverseItemIterator(),
                   item => item.sequenceNo,
-                  (item, indx) => {
-                    return html`
+                  item => html`
                       <div class="kds-row">
                       <div>${item.timeStamp}</div>
                       <div>${item.title}</div>
                       <pre @click=${this._errorDetailClick}>${item.detail}</pre>
                       </div>
-                    `;
+                    `)
                   }
-                )}
                 </div>
               </div>
             `

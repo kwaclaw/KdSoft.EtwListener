@@ -4,7 +4,7 @@ import { html, nothing } from '../lib/lit-html.js';
 import { classMap } from '../lib/lit-html/directives/class-map.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
-import { css, unsafeCSS } from '../styles/css-tag.js';
+import { css } from '../styles/css-tag.js';
 import dialogPolyfill from '../lib/dialog-polyfill.js';
 import FilterFormModel from './filter-form-model.js';
 import './kdsoft-tree-node.js';
@@ -75,7 +75,7 @@ class MyAppSideBar extends LitMvvmElement {
     dlg.showModal();
   }
 
-  _importProfilesClick(e) {
+  _importProfilesClick() {
     const fileDlg = this.renderRoot.getElementById('import-profiles');
     fileDlg.click();
   }
@@ -301,8 +301,7 @@ class MyAppSideBar extends LitMvvmElement {
           <input id="import-profiles" type="file" @change=${this._importProfilesSelected} multiple class="hidden"></input>
           <button class="px-1 py-1 ml-auto" @click=${this._importProfilesClick} title="Import Profiles"><i class="fas fa-lg fa-file-import"></i></button>
         </div>
-        ${this.model.sessionProfiles.map(p => {
-          return html`
+        ${this.model.sessionProfiles.map(p => html`
             <div class="flex flex-wrap">
               <label class="pl-3 font-bold text-xl">${p.name}</label>
               <div class="ml-auto pr-1">
@@ -311,8 +310,8 @@ class MyAppSideBar extends LitMvvmElement {
                 <button type="button" class="px-1 py-1" @click=${e => this._deleteProfileClick(e, p.name)}><i class="far fa-lg fa-trash-alt"></i></button>
               </div>
             </div>
-          `;
-        })}
+          `)
+        }
         <div class="flex text-white bg-gray-500">
           <label class="pl-3 font-bold text-xl">${i18n.gettext('Sessions')}</label>
         </div>

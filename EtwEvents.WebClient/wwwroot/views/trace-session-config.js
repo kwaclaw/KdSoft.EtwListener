@@ -10,7 +10,6 @@ import * as utils from '../js/utils.js';
 import EventProvider from '../js/eventProvider.js';
 import './provider-config.js';
 import './filter-edit.js';
-import './kdsoft-checklist.js';
 import TraceSessionProfile from '../js/traceSessionProfile.js';
 
 const tabBase = {
@@ -67,7 +66,7 @@ class TraceSessionConfig extends LitMvvmElement {
     //
   }
 
-  _cancel(e) {
+  _cancel() {
     const evt = new CustomEvent('kdsoft-done', {
       // composed allows bubbling beyond shadow root
       bubbles: true, composed: true, cancelable: true, detail: { model: this.model, canceled: true }
@@ -75,7 +74,7 @@ class TraceSessionConfig extends LitMvvmElement {
     this.dispatchEvent(evt);
   }
 
-  _apply(e) {
+  _apply() {
     const valid = this.renderRoot.querySelector('form').reportValidity();
     if (!valid) return;
 
@@ -86,7 +85,7 @@ class TraceSessionConfig extends LitMvvmElement {
     this.dispatchEvent(evt);
   }
 
-  _exportProfile(e) {
+  _exportProfile() {
     this.model.exportProfile();
   }
 
@@ -95,7 +94,7 @@ class TraceSessionConfig extends LitMvvmElement {
     this.model[e.target.name] = e.target.value;
   }
 
-  _addProviderClick(e) {
+  _addProviderClick() {
     const newProvider = new EventProvider('<New Provider>', 0);
     this.model.providers.splice(0, 0, newProvider);
     this.model.providers.forEach(p => {
@@ -110,7 +109,7 @@ class TraceSessionConfig extends LitMvvmElement {
     if (index >= 0) this.model.providers.splice(index, 1);
   }
 
-  _providerBeforeExpand(e) {
+  _providerBeforeExpand() {
     this.model.providers.forEach(p => {
       p.expanded = false;
     });
@@ -131,7 +130,7 @@ class TraceSessionConfig extends LitMvvmElement {
     return this.model.activeSection === tabId ? 'active' : '';
   }
 
-  _addPayloadColumnClick(e) {
+  _addPayloadColumnClick() {
     const r = this.renderRoot;
     const nameInput = r.getElementById('payload-field');
     const labelInput = r.getElementById('payload-label');
@@ -285,7 +284,7 @@ class TraceSessionConfig extends LitMvvmElement {
             `)}
           </section>
           <section id="filters" class="${this._sectionActive('filters')}">
-            <filter-carousel class="h-full" .model=${this.model.filterCarousel}></filter-edit>
+            <filter-carousel class="h-full" .model=${this.model.filterCarousel}></filter-carousel>
           </section>
           <section id="columns" class="${this._sectionActive('columns')} h-full flex items-stretch">
             <div id="standard-cols-wrapper" class="mr-4">

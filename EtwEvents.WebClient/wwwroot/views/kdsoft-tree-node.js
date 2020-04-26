@@ -133,7 +133,7 @@ class KdSoftTreeNode extends LitMvvmElement {
     //
   }
 
-  _expanderClicked(e) {
+  _expanderClicked() {
     this.ariaExpanded = !this.ariaExpanded;
   }
 

@@ -220,7 +220,6 @@ class FilterEdit extends LitMvvmElement {
           display: inline-block;
           margin-left: auto;
           border: 1px solid LightGray;
-          spell-check: false;
           color: initial;
           padding: 3px;
           line-height: 1.5rem !important;
@@ -275,9 +274,8 @@ namespace EtwEvents.Server
   {
     public bool IncludeEvent(TraceEvent evt) {
       ${html`<div id="code"
-        contenteditable
+        contenteditable="true"
         @blur=${this._change}
-        rows="10"
         spellcheck="false"
         title=${codeToolTip}
         placeholder="Your code goes here"></div>`}

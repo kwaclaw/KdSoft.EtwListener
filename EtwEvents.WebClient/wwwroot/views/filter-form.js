@@ -12,7 +12,7 @@ class FilterForm extends LitMvvmElement {
     this.scheduler = new Queue(priorities.HIGH);
   }
 
-  _cancel(e) {
+  _cancel() {
     const evt = new CustomEvent('kdsoft-done', {
       // composed allows bubbling beyond shadow root
       bubbles: true, composed: true, cancelable: true, detail: { canceled: true, model: this.model }
@@ -37,7 +37,7 @@ class FilterForm extends LitMvvmElement {
     this.model.testActiveFilter(spinner);
   }
 
-  _save(e) {
+  _save() {
     this.model.postFormData();
     const evt = new CustomEvent('kdsoft-save', {
       // composed allows bubbling beyond shadow root
