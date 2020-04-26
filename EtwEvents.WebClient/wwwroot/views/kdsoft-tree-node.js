@@ -106,7 +106,6 @@ class KdSoftTreeNode extends LitMvvmElement {
     super.connectedCallback();
 
     const h = this.shadowRoot.host;
-    h.setAttribute('draggable', true);
     h.addEventListener('dragstart', this._dragStart);
     h.addEventListener('dragenter', this._dragEnter);
     h.addEventListener('dragover', this._dragOver);
