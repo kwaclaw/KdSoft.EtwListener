@@ -333,22 +333,22 @@ class MyAppSideBar extends LitMvvmElement {
                 </div>
               </div>
               <div slot="children">
-                <p class="font-bold">Providers</p>
+                <p class="font-bold">Event Sinks</p>
+                ${ses.state.eventSinks.map(ev => html`
+                  <kdsoft-tree-node class="session-details">
+                    <div slot="content" class="truncate">${ev.sinkType}: ${ev.name}</div>
+                    <div slot="children">
+                      <div>Name</div><div>${ev.name}</div>
+                    </div>
+                  </kdsoft-tree-node>
+                `)}
+                <p class="font-bold mt-3">Providers</p>
                 ${ses.state.enabledProviders.map(ep => html`
                   <kdsoft-tree-node class="session-details">
                     <div slot="content" class="truncate">${ep.name}</div>
                     <div slot="children">
                       <div>Level</div><div>${ep.level}</div>
                       <div>Keywords</div><div>${ep.matchKeywords}</div>
-                    </div>
-                  </kdsoft-tree-node>
-                `)}
-                <p class="font-bold mt-3">Event Sinks</p>
-                ${ses.state.eventSinks.map(ev => html`
-                  <kdsoft-tree-node  class="session-details">
-                    <div slot="content" class="truncate">${ev.sinkType}: ${ev.name}</div>
-                    <div slot="children">
-                      <div>Name</div><div>${ev.name}</div>
                     </div>
                   </kdsoft-tree-node>
                 `)}
