@@ -1,6 +1,6 @@
-﻿using EtwEvents.WebClient.EventSinks;
+﻿using KdSoft.EtwEvents.WebClient.EventSinks;
 
-namespace EtwEvents.WebClient.Models
+namespace KdSoft.EtwEvents.WebClient.Models
 {
     public class EventSinkRequest
     {

@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 
-namespace EtwEvents.WebClient
+namespace KdSoft.EtwEvents.WebClient
 {
     public class ErrorController: Controller {
         readonly IStringLocalizer<ErrorController> _;
@@ -13,7 +13,6 @@ namespace EtwEvents.WebClient
         public ErrorController(IStringLocalizer<ErrorController> localizer) {
             this._ = localizer;
         }
-
 
         [Route("/error-local-development")]
         public IActionResult ErrorLocalDevelopment([FromServices] IWebHostEnvironment webHostEnvironment) {

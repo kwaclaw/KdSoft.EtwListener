@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Security.Claims;
 
-namespace EtwEvents.WebClient
+namespace KdSoft.EtwEvents.WebClient
 {
     public class AuthService
     {

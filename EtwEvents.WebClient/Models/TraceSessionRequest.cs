@@ -3,7 +3,7 @@ using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations;
 using KdSoft.EtwLogging;
 
-namespace EtwEvents.WebClient.Models
+namespace KdSoft.EtwEvents.WebClient.Models
 {
     public class TraceSessionRequest
     {

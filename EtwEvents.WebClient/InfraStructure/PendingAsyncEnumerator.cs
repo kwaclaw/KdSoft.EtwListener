@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace EtwEvents.WebClient
+namespace KdSoft.EtwEvents
 {
     public abstract class PendingAsyncEnumerator<T>: IAsyncEnumerator<T> where T: notnull
     {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace EtwEvents.WebClient.Models
+namespace KdSoft.EtwEvents.WebClient.Models
 {
     public class EventSessionOptions
     {

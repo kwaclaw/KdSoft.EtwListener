@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using KdSoft.EtwLogging;
 
-namespace EtwEvents.WebClient
+namespace KdSoft.EtwEvents.WebClient
 {
     public interface IEventSink: IAsyncDisposable, IDisposable, IEquatable<IEventSink>
     {

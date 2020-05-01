@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using KdSoft.Utils;
 
-namespace EtwEvents.WebClient
+namespace KdSoft.EtwEvents.WebClient
 {
     class TraceSessionEntry: ILifeCycleAware<ITimedLifeCycle>
     {

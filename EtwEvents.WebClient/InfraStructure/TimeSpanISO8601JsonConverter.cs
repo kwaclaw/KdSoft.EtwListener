@@ -3,7 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Xml;
 
-namespace EtwEvents.WebClient
+namespace KdSoft.EtwEvents
 {
     /// <summary>
     /// The new Json.NET doesn't support Timespan at this time

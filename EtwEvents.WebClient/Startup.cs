@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
-using EtwEvents.WebClient.Models;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -16,7 +15,7 @@ using Microsoft.Extensions.Localization;
 
 #pragma warning disable CA1822 // Mark members as static
 
-namespace EtwEvents.WebClient
+namespace KdSoft.EtwEvents.WebClient
 {
     public class Startup
     {
@@ -71,8 +70,8 @@ namespace EtwEvents.WebClient
                 options.CheckConsentNeeded = context => true;
             });
 
-            services.Configure<EventSessionOptions>(Configuration.GetSection("EventSessionOptions"));
-            services.Configure<ClientCertOptions>(Configuration.GetSection("ClientCertificate"));
+            services.Configure<Models.EventSessionOptions>(Configuration.GetSection("EventSessionOptions"));
+            services.Configure<Models.ClientCertOptions>(Configuration.GetSection("ClientCertificate"));
 
             services.AddSingleton<TraceSessionManager>();
 

@@ -2,12 +2,11 @@
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using EtwEvents.WebClient.Models;
 using Grpc.Core;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Options;
 
-namespace EtwEvents.WebClient
+namespace KdSoft.EtwEvents.WebClient
 {
     sealed class EventSession: IAsyncDisposable, IDisposable
     {
@@ -26,7 +25,7 @@ namespace EtwEvents.WebClient
         public EventSession(
             EtwListener.EtwListenerClient etwClient,
             EtwEventRequest etwRequest,
-            IOptionsMonitor<EventSessionOptions> optionsMonitor,
+            IOptionsMonitor<Models.EventSessionOptions> optionsMonitor,
             EventSinkHolder eventSinks
         ) {
             this._etwClient = etwClient;

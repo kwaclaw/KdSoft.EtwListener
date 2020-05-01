@@ -1,16 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Resources;
-using System.Text.Json;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Localization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
+﻿using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 
-namespace EtwEvents.WebClient.Pages
+namespace KdSoft.EtwEvents.WebClient.Pages
 {
     public class IndexModel: PageModel
     {

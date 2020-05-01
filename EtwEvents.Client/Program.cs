@@ -1,14 +1,10 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
-using KdSoft.EtwLogging;
-using Grpc.Core;
 using Google.Protobuf.WellKnownTypes;
-using Google.Protobuf.Collections;
+using Grpc.Core;
+using KdSoft.EtwLogging;
 
-namespace EtwEvents.Client
+namespace KdSoft.EtwEvents.Client
 {
     public class Program
     {

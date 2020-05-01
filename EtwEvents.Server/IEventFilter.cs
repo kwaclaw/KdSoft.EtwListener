@@ -1,6 +1,6 @@
 ﻿using Microsoft.Diagnostics.Tracing;
 
-namespace EtwEvents
+namespace KdSoft.EtwEvents
 {
     public interface IEventFilter
     {

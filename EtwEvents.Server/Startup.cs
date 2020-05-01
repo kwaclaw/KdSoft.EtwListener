@@ -6,7 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace EtwEvents.Server
+namespace KdSoft.EtwEvents.Server
 {
     public class Startup
     {
@@ -58,8 +58,7 @@ namespace EtwEvents.Server
                 opts.Interceptors.Add<AuthInterceptor>(authorizedNames);
             });
 
-            services.AddSingleton<TraceSessionManager>(new TraceSessionManager(TimeSpan.FromMinutes(3)));
-
+            services.AddSingleton<TraceSessionManager>(provider => new TraceSessionManager(TimeSpan.FromMinutes(3)));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

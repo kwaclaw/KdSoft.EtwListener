@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
 
-namespace EtwEvents.Server
+namespace KdSoft.EtwEvents.Server
 {
     public class AuthInterceptor: Interceptor
     {

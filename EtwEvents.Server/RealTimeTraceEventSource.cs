@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Diagnostics.Tracing;
 
-namespace EtwEvents.Server
+namespace KdSoft.EtwEvents.Server
 {
     class RealTimeTraceEventSource: IDisposable
     {

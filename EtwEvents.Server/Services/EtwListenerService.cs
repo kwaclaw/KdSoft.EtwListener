@@ -7,7 +7,7 @@ using KdSoft.EtwLogging;
 using Microsoft.Diagnostics.Tracing.Session;
 using tracing = Microsoft.Diagnostics.Tracing;
 
-namespace EtwEvents.Server
+namespace KdSoft.EtwEvents.Server
 {
     class EtwListenerService: EtwListener.EtwListenerBase
     {

@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using System.Runtime.Loader;
 
-namespace EtwEvents.Server
+namespace KdSoft.EtwEvents.Server
 {
     public class CollectibleAssemblyLoadContext: AssemblyLoadContext
     {

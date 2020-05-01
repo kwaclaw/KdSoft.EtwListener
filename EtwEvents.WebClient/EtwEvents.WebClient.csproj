@@ -6,7 +6,8 @@
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <LangVersion>8.0</LangVersion>
     <Nullable>enable</Nullable>
-    <AssemblyName>EtwEvents.WebClient</AssemblyName>
+    <AssemblyName>KdSoft.EtwEvents.WebClient</AssemblyName>
+    <RootNamespace>KdSoft.EtwEvents.WebClient</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,6 +32,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="3.1.3" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.2" />
+    <PackageReference Include="MongoDB.Driver" Version="2.10.3" />
     <PackageReference Include="OrchardCore.Localization.Core" Version="1.0.0-rc1-10004" />
     <PackageReference Include="System.Collections.NonGeneric" Version="4.3.0" />
   </ItemGroup>

@@ -6,7 +6,6 @@ using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using EtwEvents.WebClient.Models;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Net.Client;
 using KdSoft.EtwLogging;
@@ -14,7 +13,7 @@ using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace EtwEvents.WebClient
+namespace KdSoft.EtwEvents.WebClient
 {
     sealed class TraceSession: IAsyncDisposable, IDisposable
     {
@@ -119,7 +118,7 @@ namespace EtwEvents.WebClient
             this.EnabledProviders = etwSession.EnabledProviders.ToImmutableList();
         }
 
-        async Task<EventSession> StartEventsInternal(IOptionsMonitor<EventSessionOptions> optionsMonitor) {
+        async Task<EventSession> StartEventsInternal(IOptionsMonitor<Models.EventSessionOptions> optionsMonitor) {
             if (optionsMonitor == null)
                 throw new ArgumentNullException(nameof(optionsMonitor));
 
@@ -168,7 +167,7 @@ namespace EtwEvents.WebClient
             return eventSession;
         }
 
-        public Task<EventSession> StartEvents(IOptionsMonitor<EventSessionOptions> optionsMonitor) {
+        public Task<EventSession> StartEvents(IOptionsMonitor<Models.EventSessionOptions> optionsMonitor) {
             var eventsTask = StartEventsInternal(optionsMonitor);
             this.EventStream = eventsTask;
             return eventsTask;

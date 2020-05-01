@@ -2,14 +2,13 @@
 using System.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.Net.WebSockets;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using KdSoft.EtwLogging;
 
-namespace EtwEvents.WebClient.EventSinks
+namespace KdSoft.EtwEvents.WebClient.EventSinks
 {
     class WebSocketSink: IEventSink
     {

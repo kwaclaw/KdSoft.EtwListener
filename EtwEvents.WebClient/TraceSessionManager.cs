@@ -5,15 +5,15 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using EtwEvents.WebClient.Models;
 using Google.Protobuf.WellKnownTypes;
+using KdSoft.EtwEvents.WebClient.Models;
 using KdSoft.EtwLogging;
 using KdSoft.Utils;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 
-namespace EtwEvents.WebClient
+namespace KdSoft.EtwEvents.WebClient
 {
     class TraceSessionManager: ConcurrentTimedLifeCycleManager<string, TraceSessionEntry>
     {
@@ -45,14 +45,14 @@ namespace EtwEvents.WebClient
         /// <returns></returns>
         /// <remarks>When session was opened for first time, restartedProviders can be empty but not null.
         /// In other words, when restartedProviders is null, then the session was already open.</remarks>
-        public Task<OpenSessionState> OpenSession(
+        public Task<Models.OpenSessionState> OpenSession(
             string name,
             string host,
             X509Certificate2 clientCertificate,
             IReadOnlyList<ProviderSetting> providers,
             Duration lifeTime
         ) {
-            Task<OpenSessionState>? result = null;
+            Task<Models.OpenSessionState>? result = null;
 
             // NOTE: the value factory might be executed multiple times with this overload of GetOrAdd,
             //       if this is a problem then we need to use Lazy<T> instead.
@@ -72,9 +72,9 @@ namespace EtwEvents.WebClient
                     return ct.Result.traceSession;
                 }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
 
-                result = createTask.ContinueWith<OpenSessionState>(ct => {
+                result = createTask.ContinueWith<Models.OpenSessionState>(ct => {
                     var session = ct.Result.traceSession;
-                    var openSessionState = session.GetSessionStateSnapshot<OpenSessionState>();
+                    var openSessionState = session.GetSessionStateSnapshot<Models.OpenSessionState>();
                     openSessionState.RestartedProviders = ct.Result.restartedProviders;
                     openSessionState.AlreadyOpen = false;
                     return openSessionState;
@@ -86,9 +86,9 @@ namespace EtwEvents.WebClient
             if (result != null)
                 return result;
 
-            return entry.SessionTask.ContinueWith<OpenSessionState>(st => {
+            return entry.SessionTask.ContinueWith<Models.OpenSessionState>(st => {
                 var session = st.Result;
-                var openSessionState = session.GetSessionStateSnapshot<OpenSessionState>();
+                var openSessionState = session.GetSessionStateSnapshot<Models.OpenSessionState>();
                 openSessionState.RestartedProviders = ImmutableList<string>.Empty;
                 openSessionState.AlreadyOpen = true;
                 return openSessionState;
@@ -105,13 +105,13 @@ namespace EtwEvents.WebClient
             return false;
         }
 
-        public async Task<TraceSessionStates> GetSessionStates() {
+        public async Task<Models.TraceSessionStates> GetSessionStates() {
             var sessionEntries = this.GetSnapshot();
             var sessionTasks = sessionEntries.Select(se => se.Value.SessionTask);
             var sessions = await Task.WhenAll(sessionTasks).ConfigureAwait(false);
             var sessionStateTasks = sessions.Select(s => s.GetSessionState());
             var sessionStates = await Task.WhenAll(sessionStateTasks).ConfigureAwait(false);
-            return new TraceSessionStates { Sessions = sessionStates.ToImmutableArray() };
+            return new Models.TraceSessionStates { Sessions = sessionStates.ToImmutableArray() };
         }
 
         public async ValueTask PostSessionStateChange() {
@@ -139,12 +139,12 @@ namespace EtwEvents.WebClient
             }
         }
 
-        public IAsyncEnumerable<TraceSessionStates> GetSessionStateChanges() {
+        public IAsyncEnumerable<Models.TraceSessionStates> GetSessionStateChanges() {
             return new ChangeListener(this);
         }
 
         // https://anthonychu.ca/post/async-streams-dotnet-core-3-iasyncenumerable/
-        class ChangeListener: IAsyncEnumerable<TraceSessionStates>
+        class ChangeListener: IAsyncEnumerable<Models.TraceSessionStates>
         {
             readonly TraceSessionManager _sessionManager;
 
@@ -152,13 +152,13 @@ namespace EtwEvents.WebClient
                 this._sessionManager = sessionManager;
             }
 
-            public IAsyncEnumerator<TraceSessionStates> GetAsyncEnumerator(CancellationToken cancellationToken = default) {
+            public IAsyncEnumerator<Models.TraceSessionStates> GetAsyncEnumerator(CancellationToken cancellationToken = default) {
                 return new ChangeEnumerator(_sessionManager, cancellationToken);
             }
         }
 
         // https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-8.0/async-streams
-        class ChangeEnumerator: PendingAsyncEnumerator<TraceSessionStates>
+        class ChangeEnumerator: PendingAsyncEnumerator<Models.TraceSessionStates>
         {
             readonly TraceSessionManager _sessionManager;
 
@@ -172,7 +172,7 @@ namespace EtwEvents.WebClient
                 return default;
             }
 
-            protected override Task<TraceSessionStates> GetNext() {
+            protected override Task<Models.TraceSessionStates> GetNext() {
                 return _sessionManager.GetSessionStates();
             }
         }

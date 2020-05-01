@@ -17,7 +17,7 @@ using Microsoft.CodeAnalysis.Text;
 using Microsoft.Diagnostics.Tracing.Session;
 using tracing = Microsoft.Diagnostics.Tracing;
 
-namespace EtwEvents.Server
+namespace KdSoft.EtwEvents.Server
 {
     class TraceSession: TimedLifeCycleAware, IDisposable
     {

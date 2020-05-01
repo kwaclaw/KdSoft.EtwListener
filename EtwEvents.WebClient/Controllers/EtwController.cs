@@ -5,8 +5,6 @@ using System.Net.WebSockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using EtwEvents.WebClient.EventSinks;
-using EtwEvents.WebClient.Models;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -14,7 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 
-namespace EtwEvents.WebClient
+namespace KdSoft.EtwEvents.WebClient
 {
     [Authorize]
     [ApiController]
@@ -22,15 +20,15 @@ namespace EtwEvents.WebClient
     class EtwController: ControllerBase
     {
         readonly TraceSessionManager _sessionManager;
-        readonly IOptionsMonitor<EventSessionOptions> _optionsMonitor;
-        readonly IOptions<ClientCertOptions> _clientCertOptions;
+        readonly IOptionsMonitor<Models.EventSessionOptions> _optionsMonitor;
+        readonly IOptions<Models.ClientCertOptions> _clientCertOptions;
         readonly IOptions<JsonOptions> _jsonOptions;
         readonly IStringLocalizer<EtwController> _;
 
         public EtwController(
             TraceSessionManager sessionManager,
-            IOptionsMonitor<EventSessionOptions> optionsMonitor,
-            IOptions<ClientCertOptions> clientCertOptions,
+            IOptionsMonitor<Models.EventSessionOptions> optionsMonitor,
+            IOptions<Models.ClientCertOptions> clientCertOptions,
             IOptions<JsonOptions> jsonOptions,
             IStringLocalizer<EtwController> localize
         ) {
@@ -70,7 +68,7 @@ namespace EtwEvents.WebClient
         }
 
         [HttpPost]
-        public async Task<IActionResult> OpenSession(TraceSessionRequest request) {
+        public async Task<IActionResult> OpenSession(Models.TraceSessionRequest request) {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
@@ -97,12 +95,12 @@ namespace EtwEvents.WebClient
 
         public const int SessionNotFoundWebSocketStatus = 4901;
 
-        IEventSink CreateEventSink(EventSinkRequest request, EventSinkHolder holder) {
+        IEventSink CreateEventSink(Models.EventSinkRequest request, EventSinkHolder holder) {
             IEventSink result;
             switch (request.SinkType) {
-                case nameof(DummySink):
+                case nameof(EventSinks.DummySink):
                 default:
-                    result = new DummySink(request.Name);
+                    result = new EventSinks.DummySink(request.Name);
                     break;
 
             }
@@ -127,9 +125,6 @@ namespace EtwEvents.WebClient
                 catch (Exception ex) {
                     //_logger.LogError(ex);
                 }
-                finally {
-
-                }
             }, TaskScheduler.Default);
         }
 
@@ -142,7 +137,7 @@ namespace EtwEvents.WebClient
                     var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
                     // this WebSocketSink has a life-cycle tied to the EventSession, while other sinks can be added and removed dynamically
                     var webSocketName = Guid.NewGuid().ToString();
-                    var webSocketSink = new WebSocketSink(webSocketName, webSocket, CancellationToken.None);
+                    var webSocketSink = new EventSinks.WebSocketSink(webSocketName, webSocket, CancellationToken.None);
                     try {
                         AddEventSink(webSocketSink, traceSession.EventSinks);
                         var eventSessionTask = traceSession.StartEvents(_optionsMonitor);
@@ -197,7 +192,7 @@ namespace EtwEvents.WebClient
                     var traceSession = await sessionEntry.SessionTask.ConfigureAwait(false);
                     // the WebSocketSink has a life-cycle tied to the EventSession, while other sinks can be added and removed dynamically
                     var webSocketName = Guid.NewGuid().ToString();
-                    await using (var webSocketSink = new WebSocketSink(webSocketName, webSocket, CancellationToken.None)) {
+                    await using (var webSocketSink = new EventSinks.WebSocketSink(webSocketName, webSocket, CancellationToken.None)) {
                         AddEventSink(webSocketSink, traceSession.EventSinks);
                         await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
                         try {
@@ -229,7 +224,7 @@ namespace EtwEvents.WebClient
         }
 
         [HttpPost]
-        public async Task<IActionResult> OpenEventSinks(string sessionName, IEnumerable<EventSinkRequest> sinkRequests) {
+        public async Task<IActionResult> OpenEventSinks(string sessionName, IEnumerable<Models.EventSinkRequest> sinkRequests) {
             if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
                 var traceSession = await sessionEntry.SessionTask.ConfigureAwait(false);
                 var sinkList = sinkRequests.Select(sr => CreateEventSink(sr, traceSession.EventSinks));

@@ -1,6 +1,6 @@
 ﻿using System.Security.Cryptography.X509Certificates;
 
-namespace EtwEvents.WebClient.Models
+namespace KdSoft.EtwEvents.WebClient.Models
 {
     public class ClientCertOptions
     {

@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Diagnostics.Tracing.Session;
 using Microsoft.Extensions.Hosting;
 
-namespace EtwEvents.Server
+namespace KdSoft.EtwEvents.Server
 {
     public static class Program
     {

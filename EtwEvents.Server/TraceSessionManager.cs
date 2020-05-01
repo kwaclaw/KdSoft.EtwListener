@@ -1,7 +1,7 @@
 ﻿using System;
 using KdSoft.Utils;
 
-namespace EtwEvents.Server
+namespace KdSoft.EtwEvents.Server
 {
     class TraceSessionManager: ConcurrentTimedLifeCycleManager<string, TraceSession>
     {

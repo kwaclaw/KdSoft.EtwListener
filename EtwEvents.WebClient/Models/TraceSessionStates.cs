@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using KdSoft.EtwLogging;
 
-namespace EtwEvents.WebClient.Models
+namespace KdSoft.EtwEvents.WebClient.Models
 {
     public class TraceSessionState
     {

@@ -3,6 +3,8 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
+    <RootNamespace>KdSoft.EtwEvents.Server</RootNamespace>
+    <AssemblyName>KdSoft.EtwEvents.Server</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
