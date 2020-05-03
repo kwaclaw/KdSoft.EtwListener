@@ -52,13 +52,13 @@ namespace KdSoft.EtwEvents.WebClient
             IReadOnlyList<ProviderSetting> providers,
             Duration lifeTime
         ) {
-            Task<Models.OpenSessionState>? result = null;
+            Task<(TraceSession traceSession, IImmutableList<string> restartedProviders)>? createTask = null;
 
             // NOTE: the value factory might be executed multiple times with this overload of GetOrAdd,
             //       if this is a problem then we need to use Lazy<T> instead.
             var entry = this.GetOrAdd(name, sessionName => {
                 var sessionLogger = _loggerFactory.CreateLogger<TraceSession>();
-                var createTask = TraceSession.Create(
+                createTask = TraceSession.Create(
                     sessionName, host, clientCertificate, providers, lifeTime, sessionLogger, _localizer);
 
                 var checkedTask = createTask.ContinueWith<TraceSession>(ct => {
@@ -72,19 +72,19 @@ namespace KdSoft.EtwEvents.WebClient
                     return ct.Result.traceSession;
                 }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
 
-                result = createTask.ContinueWith<Models.OpenSessionState>(ct => {
+                return new TraceSessionEntry(checkedTask, lifeTime.ToTimeSpan(), PostSessionStateChange);
+            });
+
+            // return OpenSessionState if we just created a new Session
+            if (createTask != null && createTask.IsCompletedSuccessfully) {
+                return createTask.ContinueWith<Models.OpenSessionState>(ct => {
                     var session = ct.Result.traceSession;
                     var openSessionState = session.GetSessionStateSnapshot<Models.OpenSessionState>();
                     openSessionState.RestartedProviders = ct.Result.restartedProviders;
                     openSessionState.AlreadyOpen = false;
                     return openSessionState;
                 }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
-
-                return new TraceSessionEntry(checkedTask, lifeTime.ToTimeSpan(), PostSessionStateChange);
-            });
-
-            if (result != null)
-                return result;
+            }
 
             return entry.SessionTask.ContinueWith<Models.OpenSessionState>(st => {
                 var session = st.Result;
@@ -109,9 +109,16 @@ namespace KdSoft.EtwEvents.WebClient
             var sessionEntries = this.GetSnapshot();
             var sessionTasks = sessionEntries.Select(se => se.Value.SessionTask);
             var sessions = await Task.WhenAll(sessionTasks).ConfigureAwait(false);
-            var sessionStateTasks = sessions.Select(s => s.GetSessionState());
+            var sessionStateTasks = sessions.Select(session => session.GetSessionState());
+
             var sessionStates = await Task.WhenAll(sessionStateTasks).ConfigureAwait(false);
-            return new Models.TraceSessionStates { Sessions = sessionStates.ToImmutableArray() };
+            var ssb = ImmutableArray.CreateBuilder<TraceSessionState>();
+            for (int indx = 0; indx < sessionStates.Length; indx++) {
+                var ss = sessionStates[indx];
+                if (ss != null)
+                    ssb.Add(ss);
+            }
+            return new Models.TraceSessionStates { Sessions = ssb.ToImmutableArray() };
         }
 
         public async ValueTask PostSessionStateChange() {
