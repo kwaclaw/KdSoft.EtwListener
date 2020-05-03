@@ -53,7 +53,9 @@ namespace KdSoft.EtwEvents.WebClient
         public Task EventStream { get; private set; } = Task.CompletedTask;
 
         static GrpcChannel CreateChannel(string host, X509Certificate2 clientCertificate) {
+#pragma warning disable CA2000 // Dispose objects before losing scope
             var handler = new HttpClientHandler();
+#pragma warning restore CA2000 // Dispose objects before losing scope
             handler.ClientCertificates.Add(clientCertificate);
             var channel = GrpcChannel.ForAddress(host, new GrpcChannelOptions {
                 HttpClient = new HttpClient(handler, true),
@@ -113,10 +115,46 @@ namespace KdSoft.EtwEvents.WebClient
             }
         }
 
+        #region TraceSessionState
+
         public async Task UpdateSessionState() {
             var etwSession = await _etwClient.GetSessionAsync(new StringValue { Value = Name });
             this.EnabledProviders = etwSession.EnabledProviders.ToImmutableList();
         }
+
+        public T GetSessionStateSnapshot<T>() where T : Models.TraceSessionState, new() {
+            var result = new T {
+                Name = Name ?? string.Empty,
+                Host = Host,
+                IsRunning = !EventStream.IsCompleted,
+                EnabledProviders = EnabledProviders
+            };
+            var activeEventSinks = EventSinks.ActiveEventSinks.Select(
+                aes => new Models.EventSinkState { SinkType = aes.Value.GetType().Name, Name = aes.Key }
+            ).ToImmutableArray();
+            var eventSinks = activeEventSinks.AddRange(EventSinks.FailedEventSinks.Select(
+                fes => new Models.EventSinkState {
+                    SinkType = fes.Value.sink.GetType().Name,
+                    Name = fes.Key,
+                    Error = fes.Value.error?.Message ?? _.GetString("Write Failure"),
+                }
+            ));
+            result.EventSinks = eventSinks;
+            return result;
+        }
+
+        public async Task<Models.TraceSessionState?> GetSessionState() {
+            try {
+                await UpdateSessionState().ConfigureAwait(false);
+                return GetSessionStateSnapshot<Models.TraceSessionState>();
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, _.GetString("GetSessionState error."));
+                return null;
+            }
+        }
+
+        #endregion
 
         async Task<EventSession> StartEventsInternal(IOptionsMonitor<Models.EventSessionOptions> optionsMonitor) {
             if (optionsMonitor == null)

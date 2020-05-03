@@ -11,13 +11,13 @@ namespace KdSoft.EtwEvents.WebClient
         /// <summary>
         /// Identifier for event sink.
         /// </summary>
-        public string Name { get; }
+        string Name { get; }
 
         /// <summary>
         /// Task that completes when <see cref="IEventSink"/> is finished/closed.
         /// </summary>
         /// <returns><c>true</c> when already disposed, <c>false</c> otherwise.</returns>
-        public Task<bool> RunTask { get; }
+        Task<bool> RunTask { get; }
 
         /// <summary>
         /// Writes event asynchronously. This may queue event for batched writing and may return synchronously.
