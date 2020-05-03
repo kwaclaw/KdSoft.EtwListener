@@ -68,7 +68,10 @@ class MyAppSideBar extends LitMvvmElement {
   }
 
   _toggleNav() {
-    this.renderRoot.getElementById('nav-content').classList.toggle('hidden');
+    const host = this.renderRoot.host;
+    const expanded = host.hasAttribute('aria-expanded');
+    if (expanded) host.removeAttribute('aria-expanded');
+    else host.setAttribute('aria-expanded', '');
   }
 
   //#region profile
@@ -228,6 +231,37 @@ class MyAppSideBar extends LitMvvmElement {
           flex-wrap: nowrap;
           justify-content: flex-start;
           align-items: stretch;
+          width: 0;
+          overflow-x: hidden;
+          transition: width var(--trans-time, 300ms) ease;
+        }
+
+        #nav-toggle {
+          position: fixed;
+          top:0;
+          left: 0;
+          background-color: transparent;
+        }
+
+        #nav-toggle:focus {
+          outline: none;
+        }
+
+        #nav-toggle:hover {
+          color: #2d3748;
+        }
+        
+        :host([aria-expanded]) #sidebar {
+          width: 100%;
+        }
+
+        :host([aria-expanded]) #nav-toggle:hover {
+          color: white;
+          border-color: white;
+        }
+        
+        #sidebar.collapsed {
+          width: 2em;
         }
 
         .brand {
@@ -283,16 +317,15 @@ class MyAppSideBar extends LitMvvmElement {
           position: relative;
         }
       </style>
-
-      <nav id="sidebar" class="items-center justify-between text-gray-500 bg-gray-800 pt-2 pb-3 h-full w-full z-30">
-        <div class=flex>
-          <!-- <div class="pr-2"> -->
-            <button id="nav-toggle" @click=${this._toggleNav}
-                    class="flex items-center px-3 py-2 text-gray-500 border-gray-600 hover:text-white hover:border-white">
-              <i class="fas fa-lg fa-bars"></i>
-              <!-- <svg class="fill-current h-3 w-3" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Menu</title><path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"/></svg> -->
-            </button>
-          <!-- </div> -->
+      <nav id="sidebar" class="items-center justify-between text-gray-500 bg-gray-800 pt-0 pb-3 h-full z-30">
+        <!-- <div class="pr-2"> -->
+          <button id="nav-toggle" @click=${this._toggleNav}
+                  class="flex items-center px-3 py-3 text-gray-500 border-gray-600">
+            <i class="fas fa-lg fa-bars"></i>
+            <!-- <svg class="fill-current h-3 w-3" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Menu</title><path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"/></svg> -->
+          </button>
+        <!-- </div> -->
+        <div class="flex pl-8">
           <!-- <div class="flex items-center flex-shrink-0 text-white mr-6"> -->
             <a class="text-white no-underline hover:text-white hover:no-underline" href="#">
               <span class="text-2xl pl-2 brand"><i class="brand"></i>KDS</span>
