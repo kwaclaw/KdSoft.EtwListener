@@ -107,7 +107,7 @@ namespace KdSoft.EtwEvents.Server
 using System;
 using Microsoft.Diagnostics.Tracing;
 
-namespace EtwEvents.Server
+namespace KdSoft.EtwEvents.Server
 {{
     public class EventFilter: IEventFilter
     {{

@@ -268,7 +268,7 @@ class FilterEdit extends LitMvvmElement {
       <div id="code-wrapper" class="border p-2"><pre>${html`using System;
 using Microsoft.Diagnostics.Tracing;
 
-namespace EtwEvents.Server
+namespace KdSoft.EtwEvents.Server
 {
   public class EventFilter: IEventFilter
   {
