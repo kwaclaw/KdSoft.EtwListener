@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.WebSockets;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,7 +26,7 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
 
         public string Name { get; }
 
-        public WebSocketSink(string name, WebSocket webSocket, CancellationToken cancelToken) {
+        public WebSocketSink(string name, WebSocket webSocket) {
             this.Name = name;
             this._webSocket = webSocket;
             _jsonOptions = new JsonWriterOptions {
@@ -34,7 +35,6 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
             };
             _bufferWriter = new ArrayBufferWriter<byte>(512);
             _jsonWriter = new Utf8JsonWriter(_bufferWriter, _jsonOptions);
-            Initialize(cancelToken);
         }
 
         // we only expect to receive Close messages
@@ -67,12 +67,13 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
             return result;
         }
 
-        void Initialize(CancellationToken cancelToken) {
+        public ValueTask Initialize(CancellationToken cancelToken) {
             _startNewMessage = true;
             _bufferWriter.Clear();
             _jsonWriter.Reset();
             this._cancelToken = cancelToken;
             this._receiveTask = KeepReceiving(cancelToken);
+            return _webSocket.SendAsync(Encoding.UTF8.GetBytes($"\"{Name}\"").AsMemory(), WebSocketMessageType.Text, true, cancelToken);
         }
 
         async Task<bool> WriteAsync(bool endOfMessage) {

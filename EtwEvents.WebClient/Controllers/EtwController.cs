@@ -137,15 +137,18 @@ namespace KdSoft.EtwEvents.WebClient
                     var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
                     // this WebSocketSink has a life-cycle tied to the EventSession, while other sinks can be added and removed dynamically
                     var webSocketName = Guid.NewGuid().ToString();
-                    var webSocketSink = new EventSinks.WebSocketSink(webSocketName, webSocket, CancellationToken.None);
-                    try {
-                        AddEventSink(webSocketSink, traceSession.EventSinks);
-                        var eventSessionTask = traceSession.StartEvents(_optionsMonitor);
-                        await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
-                        var eventSession = await eventSessionTask.ConfigureAwait(false);
-                    }
-                    finally {
-                        await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
+                    await using (var webSocketSink = new EventSinks.WebSocketSink(webSocketName, webSocket)) {
+                        try {
+                            // must initialize before configuring disposal
+                            await webSocketSink.Initialize(CancellationToken.None).ConfigureAwait(false);
+                            AddEventSink(webSocketSink, traceSession.EventSinks);
+                            var eventSessionTask = traceSession.StartEvents(_optionsMonitor);
+                            await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
+                            var eventSession = await eventSessionTask.ConfigureAwait(false);
+                        }
+                        finally {
+                            await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
+                        }
                     }
 
                     // OkResult not right here, tries to set status code which is not good in this scenario
@@ -192,7 +195,9 @@ namespace KdSoft.EtwEvents.WebClient
                     var traceSession = await sessionEntry.SessionTask.ConfigureAwait(false);
                     // the WebSocketSink has a life-cycle tied to the EventSession, while other sinks can be added and removed dynamically
                     var webSocketName = Guid.NewGuid().ToString();
-                    await using (var webSocketSink = new EventSinks.WebSocketSink(webSocketName, webSocket, CancellationToken.None)) {
+                    await using (var webSocketSink = new EventSinks.WebSocketSink(webSocketName, webSocket)) {
+                        // must initialize before configuring disposal
+                        await webSocketSink.Initialize(CancellationToken.None).ConfigureAwait(false);
                         AddEventSink(webSocketSink, traceSession.EventSinks);
                         await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
                         try {

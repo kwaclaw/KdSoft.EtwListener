@@ -35,6 +35,7 @@
     <PackageReference Include="MongoDB.Driver" Version="2.10.3" />
     <PackageReference Include="OrchardCore.Localization.Core" Version="1.0.0-rc1-10004" />
     <PackageReference Include="System.Collections.NonGeneric" Version="4.3.0" />
+    <PackageReference Include="System.Memory" Version="4.5.4" />
   </ItemGroup>
 
   <ItemGroup>
