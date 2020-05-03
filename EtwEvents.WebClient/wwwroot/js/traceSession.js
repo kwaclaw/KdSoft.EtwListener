@@ -2,6 +2,17 @@
 import EventSession from './eventSession.js';
 import FetchHelper from './fetchHelper.js';
 
+function updateStateInternal(instance) {
+  const state = instance._state;
+  if (state && instance.eventSession && Array.isArray(state.eventSinks)) {
+    const evsName = instance.eventSession.name;
+    for (let indx = 0; indx < state.eventSinks.length; indx += 1) {
+      const evs = state.eventSinks[indx];
+      evs.isLocal = evs.name === evsName;
+    }
+  }
+}
+
 class TraceSession {
   constructor(profile, state) {
     this._profile = profile;
@@ -9,7 +20,11 @@ class TraceSession {
     this.filter = profile.activeFilter;
     this._eventSession = null;
     this.fetcher = new FetchHelper('/Etw');
-    return observable(this);
+    const result = observable(this);
+    observe(() => {
+      updateStateInternal(result);
+    });
+    return result;
   }
 
   get name() { return this._state ? this._state.name : (this._profile ? this._profile.name : '<unknown>'); }

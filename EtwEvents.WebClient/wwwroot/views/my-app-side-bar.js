@@ -252,7 +252,7 @@ class MyAppSideBar extends LitMvvmElement {
         kdsoft-tree-node.session-details [slot="children"] {
           display: grid;
           grid-gap: 0 1em;
-          grid-template-columns :max-content auto;
+          grid-template-columns: max-content auto;
           justify-items: start;
         }
       `
@@ -336,9 +336,13 @@ class MyAppSideBar extends LitMvvmElement {
                 <p class="font-bold">Event Sinks</p>
                 ${ses.state.eventSinks.map(ev => html`
                   <kdsoft-tree-node class="session-details">
-                    <div slot="content" class="truncate">${ev.sinkType}: ${ev.name}</div>
+                    <div slot="content" class="truncate">
+                      <i class="fas fa-lg fa-eye"></i>
+                      ${ev.error ? 'Failed' : (ev.isLocal ? 'Local' : 'External')}
+                    </div>
                     <div slot="children">
                       <div>Name</div><div>${ev.name}</div>
+                      ${ev.error ? html`<div>Error</div><div>${ev.error}</div>` : nothing}
                     </div>
                   </kdsoft-tree-node>
                 `)}
