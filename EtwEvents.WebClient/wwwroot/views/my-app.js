@@ -211,7 +211,7 @@ class MyApp extends LitMvvmElement {
         }
 
         #container.sidebar-expanded {
-          grid-template-columns: 25% 75%;
+          grid-template-columns: 30% 70%;
         }
 
         #sidebar {

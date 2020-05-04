@@ -232,6 +232,7 @@ class MyAppSideBar extends LitMvvmElement {
           justify-content: flex-start;
           align-items: stretch;
           width: 100%;
+          min-width: 8rem;
         }
 
         #nav-toggle {
