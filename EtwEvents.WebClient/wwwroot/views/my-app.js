@@ -38,6 +38,25 @@ class MyApp extends LitMvvmElement {
     window.myapp = this;
   }
 
+  _sidebarObserverCallback(mutations) {
+    mutations.forEach(mutation => {
+      switch (mutation.type) {
+        case 'attributes':
+          /* An attribute value changed on the element in mutation.target; the attribute name is in
+             mutation.attributeName and its previous value is in mutation.oldValue */
+          if (mutation.attributeName === 'aria-expanded') {
+            const cntr = this.renderRoot.getElementById('container');
+            const wasExpanded = !!mutation.oldValue;
+            if (wasExpanded) cntr.classList.remove('sidebar-expanded');
+            else cntr.classList.add('sidebar-expanded');
+          }
+          break;
+        default:
+          break;
+      }
+    });
+  }
+
   //#region trace-session
 
   _sessionTabClick(e) {
@@ -128,6 +147,7 @@ class MyApp extends LitMvvmElement {
   disconnectedCallback() {
     super.disconnectedCallback();
     this.model.unobserveVisibleSessions();
+    this._sidebarObserver.disconnect();
   }
 
   // called at most once every time after connectedCallback was executed
@@ -135,6 +155,12 @@ class MyApp extends LitMvvmElement {
     super.firstRendered();
     this.appTitle = this.getAttribute('appTitle');
     this.model.observeVisibleSessions();
+
+    // listen for changes of the aria-expanded attribute on sidebar,
+    // and expand/collapse the first grid column accordingly
+    this._sidebarObserver = new MutationObserver(m => this._sidebarObserverCallback(m));
+    const sidebar = this.renderRoot.getElementById('sidebar');
+    this._sidebarObserver.observe(sidebar, { attributes: true, attributeOldValue: true, attributeFilter: ['aria-expanded'] });
   }
 
   rendered() {
@@ -179,13 +205,19 @@ class MyApp extends LitMvvmElement {
           position: relative;
           height: 100%;
           display: grid;
-          grid-template-columns: minmax(2rem, 1fr) 3fr;
+          grid-template-columns: 0px 100%;
           grid-template-rows: 1fr auto;
+          transition: grid-template-columns var(--trans-time, 300ms) ease;
+        }
+
+        #container.sidebar-expanded {
+          grid-template-columns: 25% 75%;
         }
 
         #sidebar {
           grid-column: 1;
           grid-row: 1/2;
+          overflow-x: hidden;
         }
 
         #main {
@@ -283,9 +315,9 @@ class MyApp extends LitMvvmElement {
         }
       </style>
 
-      <div id="container">
+      <div id="container" class="sidebar-expanded">
 
-        <my-app-side-bar id="sidebar" .model=${this.model}></my-app-side-bar>
+        <my-app-side-bar id="sidebar" .model=${this.model} aria-expanded="true"></my-app-side-bar>
 
         <div id="main">
           <div id="nav-content" class="lg:flex lg:items-center lg:w-auto hidden lg:block pt-6 lg:pt-0 bg-gray-500">

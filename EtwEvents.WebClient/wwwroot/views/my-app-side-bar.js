@@ -71,7 +71,7 @@ class MyAppSideBar extends LitMvvmElement {
     const host = this.renderRoot.host;
     const expanded = host.hasAttribute('aria-expanded');
     if (expanded) host.removeAttribute('aria-expanded');
-    else host.setAttribute('aria-expanded', '');
+    else host.setAttribute('aria-expanded', 'true');
   }
 
   //#region profile
@@ -231,39 +231,33 @@ class MyAppSideBar extends LitMvvmElement {
           flex-wrap: nowrap;
           justify-content: flex-start;
           align-items: stretch;
-          width: 0;
-          overflow-x: hidden;
-          transition: width var(--trans-time, 300ms) ease;
+          width: 100%;
         }
 
         #nav-toggle {
           position: fixed;
           top:0;
           left: 0;
+          display: flex;
+          align-items: center;
           background-color: transparent;
+          z-index: 30;
         }
 
         #nav-toggle:focus {
           outline: none;
         }
 
-        #nav-toggle:hover {
-          color: #2d3748;
+        :host([aria-expanded]) #nav-toggle {
+          color: #a0aec0;
+          border-color: #718096;
         }
         
-        :host([aria-expanded]) #sidebar {
-          width: 100%;
-        }
-
         :host([aria-expanded]) #nav-toggle:hover {
           color: white;
           border-color: white;
         }
         
-        #sidebar.collapsed {
-          width: 2em;
-        }
-
         .brand {
           font-family: Candara;
         }
@@ -303,9 +297,7 @@ class MyAppSideBar extends LitMvvmElement {
     const traceSessionList = [...this.model.traceSessions.values()];
     const dialogStyle = utils.html5DialogSupported
       ? nothing
-      : html`
-        <link rel="stylesheet" type="text/css" href=${styleLinks.dialog} />
-      `;
+      : html`<link rel="stylesheet" type="text/css" href=${styleLinks.dialog} />`;
 
     return html`
       ${sharedStyles}
@@ -317,10 +309,9 @@ class MyAppSideBar extends LitMvvmElement {
           position: relative;
         }
       </style>
-      <nav id="sidebar" class="items-center justify-between text-gray-500 bg-gray-800 pt-0 pb-3 h-full z-30">
+      <nav id="sidebar" class="text-gray-500 bg-gray-800 pt-0 pb-3 h-full z-30">
         <!-- <div class="pr-2"> -->
-          <button id="nav-toggle" @click=${this._toggleNav}
-                  class="flex items-center px-3 py-3 text-gray-500 border-gray-600">
+          <button id="nav-toggle" @click=${this._toggleNav} class="px-3 py-3 text-gray-600 border-gray-600 hover:text-gray-800">
             <i class="fas fa-lg fa-bars"></i>
             <!-- <svg class="fill-current h-3 w-3" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Menu</title><path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"/></svg> -->
           </button>
@@ -367,18 +358,21 @@ class MyAppSideBar extends LitMvvmElement {
               </div>
               <div slot="children">
                 <p class="font-bold">Event Sinks</p>
-                ${ses.state.eventSinks.map(ev => html`
-                  <kdsoft-tree-node class="session-details">
-                    <div slot="content" class="truncate">
-                      <i class="fas fa-lg fa-eye"></i>
-                      ${ev.error ? 'Failed' : (ev.isLocal ? 'Local' : 'External')}
-                    </div>
-                    <div slot="children">
-                      <div>Name</div><div>${ev.name}</div>
-                      ${ev.error ? html`<div>Error</div><div>${ev.error}</div>` : nothing}
-                    </div>
-                  </kdsoft-tree-node>
-                `)}
+                ${ses.state.eventSinks.map(ev => {
+                  const evsType = ev.error ? i18n.gettext('Failed') : (ev.isLocal ? i18n.gettext('Local') : i18n.gettext('External'));
+                  const evsColor = ev.error ? 'text-red-500' : (ev.isLocal ? 'text-blue-500' : 'inherited');
+                  return html`
+                    <kdsoft-tree-node class="session-details">
+                      <div slot="content" class="truncate ${evsColor}">
+                        <i class="fas fa-lg fa-eye"></i> ${evsType}
+                      </div>
+                      <div slot="children">
+                        <div>Name</div><div>${ev.name}</div>
+                        ${ev.error ? html`<div>Error</div><div>${ev.error}</div>` : nothing}
+                      </div>
+                    </kdsoft-tree-node>
+                  `;
+                })}
                 <p class="font-bold mt-3">Providers</p>
                 ${ses.state.enabledProviders.map(ep => html`
                   <kdsoft-tree-node class="session-details">
