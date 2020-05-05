@@ -132,32 +132,27 @@ namespace KdSoft.EtwEvents.WebClient
         public async Task<IActionResult> StartEvents(string sessionName) {
             if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
                 var traceSession = await sessionEntry.SessionTask.ConfigureAwait(false);
+                var eventSessionTask = traceSession.StartEvents(_optionsMonitor);
+                await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
+
                 // If this is a WebSocket request we add a WebSocket sink
                 if (HttpContext.WebSockets.IsWebSocketRequest) {
                     var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
+
                     // this WebSocketSink has a life-cycle tied to the EventSession, while other sinks can be added and removed dynamically
                     var webSocketName = Guid.NewGuid().ToString();
-                    await using (var webSocketSink = new EventSinks.WebSocketSink(webSocketName, webSocket)) {
-                        try {
-                            // must initialize before configuring disposal
-                            await webSocketSink.Initialize(CancellationToken.None).ConfigureAwait(false);
-                            AddEventSink(webSocketSink, traceSession.EventSinks);
-                            var eventSessionTask = traceSession.StartEvents(_optionsMonitor);
-                            await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
-                            var eventSession = await eventSessionTask.ConfigureAwait(false);
-                        }
-                        finally {
-                            await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
-                        }
-                    }
+                    var webSocketSink = new EventSinks.WebSocketSink(webSocketName, webSocket);
+                    // must initialize before configuring disposal
+                    await webSocketSink.Initialize(CancellationToken.None).ConfigureAwait(false);
+                    AddEventSink(webSocketSink, traceSession.EventSinks);
+
+                    // wait for receive task to terminate
+                    await webSocketSink.RunTask.ConfigureAwait(false);
 
                     // OkResult not right here, tries to set status code which is not good in this scenario
                     return new EmptyResult();
                 }
                 else {
-                    var eventSessionTask = traceSession.StartEvents(_optionsMonitor);
-                    await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
-                    var eventSession = await eventSessionTask.ConfigureAwait(false);
                     return Ok();
                 }
             }
@@ -193,21 +188,18 @@ namespace KdSoft.EtwEvents.WebClient
                 var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
                 if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
                     var traceSession = await sessionEntry.SessionTask.ConfigureAwait(false);
+
                     // the WebSocketSink has a life-cycle tied to the EventSession, while other sinks can be added and removed dynamically
                     var webSocketName = Guid.NewGuid().ToString();
-                    await using (var webSocketSink = new EventSinks.WebSocketSink(webSocketName, webSocket)) {
-                        // must initialize before configuring disposal
-                        await webSocketSink.Initialize(CancellationToken.None).ConfigureAwait(false);
-                        AddEventSink(webSocketSink, traceSession.EventSinks);
-                        await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
-                        try {
-                            await traceSession.EventStream.ConfigureAwait(false);
-                        }
-                        finally {
-                            // need a change notification also when the event stream ends
-                            await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
-                        }
-                    }
+                    var webSocketSink = new EventSinks.WebSocketSink(webSocketName, webSocket);
+                    // must initialize before configuring disposal
+                    await webSocketSink.Initialize(CancellationToken.None).ConfigureAwait(false);
+                    AddEventSink(webSocketSink, traceSession.EventSinks);
+                    await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
+
+                    // wait for receive task to terminate
+                    await webSocketSink.RunTask.ConfigureAwait(false);
+
                     // OkResult not right here, tries to set status code which is not good in this scenario
                     return new EmptyResult();
                 }
