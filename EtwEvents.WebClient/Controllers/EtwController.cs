@@ -142,12 +142,17 @@ namespace KdSoft.EtwEvents.WebClient
                     // this WebSocketSink has a life-cycle tied to the EventSession, while other sinks can be added and removed dynamically
                     var webSocketName = Guid.NewGuid().ToString();
                     var webSocketSink = new EventSinks.WebSocketSink(webSocketName, webSocket);
-                    // must initialize before configuring disposal
-                    await webSocketSink.Initialize(CancellationToken.None).ConfigureAwait(false);
-                    AddEventSink(webSocketSink, traceSession.EventSinks);
+                    try {
+                        // must initialize before configuring disposal
+                        await webSocketSink.Initialize(CancellationToken.None).ConfigureAwait(false);
+                        AddEventSink(webSocketSink, traceSession.EventSinks);
 
-                    // wait for receive task to terminate
-                    await webSocketSink.RunTask.ConfigureAwait(false);
+                        // wait for receive task to terminate
+                        await webSocketSink.RunTask.ConfigureAwait(false);
+                    }
+                    finally {
+                        await webSocketSink.DisposeAsync().ConfigureAwait(false);
+                    }
 
                     // OkResult not right here, tries to set status code which is not good in this scenario
                     return new EmptyResult();
@@ -192,13 +197,18 @@ namespace KdSoft.EtwEvents.WebClient
                     // the WebSocketSink has a life-cycle tied to the EventSession, while other sinks can be added and removed dynamically
                     var webSocketName = Guid.NewGuid().ToString();
                     var webSocketSink = new EventSinks.WebSocketSink(webSocketName, webSocket);
-                    // must initialize before configuring disposal
-                    await webSocketSink.Initialize(CancellationToken.None).ConfigureAwait(false);
-                    AddEventSink(webSocketSink, traceSession.EventSinks);
-                    await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
+                    try {
+                        // must initialize before configuring disposal
+                        await webSocketSink.Initialize(CancellationToken.None).ConfigureAwait(false);
+                        AddEventSink(webSocketSink, traceSession.EventSinks);
+                        await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
 
-                    // wait for receive task to terminate
-                    await webSocketSink.RunTask.ConfigureAwait(false);
+                        // wait for receive task to terminate
+                        await webSocketSink.RunTask.ConfigureAwait(false);
+                    }
+                    finally {
+                        await webSocketSink.DisposeAsync().ConfigureAwait(false);
+                    }
 
                     // OkResult not right here, tries to set status code which is not good in this scenario
                     return new EmptyResult();
