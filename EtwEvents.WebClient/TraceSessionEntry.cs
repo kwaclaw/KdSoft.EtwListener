@@ -8,25 +8,24 @@ namespace KdSoft.EtwEvents.WebClient
     class TraceSessionEntry: ILifeCycleAware<ITimedLifeCycle>
     {
         readonly TimedLifeCycle _lifeCycle;
-        readonly Func<ValueTask> _onDisposed;
 
-        public TraceSessionEntry(Task<TraceSession> createTask, TimeSpan lifeTime, Func<ValueTask> onDisposed) {
+        public TraceSessionEntry(Task<TraceSession> createTask, TimeSpan lifeTime) {
             this.SessionTask = createTask;
             _lifeCycle = new TimedLifeCycle(lifeTime);
             _lifeCycle.Ended += _lifeCycle_Ended;
-            _onDisposed = onDisposed;
         }
 
         void _lifeCycle_Ended(object? sender, EventArgs e) {
             _disposeTask = SessionTask.ContinueWith(async t => {
+                var ts = t.Result;  // will not throw, see TaskContinuationOptions.OnlyOnRanToCompletion
                 try {
-                    await t.Result.DisposeAsync().ConfigureAwait(false);
+                    await ts.DisposeAsync().ConfigureAwait(false);
                 }
                 catch (Exception ex) {
                     //_logger.LogError(new EventId(0, "session-dispose"), ex, "");
                 }
                 finally {
-                    await _onDisposed().ConfigureAwait(false);
+                    await ts.PostSessionStateChange().ConfigureAwait(false);
                 }
             }, CancellationToken.None, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Current);
         }

@@ -20,7 +20,7 @@ namespace KdSoft.EtwEvents.WebClient
         readonly IServiceProvider _services;
         readonly ILoggerFactory _loggerFactory;
         readonly IStringLocalizer<TraceSession> _localizer;
-
+        readonly TraceSessionChangeNotifier _changeNotifier;
 
         public TraceSessionManager(
             IConfiguration config,
@@ -32,6 +32,7 @@ namespace KdSoft.EtwEvents.WebClient
             this._services = services;
             this._loggerFactory = loggerFactory;
             this._localizer = localizer;
+            this._changeNotifier = new TraceSessionChangeNotifier(GetSessionStates);
         }
 
         /// <summary>
@@ -59,7 +60,7 @@ namespace KdSoft.EtwEvents.WebClient
             var entry = this.GetOrAdd(name, sessionName => {
                 var sessionLogger = _loggerFactory.CreateLogger<TraceSession>();
                 createTask = TraceSession.Create(
-                    sessionName, host, clientCertificate, providers, lifeTime, sessionLogger, _localizer);
+                    sessionName, host, clientCertificate, providers, lifeTime, sessionLogger, _changeNotifier, _localizer);
 
                 var checkedTask = createTask.ContinueWith<TraceSession>(ct => {
                     if (!ct.IsCompletedSuccessfully) {
@@ -72,7 +73,7 @@ namespace KdSoft.EtwEvents.WebClient
                     return ct.Result.traceSession;
                 }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
 
-                return new TraceSessionEntry(checkedTask, lifeTime.ToTimeSpan(), PostSessionStateChange);
+                return new TraceSessionEntry(checkedTask, lifeTime.ToTimeSpan());
             });
 
             // return OpenSessionState if we just created a new Session
@@ -121,67 +122,12 @@ namespace KdSoft.EtwEvents.WebClient
             return new Models.TraceSessionStates { Sessions = ssb.ToImmutableArray() };
         }
 
-        public async ValueTask PostSessionStateChange() {
-            var changeEnumerators = _changeEnumerators;
-            foreach (var enumerator in changeEnumerators) {
-                try {
-                    await enumerator.Advance().ConfigureAwait(false);
-                }
-                catch { }
-            }
-        }
-
-        readonly object _enumeratorSync = new object();
-        ImmutableList<ChangeEnumerator> _changeEnumerators = ImmutableList<ChangeEnumerator>.Empty;
-
-        void AddEnumerator(ChangeEnumerator enumerator) {
-            lock (_enumeratorSync) {
-                _changeEnumerators = _changeEnumerators.Add(enumerator);
-            }
-        }
-
-        void RemoveEnumerator(ChangeEnumerator enumerator) {
-            lock (_enumeratorSync) {
-                _changeEnumerators = _changeEnumerators.Remove(enumerator);
-            }
-        }
-
         public IAsyncEnumerable<Models.TraceSessionStates> GetSessionStateChanges() {
-            return new ChangeListener(this);
+            return _changeNotifier.GetSessionStateChanges();
         }
 
-        // https://anthonychu.ca/post/async-streams-dotnet-core-3-iasyncenumerable/
-        class ChangeListener: IAsyncEnumerable<Models.TraceSessionStates>
-        {
-            readonly TraceSessionManager _sessionManager;
-
-            public ChangeListener(TraceSessionManager sessionManager) {
-                this._sessionManager = sessionManager;
-            }
-
-            public IAsyncEnumerator<Models.TraceSessionStates> GetAsyncEnumerator(CancellationToken cancellationToken = default) {
-                return new ChangeEnumerator(_sessionManager, cancellationToken);
-            }
-        }
-
-        // https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-8.0/async-streams
-        class ChangeEnumerator: PendingAsyncEnumerator<Models.TraceSessionStates>
-        {
-            readonly TraceSessionManager _sessionManager;
-
-            public ChangeEnumerator(TraceSessionManager sessionManager, CancellationToken cancelToken) : base(cancelToken) {
-                this._sessionManager = sessionManager;
-                sessionManager.AddEnumerator(this);
-            }
-
-            public override ValueTask DisposeAsync() {
-                _sessionManager.RemoveEnumerator(this);
-                return default;
-            }
-
-            protected override Task<Models.TraceSessionStates> GetNext() {
-                return _sessionManager.GetSessionStates();
-            }
+        public ValueTask PostSessionStateChange() {
+            return _changeNotifier.PostSessionStateChange();
         }
     }
 }

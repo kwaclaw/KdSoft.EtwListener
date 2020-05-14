@@ -133,16 +133,18 @@ namespace KdSoft.EtwEvents.WebClient
         }
 
         void HandleFailedEventSink(IEventSink failedSink, Exception? ex) {
-            if (RemoveEventSink(failedSink))
+            if (RemoveEventSink(failedSink)) {
                 lock (_failedEventSinkLock) {
                     this._failedEventSinks = this._failedEventSinks.SetItem(failedSink.Name, (failedSink, ex));
                 }
+            }
         }
 
-        public async Task ProcessEvent(EtwEvent? evt, long sequenceNo) {
+        public async Task<bool> ProcessEvent(EtwEvent? evt, long sequenceNo) {
             // We do not use a lock here because reference field access is atomic
             // and we do not exactly care which version of the field value we get. 
             var eventSinks = this._eventSinks;
+            var result = true;
 
             var taskList = this._eventSinkTaskPool.Rent(eventSinks.Count);
             try {
@@ -164,16 +166,19 @@ namespace KdSoft.EtwEvents.WebClient
                         var success = await entry.task.ConfigureAwait(false);
                         if (!success) {
                             HandleFailedEventSink(entry.sink, null);
+                            result = false;
                         }
                     }
                     catch (Exception ex) {
                         HandleFailedEventSink(entry.sink, ex);
+                        result = false;
                     }
                 }
             }
             finally {
                 this._eventSinkTaskPool.Return(taskList);
             }
+            return result;
         }
     }
 }

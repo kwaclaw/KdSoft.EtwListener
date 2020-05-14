@@ -20,6 +20,7 @@ namespace KdSoft.EtwEvents.WebClient
         readonly GrpcChannel _channel;
         readonly EtwListener.EtwListenerClient _etwClient;
         readonly ILogger<TraceSession> _logger;
+        readonly TraceSessionChangeNotifier _changeNotifier;
         readonly IStringLocalizer<TraceSession> _;
         readonly object _syncObj = new object();
 
@@ -34,6 +35,7 @@ namespace KdSoft.EtwEvents.WebClient
             GrpcChannel channel,
             EtwListener.EtwListenerClient etwClient,
             ILogger<TraceSession> logger,
+            TraceSessionChangeNotifier changeNotifier,
             IStringLocalizer<TraceSession> localizer
         ) {
             this.Name = name;
@@ -41,6 +43,7 @@ namespace KdSoft.EtwEvents.WebClient
             _channel = channel;
             _etwClient = etwClient;
             _logger = logger;
+            _changeNotifier = changeNotifier;
             _ = localizer;
             _eventCts = new CancellationTokenSource();
             EventSinks = new EventSinkHolder();
@@ -71,6 +74,7 @@ namespace KdSoft.EtwEvents.WebClient
             IReadOnlyList<ProviderSetting> providers,
             Duration lifeTime,
             ILogger<TraceSession> logger,
+            TraceSessionChangeNotifier changeNotifier,
             IStringLocalizer<TraceSession> localizer
         ) {
             var channel = CreateChannel(host, clientCertificate);
@@ -93,7 +97,7 @@ namespace KdSoft.EtwEvents.WebClient
 
                 var restartedProviders = reply.Results.Where(r => r.Restarted).Select(r => r.Name).ToImmutableList();
 
-                var traceSession = new TraceSession(name, enabledProviders, channel, client, logger, localizer);
+                var traceSession = new TraceSession(name, enabledProviders, channel, client, logger, changeNotifier, localizer);
                 return (traceSession, restartedProviders);
             }
             catch {
@@ -154,6 +158,10 @@ namespace KdSoft.EtwEvents.WebClient
             }
         }
 
+        public ValueTask PostSessionStateChange() {
+            return _changeNotifier.PostSessionStateChange();
+        }
+
         #endregion
 
         async Task<EventSession> StartEventsInternal(IOptionsMonitor<Models.EventSessionOptions> optionsMonitor) {
@@ -174,7 +182,7 @@ namespace KdSoft.EtwEvents.WebClient
                     stopEventCts.Cancel();
                     stopTask = _eventSession.Stop();
                 }
-                eventSession = new EventSession(_etwClient, etwRequest, optionsMonitor, EventSinks);
+                eventSession = new EventSession(_etwClient, etwRequest, optionsMonitor, EventSinks, _changeNotifier);
                 _eventSession = eventSession;
                 _eventCts = new CancellationTokenSource();
             }
