@@ -187,36 +187,6 @@ class MyAppSideBar extends LitMvvmElement {
     this._addDialogHandlers(configDlg);
   }
 
-  rendered() {
-    let newHeightStyle = null;
-    if (this.model.showErrors) {
-      newHeightStyle = `${300}px`;
-    } else if (this.model.showLastError) {
-      // Calculate the height of the first row in errors, and resize the errors
-      // container to show just that row, as it contains the most recent error.
-      const topRow = this.renderRoot.querySelector('#error-grid div.kds-row');
-      if (topRow) {
-        let minTop = 0;
-        let maxBottom = 0;
-        // topRow has CSS rule "display: contents", so it has no height of its own
-        for (let indx = 0; indx < topRow.children.length; indx += 1) {
-          const child = topRow.children[indx];
-          const ot = child.offsetTop;
-          const ob = ot + child.offsetHeight;
-          if (ot < minTop) minTop = ot;
-          if (ob > maxBottom) maxBottom = ob;
-        }
-        const topRowHeight = maxBottom - minTop;
-        newHeightStyle = `${topRowHeight}px`;
-      }
-    }
-
-    if (newHeightStyle) {
-      const errContainer = this.renderRoot.getElementById('error-resizable');
-      errContainer.style.height = newHeightStyle;
-    }
-  }
-
   static get styles() {
     return [
       KdSoftGridStyle,
