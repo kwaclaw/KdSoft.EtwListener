@@ -142,7 +142,9 @@ class TraceSession {
           hosts: ['mongodb.mosaiq.mobi:27017', 'mongodbqa.mosaiq.mobi:27017', 'mongodbshow3.mosaiq.mobi:27017'],
           replicaSet: 'rs0',
           database: 'Dev1',
-          collection: 'logs'
+          collection: 'logs',
+          eventFilterFields: ['Timestamp', 'ProviderName', 'Id', 'Level', 'Keywords', 'Opcode', 'TaskName'],
+          payloadFilterFields: [],
         },
         credentials: {
           database: 'admin',
