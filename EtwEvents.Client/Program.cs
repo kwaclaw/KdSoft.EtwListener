@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
+using Grpc.Net.Client;
 using KdSoft.EtwLogging;
 
 namespace KdSoft.EtwEvents.Client
@@ -32,7 +33,9 @@ return result;
             // Include port of the gRPC server as an application argument
             var port = args.Length > 0 ? args[0] : "50051";
 
-            var channel = new Channel("localhost:" + port, ChannelCredentials.Insecure);
+            var channel = GrpcChannel.ForAddress("localhost:" + port, new GrpcChannelOptions {
+                Credentials = ChannelCredentials.Insecure
+            });
             var client = new EtwListener.EtwListenerClient(channel);
 
             var serverAppSetting = new ProviderSetting {
