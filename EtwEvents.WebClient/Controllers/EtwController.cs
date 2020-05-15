@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
+using KdSoft.EtwEvents.WebClient.EventSinks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -97,7 +99,20 @@ namespace KdSoft.EtwEvents.WebClient
 
         IEventSink CreateEventSink(Models.EventSinkRequest request, EventSinkHolder holder) {
             IEventSink result;
+            var jsonSerializerOptions = _jsonOptions.Value.JsonSerializerOptions;
             switch (request.SinkType) {
+                case nameof(EventSinks.MongoSink):
+                    var optsElement = (JsonElement)request.Options;
+                    var sinkOptions = optsElement.ToObject<MongoSinkOptions>(jsonSerializerOptions);
+                    var credsElement = (JsonElement)request.Credentials;
+                    result = new EventSinks.MongoSink(
+                        request.Name,
+                        sinkOptions,
+                        credsElement.GetProperty("database").GetString(),
+                        credsElement.GetProperty("user").GetString(),
+                        credsElement.GetProperty("password").GetString(),
+                        CancellationToken.None);
+                    break;
                 case nameof(EventSinks.DummySink):
                 default:
                     result = new EventSinks.DummySink(request.Name);
@@ -231,7 +246,7 @@ namespace KdSoft.EtwEvents.WebClient
         }
 
         [HttpPost]
-        public async Task<IActionResult> OpenEventSinks(string sessionName, IEnumerable<Models.EventSinkRequest> sinkRequests) {
+        public async Task<IActionResult> OpenEventSinks(string sessionName, [FromBody]IEnumerable<Models.EventSinkRequest> sinkRequests) {
             if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
                 var traceSession = await sessionEntry.SessionTask.ConfigureAwait(false);
                 var sinkList = sinkRequests.Select(sr => CreateEventSink(sr, traceSession.EventSinks));
@@ -249,7 +264,7 @@ namespace KdSoft.EtwEvents.WebClient
         }
 
         [HttpPost]
-        public async Task<IActionResult> CloseEventSinks(string sessionName, IEnumerable<string> sinkNames) {
+        public async Task<IActionResult> CloseEventSinks(string sessionName, [FromBody]IEnumerable<string> sinkNames) {
             if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
                 var traceSession = await sessionEntry.SessionTask.ConfigureAwait(false);
                 var closedSinks = traceSession.EventSinks.RemoveEventSinks(sinkNames);

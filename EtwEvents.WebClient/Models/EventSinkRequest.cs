@@ -6,6 +6,7 @@ namespace KdSoft.EtwEvents.WebClient.Models
     {
         public string SinkType { get; set; } = nameof(DummySink);
         public string Name { get; set; } = "Dummy";
-        public dynamic Options { get; set; } = new { };
+        public object Options { get; set; } = new { };
+        public object Credentials { get; set; } = new { };
     }
 }

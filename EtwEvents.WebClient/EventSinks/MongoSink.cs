@@ -15,6 +15,7 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
         readonly MongoSinkOptions _sinkInfo;
         readonly FilterDefinitionBuilder<BsonDocument> _fb;
         readonly List<WriteModel<BsonDocument>> _evl;
+        readonly TaskCompletionSource<bool> _tcs;
 
         IMongoDatabase? _db;
         IMongoCollection<BsonDocument>? _coll;
@@ -22,10 +23,13 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
 
         public string Name { get; }
 
-        public Task<bool> RunTask { get; } = Task.FromResult(true);
+        public Task<bool> RunTask { get; }
 
-        public MongoSink(string name, MongoSinkOptions sinkInfo, string dbUser, string dbPwd, CancellationToken cancelToken) {
+        public MongoSink(string name, MongoSinkOptions sinkInfo, string authDb, string dbUser, string dbPwd, CancellationToken cancelToken) {
             this.Name = name;
+
+            _tcs = new TaskCompletionSource<bool>();
+            RunTask = _tcs.Task;
 
             _fb = new FilterDefinitionBuilder<BsonDocument>();
             _evl = new List<WriteModel<BsonDocument>>();
@@ -33,10 +37,9 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
             _sinkInfo = sinkInfo;
 
             try {
-                var mcs = new MongoClientSettings();
-                mcs.Server = new MongoServerAddress(sinkInfo.Host, sinkInfo.Port);
+                var mcs = MongoClientSettings.FromConnectionString(sinkInfo.GetConnectionStringUri(dbUser, dbPwd));
                 mcs.UseTls = true;
-                mcs.Credential = MongoCredential.CreateCredential(sinkInfo.Database, dbUser, dbPwd);
+                mcs.Credential = MongoCredential.CreateCredential(authDb, dbUser, dbPwd);
 
                 _client = new MongoClient(mcs);
 
@@ -56,7 +59,7 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
                 _coll = _db.GetCollection<BsonDocument>(_sinkInfo.Collection);
             }
             catch (Exception ex) {
-                var errStr = $@"Error in {nameof(MongoSink)} initialization encountered:{Environment.NewLine}{ex.Message}";
+                var errStr = $@"Error in {nameof(MongoSink)} initialization:{Environment.NewLine}{ex.Message}";
                 //healthReporter.ReportProblem(errStr, EventFlowContextIdentifiers.Configuration);
                 throw;
             }
@@ -99,7 +102,7 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
                         filter = filter & _fb.Eq(ef, evt.Version);
                         break;
                     default:
-                        throw new ArgumentOutOfRangeException(string.Format("Event filter field not allowed: {0}", ef));
+                        throw new ArgumentOutOfRangeException($"Event filter field not allowed: {ef}");
                 }
             }
 
@@ -134,7 +137,10 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
         }
 
         async Task<bool> FlushAsyncInternal() {
-            _cancelToken.ThrowIfCancellationRequested();
+            if (_cancelToken.IsCancellationRequested) {
+                _tcs.TrySetCanceled(_cancelToken);
+                return false;
+            }
             var bwResult = await _coll!.BulkWriteAsync(_evl, new BulkWriteOptions { IsOrdered = false }).ConfigureAwait(false);
             _evl.Clear();
             //return bwResult;
@@ -143,7 +149,10 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
 
         //TODO maybe use Interlocked and two lists to keep queueing while a bulk write is in process
         public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
-            _cancelToken.ThrowIfCancellationRequested();
+            if (_cancelToken.IsCancellationRequested) {
+                _tcs.TrySetCanceled(_cancelToken);
+                return new ValueTask<bool>(false);
+            }
             var writeModel = FromEvent(evt, sequenceNo);
             _evl.Add(writeModel);
             return new ValueTask<bool>(true);
@@ -158,11 +167,12 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
 
         // Warning: ValueTasks should not be awaited multiple times
         public ValueTask DisposeAsync() {
+            _tcs.TrySetResult(false);
             return default;
         }
 
         public void Dispose() {
-            //
+            _tcs.TrySetResult(false);
         }
 
         public bool Equals([AllowNull] IEventSink other) {
