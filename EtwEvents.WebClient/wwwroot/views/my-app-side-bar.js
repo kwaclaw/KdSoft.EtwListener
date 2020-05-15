@@ -143,6 +143,15 @@ class MyAppSideBar extends LitMvvmElement {
 
   //#endregion
 
+  //#region event sinks
+
+  _openEventSinkClick(e, session) {
+    const spinner = new Spinner(e.currentTarget);
+    session.openEventSink(spinner);
+  }
+
+  //#endregion
+
   //#region overrides
 
   _addDialogHandlers(dlg) {
@@ -328,7 +337,10 @@ class MyAppSideBar extends LitMvvmElement {
                 </div>
               </div>
               <div slot="children">
-                <p class="font-bold">Event Sinks</p>
+                <div class="flex">
+                  <label class="font-bold">${i18n.gettext('Event Sinks')}</label>
+                   <button class="px-1 py-1 ml-auto" @click=${e => this._openEventSinkClick(e, ses)} title="Open Event Sink"><i class="fas fa-lg fa-plus"></i></button>
+                </div>
                 ${ses.state.eventSinks.map(ev => {
                   const evsType = ev.error ? i18n.gettext('Failed') : (ev.isLocal ? i18n.gettext('Local') : i18n.gettext('External'));
                   const evsColor = ev.error ? 'text-red-500' : (ev.isLocal ? 'text-blue-500' : 'inherited');

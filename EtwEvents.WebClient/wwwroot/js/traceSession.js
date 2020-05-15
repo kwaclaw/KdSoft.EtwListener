@@ -132,6 +132,30 @@ class TraceSession {
   testFilter(filter, progress) {
     return this._callFilter('TestCSharpFilter', { host: this.profile.host, csharpFilter: filter || null }, progress);
   }
+
+  async openEventSink(progress) {
+    try {
+      const evr = {
+        sinkType: 'MongoSink',
+        name: 'MongoTest',
+        options: {
+          hosts: ['mongodb.mosaiq.mobi:27017', 'mongodbqa.mosaiq.mobi:27017', 'mongodbshow3.mosaiq.mobi:27017'],
+          replicaSet: 'rs0',
+          database: 'Dev1',
+          collection: 'logs'
+        },
+        credentials: {
+          database: 'admin',
+          user: 'loggy',
+          password: 'chickenshit'
+        }
+      };
+      const data = [evr];
+      await this.fetcher.withProgress(progress).postJson('OpenEventSinks', { sessionName: this._profile.name }, data);
+    } catch (error) {
+      window.myapp.defaultHandleError(error);
+    }
+  }
 }
 
 export default TraceSession;
