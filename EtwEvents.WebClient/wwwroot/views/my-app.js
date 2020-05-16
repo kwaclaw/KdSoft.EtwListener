@@ -45,10 +45,7 @@ class MyApp extends LitMvvmElement {
           /* An attribute value changed on the element in mutation.target; the attribute name is in
              mutation.attributeName and its previous value is in mutation.oldValue */
           if (mutation.attributeName === 'aria-expanded') {
-            const cntr = this.renderRoot.getElementById('container');
-            const wasExpanded = !!mutation.oldValue;
-            if (wasExpanded) cntr.classList.remove('sidebar-expanded');
-            else cntr.classList.add('sidebar-expanded');
+            this._sidebarExpandedChanged(mutation.oldValue);
           }
           break;
         default:
@@ -85,6 +82,48 @@ class MyApp extends LitMvvmElement {
 
   //#endregion
 
+  //#region sidebar
+
+  _sidebarExpandedChanged(oldValue) {
+    const cntr = this.renderRoot.getElementById('container');
+    // remove resize style, as it would interfere with collapsing/expanding
+    cntr.style.gridTemplateColumns = '';
+    const wasExpanded = !!oldValue;
+    if (wasExpanded) cntr.classList.remove('sidebar-expanded');
+    else cntr.classList.add('sidebar-expanded');
+  }
+
+  _sidebarSizeDown(e) {
+    if (e.buttons !== 1) return;
+
+    this._gridContainerEl = this.renderRoot.querySelector('#container.sidebar-expanded');
+    if (!this._gridContainerEl) return;
+
+    //disable expand/collapse transition for resizing
+    this._gridContainerEl.style.transition = 'none';
+
+    e.currentTarget.setPointerCapture(e.pointerId);
+    e.currentTarget.onpointermove = ev => this._sidebarSizeChange(ev);
+  }
+
+  _sidebarSizeChange(e) {
+    if (this._gridContainerEl) {
+      const newColumnsStyle = `${e.x}px 4px 1fr`;
+      this._gridContainerEl.style.gridTemplateColumns = newColumnsStyle;
+    }
+  }
+
+  _sidebarSizeUp(e) {
+    //re-ensable expand/collapse transition
+    this._gridContainerEl.style.transition = '';
+
+    this._gridContainerEl = null;
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    e.currentTarget.onpointermove = null;
+  }
+
+  //#endregion
+
   //#region error handling
 
   _showErrors() {
@@ -94,7 +133,7 @@ class MyApp extends LitMvvmElement {
   _errSizeDown(e) {
     if (e.buttons !== 1) return;
 
-    this._resizeEl = this.renderRoot.getElementById('error-resizable');
+    this._errorResizeEl = this.renderRoot.getElementById('error-resizable');
     this.model.keepErrorsOpen();
 
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -102,18 +141,18 @@ class MyApp extends LitMvvmElement {
   }
 
   _errSizeChange(e) {
-    if (!this._resizeEl) return;
+    if (!this._errorResizeEl) return;
 
-    const h = this._resizeEl.offsetHeight;
+    const h = this._errorResizeEl.offsetHeight;
     const dy = e.offsetY;
     if (e.y === 0 || dy === 0) return;
 
     const newHeightStyle = `${h - dy}px`;
-    this._resizeEl.style.height = newHeightStyle;
+    this._errorResizeEl.style.height = newHeightStyle;
   }
 
   _errSizeUp(e) {
-    this._resizeEl = null;
+    this._errorResizeEl = null;
     e.currentTarget.releasePointerCapture(e.pointerId);
     e.currentTarget.onpointermove = null;
   }
@@ -205,13 +244,13 @@ class MyApp extends LitMvvmElement {
           position: relative;
           height: 100%;
           display: grid;
-          grid-template-columns: 0px 100%;
+          grid-template-columns: 0px 0px 1fr;
           grid-template-rows: 1fr auto;
           transition: grid-template-columns var(--trans-time, 300ms) ease;
         }
 
         #container.sidebar-expanded {
-          grid-template-columns: 30% 70%;
+          grid-template-columns: 30% 4px 1fr;
         }
 
         #sidebar {
@@ -220,8 +259,18 @@ class MyApp extends LitMvvmElement {
           overflow-x: hidden;
         }
 
-        #main {
+        #sidebar-resize {
           grid-column: 2;
+          grid-row: 1/2;
+          /* width: 3px; */
+          border-left: solid gray 1px;
+          border-right: solid gray 1px;
+          height: 100%;
+          cursor: e-resize;
+        }
+
+        #main {
+          grid-column: 3;
           grid-row: 1/2;
           height: 100%;
           position: relative;
@@ -319,6 +368,8 @@ class MyApp extends LitMvvmElement {
 
         <my-app-side-bar id="sidebar" .model=${this.model} aria-expanded="true"></my-app-side-bar>
 
+        <div id="sidebar-resize" @pointerdown=${this._sidebarSizeDown} @pointerup=${this._sidebarSizeUp}></div>
+
         <div id="main">
           <div id="nav-content" class="lg:flex lg:items-center lg:w-auto hidden lg:block pt-6 lg:pt-0 bg-gray-500">
             <ul class="list-reset lg:flex justify-end flex-1 items-center">
@@ -359,6 +410,7 @@ class MyApp extends LitMvvmElement {
             ? nothing
             : html`
               <div id="error-resize" @pointerdown=${this._errSizeDown} @pointerup=${this._errSizeUp}></div>
+
               <div id="error-resizable">
                 <div id="error-grid" class="kds-container px-2 pt-0 pb-2" @pointerdown=${this._errorGridDown}>
                 <button id="error-close" class="p-1 text-gray-500" @click=${this._closeError}>
