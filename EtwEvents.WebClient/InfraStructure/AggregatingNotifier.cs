@@ -4,17 +4,17 @@ using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace KdSoft.EtwEvents.WebClient
+namespace KdSoft.EtwEvents
 {
-    class TraceSessionChangeNotifier
+    public class AggregatingNotifier<T> where T : notnull
     {
-        readonly Func<Task<Models.TraceSessionStates>> _getSessionStates;
+        readonly Func<Task<T>> _getNotificationData;
 
-        public TraceSessionChangeNotifier(Func<Task<Models.TraceSessionStates>> getSessionStates) {
-            this._getSessionStates = getSessionStates;
+        public AggregatingNotifier(Func<Task<T>> getNotificationData) {
+            this._getNotificationData = getNotificationData;
         }
 
-        public async ValueTask PostSessionStateChange() {
+        public async ValueTask PostNotification() {
             var changeEnumerators = _changeEnumerators;
             foreach (var enumerator in changeEnumerators) {
                 try {
@@ -39,30 +39,30 @@ namespace KdSoft.EtwEvents.WebClient
             }
         }
 
-        public IAsyncEnumerable<Models.TraceSessionStates> GetSessionStateChanges() {
+        public IAsyncEnumerable<T> GetNotifications() {
             return new ChangeListener(this);
         }
 
         // https://anthonychu.ca/post/async-streams-dotnet-core-3-iasyncenumerable/
-        class ChangeListener: IAsyncEnumerable<Models.TraceSessionStates>
+        class ChangeListener: IAsyncEnumerable<T>
         {
-            readonly TraceSessionChangeNotifier _changeNotifier;
+            readonly AggregatingNotifier<T> _changeNotifier;
 
-            public ChangeListener(TraceSessionChangeNotifier changeNotifier) {
+            public ChangeListener(AggregatingNotifier<T> changeNotifier) {
                 this._changeNotifier = changeNotifier;
             }
 
-            public IAsyncEnumerator<Models.TraceSessionStates> GetAsyncEnumerator(CancellationToken cancellationToken = default) {
+            public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default) {
                 return new ChangeEnumerator(_changeNotifier, cancellationToken);
             }
         }
 
         // https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-8.0/async-streams
-        class ChangeEnumerator: PendingAsyncEnumerator<Models.TraceSessionStates>
+        class ChangeEnumerator: PendingAsyncEnumerator<T>
         {
-            readonly TraceSessionChangeNotifier _changeNotifier;
+            readonly AggregatingNotifier<T> _changeNotifier;
 
-            public ChangeEnumerator(TraceSessionChangeNotifier changeNotifier, CancellationToken cancelToken) : base(cancelToken) {
+            public ChangeEnumerator(AggregatingNotifier<T> changeNotifier, CancellationToken cancelToken) : base(cancelToken) {
                 this._changeNotifier = changeNotifier;
                 changeNotifier.AddEnumerator(this);
             }
@@ -72,8 +72,8 @@ namespace KdSoft.EtwEvents.WebClient
                 return default;
             }
 
-            protected override Task<Models.TraceSessionStates> GetNext() {
-                return _changeNotifier._getSessionStates();
+            protected override Task<T> GetNext() {
+                return _changeNotifier._getNotificationData();
             }
         }
     }

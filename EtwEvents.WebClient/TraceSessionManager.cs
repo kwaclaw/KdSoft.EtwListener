@@ -20,7 +20,7 @@ namespace KdSoft.EtwEvents.WebClient
         readonly IServiceProvider _services;
         readonly ILoggerFactory _loggerFactory;
         readonly IStringLocalizer<TraceSession> _localizer;
-        readonly TraceSessionChangeNotifier _changeNotifier;
+        readonly AggregatingNotifier<Models.TraceSessionStates> _changeNotifier;
 
         public TraceSessionManager(
             IConfiguration config,
@@ -32,7 +32,7 @@ namespace KdSoft.EtwEvents.WebClient
             this._services = services;
             this._loggerFactory = loggerFactory;
             this._localizer = localizer;
-            this._changeNotifier = new TraceSessionChangeNotifier(GetSessionStates);
+            this._changeNotifier = new AggregatingNotifier<Models.TraceSessionStates>(GetSessionStates);
         }
 
         /// <summary>
@@ -123,11 +123,11 @@ namespace KdSoft.EtwEvents.WebClient
         }
 
         public IAsyncEnumerable<Models.TraceSessionStates> GetSessionStateChanges() {
-            return _changeNotifier.GetSessionStateChanges();
+            return _changeNotifier.GetNotifications();
         }
 
         public ValueTask PostSessionStateChange() {
-            return _changeNotifier.PostSessionStateChange();
+            return _changeNotifier.PostNotification();
         }
     }
 }

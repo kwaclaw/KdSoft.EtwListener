@@ -14,7 +14,7 @@ namespace KdSoft.EtwEvents.WebClient
         readonly EtwEventRequest _etwRequest;
         readonly Timer _flushTimer;
         readonly EventSinkHolder _eventSinks;
-        readonly TraceSessionChangeNotifier _changeNotifier;
+        readonly AggregatingNotifier<Models.TraceSessionStates> _changeNotifier;
 
         AsyncServerStreamingCall<EtwEvent>? _streamingCall;
         int _pushFrequencyMillisecs;
@@ -28,7 +28,7 @@ namespace KdSoft.EtwEvents.WebClient
             EtwEventRequest etwRequest,
             IOptionsMonitor<Models.EventSessionOptions> optionsMonitor,
             EventSinkHolder eventSinks,
-            TraceSessionChangeNotifier changeNotifier
+            AggregatingNotifier<Models.TraceSessionStates> changeNotifier
         ) {
             this._etwClient = etwClient;
             this._etwRequest = etwRequest;
@@ -53,7 +53,7 @@ namespace KdSoft.EtwEvents.WebClient
         async Task ProcessResponse((EtwEvent? evt, long sequenceNo) args) {
             var success = await this._eventSinks.ProcessEvent(args.evt, args.sequenceNo).ConfigureAwait(false);
             if (!success) {
-                await _changeNotifier.PostSessionStateChange().ConfigureAwait(false);
+                await _changeNotifier.PostNotification().ConfigureAwait(false);
             }
 
             if (args.evt == null) {

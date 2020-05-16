@@ -20,7 +20,7 @@ namespace KdSoft.EtwEvents.WebClient
         readonly GrpcChannel _channel;
         readonly EtwListener.EtwListenerClient _etwClient;
         readonly ILogger<TraceSession> _logger;
-        readonly TraceSessionChangeNotifier _changeNotifier;
+        readonly AggregatingNotifier<Models.TraceSessionStates> _changeNotifier;
         readonly IStringLocalizer<TraceSession> _;
         readonly object _syncObj = new object();
 
@@ -35,7 +35,7 @@ namespace KdSoft.EtwEvents.WebClient
             GrpcChannel channel,
             EtwListener.EtwListenerClient etwClient,
             ILogger<TraceSession> logger,
-            TraceSessionChangeNotifier changeNotifier,
+            AggregatingNotifier<Models.TraceSessionStates> changeNotifier,
             IStringLocalizer<TraceSession> localizer
         ) {
             this.Name = name;
@@ -74,7 +74,7 @@ namespace KdSoft.EtwEvents.WebClient
             IReadOnlyList<ProviderSetting> providers,
             Duration lifeTime,
             ILogger<TraceSession> logger,
-            TraceSessionChangeNotifier changeNotifier,
+            AggregatingNotifier<Models.TraceSessionStates> changeNotifier,
             IStringLocalizer<TraceSession> localizer
         ) {
             var channel = CreateChannel(host, clientCertificate);
@@ -159,7 +159,7 @@ namespace KdSoft.EtwEvents.WebClient
         }
 
         public ValueTask PostSessionStateChange() {
-            return _changeNotifier.PostSessionStateChange();
+            return _changeNotifier.PostNotification();
         }
 
         #endregion
