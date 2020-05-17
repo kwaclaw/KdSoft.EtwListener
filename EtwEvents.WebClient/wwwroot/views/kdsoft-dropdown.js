@@ -24,6 +24,9 @@ class KdSoftDropdown extends LitMvvmElement {
     this.scheduler = new Queue(priorities.HIGH);
   }
 
+  get connector() { return this._connector; }
+  set connector(value) { this._connector = value; }
+
   static get styles() {
     return [
       css`
@@ -53,8 +56,14 @@ class KdSoftDropdown extends LitMvvmElement {
     super.connectedCallback();
   }
 
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this.connector) this.connector.disconnectDropdownSlot();
+  }
+
   firstRendered() {
-    //
+    super.firstRendered();
+    if (this.connector) this.connector.connectDropdownSlot();
   }
 
   _hostLostFocus(e) {

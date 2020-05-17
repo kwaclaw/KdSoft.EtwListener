@@ -11,12 +11,18 @@ import * as utils from '../js/utils.js';
 import TraceSessionConfigModel from './trace-session-config-model.js';
 import KdSoftDropdownModel from './kdsoft-dropdown-model.js';
 import KdSoftChecklistModel from './kdsoft-checklist-model.js';
+import KdSoftDropdownChecklistConnector from './kdsoft-dropdown-checklist-connector.js';
 
 class ProviderConfig extends LitMvvmElement {
   constructor() {
     super();
     this.scheduler = new Queue(priorities.HIGH);
     this.levelDropDownModel = new KdSoftDropdownModel();
+    this.levelChecklistConnector = new KdSoftDropdownChecklistConnector(
+      () => this.renderRoot.getElementById('traceLevel'),
+      () => this.renderRoot.getElementById('traceLevelList'),
+      ProviderConfig._getSelectedText
+    );
   }
 
   connectedCallback() {
@@ -25,13 +31,11 @@ class ProviderConfig extends LitMvvmElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    this._levelObservers.forEach(o => unobserve(o));
     this.levelCheckListModel = null;
   }
 
   firstRendered() {
     super.firstRendered();
-    this._levelObservers = this.connectLevelControls(this.levelDropDownModel, this.levelCheckListModel, 'traceLevelList', true);
   }
 
   static _getSelectedText(clm) {
@@ -41,33 +45,6 @@ class ProviderConfig extends LitMvvmElement {
       else result = selEntry.item.name;
     }
     return result;
-  }
-
-  connectLevelControls(dropDownModel, checkListModel, checkListId, singleSelect) {
-    const checkList = this.renderRoot.getElementById(checkListId);
-    // react to selection changes in checklist
-    const selectObserver = observe(() => {
-      dropDownModel.selectedText = ProviderConfig._getSelectedText(checkListModel);
-      // single select: always close up on selecting an item
-      if (singleSelect) checkList.blur();
-      const selEntry = utils.first(checkListModel.selectedEntries);
-      if (selEntry) { this.model.level = selEntry.item.value; }
-    });
-
-    // react to search text changes in dropdown
-    const searchObserver = observe(() => {
-      const regex = new RegExp(dropDownModel.searchText, 'i');
-      checkListModel.filter = item => regex.test(item.name);
-    });
-
-    const droppedObserver = observe(() => {
-      if (dropDownModel.dropped) {
-        // queue this at the end of updates to be rendered correctly
-        checkList.scheduler.add(() => checkList.initView());
-      }
-    });
-
-    return [selectObserver, searchObserver, droppedObserver];
   }
 
   expand() {
@@ -156,10 +133,10 @@ class ProviderConfig extends LitMvvmElement {
 
   /* eslint-disable indent, no-else-return */
 
-  render() {
-    if (!this._firstRendered) {
-      // first time we know that this.model is defined for certain
-      this.levelCheckListModel = new KdSoftCheckListModel(
+  shouldRender() {
+    const result = !!this.model;
+    if (result && !this.levelCheckListModel) {
+      this.levelCheckListModel = new KdSoftChecklistModel(
         TraceSessionConfigModel.traceLevelList,
         [this.model.level || 0],
         false,
@@ -167,7 +144,10 @@ class ProviderConfig extends LitMvvmElement {
         item => item.value
       );
     }
+    return result;
+  }
 
+  render() {
     const expanded = this.model.expanded || false;
     const borderColor = expanded ? 'border-indigo-500' : 'border-transparent';
     const htColor = expanded ? 'text-indigo-700' : 'text-gray-700';
@@ -198,7 +178,7 @@ class ProviderConfig extends LitMvvmElement {
             <div class="provider pl-8 pb-1">
               <fieldset>
                 <label class="text-gray-600" for="level">Level</label>
-                <kdsoft-dropdown id="traceLevel" class="py-0" .model=${this.levelDropDownModel}>
+                <kdsoft-dropdown id="traceLevel" class="py-0" .model=${this.levelDropDownModel} .connector=${this.levelChecklistConnector}>
                   <kdsoft-checklist id="traceLevelList" class="text-black" .model=${this.levelCheckListModel}></kdsoft-checklist>
                 </kdsoft-dropdown>
               </fieldset>
