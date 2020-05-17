@@ -51,7 +51,7 @@ function iterateFilter(items, filter) {
 
 const _multiSelect = new WeakMap();
 
-class KdSoftCheckListModel {
+class KdSoftChecklistModel {
   constructor(
     items = [],
     selectedIndexes = [],
@@ -161,4 +161,4 @@ class KdSoftCheckListModel {
   }
 }
 
-export default KdSoftCheckListModel;
+export default KdSoftChecklistModel;

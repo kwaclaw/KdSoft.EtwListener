@@ -9,14 +9,14 @@ import './kdsoft-dropdown.js';
 import './kdsoft-checklist.js';
 import * as utils from '../js/utils.js';
 import TraceSessionConfigModel from './trace-session-config-model.js';
-import KdSoftDropDownModel from './kdsoft-dropdown-model.js';
-import KdSoftCheckListModel from './kdsoft-checklist-model.js';
+import KdSoftDropdownModel from './kdsoft-dropdown-model.js';
+import KdSoftChecklistModel from './kdsoft-checklist-model.js';
 
 class ProviderConfig extends LitMvvmElement {
   constructor() {
     super();
     this.scheduler = new Queue(priorities.HIGH);
-    this.levelDropDownModel = new KdSoftDropDownModel();
+    this.levelDropDownModel = new KdSoftDropdownModel();
   }
 
   connectedCallback() {

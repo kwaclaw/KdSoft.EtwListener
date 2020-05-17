@@ -1,7 +1,7 @@
 
 import { observable } from '../lib/@nx-js/observer-util.js';
 
-class KdSoftDropDownModel {
+class KdSoftDropdownModel {
   constructor(selectedText = '') {
     this.selectedText = selectedText;
     this.searchText = '';
@@ -10,4 +10,4 @@ class KdSoftDropDownModel {
   }
 }
 
-export default KdSoftDropDownModel;
+export default KdSoftDropdownModel;

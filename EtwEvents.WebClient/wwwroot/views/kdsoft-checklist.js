@@ -19,7 +19,7 @@ const classList = {
 
 // and: https://web.dev/more-capable-form-controls/
 
-class KdSoftCheckList extends LitMvvmElement {
+class KdSoftChecklist extends LitMvvmElement {
   // turns this into a form-associated custom element: https://html.spec.whatwg.org/multipage/custom-elements.html#custom-elements-face-example
   static get formAssociated() { return true; }
 
@@ -359,4 +359,4 @@ class KdSoftCheckList extends LitMvvmElement {
   }
 }
 
-window.customElements.define('kdsoft-checklist', KdSoftCheckList);
+window.customElements.define('kdsoft-checklist', KdSoftChecklist);

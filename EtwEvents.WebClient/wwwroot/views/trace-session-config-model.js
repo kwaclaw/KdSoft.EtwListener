@@ -6,7 +6,7 @@ import { observable, observe } from '../lib/@nx-js/observer-util.js';
 import * as utils from '../js/utils.js';
 import TraceSessionProfile from '../js/traceSessionProfile.js';
 import FilterCarouselModel from './filter-carousel-model.js';
-import KdSoftCheckListModel from './kdsoft-checklist-model.js';
+import KdSoftChecklistModel from './kdsoft-checklist-model.js';
 
 const traceLevelList = () => [
   { name: i18n.__('Always'), value: 0 },
@@ -34,7 +34,7 @@ class TraceSessionConfigModel extends TraceSessionProfile {
     this.filterCarousel = new FilterCarouselModel(profile.filters, profile.activeFilterIndex);
     this.activeSection = 'general';
 
-    this.standardColumnCheckList = new KdSoftCheckListModel(
+    this.standardColumnCheckList = new KdSoftChecklistModel(
       this.getStandardColumnList(),
       this.standardColumns,
       true,
@@ -42,7 +42,7 @@ class TraceSessionConfigModel extends TraceSessionProfile {
       item => item.name
     );
 
-    this.payloadColumnCheckList = new KdSoftCheckListModel(
+    this.payloadColumnCheckList = new KdSoftChecklistModel(
       this.payloadColumnList,
       this.payloadColumns,
       true,
