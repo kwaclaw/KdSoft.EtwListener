@@ -75,7 +75,7 @@ class TraceSessionConfigModel extends TraceSessionProfile {
     return result;
   }
 
-  exportProfile(savePath) {
+  exportProfile() {
     const profileToExport = new TraceSessionProfile();
     utils.setTargetProperties(profileToExport, this);
     const profileString = JSON.stringify(profileToExport, null, 2);
@@ -85,7 +85,7 @@ class TraceSessionConfigModel extends TraceSessionProfile {
     try {
       a.style.display = 'none';
       a.href = profileURL;
-      a.download = `${savePath || ''}${profileToExport.name}.json`;
+      a.download = `${profileToExport.name}.json`;
       document.body.appendChild(a);
       a.click();
     } finally {
