@@ -50,10 +50,7 @@ function formSaveHandler(e) {
 class MyAppSideBar extends LitMvvmElement {
   constructor() {
     super();
-    // setting model property here because we cannot reliable set it from a non-lit-html rendered HTML page
     this.scheduler = new Queue(priorities.HIGH);
-    // we must assign the model *after* the scheduler, or assign it externally
-    // this.model = new MyAppModel(); --
 
     // this allows us to unregister the event handlers, because we maintain references to their instances
     this._formDoneHandler = formDoneHandler.bind(this);
@@ -304,7 +301,7 @@ class MyAppSideBar extends LitMvvmElement {
           <!-- </div> -->
         </div>
         <div class="flex pr-1 text-white bg-gray-500">
-          <label class="pl-3 font-bold text-xl">${i18n.gettext('Profiles')}</label>
+          <label class="pl-3 font-bold text-xl">${i18n.gettext('Session Profiles')}</label>
           <input id="import-profiles" type="file" @change=${this._importProfilesSelected} multiple class="hidden"></input>
           <button class="px-1 py-1 ml-auto" @click=${this._importProfilesClick} title="Import Profiles"><i class="fas fa-lg fa-file-import"></i></button>
         </div>
