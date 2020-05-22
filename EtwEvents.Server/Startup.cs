@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+
+#pragma warning disable CA1822 // Mark members as static
+#pragma warning disable CA1801 // Review unused parameters
 
 namespace KdSoft.EtwEvents.Server
 {
@@ -21,7 +23,7 @@ namespace KdSoft.EtwEvents.Server
         public void ConfigureServices(IServiceCollection services) {
             // NOTE: None of this seems to work with Grpc, OnCertificateValidated is never called
             //       and consequently we cannot use the standard Authorize attribute and authorization policies.
-            //       Therefore we are using an interceptor instead, which is likely more efficient - see above.
+            //       Therefore we are using an interceptor instead, which is likely more efficient.
 
             //services.AddAuthorization();
             //services.AddAuthentication(CertificateAuthenticationDefaults.AuthenticationScheme).AddCertificate(options => {
@@ -62,12 +64,10 @@ namespace KdSoft.EtwEvents.Server
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-#pragma warning disable CA1822 // Mark members as static
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
-#pragma warning restore CA1822 // Mark members as static
-            if (env.IsDevelopment()) {
-                app.UseDeveloperExceptionPage();
-            }
+            //if (env.IsDevelopment()) {
+            //    app.UseDeveloperExceptionPage();
+            //}
 
             app.UseRouting();
 

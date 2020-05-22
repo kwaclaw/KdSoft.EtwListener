@@ -17,19 +17,16 @@ namespace KdSoft.EtwEvents.WebClient
 {
     class TraceSessionManager: ConcurrentTimedLifeCycleManager<string, TraceSessionEntry>
     {
-        readonly IServiceProvider _services;
         readonly ILoggerFactory _loggerFactory;
         readonly IStringLocalizer<TraceSession> _localizer;
         readonly AggregatingNotifier<Models.TraceSessionStates> _changeNotifier;
 
         public TraceSessionManager(
             IConfiguration config,
-            IServiceProvider services,
             ILoggerFactory loggerFactory,
             IStringLocalizer<TraceSession> localizer
         ) : base(TimeSpan.TryParse(config?["ReapPeriod"], out var reapPeriod) ? reapPeriod : TimeSpan.FromMinutes(5), StringComparer.CurrentCultureIgnoreCase)
         {
-            this._services = services;
             this._loggerFactory = loggerFactory;
             this._localizer = localizer;
             this._changeNotifier = new AggregatingNotifier<Models.TraceSessionStates>(GetSessionStates);
