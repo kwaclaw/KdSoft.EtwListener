@@ -14,9 +14,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Google.Protobuf" Version="3.12.1" />
+    <PackageReference Include="Google.Protobuf" Version="3.12.2" />
     <PackageReference Include="Grpc.Tools" Version="2.29.0" PrivateAssets="All" />
-    <PackageReference Include="Grpc.AspNetCore.Server" Version="2.28.0" />
+    <PackageReference Include="Grpc.AspNetCore.Server" Version="2.29.0" />
     <PackageReference Include="KdSoft.Data.Models.Shared" Version="1.1.0" />
     <PackageReference Include="KdSoft.Utils.Portable" Version="3.6.3" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Certificate" Version="3.1.4" />
@@ -25,7 +25,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="2.0.55" />
+    <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="2.0.56" />
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="3.1.4" />
   </ItemGroup>
 
