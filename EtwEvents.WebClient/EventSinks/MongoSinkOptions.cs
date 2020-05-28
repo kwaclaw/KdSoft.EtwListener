@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
+using MongoDB.Driver;
+using MongoDB.Driver.Core.Configuration;
 
 namespace KdSoft.EtwEvents.WebClient.EventSinks
 {
@@ -32,10 +35,27 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
 
         public ImmutableArray<string> PayloadFilterFields { get; set; }
 
-        public string GetConnectionStringUri(string user, string pwd) {
+        public Uri GetConnectionStringUri(string user, string pwd) {
             var hostString = string.Join(',', Hosts);
             var replSetString = string.IsNullOrWhiteSpace(ReplicaSet) ? "" : $"?replicaSet={ReplicaSet}";
-            return $"mongodb://{user}:{pwd}@{hostString}/{Database}{replSetString}";
+            var ub = new UriBuilder("mongodb", hostString);
+            ub.UserName = user;
+            ub.Password = pwd;
+            ub.Path = Database;
+            ub.Query = replSetString;
+            return ub.Uri;
+            //return $"mongodb://{user}:{pwd}@{hostString}/{Database}{replSetString}";
+        }
+
+        public MongoUrl GetConnectionUrl(string user, string pwd) {
+            var mub = new MongoUrlBuilder();
+            mub.Scheme = ConnectionStringScheme.MongoDB;
+            mub.Servers = Hosts.Select(h => new MongoServerAddress(h));
+            mub.ReplicaSetName = ReplicaSet;
+            mub.Username = user;
+            mub.Password = pwd;
+            mub.DatabaseName = Database;
+            return mub.ToMongoUrl();
         }
 
         public string GetHostParameter() {

@@ -37,7 +37,7 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
             _sinkInfo = sinkInfo;
 
             try {
-                var mcs = MongoClientSettings.FromConnectionString(sinkInfo.GetConnectionStringUri(dbUser, dbPwd));
+                var mcs = MongoClientSettings.FromUrl(sinkInfo.GetConnectionUrl(dbUser, dbPwd));
                 mcs.UseTls = true;
                 mcs.Credential = MongoCredential.CreateCredential(authDb, dbUser, dbPwd);
 
