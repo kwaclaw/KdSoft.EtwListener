@@ -178,17 +178,13 @@ class MyApp extends LitMvvmElement {
 
   //#region overrides
 
-  connectedCallback() {
-    super.connectedCallback();
-  }
+  /* eslint-disable indent, no-else-return */
 
   disconnectedCallback() {
     super.disconnectedCallback();
     this.model.unobserveVisibleSessions();
     this._sidebarObserver.disconnect();
   }
-
-  /* eslint-disable indent, no-else-return */
 
   shouldRender() {
     return !!this.model;

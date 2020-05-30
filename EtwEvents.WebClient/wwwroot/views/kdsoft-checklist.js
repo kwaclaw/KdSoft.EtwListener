@@ -19,7 +19,9 @@ const classList = {
 // and: https://web.dev/more-capable-form-controls/
 
 class KdSoftChecklist extends LitMvvmElement {
-  // turns this into a form-associated custom element: https://html.spec.whatwg.org/multipage/custom-elements.html#custom-elements-face-example
+  // turns this into a form-associated custom element:
+  // https://html.spec.whatwg.org/multipage/custom-elements.html#custom-elements-face-example
+  // and: https://web.dev/more-capable-form-controls/
   static get formAssociated() { return true; }
 
   constructor() {
@@ -64,6 +66,8 @@ class KdSoftChecklist extends LitMvvmElement {
     return [...super.observedAttributes, 'arrows', 'allow-drag-drop'];
   }
 
+  //#region click and key events
+
   _checkboxClicked(e) {
     e.preventDefault();
     // want to keep dropped list open for multiple selections
@@ -82,6 +86,54 @@ class KdSoftChecklist extends LitMvvmElement {
       this.model.selectIndex(itemDiv.dataset.itemIndex, true);
     }
   }
+
+  _upClick(e) {
+    const itemDiv = e.currentTarget.closest('.list-item');
+    const itemIndex = Number(itemDiv.dataset.itemIndex);
+    this.model.moveItem(itemIndex, itemIndex - 1);
+  }
+
+  _downClick(e) {
+    const itemDiv = e.currentTarget.closest('.list-item');
+    const itemIndex = Number(itemDiv.dataset.itemIndex);
+    this.model.moveItem(itemIndex, itemIndex + 1);
+  }
+
+  _itemListKeydown(e) {
+    switch (e.key) {
+      case 'ArrowDown':
+      case 'ArrowRight': {
+        const nextSib = e.target.closest('li').nextElementSibling;
+        if (nextSib) nextSib.focus();
+        break;
+      }
+      case 'ArrowUp':
+      case 'ArrowLeft': {
+        const prevSib = e.target.closest('li').previousElementSibling;
+        if (prevSib) prevSib.focus();
+        break;
+      }
+      case 'Enter': {
+        const itemNode = e.target.closest('[data-item-index]');
+        this.model.selectIndex(itemNode.dataset.itemIndex, true);
+        break;
+      }
+      case ' ': {
+        const itemNode = e.target.closest('[data-item-index]');
+        const checkbox = itemNode.querySelector('input[type="checkbox"]');
+        this.model.selectIndex(itemNode.dataset.itemIndex, !checkbox.checked);
+        break;
+      }
+      default:
+        // ignore, let bubble up
+        return;
+    }
+    e.preventDefault();
+  }
+
+  //#endregion
+
+  //#region drag and drop
 
   _dragStart(e) {
     e.dataTransfer.setData('text/plain', e.currentTarget.dataset.itemIndex);
@@ -141,49 +193,7 @@ class KdSoftChecklist extends LitMvvmElement {
     });
   }
 
-  _upClick(e) {
-    const itemDiv = e.currentTarget.closest('.list-item');
-    const itemIndex = Number(itemDiv.dataset.itemIndex);
-    this.model.moveItem(itemIndex, itemIndex - 1);
-  }
-
-  _downClick(e) {
-    const itemDiv = e.currentTarget.closest('.list-item');
-    const itemIndex = Number(itemDiv.dataset.itemIndex);
-    this.model.moveItem(itemIndex, itemIndex + 1);
-  }
-
-  _itemListKeydown(e) {
-    switch (e.key) {
-      case 'ArrowDown':
-      case 'ArrowRight': {
-        const nextSib = e.target.closest('li').nextElementSibling;
-        if (nextSib) nextSib.focus();
-        break;
-      }
-      case 'ArrowUp':
-      case 'ArrowLeft': {
-        const prevSib = e.target.closest('li').previousElementSibling;
-        if (prevSib) prevSib.focus();
-        break;
-      }
-      case 'Enter': {
-        const itemNode = e.target.closest('[data-item-index]');
-        this.model.selectIndex(itemNode.dataset.itemIndex, true);
-        break;
-      }
-      case ' ': {
-        const itemNode = e.target.closest('[data-item-index]');
-        const checkbox = itemNode.querySelector('input[type="checkbox"]');
-        this.model.selectIndex(itemNode.dataset.itemIndex, !checkbox.checked);
-        break;
-      }
-      default:
-        // ignore, let bubble up
-        return;
-    }
-    e.preventDefault();
-  }
+  //#endregion
 
   // NOTE: the checked status of a checkbox may not be properly rendered when the checked attribute is set,
   //       because that applies to inital rendering only. However, setting the checked property works!
@@ -210,12 +220,12 @@ class KdSoftChecklist extends LitMvvmElement {
     const listItemContent = html`
       <div class="w-full inline-flex items-baseline">
         ${hasArrows
-          ? html`
+        ? html`
             <span class="leading-none cursor-pointer my-auto mr-1" @click=${this._upClick}><i class=${classMap(upArrowClasses)}></i></span>
             <span class="leading-none cursor-pointer my-auto mr-2" @click=${this._downClick}><i class=${classMap(downArrowClasses)}></i></span>
           `
-          : nothing
-        }
+        : nothing
+      }
         ${showCheckboxes ? this._checkBoxTemplate(this.model, item, indx) : nothing}
         ${this.model.getItemTemplate(item)}
       </div>
@@ -254,9 +264,21 @@ class KdSoftChecklist extends LitMvvmElement {
     return result;
   }
 
-  // model may still be undefined
-  connectedCallback() {
-    super.connectedCallback();
+  // scrolls to first selected item
+  initView() {
+    if (!this.model) return;
+
+    let firstSelEntry = null;
+    for (const selEntry of this.model.selectedEntries) {
+      firstSelEntry = selEntry;
+      break;
+    }
+    if (firstSelEntry) {
+      const firstSelected = this.shadowRoot.querySelector(`.list-item[data-item-index="${firstSelEntry.index}"]`);
+      //firstSelected.scrollIntoView(true); --  does not work in ShadowDom
+      const op = firstSelected.offsetParent;
+      if (op) op.scrollTop = firstSelected.offsetTop;
+    }
   }
 
   disconnectedCallback() {
@@ -338,23 +360,6 @@ class KdSoftChecklist extends LitMvvmElement {
       </div>
     `;
     return result;
-  }
-
-  // scrolls to first selected item
-  initView() {
-    if (!this.model) return;
-
-    let firstSelEntry = null;
-    for (const selEntry of this.model.selectedEntries) {
-      firstSelEntry = selEntry;
-      break;
-    }
-    if (firstSelEntry) {
-      const firstSelected = this.shadowRoot.querySelector(`.list-item[data-item-index="${firstSelEntry.index}"]`);
-      //firstSelected.scrollIntoView(true); --  does not work in ShadowDom
-      const op = firstSelected.offsetParent;
-      if (op) op.scrollTop = firstSelected.offsetTop;
-    }
   }
 }
 

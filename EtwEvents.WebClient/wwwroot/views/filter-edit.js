@@ -208,6 +208,16 @@ class FilterEdit extends LitMvvmElement {
     this.model.filter = e.currentTarget.innerText;
   }
 
+  //TODO intercept tab key in code div
+
+  rendered() {
+    const filter = this.model.filter;
+    const formattedFilter = formatFilter(filter, this.model.diagnostics);
+    const codeElement = this.renderRoot.getElementById('code');
+    codeElement.innerHTML = formattedFilter;
+    codeElement.classList.toggle('invalid', this.model.diagnostics.length);
+  }
+
   static get styles() {
     return [
       css`
@@ -243,16 +253,6 @@ class FilterEdit extends LitMvvmElement {
         }
       `,
     ];
-  }
-
-  //TODO intercept tab key in code div
-
-  rendered() {
-    const filter = this.model.filter;
-    const formattedFilter = formatFilter(filter, this.model.diagnostics);
-    const codeElement = this.renderRoot.getElementById('code');
-    codeElement.innerHTML = formattedFilter;
-    codeElement.classList.toggle('invalid', this.model.diagnostics.length);
   }
 
   render() {

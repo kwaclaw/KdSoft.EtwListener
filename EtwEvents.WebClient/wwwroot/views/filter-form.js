@@ -45,6 +45,10 @@ class FilterForm extends LitMvvmElement {
     this.dispatchEvent(evt);
   }
 
+  shouldRender() {
+    return !!this.model;
+  }
+
   static get styles() {
     return [
       css`
@@ -53,10 +57,6 @@ class FilterForm extends LitMvvmElement {
         }
       `,
     ];
-  }
-
-  shouldRender() {
-    return !!this.model;
   }
 
   render() {

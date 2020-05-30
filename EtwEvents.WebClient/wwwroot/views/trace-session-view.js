@@ -31,10 +31,6 @@ class TraceSessionView extends LitMvvmElement {
     this.scheduler = new BatchScheduler(100);
   }
 
-  connectedCallback() {
-    super.connectedCallback();
-  }
-
   _gridClick(e) {
     //e.preventDefault();
     const row = e.target.closest('.kds-row');
@@ -42,6 +38,25 @@ class TraceSessionView extends LitMvvmElement {
     const payload = row.querySelector('.payload');
     if (!payload) return;
     payload.toggleAttribute('hidden');
+  }
+
+  /* eslint-disable indent, no-else-return */
+
+  shouldRender() {
+    return !!this.model;
+  }
+
+  beforeFirstRender() {
+    const ts = this.model;
+
+    const sclist = ts.profile.getStandardColumnList();
+    this._standardCols = ts.profile.standardColumns.map(col => sclist[col]);
+    this._expandPayload = this._standardCols.findIndex(col => col.name === 'payload') < 0;
+
+    const pclist = ts.profile.payloadColumnList;
+    this._payloadCols = ts.profile.payloadColumns.map(pcol => pclist[pcol]);
+
+    this._colTemplate = Array(this._standardCols.length + this._payloadCols.length).fill('auto').join(' ');
   }
 
   rendered() {
@@ -81,29 +96,6 @@ class TraceSessionView extends LitMvvmElement {
     ];
   }
 
-  /* eslint-disable indent, no-else-return */
-
-  shouldRender() {
-    return !!this.model;
-  }
-
-  beforeFirstRender() {
-    const ts = this.model;
-
-    const sclist = ts.profile.getStandardColumnList();
-    this._standardCols = ts.profile.standardColumns.map(col => sclist[col]);
-    this._expandPayload = this._standardCols.findIndex(col => col.name === 'payload') < 0;
-
-    const pclist = ts.profile.payloadColumnList;
-    this._payloadCols = ts.profile.payloadColumns.map(pcol => pclist[pcol]);
-
-    this._colTemplate = Array(this._standardCols.length + this._payloadCols.length).fill('auto').join(' ');
-  }
-
-  firstRendered() {
-    //
-  }
-
   render() {
     const ts = this.model;
 
@@ -126,18 +118,18 @@ class TraceSessionView extends LitMvvmElement {
             ${this._payloadCols.map(col => html`<div class="kds-header payload">${col.label}</div>`)}
           </div>
           ${repeat(
-            itemIterator,
-            item => item.sequenceNo,
-            (item, indx) => {
-              return html`
+      itemIterator,
+      item => item.sequenceNo,
+      (item, indx) => {
+        return html`
                 <div class="kds-row">
                   ${this._standardCols.map(col => html`<div>${renderColumn(item[col.name], col.type)}</div>`)}
                   ${this._payloadCols.map(col => html`<div>${renderColumn(item.payload[col.name], col.type)}</div>`)}
                   ${this._expandPayload ? html`<div class="payload" hidden><pre>${JSON.stringify(item.payload, null, 2)}</pre></div>` : nothing}
                 </div>
               `;
-            }
-          )}
+      }
+    )}
         </div>
       </div>
     `;

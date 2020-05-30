@@ -49,8 +49,10 @@ class FilterCarousel extends LitMvvmElement {
     this.model.activeFilterIndex = Number(filterIndex);
   }
 
-  disconnectedCallback() {
-    super.disconnectedCallback();
+  /* eslint-disable indent, no-else-return */
+
+  shouldRender() {
+    return !!this.model;
   }
 
   rendered() {
@@ -101,12 +103,6 @@ class FilterCarousel extends LitMvvmElement {
         }
       `,
     ];
-  }
-
-  /* eslint-disable indent, no-else-return */
-
-  shouldRender() {
-    return !!this.model;
   }
 
   render() {

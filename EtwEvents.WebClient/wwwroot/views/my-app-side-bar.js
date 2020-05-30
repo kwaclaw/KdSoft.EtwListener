@@ -144,8 +144,8 @@ class MyAppSideBar extends LitMvvmElement {
   //#region event sinks
 
   _openEventSinkClick(e, session) {
-     const spinner = new Spinner(e.currentTarget);
-     session.openEventSink(spinner);
+    const spinner = new Spinner(e.currentTarget);
+    session.openEventSink(spinner);
 
     //const configModel = new EventSinkConfigModel(0);
 
@@ -169,9 +169,7 @@ class MyAppSideBar extends LitMvvmElement {
     dlg.removeEventListener('kdsoft-save', this._formSaveHandler);
   }
 
-  connectedCallback() {
-    super.connectedCallback();
-  }
+  /* eslint-disable indent, no-else-return */
 
   disconnectedCallback() {
     super.disconnectedCallback();
@@ -181,6 +179,32 @@ class MyAppSideBar extends LitMvvmElement {
     this._removeDialogHandlers(this.renderRoot.getElementById('dlg-filter'));
     this._removeDialogHandlers(this.renderRoot.getElementById('dlg-config'));
     this._removeDialogHandlers(this.renderRoot.getElementById('dlg-event-sink'));
+  }
+
+  shouldRender() {
+    return !!this.model;
+  }
+
+  // called at most once every time after connectedCallback was executed
+  beforeFirstRender() {
+    this.appTitle = this.getAttribute('appTitle');
+    this.model.observeVisibleSessions();
+  }
+
+  firstRendered() {
+    const filterDlg = this.renderRoot.getElementById('dlg-filter');
+    const configDlg = this.renderRoot.getElementById('dlg-config');
+    const eventSinkDlg = this.renderRoot.getElementById('dlg-event-sink');
+
+    if (!utils.html5DialogSupported) {
+      dialogPolyfill.registerDialog(filterDlg);
+      dialogPolyfill.registerDialog(configDlg);
+      dialogPolyfill.registerDialog(eventSinkDlg);
+    }
+
+    this._addDialogHandlers(filterDlg);
+    this._addDialogHandlers(configDlg);
+    this._addDialogHandlers(eventSinkDlg);
   }
 
   static get styles() {
@@ -261,34 +285,6 @@ class MyAppSideBar extends LitMvvmElement {
     ];
   }
 
-  /* eslint-disable indent, no-else-return */
-
-  shouldRender() {
-    return !!this.model;
-  }
-
-  // called at most once every time after connectedCallback was executed
-  beforeFirstRender() {
-    this.appTitle = this.getAttribute('appTitle');
-    this.model.observeVisibleSessions();
-  }
-
-  firstRendered() {
-    const filterDlg = this.renderRoot.getElementById('dlg-filter');
-    const configDlg = this.renderRoot.getElementById('dlg-config');
-    const eventSinkDlg = this.renderRoot.getElementById('dlg-event-sink');
-
-    if (!utils.html5DialogSupported) {
-      dialogPolyfill.registerDialog(filterDlg);
-      dialogPolyfill.registerDialog(configDlg);
-      dialogPolyfill.registerDialog(eventSinkDlg);
-    }
-
-    this._addDialogHandlers(filterDlg);
-    this._addDialogHandlers(configDlg);
-    this._addDialogHandlers(eventSinkDlg);
-  }
-
   render() {
     const traceSessionList = [...this.model.traceSessions.values()];
     const dialogStyle = utils.html5DialogSupported
@@ -334,14 +330,14 @@ class MyAppSideBar extends LitMvvmElement {
               </div>
             </div>
           `)
-        }
+      }
         <div class="flex text-white bg-gray-500">
           <label class="pl-3 font-bold text-xl">${i18n.gettext('Sessions')}</label>
         </div>
         <div>
         ${traceSessionList.map(ses => {
-          const eventsClasses = ses.state.isRunning ? classList.stopBtn : classList.startBtn;
-          return html`
+        const eventsClasses = ses.state.isRunning ? classList.stopBtn : classList.startBtn;
+        return html`
             <kdsoft-tree-node>
               <div slot="content" class="flex flex-wrap">
                 <label class="font-bold text-xl">${ses.name}</label>
@@ -358,9 +354,9 @@ class MyAppSideBar extends LitMvvmElement {
                    <button class="px-1 py-1 ml-auto" @click=${e => this._openEventSinkClick(e, ses)} title="Open Event Sink"><i class="fas fa-lg fa-plus"></i></button>
                 </div>
                 ${ses.state.eventSinks.map(ev => {
-                  const evsType = ev.error ? i18n.gettext('Failed') : (ev.isLocal ? i18n.gettext('Local') : i18n.gettext('External'));
-                  const evsColor = ev.error ? 'text-red-500' : (ev.isLocal ? 'text-blue-500' : 'inherited');
-                  return html`
+          const evsType = ev.error ? i18n.gettext('Failed') : (ev.isLocal ? i18n.gettext('Local') : i18n.gettext('External'));
+          const evsColor = ev.error ? 'text-red-500' : (ev.isLocal ? 'text-blue-500' : 'inherited');
+          return html`
                     <kdsoft-tree-node class="session-details">
                       <div slot="content" class="truncate ${evsColor}">
                         <i class="fas fa-lg fa-eye"></i> ${evsType}
@@ -371,7 +367,7 @@ class MyAppSideBar extends LitMvvmElement {
                       </div>
                     </kdsoft-tree-node>
                   `;
-                })}
+        })}
                 <p class="font-bold mt-3">Providers</p>
                 ${ses.state.enabledProviders.map(ep => html`
                   <kdsoft-tree-node class="session-details">
@@ -385,7 +381,7 @@ class MyAppSideBar extends LitMvvmElement {
               </div>
             </kdsoft-tree-node>
           `;
-        })}
+      })}
         </div>
       </nav>
 
@@ -400,6 +396,8 @@ class MyAppSideBar extends LitMvvmElement {
       </dialog>
     `;
   }
+
+  //#endregion
 }
 
 window.customElements.define('my-app-side-bar', MyAppSideBar);

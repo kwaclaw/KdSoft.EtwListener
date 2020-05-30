@@ -24,19 +24,6 @@ class ProviderConfig extends LitMvvmElement {
     );
   }
 
-  connectedCallback() {
-    super.connectedCallback();
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this.levelChecklistModel = null;
-  }
-
-  firstRendered() {
-    super.firstRendered();
-  }
-
   static _getSelectedText(checkListModel) {
     let result = null;
     for (const selEntry of checkListModel.selectedEntries) {
@@ -92,6 +79,33 @@ class ProviderConfig extends LitMvvmElement {
     this.model[e.target.name] = val;
   }
 
+  /* eslint-disable indent, no-else-return */
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.levelChecklistModel = null;
+  }
+
+  shouldRender() {
+    return !!this.model;
+  }
+
+  firstRendered() {
+    super.firstRendered();
+  }
+
+  beforeFirstRender() {
+    if (!this.levelChecklistModel) {
+      this.levelChecklistModel = new KdSoftChecklistModel(
+        TraceSessionConfigModel.traceLevelList,
+        [this.model.level || 0],
+        false,
+        item => html`${item.name}`,
+        item => item.value
+      );
+    }
+  }
+
   static get styles() {
     return [
       css`
@@ -128,24 +142,6 @@ class ProviderConfig extends LitMvvmElement {
         }
       `,
     ];
-  }
-
-  /* eslint-disable indent, no-else-return */
-
-  shouldRender() {
-    return !!this.model;
-  }
-
-  beforeFirstRender() {
-    if (!this.levelChecklistModel) {
-      this.levelChecklistModel = new KdSoftChecklistModel(
-        TraceSessionConfigModel.traceLevelList,
-        [this.model.level || 0],
-        false,
-        item => html`${item.name}`,
-        item => item.value
-      );
-    }
   }
 
   render() {

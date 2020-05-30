@@ -46,52 +46,6 @@ class KdSoftTreeNode extends LitMvvmElement {
     return [...super.observedAttributes, 'aria-expanded'];
   }
 
-  static get styles() {
-    return [
-      css`
-        #container {
-          display: grid;
-          grid-template-columns: max-content minmax(0, 1fr);
-          padding: var(--content-padding, 5px);
-        }
-
-        #container.droppable {
-          outline: 2px solid darkgray;
-        }
-
-        #expander {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          cursor: pointer;
-          width: var(--left-padding, 2em);
-        }
-
-        #expander:focus {
-          outline: none;
-        }
-
-        #expander i {
-          transition: transform var(--trans-time, 300ms) ease;
-        }
-
-        :host([aria-expanded]) #expander i {
-          transform: rotate(90deg);
-        }
-
-        #children-slot {
-          overflow: hidden;
-          height: 0;
-          border-color: darkgray;
-        }
-
-        :host([aria-expanded]) #children-slot {
-          height: unset;
-        }
-      `,
-    ];
-  }
-
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === 'aria-expanded') {
       const children = this.renderRoot.getElementById('children-slot');
@@ -101,31 +55,11 @@ class KdSoftTreeNode extends LitMvvmElement {
     }
   }
 
-  connectedCallback() {
-    super.connectedCallback();
-
-    const h = this.shadowRoot.host;
-    h.addEventListener('dragstart', this._dragStart);
-    h.addEventListener('dragenter', this._dragEnter);
-    h.addEventListener('dragover', this._dragOver);
-    h.addEventListener('dragleave', this._dragLeave);
-    h.addEventListener('drop', this._drop);
-  }
-
-  disconnectedCallback() {
-    const h = this.shadowRoot.host;
-    h.removeEventListener('dragstart', this._dragStart);
-    h.removeEventListener('dragenter', this._dragEnter);
-    h.removeEventListener('dragover', this._dragOver);
-    h.removeEventListener('dragleave', this._dragLeave);
-    h.removeEventListener('drop', this._drop);
-
-    super.disconnectedCallback();
-  }
-
   _expanderClicked() {
     this.ariaExpanded = !this.ariaExpanded;
   }
+
+  //#region drag and drop
 
   _dragStart(e) {
     e.stopPropagation();
@@ -182,7 +116,77 @@ class KdSoftTreeNode extends LitMvvmElement {
     this.dispatchEvent(evt);
   }
 
+  //#endregion
+
   /* eslint-disable indent, no-else-return */
+
+  connectedCallback() {
+    super.connectedCallback();
+
+    const h = this.shadowRoot.host;
+    h.addEventListener('dragstart', this._dragStart);
+    h.addEventListener('dragenter', this._dragEnter);
+    h.addEventListener('dragover', this._dragOver);
+    h.addEventListener('dragleave', this._dragLeave);
+    h.addEventListener('drop', this._drop);
+  }
+
+  disconnectedCallback() {
+    const h = this.shadowRoot.host;
+    h.removeEventListener('dragstart', this._dragStart);
+    h.removeEventListener('dragenter', this._dragEnter);
+    h.removeEventListener('dragover', this._dragOver);
+    h.removeEventListener('dragleave', this._dragLeave);
+    h.removeEventListener('drop', this._drop);
+
+    super.disconnectedCallback();
+  }
+
+  static get styles() {
+    return [
+      css`
+        #container {
+          display: grid;
+          grid-template-columns: max-content minmax(0, 1fr);
+          padding: var(--content-padding, 5px);
+        }
+
+        #container.droppable {
+          outline: 2px solid darkgray;
+        }
+
+        #expander {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          cursor: pointer;
+          width: var(--left-padding, 2em);
+        }
+
+        #expander:focus {
+          outline: none;
+        }
+
+        #expander i {
+          transition: transform var(--trans-time, 300ms) ease;
+        }
+
+        :host([aria-expanded]) #expander i {
+          transform: rotate(90deg);
+        }
+
+        #children-slot {
+          overflow: hidden;
+          height: 0;
+          border-color: darkgray;
+        }
+
+        :host([aria-expanded]) #children-slot {
+          height: unset;
+        }
+      `,
+    ];
+  }
 
   render() {
     const result = html`

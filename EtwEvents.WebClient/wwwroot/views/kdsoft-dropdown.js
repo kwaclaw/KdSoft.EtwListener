@@ -26,52 +26,10 @@ class KdSoftDropdown extends LitMvvmElement {
   get connector() { return this._connector; }
   set connector(value) { this._connector = value; }
 
-  static get styles() {
-    return [
-      css`
-        #container {
-          display: flex;
-          align-items: baseline;
-          justify-items: flex-end;
-        }
-        #dropdown {
-          position: relative;
-          /* height: 0; */
-        }
-        #seltext {
-          pointer-events: auto;
-        }
-        slot {
-          display: flex;
-          position: absolute;
-          left: 0;
-          top: 0;
-        }
-      `,
-    ];
-  }
-
-  connectedCallback() {
-    super.connectedCallback();
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    if (this.connector) this.connector.disconnectDropdownSlot();
-  }
-
-  beforeFirstRender() {
-    super.beforeFirstRender();
-    if (this.connector) this.connector.connectDropdownSlot();
-    this.shadowRoot.host.addEventListener('focusout', this._hostLostFocus);
-    this.shadowRoot.host.addEventListener('focusin', this._hostFocused);
-  }
-
   _hostLostFocus(e) {
     if (e.currentTarget === e.relatedTarget || isChildOf(e.currentTarget, e.relatedTarget)) {
       return;
     }
-
     this.model.dropped = false;
   }
 
@@ -131,6 +89,43 @@ class KdSoftDropdown extends LitMvvmElement {
   }
 
   /* eslint-disable indent, no-else-return */
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this.connector) this.connector.disconnectDropdownSlot();
+  }
+
+  beforeFirstRender() {
+    super.beforeFirstRender();
+    if (this.connector) this.connector.connectDropdownSlot();
+    this.shadowRoot.host.addEventListener('focusout', this._hostLostFocus);
+    this.shadowRoot.host.addEventListener('focusin', this._hostFocused);
+  }
+
+  static get styles() {
+    return [
+      css`
+        #container {
+          display: flex;
+          align-items: baseline;
+          justify-items: flex-end;
+        }
+        #dropdown {
+          position: relative;
+          /* height: 0; */
+        }
+        #seltext {
+          pointer-events: auto;
+        }
+        slot {
+          display: flex;
+          position: absolute;
+          left: 0;
+          top: 0;
+        }
+      `,
+    ];
+  }
 
   render() {
     const selText = this.model.selectedText;

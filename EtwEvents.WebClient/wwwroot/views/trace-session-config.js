@@ -142,6 +142,26 @@ class TraceSessionConfig extends LitMvvmElement {
     return this.model.activeSection === tabId ? 'active' : '';
   }
 
+  /* eslint-disable indent, no-else-return */
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this._filterObserver) unobserve(this._filterObserver);
+  }
+
+  shouldRender() {
+    return !!this.model;
+  }
+
+  firstRendered() {
+    // model is defined, because of our shouldRender() override
+    this.model.payloadColumnCheckList.getItemTemplate = this._getPayloadColumnListItemTemplate;
+    this._filterObserver = observe(() => {
+      this.model.filters = this.model.filterCarousel.filterModels.map(fm => fm.filter);
+      this.model.activeFilterIndex = this.model.filterCarousel.activeFilterIndex;
+    });
+  }
+
   static get styles() {
     return [
       css`
@@ -203,34 +223,6 @@ class TraceSessionConfig extends LitMvvmElement {
         }
       `,
     ];
-  }
-
-  /* eslint-disable indent, no-else-return */
-
-  connectedCallback() {
-    super.connectedCallback();
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    if (this._filterObserver) unobserve(this._filterObserver);
-  }
-
-  shouldRender() {
-    return !!this.model;
-  }
-
-  firstRendered() {
-    // model is defined, because of our shouldRender() override
-    this.model.payloadColumnCheckList.getItemTemplate = this._getPayloadColumnListItemTemplate;
-    this._filterObserver = observe(() => {
-      this.model.filters = this.model.filterCarousel.filterModels.map(fm => fm.filter);
-      this.model.activeFilterIndex = this.model.filterCarousel.activeFilterIndex;
-    });
-  }
-
-  rendered() {
-    //
   }
 
   render() {
