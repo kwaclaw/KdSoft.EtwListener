@@ -19,7 +19,8 @@
         import gettext from '/lib/gettext.js';
         import FetchHelper from '/js/fetchHelper.js';
        
-        window.i18n = gettext();
+        // use "new" so that "this" is defined inside of gettext()
+        window.i18n = new gettext();
 
         const fetcher = new FetchHelper('');
         fetcher.getJson('de_AT.json')
@@ -34,25 +35,6 @@
     <script type="module" src="~/views/my-app.js"></script>
     <script type="module">
         import MyAppModel from '/views/my-app-model.js';
-        //import FetchHelper from '/js/fetchHelper.js';
-        //import * as utils from '/js/utils.js';
-
-        @* const resourceBase64 = '@Html.Raw(Model.ResourceBase64())';
-        const resourceJson = utils.b64DecodeUnicode(resourceBase64);
-        const resource = JSON.parse(resourceJson); *@
-
-        //const fetcher = new FetchHelper('/Resource');
-        //fetcher.getJson('GetLocalizations')
-        //    .then(result => {
-        //        const myapp = document.querySelector('my-app');
-        //        const strings = {};
-        //        for (let entry of result) strings[entry.key] = entry.value;
-        //        myapp.model = new MyAppModel(strings);
-        //    })
-        //    .catch(console.error);
-
-        // initialize global i18n infrastructure
-
         const myapp = document.querySelector('my-app');
         myapp.model = new MyAppModel();
     </script>
