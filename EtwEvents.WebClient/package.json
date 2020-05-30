@@ -6,16 +6,15 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "postcss-fontawesome": "postcss src/css/fontawesome/css/all.css -o wwwroot/css/fontawesome/css/all.css",
     "postcss-src": "postcss src/css/**/*.pcss --dir wwwroot/css --ext css",
-    "postcss-dlg": "postcss node_modules/dialog-polyfill/dist/dialog-polyfill.css --dir wwwroot/css --ext css",
-    "snowpack": "snowpack --dest wwwroot/lib",
+    "snowpack": "snowpack install --dest wwwroot/lib",
     "lint": "eslint",
     "po2json": "po2json-gettextjs wwwroot/de_AT.po wwwroot/de_AT.json -p",
-    "build": "npm run postcss-fontawesome && npm run postcss-src && npm run postcss-dlg && npm run po2json"
+    "build": "npm run postcss-fontawesome && npm run postcss-src && npm run po2json"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@kdsoft/lit-mvvm": "^0.9.961",
+    "@kdsoft/lit-mvvm": "github:kwaclaw/KdSoft.lit-mvvm#master",
     "@nx-js/observer-util": "^4.2.2",
     "@nx-js/queue-util": "^1.1.1",
     "dialog-polyfill": "^0.5.1",
@@ -24,9 +23,9 @@
     "tailwindcss": "^1.4.6"
   },
   "devDependencies": {
-    "@babel/cli": "^7.8.4",
-    "@babel/core": "^7.9.6",
-    "@babel/preset-env": "^7.9.6",
+    "@babel/cli": "^7.10.1",
+    "@babel/core": "^7.10.1",
+    "@babel/preset-env": "^7.10.1",
     "@tailwindcss/custom-forms": "^0.2.1",
     "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^14.1.0",
@@ -34,15 +33,10 @@
     "postcss-cli": "^7.1.1",
     "postcss-import": "^12.0.1",
     "postcss-modules": "^1.5.0",
-    "snowpack": "^1.7.1"
+    "snowpack": "^2.0.3"
   },
-  "browserslist": [
-    "last 2 chrome versions",
-    "last 2 firefox versions",
-    "last 2 safari versions"
-  ],
   "snowpack": {
-    "webDependencies": [
+    "install": [
       "@kdsoft/lit-mvvm",
       "@nx-js/observer-util",
       "@nx-js/queue-util",
@@ -50,9 +44,15 @@
       "lit-html/directives/repeat.js",
       "lit-html/directives/class-map.js",
       "gettext.js",
-      "dialog-polyfill"
+      "dialog-polyfill",
+      "dialog-polyfill/dialog-polyfill.css"
     ]
   },
+  "browserslist": [
+    "last 2 chrome versions",
+    "last 2 firefox versions",
+    "last 2 safari versions"
+  ],
   "-vs-binding": {
     "ProjectOpened": [
       "snowpack"

@@ -1,9 +1,81 @@
-import { TemplateResult, render, html } from '../lit-html.js';
+import { render } from '../lit-html.js';
 import { unobserve, observe } from '../@nx-js/observer-util.js';
 
-/* eslint-disable class-methods-use-this */
-
+/**
+@license
+Copyright (c) 2019 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at
+http://polymer.github.io/LICENSE.txt The complete set of authors may be found at
+http://polymer.github.io/AUTHORS.txt The complete set of contributors may be
+found at http://polymer.github.io/CONTRIBUTORS.txt Code distributed by Google as
+part of the polymer project is also subject to an additional IP rights grant
+found at http://polymer.github.io/PATENTS.txt
+*/
 const supportsAdoptingStyleSheets = 'adoptedStyleSheets' in Document.prototype && 'replace' in CSSStyleSheet.prototype;
+
+const constructionToken = Symbol();
+
+class CSSResult {
+  constructor(cssText, safeToken) {
+    if (safeToken !== constructionToken) {
+      throw new Error('CSSResult is not constructable. Use `unsafeCSS` or `css` instead.');
+    }
+    this.cssText = cssText;
+  }
+
+  // Note, this is a getter so that it's lazy. In practice, this means
+  // stylesheets are not created until the first element instance is made.
+  get styleSheet() {
+    if (this._styleSheet === undefined) {
+      // Note, if `adoptedStyleSheets` is supported then we assume CSSStyleSheet is constructable.
+      if (supportsAdoptingStyleSheets) {
+        this._styleSheet = new CSSStyleSheet();
+        this._styleSheet.replaceSync(this.cssText);
+      } else {
+        this._styleSheet = null;
+      }
+    }
+    return this._styleSheet;
+  }
+
+  toString() {
+    return this.cssText;
+  }
+}
+
+/**
+ * Wrap a value for interpolation in a css tagged template literal.
+ *
+ * This is unsafe because untrusted CSS text can be used to phone home
+ * or exfiltrate data to an attacker controlled site. Take care to only use
+ * this with trusted input.
+ */
+const unsafeCSS = (value) => {
+  return new CSSResult(String(value), constructionToken);
+};
+
+const textFromCSSResult = (value) => {
+  if (value instanceof CSSResult) {
+    return value.cssText;
+  } else if (typeof value === 'number') {
+    return value;
+  } else {
+    throw new Error(`Value passed to 'css' function must be a 'css' function result: ${value}. Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.`);
+  }
+};
+
+/**
+ * Template tag which which can be used with LitElement's `style` property to
+ * set element styles. For security reasons, only literal string values may be
+ * used. To incorporate non-literal values `unsafeCSS` may be used inside a
+ * template string part.
+ */
+const css = (strings, ...values) => {
+  const cssText = values.reduce((acc, v, idx) => acc + textFromCSSResult(v) + strings[idx + 1], strings[0]);
+  return new CSSResult(cssText, constructionToken);
+};
+
+/* eslint-disable class-methods-use-this */
 
 /**
  * When using Closure Compiler, JSCompiler_renameProperty(property, object) is
@@ -14,61 +86,84 @@ const supportsAdoptingStyleSheets = 'adoptedStyleSheets' in Document.prototype &
 // eslint-disable-next-line no-unused-vars
 window.JSCompiler_renameProperty = (prop, _obj) => prop;
 
-function arrayFlat(styles, result = []) {
-  for (let i = 0, { length } = styles; i < length; i += 1) {
-    const value = styles[i];
-    if (Array.isArray(value)) {
-      arrayFlat(value, result);
-    } else {
-      result.push(value);
-    }
-  }
-  return result;
-}
-
-const flattenStyles = styles => (styles.flat ? styles.flat(Infinity) : arrayFlat(styles));
+/**
+ * Sentinel value used to avoid calling lit-html's render function when
+ * subclasses do not implement `render`
+ */
+const renderNotImplemented = {};
 
 class LitBaseElement extends HTMLElement {
   // only called if there is an attributeChangedCallback() defined;
   // we piggy back on this getter to run finalize() to ensure finalize() is run
   static get observedAttributes() {
-    this.finalize();
     return [];
   }
 
-  static finalize() {
-    // Prepare styling that is stamped at first render time.
-    // Styling is built from user provided `styles` or is inherited from the superclass.
-    // eslint-disable-next-line no-prototype-builtins
-    this._styles = this.hasOwnProperty(window.JSCompiler_renameProperty('styles', this))
-      ? this._getUniqueStyles()
-      : this._styles || [];
+  /**
+   * Return the array of styles to apply to the element.
+   * Override this method to integrate into a style management system.
+   *
+   * @nocollapse
+   */
+  static getStyles() {
+    return this.styles;
   }
 
+  /** @nocollapse */
   static _getUniqueStyles() {
-    // Take care not to call `this.styles` multiple times since this generates new CSSResults each time.
-    // TODO(sorvell): Since we do not cache CSSResults by input, any shared styles will generate
-    // new stylesheet objects, which is wasteful.
-    // This should be addressed when a browser ships constructable stylesheets.
-    const userStyles = this.styles;
-    const styles = [];
-    if (Array.isArray(userStyles)) {
-      const flatStyles = flattenStyles(userStyles);
-      // As a performance optimization to avoid duplicated styling that can occur especially when composing
-      // via subclassing, de-duplicate styles preserving the last item in the list. The last item is kept to
-      // try to preserve cascade order with the assumption that it's most important that last added styles
-      // override previous styles.
-      const styleSet = flatStyles.reduceRight((set, s) => {
-        set.add(s);
-        // on IE set.add does not return the set.
-        return set;
-      }, new Set());
-      // Array.from does not work on Set in IE
-      styleSet.forEach(v => styles.unshift(v));
-    } else if (userStyles) {
-      styles.push(userStyles);
+    // Only gather styles once per class
+    if (Object.prototype.hasOwnProperty.call(this, window.JSCompiler_renameProperty('_styles', this))) {
+      return;
     }
-    return styles;
+
+    // Take care not to call `this.getStyles()` multiple times since this
+    // generates new CSSResults each time.
+    // TODO(sorvell): Since we do not cache CSSResults by input, any
+    // shared styles will generate new stylesheet objects, which is wasteful.
+    // This should be addressed when a browser ships constructable
+    // stylesheets.
+    const userStyles = this.getStyles();
+    if (Array.isArray(userStyles)) {
+      // De-duplicate styles preserving the _last_ instance in the set.
+      // This is a performance optimization to avoid duplicated styles that can
+      // occur especially when composing via subclassing.
+      // The last item is kept to try to preserve the cascade order with the
+      // assumption that it's most important that last added styles override
+      // previous styles.
+      const addStyles = (stylesToAdd, styleSet) => stylesToAdd.reduceRight(
+        // Note: On IE set.add() does not return the set
+        // Note: grouping expression returns last value: '(set.add(styles), set)' returns 'set'
+        (set, style) => (Array.isArray(style) ? addStyles(style, set) : (set.add(style), set)),
+        styleSet
+      );
+      // Array.from does not work on Set in IE, otherwise return
+      // Array.from(addStyles(userStyles, new Set<CSSResult>())).reverse()
+      const set = addStyles(userStyles, new Set());
+      const styles = [];
+      set.forEach(v => styles.unshift(v));
+      this._styles = styles;
+    } else {
+      this._styles = userStyles === undefined ? [] : [userStyles];
+    }
+
+    // Ensure that there are no invalid CSSStyleSheet instances here. They are
+    // invalid in two conditions.
+    // (1) the sheet is non-constructible (`sheet` of a HTMLStyleElement), but
+    //     this is impossible to check except via .replaceSync or use
+    // (2) the ShadyCSS polyfill is enabled (:. supportsAdoptingStyleSheets is
+    //     false)
+    this._styles = this._styles.map(s => {
+      if (s instanceof CSSStyleSheet && !supportsAdoptingStyleSheets) {
+        // Flatten the cssText from the passed constructible stylesheet (or
+        // undetectable non-constructible stylesheet). The user might have
+        // expected to update their stylesheets over time, but the alternative
+        // is a crash.
+        const cssText = Array.prototype.slice.call(s.cssRules)
+          .reduce((css, rule) => css + rule.cssText, '');
+        return unsafeCSS(cssText);
+      }
+      return s;
+    });
   }
 
   constructor() {
@@ -81,6 +176,7 @@ class LitBaseElement extends HTMLElement {
    * the element `renderRoot` node and captures any pre-set values for registered properties.
    */
   initialize() {
+    this.constructor._getUniqueStyles();
     this.renderRoot = this.createRenderRoot();
     // Note, if renderRoot is not a shadowRoot, styles would/could apply to the element's getRootNode().
     // While this could be done, we're choosing not to support this now since it would require different
@@ -108,7 +204,7 @@ class LitBaseElement extends HTMLElement {
     }
 
     if (supportsAdoptingStyleSheets) {
-      this.renderRoot.adoptedStyleSheets = styles.map(s => s.styleSheet);
+      this.renderRoot.adoptedStyleSheets = styles.map(s => (s instanceof CSSStyleSheet ? s : s.styleSheet));
     } else {
       // This must be done after rendering so the actual style insertion is done in `update`.
       this._needsShimAdoptedStyleSheets = true;
@@ -121,9 +217,13 @@ class LitBaseElement extends HTMLElement {
    */
   _doRender() {
     if (this.shouldRender()) {
+      if (!this._firstRendered) {
+        this.beforeFirstRender();
+      }
+
       const templateResult = this.render();
-      if (templateResult instanceof TemplateResult) {
-        render(templateResult, this.shadowRoot, {
+      if (templateResult !== renderNotImplemented) {
+        render(templateResult, this.renderRoot, {
           scopeName: this.localName,
           eventContext: this,
         });
@@ -171,13 +271,15 @@ class LitBaseElement extends HTMLElement {
     return true;
   }
 
+  beforeFirstRender() { }
+
   render() {
-    return html``;
+    return renderNotImplemented;
   }
 
-  firstRendered() {}
+  firstRendered() { }
 
-  rendered() {}
+  rendered() { }
 }
 
 /* eslint-disable lines-between-class-members */
@@ -343,4 +445,4 @@ class BatchScheduler {
   }
 }
 
-export { BatchScheduler, LitBaseElement, LitMvvmElement };
+export { BatchScheduler, CSSResult, LitBaseElement, LitMvvmElement, css, supportsAdoptingStyleSheets, unsafeCSS };

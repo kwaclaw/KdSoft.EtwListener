@@ -4,6 +4,7 @@
     "@nx-js/observer-util": "./@nx-js/observer-util.js",
     "@nx-js/queue-util": "./@nx-js/queue-util.js",
     "dialog-polyfill": "./dialog-polyfill.js",
+    "dialog-polyfill/dialog-polyfill.css": "./dialog-polyfill/dialog-polyfill.css",
     "gettext.js": "./gettext.js",
     "lit-html": "./lit-html.js",
     "lit-html/directives/class-map.js": "./lit-html/directives/class-map.js",

@@ -24,8 +24,7 @@ export class CSSResult {
   // stylesheets are not created until the first element instance is made.
   get styleSheet() {
     if (this._styleSheet === undefined) {
-      // Note, if `adoptedStyleSheets` is supported then we assume CSSStyleSheet
-      // is constructable.
+      // Note, if `adoptedStyleSheets` is supported then we assume CSSStyleSheet is constructable.
       if (supportsAdoptingStyleSheets) {
         this._styleSheet = new CSSStyleSheet();
         this._styleSheet.replaceSync(this.cssText);
@@ -58,8 +57,7 @@ const textFromCSSResult = (value) => {
   } else if (typeof value === 'number') {
     return value;
   } else {
-    throw new Error(`Value passed to 'css' function must be a 'css' function result: ${value}. Use 'unsafeCSS' to pass non-literal values, but
-            take care to ensure page security.`);
+    throw new Error(`Value passed to 'css' function must be a 'css' function result: ${value}. Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.`);
   }
 };
 
