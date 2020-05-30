@@ -1,8 +1,7 @@
 ﻿import { html, nothing } from '../lib/lit-html.js';
-import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
+import { LitMvvmElement, css, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
 import { repeat } from '../lib/lit-html/directives/repeat.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
-import { css } from '../styles/css-tag.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import { KdSoftGridStyle } from '../styles/kdsoft-grid-style.js';
 import * as utils from '../js/utils.js';
@@ -34,10 +33,6 @@ class TraceSessionView extends LitMvvmElement {
 
   connectedCallback() {
     super.connectedCallback();
-  }
-
-  firstRendered() {
-    //
   }
 
   _gridClick(e) {
@@ -92,21 +87,25 @@ class TraceSessionView extends LitMvvmElement {
     return !!this.model;
   }
 
-  render() {
+  beforeFirstRender() {
     const ts = this.model;
 
-    //TODO create the column lists only on/before first render, as in: if (!this.firstRendered) { ... }
+    const sclist = ts.profile.getStandardColumnList();
+    this._standardCols = ts.profile.standardColumns.map(col => sclist[col]);
+    this._expandPayload = this._standardCols.findIndex(col => col.name === 'payload') < 0;
 
-    if (!this._firstRendered) {
-      const sclist = ts.profile.getStandardColumnList();
-      this._standardCols = ts.profile.standardColumns.map(col => sclist[col]);
-      this._expandPayload = this._standardCols.findIndex(col => col.name === 'payload') < 0;
+    const pclist = ts.profile.payloadColumnList;
+    this._payloadCols = ts.profile.payloadColumns.map(pcol => pclist[pcol]);
 
-      const pclist = ts.profile.payloadColumnList;
-      this._payloadCols = ts.profile.payloadColumns.map(pcol => pclist[pcol]);
+    this._colTemplate = Array(this._standardCols.length + this._payloadCols.length).fill('auto').join(' ');
+  }
 
-      this._colTemplate = Array(this._standardCols.length + this._payloadCols.length).fill('auto').join(' ');
-    }
+  firstRendered() {
+    //
+  }
+
+  render() {
+    const ts = this.model;
 
     const itemIterator = (ts && ts.eventSession) ? ts.eventSession.itemIterator() : utils.emptyIterator();
 

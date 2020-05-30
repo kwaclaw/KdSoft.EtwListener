@@ -1,7 +1,6 @@
 import { html } from '../lib/lit-html.js';
-import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
+import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
-import { css } from '../styles/css-tag.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 
 function toggleExpansion(element, doExpand) {
@@ -122,14 +121,6 @@ class KdSoftTreeNode extends LitMvvmElement {
     h.removeEventListener('drop', this._drop);
 
     super.disconnectedCallback();
-  }
-
-  firstRendered() {
-    //
-  }
-
-  rendered() {
-    //
   }
 
   _expanderClicked() {

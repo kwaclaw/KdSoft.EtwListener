@@ -3,14 +3,15 @@
 import { html, nothing } from '../lib/lit-html.js';
 import { classMap } from '../lib/lit-html/directives/class-map.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
-import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
-import { css } from '../styles/css-tag.js';
+import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import dialogPolyfill from '../lib/dialog-polyfill.js';
 import FilterFormModel from './filter-form-model.js';
 import './kdsoft-tree-node.js';
 import './trace-session-config.js';
 import './filter-form.js';
+import './event-sink-config.js';
 import TraceSessionConfigModel from './trace-session-config-model.js';
+import EventSinkConfigModel from './event-sink-config-model.js';
 import Spinner from '../js/spinner.js';
 import * as utils from '../js/utils.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
@@ -143,8 +144,15 @@ class MyAppSideBar extends LitMvvmElement {
   //#region event sinks
 
   _openEventSinkClick(e, session) {
-    const spinner = new Spinner(e.currentTarget);
-    session.openEventSink(spinner);
+     const spinner = new Spinner(e.currentTarget);
+     session.openEventSink(spinner);
+
+    //const configModel = new EventSinkConfigModel(0);
+
+    //const dlg = this.renderRoot.getElementById('dlg-event-sink');
+    //const cfg = dlg.querySelector('event-sink-config');
+    //cfg.model = configModel;
+    //dlg.showModal();
   }
 
   //#endregion
@@ -172,25 +180,7 @@ class MyAppSideBar extends LitMvvmElement {
 
     this._removeDialogHandlers(this.renderRoot.getElementById('dlg-filter'));
     this._removeDialogHandlers(this.renderRoot.getElementById('dlg-config'));
-  }
-
-  // called at most once every time after connectedCallback was executed
-  firstRendered() {
-    super.firstRendered();
-    this.appTitle = this.getAttribute('appTitle');
-
-    this.model.observeVisibleSessions();
-
-    const filterDlg = this.renderRoot.getElementById('dlg-filter');
-    const configDlg = this.renderRoot.getElementById('dlg-config');
-
-    if (!utils.html5DialogSupported) {
-      dialogPolyfill.registerDialog(filterDlg);
-      dialogPolyfill.registerDialog(configDlg);
-    }
-
-    this._addDialogHandlers(filterDlg);
-    this._addDialogHandlers(configDlg);
+    this._removeDialogHandlers(this.renderRoot.getElementById('dlg-event-sink'));
   }
 
   static get styles() {
@@ -245,9 +235,16 @@ class MyAppSideBar extends LitMvvmElement {
           height: 500px;
           max-height: 600px;
         }
-
+        
         #dlg-filter {
           width: 80ch;
+        }
+
+        #dlg-event-sink {
+          width: 800px;
+          min-height: 400px;
+          height: 500px;
+          max-height: 600px;
         }
 
         #sessionProfiles {
@@ -268,6 +265,28 @@ class MyAppSideBar extends LitMvvmElement {
 
   shouldRender() {
     return !!this.model;
+  }
+
+  // called at most once every time after connectedCallback was executed
+  beforeFirstRender() {
+    this.appTitle = this.getAttribute('appTitle');
+    this.model.observeVisibleSessions();
+  }
+
+  firstRendered() {
+    const filterDlg = this.renderRoot.getElementById('dlg-filter');
+    const configDlg = this.renderRoot.getElementById('dlg-config');
+    const eventSinkDlg = this.renderRoot.getElementById('dlg-event-sink');
+
+    if (!utils.html5DialogSupported) {
+      dialogPolyfill.registerDialog(filterDlg);
+      dialogPolyfill.registerDialog(configDlg);
+      dialogPolyfill.registerDialog(eventSinkDlg);
+    }
+
+    this._addDialogHandlers(filterDlg);
+    this._addDialogHandlers(configDlg);
+    this._addDialogHandlers(eventSinkDlg);
   }
 
   render() {
@@ -375,6 +394,9 @@ class MyAppSideBar extends LitMvvmElement {
       </dialog>
       <dialog id="dlg-filter" class="${utils.html5DialogSupported ? '' : 'fixed'}">
         <filter-form></filter-form>
+      </dialog>
+      <dialog id="dlg-event-sink" class="${utils.html5DialogSupported ? '' : 'fixed'}">
+        <event-sink-config></event-sink-config>
       </dialog>
     `;
   }

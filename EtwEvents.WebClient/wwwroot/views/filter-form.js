@@ -1,7 +1,6 @@
 ﻿import { html } from '../lib/lit-html.js';
-import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
+import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
-import { css } from '../styles/css-tag.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import './filter-carousel.js';
 import Spinner from '../js/spinner.js';
@@ -44,18 +43,6 @@ class FilterForm extends LitMvvmElement {
       bubbles: true, composed: true, cancelable: true, detail: { model: this.model }
     });
     this.dispatchEvent(evt);
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-  }
-
-  firstRendered() {
-    //
-  }
-
-  rendered() {
-    //
   }
 
   static get styles() {

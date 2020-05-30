@@ -1,9 +1,8 @@
 ﻿import { html } from '../lib/lit-html.js';
 import { classMap } from '../lib/lit-html/directives/class-map.js';
-import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
+import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import { observe, unobserve } from '../lib/@nx-js/observer-util.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
-import { css } from '../styles/css-tag.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
 import * as utils from '../js/utils.js';
@@ -27,6 +26,10 @@ const classList = {
   tabInactive: tabBase,
 };
 
+function cl(key) {
+  return classMap(classList[key]);
+}
+
 function getPayloadColumnListItemTemplate(item) {
   return html`
     <div class="inline-block w-1\/3 mr-4 truncate" title=${item.name}>${item.name}</div>
@@ -44,26 +47,6 @@ class TraceSessionConfig extends LitMvvmElement {
     this.scheduler = new Queue(priorities.HIGH);
     this.activeTabId = 'general';
     this._getPayloadColumnListItemTemplate = getPayloadColumnListItemTemplate.bind(this);
-  }
-
-  connectedCallback() {
-    super.connectedCallback();
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    if (this._filterObserver) unobserve(this._filterObserver);
-  }
-
-  firstRendered() {
-    this._filterObserver = observe(() => {
-      this.model.filters = this.model.filterCarousel.filterModels.map(fm => fm.filter);
-      this.model.activeFilterIndex = this.model.filterCarousel.activeFilterIndex;
-    });
-  }
-
-  rendered() {
-    //
   }
 
   _cancel() {
@@ -122,14 +105,6 @@ class TraceSessionConfig extends LitMvvmElement {
     this.model.activeSection = btn.dataset.tabid;
   }
 
-  _tabClass(tabId) {
-    return this.model.activeSection === tabId ? classList.tabActive : classList.tabInactive;
-  }
-
-  _sectionActive(tabId) {
-    return this.model.activeSection === tabId ? 'active' : '';
-  }
-
   _addPayloadColumnClick() {
     const r = this.renderRoot;
     const nameInput = r.getElementById('payload-field');
@@ -157,6 +132,14 @@ class TraceSessionConfig extends LitMvvmElement {
     const fieldVal = e.currentTarget.value;
     const labelInput = this.renderRoot.getElementById('payload-label');
     if (!labelInput.value) labelInput.value = fieldVal;
+  }
+
+  _tabClass(tabId) {
+    return cl(this.model.activeSection === tabId ? 'tabActive' : 'tabInactive');
+  }
+
+  _sectionClass(tabId) {
+    return this.model.activeSection === tabId ? 'active' : '';
   }
 
   static get styles() {
@@ -224,16 +207,33 @@ class TraceSessionConfig extends LitMvvmElement {
 
   /* eslint-disable indent, no-else-return */
 
+  connectedCallback() {
+    super.connectedCallback();
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this._filterObserver) unobserve(this._filterObserver);
+  }
+
   shouldRender() {
     return !!this.model;
   }
 
-  render() {
-    // we don't have a "beforeFirstRender" event, so we set the item template function here
-    if (!this._firstRendered) {
-      this.model.payloadColumnCheckList.getItemTemplate = this._getPayloadColumnListItemTemplate;
-    }
+  firstRendered() {
+    // model is defined, because of our shouldRender() override
+    this.model.payloadColumnCheckList.getItemTemplate = this._getPayloadColumnListItemTemplate;
+    this._filterObserver = observe(() => {
+      this.model.filters = this.model.filterCarousel.filterModels.map(fm => fm.filter);
+      this.model.activeFilterIndex = this.model.filterCarousel.activeFilterIndex;
+    });
+  }
 
+  rendered() {
+    //
+  }
+
+  render() {
     const result = html`
       ${sharedStyles}
       <link rel="stylesheet" type="text/css" href=${styleLinks.checkbox} />
@@ -244,13 +244,15 @@ class TraceSessionConfig extends LitMvvmElement {
       </style>
       <form @change=${this._profileChange}>
         <nav class="flex flex-col sm:flex-row mb-4" @click=${this._tabClick}>
-          <button type="button" class=${classMap(this._tabClass('general'))} data-tabid="general">General</button>
-          <button type="button" class=${classMap(this._tabClass('providers'))} data-tabid="providers">Providers</button>
-          <button type="button" class=${classMap(this._tabClass('filters'))} data-tabid="filters">Filters</button>
-          <button type="button" class=${classMap(this._tabClass('columns'))} data-tabid="columns">Columns</button>
+          <button type="button" class=${this._tabClass('general')} data-tabid="general">General</button>
+          <button type="button" class=${this._tabClass('providers')} data-tabid="providers">Providers</button>
+          <button type="button" class=${this._tabClass('filters')} data-tabid="filters">Filters</button>
+          <button type="button" class=${this._tabClass('columns')} data-tabid="columns">Columns</button>
         </nav>
+
         <div id="container" class="mb-4">
-          <section id="general" class="${this._sectionActive('general')}">
+
+          <section id="general" class="${this._sectionClass('general')}">
             <fieldset>
               <label for="name">Name</label>
               <div class="flex flex-col">
@@ -270,7 +272,8 @@ class TraceSessionConfig extends LitMvvmElement {
                 pattern=${utils.isoDurationRx.source} />
             </fieldset>
           </section>
-          <section id="providers" class="${this._sectionActive('providers')}">
+
+          <section id="providers" class="${this._sectionClass('providers')}">
             <div class="flex my-2 pr-2">
               <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
                 @click=${this._addProviderClick}></span>
@@ -283,10 +286,12 @@ class TraceSessionConfig extends LitMvvmElement {
               </provider-config>
             `)}
           </section>
-          <section id="filters" class="${this._sectionActive('filters')}">
+
+          <section id="filters" class="${this._sectionClass('filters')}">
             <filter-carousel class="h-full" .model=${this.model.filterCarousel}></filter-carousel>
           </section>
-          <section id="columns" class="${this._sectionActive('columns')} h-full flex items-stretch">
+
+          <section id="columns" class="${this._sectionClass('columns')} h-full flex items-stretch">
             <div id="standard-cols-wrapper" class="mr-4">
               <label class="block mb-1" for="standard-cols">Standard Columns</label>
               <kdsoft-checklist id="standard-cols" class="w-full text-black"
@@ -311,7 +316,9 @@ class TraceSessionConfig extends LitMvvmElement {
               </div>
             </div>
           </section>
+
         </div>
+        
         <hr class="mb-4" />
         <div id="ok-cancel-buttons" class="flex flex-wrap mt-2 bt-1">
           <button type="button" class="py-1 px-2" @click=${this._exportProfile} title="Export"><i class="fas fa-lg fa-file-export text-gray-600"></i></button>

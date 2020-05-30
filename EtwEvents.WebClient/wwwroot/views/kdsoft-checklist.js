@@ -1,10 +1,9 @@
 import { html, nothing } from '../lib/lit-html.js';
 import { repeat } from '../lib/lit-html/directives/repeat.js';
 import { classMap } from '../lib/lit-html/directives/class-map.js';
-import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
+import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import { observe, unobserve } from '../lib/@nx-js/observer-util.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
-import { css } from '../styles/css-tag.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
 
@@ -63,32 +62,6 @@ class KdSoftChecklist extends LitMvvmElement {
   // Observed attributes will trigger an attributeChangedCallback, which in turn will cause a re-render to be scheduled!
   static get observedAttributes() {
     return [...super.observedAttributes, 'arrows', 'allow-drag-drop'];
-  }
-
-  // model may still be undefined
-  connectedCallback() {
-    super.connectedCallback();
-  }
-
-  disconnectedCallback() {
-    if (this._selectObserver) unobserve(this._selectObserver);
-    super.disconnectedCallback();
-  }
-
-  // first time model is defined for certain
-  firstRendered() {
-    this._selectObserver = observe(() => {
-      const n = this.name;
-      const entries = new FormData();
-      for (const entry of this.model.selectedEntries) {
-        entries.append(n, entry.item.value);
-      }
-      if (this._internals) this._internals.setFormValue(entries);
-    });
-  }
-
-  rendered() {
-    //
   }
 
   _checkboxClicked(e) {
@@ -279,6 +252,32 @@ class KdSoftChecklist extends LitMvvmElement {
     }
 
     return result;
+  }
+
+  // model may still be undefined
+  connectedCallback() {
+    super.connectedCallback();
+  }
+
+  disconnectedCallback() {
+    if (this._selectObserver) unobserve(this._selectObserver);
+    super.disconnectedCallback();
+  }
+
+  shouldRender() {
+    return !!this.model;
+  }
+
+  // first time model is defined for certain
+  beforeFirstRender() {
+    this._selectObserver = observe(() => {
+      const n = this.name;
+      const entries = new FormData();
+      for (const entry of this.model.selectedEntries) {
+        entries.append(n, entry.item.value);
+      }
+      if (this._internals) this._internals.setFormValue(entries);
+    });
   }
 
   static get styles() {

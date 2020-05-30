@@ -43,6 +43,7 @@ class KdSoftDropdownChecklistConnector extends KdSoftDropdownConnector {
       checklist.model.filter = item => regex.test(item.name);
     });
 
+    // react to dropping down event
     const droppedObserver = observe(() => {
       const dropdown = this.getDropdown();
       const checklist = this.getChecklist();

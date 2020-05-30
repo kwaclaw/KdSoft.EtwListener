@@ -4,8 +4,7 @@ import { html, nothing } from '../lib/lit-html.js';
 import { repeat } from '../lib/lit-html/directives/repeat.js';
 import { classMap } from '../lib/lit-html/directives/class-map.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
-import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
-import { css } from '../styles/css-tag.js';
+import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import './my-app-side-bar.js';
 import './trace-session-view.js';
 import './filter-form.js';
@@ -189,9 +188,14 @@ class MyApp extends LitMvvmElement {
     this._sidebarObserver.disconnect();
   }
 
+  /* eslint-disable indent, no-else-return */
+
+  shouldRender() {
+    return !!this.model;
+  }
+
   // called at most once every time after connectedCallback was executed
   firstRendered() {
-    super.firstRendered();
     this.appTitle = this.getAttribute('appTitle');
     this.model.observeVisibleSessions();
 
@@ -199,7 +203,7 @@ class MyApp extends LitMvvmElement {
     // and expand/collapse the first grid column accordingly
     this._sidebarObserver = new MutationObserver(m => this._sidebarObserverCallback(m));
     const sidebar = this.renderRoot.getElementById('sidebar');
-    this._sidebarObserver.observe(sidebar, { attributes: true, attributeOldValue: true, attributeFilter: ['aria-expanded'] });
+    //this._sidebarObserver.observe(sidebar, { attributes: true, attributeOldValue: true, attributeFilter: ['aria-expanded'] });
   }
 
   rendered() {
@@ -345,12 +349,6 @@ class MyApp extends LitMvvmElement {
         }
       `
     ];
-  }
-
-  /* eslint-disable indent, no-else-return */
-
-  shouldRender() {
-    return !!this.model;
   }
 
   render() {

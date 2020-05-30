@@ -1,8 +1,7 @@
 import { html } from '../lib/lit-html.js';
-import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
+import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import { observe, unobserve } from '../lib/@nx-js/observer-util.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
-import { css } from '../styles/css-tag.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
 import './kdsoft-dropdown.js';
@@ -31,16 +30,16 @@ class ProviderConfig extends LitMvvmElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    this.levelCheckListModel = null;
+    this.levelChecklistModel = null;
   }
 
   firstRendered() {
     super.firstRendered();
   }
 
-  static _getSelectedText(clm) {
+  static _getSelectedText(checkListModel) {
     let result = null;
-    for (const selEntry of clm.selectedEntries) {
+    for (const selEntry of checkListModel.selectedEntries) {
       if (result) result += `, ${selEntry.item.name}`;
       else result = selEntry.item.name;
     }
@@ -134,9 +133,12 @@ class ProviderConfig extends LitMvvmElement {
   /* eslint-disable indent, no-else-return */
 
   shouldRender() {
-    const result = !!this.model;
-    if (result && !this.levelCheckListModel) {
-      this.levelCheckListModel = new KdSoftChecklistModel(
+    return !!this.model;
+  }
+
+  beforeFirstRender() {
+    if (!this.levelChecklistModel) {
+      this.levelChecklistModel = new KdSoftChecklistModel(
         TraceSessionConfigModel.traceLevelList,
         [this.model.level || 0],
         false,
@@ -144,7 +146,6 @@ class ProviderConfig extends LitMvvmElement {
         item => item.value
       );
     }
-    return result;
   }
 
   render() {
@@ -179,7 +180,7 @@ class ProviderConfig extends LitMvvmElement {
               <fieldset>
                 <label class="text-gray-600" for="level">Level</label>
                 <kdsoft-dropdown id="traceLevel" class="py-0" .model=${this.levelDropDownModel} .connector=${this.levelChecklistConnector}>
-                  <kdsoft-checklist id="traceLevelList" class="text-black" .model=${this.levelCheckListModel}></kdsoft-checklist>
+                  <kdsoft-checklist id="traceLevelList" class="text-black" .model=${this.levelChecklistModel}></kdsoft-checklist>
                 </kdsoft-dropdown>
               </fieldset>
               <fieldset>

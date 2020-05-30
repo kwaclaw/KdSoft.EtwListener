@@ -1,7 +1,6 @@
 import { html } from '../lib/lit-html.js';
-import { LitMvvmElement, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
+import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
-import { css } from '../styles/css-tag.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 
 function isChildOf(parent, child) {
@@ -61,9 +60,11 @@ class KdSoftDropdown extends LitMvvmElement {
     if (this.connector) this.connector.disconnectDropdownSlot();
   }
 
-  firstRendered() {
-    super.firstRendered();
+  beforeFirstRender() {
+    super.beforeFirstRender();
     if (this.connector) this.connector.connectDropdownSlot();
+    this.shadowRoot.host.addEventListener('focusout', this._hostLostFocus);
+    this.shadowRoot.host.addEventListener('focusin', this._hostFocused);
   }
 
   _hostLostFocus(e) {
@@ -76,11 +77,6 @@ class KdSoftDropdown extends LitMvvmElement {
 
   _hostFocused(e) {
     this.model.dropped = true;
-  }
-
-  rendered() {
-    this.shadowRoot.host.addEventListener('focusout', this._hostLostFocus);
-    this.shadowRoot.host.addEventListener('focusin', this._hostFocused);
   }
 
   _seltextFocused(e) {
