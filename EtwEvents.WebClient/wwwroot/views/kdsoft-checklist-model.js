@@ -1,6 +1,5 @@
 
 import { observable, raw } from '../lib/@nx-js/observer-util.js';
-import { html } from '../lib/lit-html.js';
 
 function iterateSelectedItems(items, selectedItems) {
   let current;
@@ -26,7 +25,7 @@ function iterateSelectedItems(items, selectedItems) {
   };
 }
 
-function iterateFilter(items, filter) {
+function iterateFilter(items, selectedItems, filter) {
   let current;
 
   return {
@@ -40,7 +39,9 @@ function iterateFilter(items, filter) {
         const item = items[current];
         const index = current;
         current += 1;
-        if (item.selected || (!filter || filter(item))) return { done: false, value: { item, index } };
+        if (selectedItems.has(raw(item)) || (!filter || filter(item))) {
+          return { done: false, value: { item, index } };
+        }
         continue;
       }
       return { done: true };
@@ -56,7 +57,6 @@ class KdSoftChecklistModel {
     items = [],
     selectedIndexes = [],
     multiSelect = true,
-    getItemTemplate = () => html``,
     getItemId = item => item.id
   ) {
     if (!multiSelect && (selectedIndexes || []).length > 1) {
@@ -73,7 +73,6 @@ class KdSoftChecklistModel {
     // so that we can use this in the property getters/setters
     _multiSelect.set(result, multiSelect);
 
-    this.getItemTemplate = getItemTemplate;
     this.getItemId = getItemId;
 
     return result;
@@ -91,7 +90,7 @@ class KdSoftChecklistModel {
     return result;
   }
 
-  get filteredItems() { return iterateFilter(this.items, this.filter); }
+  get filteredItems() { return iterateFilter(this.items, this._selectedItems, this.filter); }
 
   selectIndex(index, select) {
     if (this.multiSelect) {

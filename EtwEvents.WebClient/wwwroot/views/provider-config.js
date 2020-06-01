@@ -100,7 +100,6 @@ class ProviderConfig extends LitMvvmElement {
         TraceSessionConfigModel.traceLevelList,
         [this.model.level || 0],
         false,
-        item => html`${item.name}`,
         item => item.value
       );
     }
@@ -176,7 +175,12 @@ class ProviderConfig extends LitMvvmElement {
               <fieldset>
                 <label class="text-gray-600" for="level">Level</label>
                 <kdsoft-dropdown id="traceLevel" class="py-0" .model=${this.levelDropDownModel} .connector=${this.levelChecklistConnector}>
-                  <kdsoft-checklist id="traceLevelList" class="text-black" .model=${this.levelChecklistModel}></kdsoft-checklist>
+                  <kdsoft-checklist
+                    id="traceLevelList"
+                    class="text-black"
+                    .model=${this.levelChecklistModel}
+                    .getItemTemplate=${item => html`${item.name}`}>
+                  </kdsoft-checklist>
                 </kdsoft-dropdown>
               </fieldset>
               <fieldset>

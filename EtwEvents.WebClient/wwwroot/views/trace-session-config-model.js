@@ -38,7 +38,6 @@ class TraceSessionConfigModel extends TraceSessionProfile {
       this.getStandardColumnList(),
       this.standardColumns,
       true,
-      item => html`${item.label}`,
       item => item.name
     );
 
@@ -46,7 +45,6 @@ class TraceSessionConfigModel extends TraceSessionProfile {
       this.payloadColumnList,
       this.payloadColumns,
       true,
-      item => html`${item.label}`,
       item => item.name
     );
 

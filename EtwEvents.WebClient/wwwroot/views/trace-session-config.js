@@ -155,7 +155,6 @@ class TraceSessionConfig extends LitMvvmElement {
 
   firstRendered() {
     // model is defined, because of our shouldRender() override
-    this.model.payloadColumnCheckList.getItemTemplate = this._getPayloadColumnListItemTemplate;
     this._filterObserver = observe(() => {
       this.model.filters = this.model.filterCarousel.filterModels.map(fm => fm.filter);
       this.model.activeFilterIndex = this.model.filterCarousel.activeFilterIndex;
@@ -288,6 +287,7 @@ class TraceSessionConfig extends LitMvvmElement {
               <label class="block mb-1" for="standard-cols">Standard Columns</label>
               <kdsoft-checklist id="standard-cols" class="w-full text-black"
                 .model=${this.model.standardColumnCheckList}
+                .getItemTemplate=${item => html`${item.label}`}
                 allow-drag-drop show-checkboxes>
               </kdsoft-checklist>
             </div>
@@ -295,6 +295,7 @@ class TraceSessionConfig extends LitMvvmElement {
               <label class="block mb-1" for="payload-cols">Payload Columns</label>
               <kdsoft-checklist id="payload-cols" class="text-black"
                 .model=${this.model.payloadColumnCheckList}
+                .getItemTemplate=${this._getPayloadColumnListItemTemplate}
                 allow-drag-drop show-checkboxes>
               </kdsoft-checklist>
               <div class="w-full self-end mt-auto pt-4 pb-1 flex items-center">

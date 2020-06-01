@@ -29,6 +29,7 @@ class KdSoftChecklist extends LitMvvmElement {
     this._internals = this.attachInternals ? this.attachInternals() : null;
     this.scheduler = new Queue(priorities.HIGH);
     //this.scheduler = new BatchScheduler(0);
+    this.getItemTemplate = item => html`${item}`;
   }
 
   get showCheckboxes() { return this.hasAttribute('show-checkboxes'); }
@@ -220,14 +221,14 @@ class KdSoftChecklist extends LitMvvmElement {
     const listItemContent = html`
       <div class="w-full inline-flex items-baseline">
         ${hasArrows
-        ? html`
-            <span class="leading-none cursor-pointer my-auto mr-1" @click=${this._upClick}><i class=${classMap(upArrowClasses)}></i></span>
-            <span class="leading-none cursor-pointer my-auto mr-2" @click=${this._downClick}><i class=${classMap(downArrowClasses)}></i></span>
-          `
-        : nothing
-      }
+          ? html`
+              <span class="leading-none cursor-pointer my-auto mr-1" @click=${this._upClick}><i class=${classMap(upArrowClasses)}></i></span>
+              <span class="leading-none cursor-pointer my-auto mr-2" @click=${this._downClick}><i class=${classMap(downArrowClasses)}></i></span>
+            `
+          : nothing
+        }
         ${showCheckboxes ? this._checkBoxTemplate(this.model, item, indx) : nothing}
-        ${this.model.getItemTemplate(item)}
+        ${this.getItemTemplate(item)}
       </div>
     `;
 
@@ -350,7 +351,7 @@ class KdSoftChecklist extends LitMvvmElement {
       <link rel="stylesheet" type="text/css" href=${styleLinks.checkbox} />
       <style>
       </style>
-      <div id="container" @click=${this._dropdownClicked}>
+      <div id="container">
         <ul id="item-list"
           class="bg-white border-solid border border-gray-400 overflow-y-auto"
           @keydown=${this._itemListKeydown}
