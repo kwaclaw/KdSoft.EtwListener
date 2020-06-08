@@ -1,8 +1,8 @@
 {
   "imports": {
     "@kdsoft/lit-mvvm": "./@kdsoft/lit-mvvm.js",
-    "@nx-js/observer-util": "./@nx-js/observer-util.js",
-    "@nx-js/queue-util": "./@nx-js/queue-util.js",
+    "@nx-js/observer-util/dist/es.es6.js": "./@nx-js/observer-util/dist/es.es6.js",
+    "@nx-js/queue-util/dist/es.es6.js": "./@nx-js/queue-util/dist/es.es6.js",
     "dialog-polyfill": "./dialog-polyfill.js",
     "dialog-polyfill/dialog-polyfill.css": "./dialog-polyfill/dialog-polyfill.css",
     "gettext.js": "./gettext.js",

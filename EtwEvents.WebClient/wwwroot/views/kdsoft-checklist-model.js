@@ -1,5 +1,5 @@
 
-import { observable, raw } from '../lib/@nx-js/observer-util.js';
+import { observable, raw } from '../lib/@nx-js/observer-util/dist/es.es6.js';
 
 function iterateSelectedItems(items, selectedItems) {
   let current;

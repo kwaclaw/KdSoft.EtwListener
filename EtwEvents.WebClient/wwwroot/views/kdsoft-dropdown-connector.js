@@ -1,4 +1,4 @@
-import { observable } from '../lib/@nx-js/observer-util.js';
+import { observable } from '../lib/@nx-js/observer-util/dist/es.es6.js';
 
 class KdSoftDropdownConnector {
   constructor(getDropdown) {

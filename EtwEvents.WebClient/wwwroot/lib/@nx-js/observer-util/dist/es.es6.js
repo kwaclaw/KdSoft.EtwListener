@@ -1,22 +1,18 @@
-var connectionStore = new WeakMap();
-var ITERATION_KEY = Symbol('iteration key');
+const connectionStore = new WeakMap();
+const ITERATION_KEY = Symbol('iteration key');
 
 function storeObservable(obj) {
   // this will be used to save (obj.key -> reaction) connections later
   connectionStore.set(obj, new Map());
 }
 
-function registerReactionForOperation(reaction, ref) {
-  var target = ref.target;
-  var key = ref.key;
-  var type = ref.type;
-
+function registerReactionForOperation(reaction, { target, key, type }) {
   if (type === 'iterate') {
     key = ITERATION_KEY;
   }
 
-  var reactionsForObj = connectionStore.get(target);
-  var reactionsForKey = reactionsForObj.get(key);
+  const reactionsForObj = connectionStore.get(target);
+  let reactionsForKey = reactionsForObj.get(key);
   if (!reactionsForKey) {
     reactionsForKey = new Set();
     reactionsForObj.set(key, reactionsForKey);
@@ -28,16 +24,12 @@ function registerReactionForOperation(reaction, ref) {
   }
 }
 
-function getReactionsForOperation(ref) {
-  var target = ref.target;
-  var key = ref.key;
-  var type = ref.type;
-
-  var reactionsForTarget = connectionStore.get(target);
-  var reactionsForKey = new Set();
+function getReactionsForOperation({ target, key, type }) {
+  const reactionsForTarget = connectionStore.get(target);
+  const reactionsForKey = new Set();
 
   if (type === 'clear') {
-    reactionsForTarget.forEach(function (_, key) {
+    reactionsForTarget.forEach((_, key) => {
       addReactionsForKey(reactionsForKey, reactionsForTarget, key);
     });
   } else {
@@ -45,7 +37,7 @@ function getReactionsForOperation(ref) {
   }
 
   if (type === 'add' || type === 'delete' || type === 'clear') {
-    var iterationKey = Array.isArray(target) ? 'length' : ITERATION_KEY;
+    const iterationKey = Array.isArray(target) ? 'length' : ITERATION_KEY;
     addReactionsForKey(reactionsForKey, reactionsForTarget, iterationKey);
   }
 
@@ -53,7 +45,7 @@ function getReactionsForOperation(ref) {
 }
 
 function addReactionsForKey(reactionsForKey, reactionsForTarget, key) {
-  var reactions = reactionsForTarget.get(key);
+  const reactions = reactionsForTarget.get(key);
   reactions && reactions.forEach(reactionsForKey.add, reactionsForKey);
 }
 
@@ -69,8 +61,8 @@ function releaseReactionKeyConnection(reactionsForKey) {
 }
 
 // reactions can call each other and form a call stack
-var reactionStack = [];
-var isDebugging = false;
+const reactionStack = [];
+let isDebugging = false;
 
 function runAsReaction(reaction, fn, context, args) {
   // do not build reactive relations, if the reaction is unobserved
@@ -100,7 +92,7 @@ function runAsReaction(reaction, fn, context, args) {
 // register the currently running reaction to be queued again on obj.key mutations
 function registerRunningReactionForOperation(operation) {
   // get the current reaction from the top of the stack
-  var runningReaction = reactionStack[reactionStack.length - 1];
+  const runningReaction = reactionStack[reactionStack.length - 1];
   if (runningReaction) {
     debugOperation(runningReaction, operation);
     registerReactionForOperation(runningReaction, operation);
@@ -139,13 +131,11 @@ function hasRunningReaction() {
   return reactionStack.length > 0;
 }
 
-var IS_REACTION = Symbol('is reaction');
+const IS_REACTION = Symbol('is reaction');
 
-function observe(fn, options) {
-  if ( options === void 0 ) options = {};
-
+function observe(fn, options = {}) {
   // wrap the passed function in a reaction, if it is not already one
-  var reaction = fn[IS_REACTION] ? fn : function reaction() {
+  const reaction = fn[IS_REACTION] ? fn : function reaction() {
     return runAsReaction(reaction, fn, this, arguments);
   };
   // save the scheduler and debugger on the reaction
@@ -174,13 +164,13 @@ function unobserve(reaction) {
   }
 }
 
-var proxyToRaw = new WeakMap();
-var rawToProxy = new WeakMap();
+const proxyToRaw = new WeakMap();
+const rawToProxy = new WeakMap();
 
-var hasOwnProperty = Object.prototype.hasOwnProperty;
+const hasOwnProperty = Object.prototype.hasOwnProperty;
 
 function findObservable(obj) {
-  var observableObj = rawToProxy.get(obj);
+  const observableObj = rawToProxy.get(obj);
   if (hasRunningReaction() && typeof obj === 'object' && obj !== null) {
     if (observableObj) {
       return observableObj;
@@ -191,11 +181,9 @@ function findObservable(obj) {
 }
 
 function patchIterator(iterator, isEntries) {
-  var originalNext = iterator.next;
-  iterator.next = function () {
-    var ref = originalNext.call(iterator);
-    var done = ref.done;
-    var value = ref.value;
+  const originalNext = iterator.next;
+  iterator.next = () => {
+    let { done, value } = originalNext.call(iterator);
     if (!done) {
       if (isEntries) {
         value[1] = findObservable(value[1]);
@@ -203,128 +191,119 @@ function patchIterator(iterator, isEntries) {
         value = findObservable(value);
       }
     }
-    return { done: done, value: value };
+    return { done, value };
   };
   return iterator;
 }
 
-var instrumentations = {
-  has: function has(key) {
-    var target = proxyToRaw.get(this);
-    var proto = Reflect.getPrototypeOf(this);
-    registerRunningReactionForOperation({ target: target, key: key, type: 'has' });
+const instrumentations = {
+  has(key) {
+    const target = proxyToRaw.get(this);
+    const proto = Reflect.getPrototypeOf(this);
+    registerRunningReactionForOperation({ target, key, type: 'has' });
     return proto.has.apply(target, arguments);
   },
-  get: function get(key) {
-    var target = proxyToRaw.get(this);
-    var proto = Reflect.getPrototypeOf(this);
-    registerRunningReactionForOperation({ target: target, key: key, type: 'get' });
+  get(key) {
+    const target = proxyToRaw.get(this);
+    const proto = Reflect.getPrototypeOf(this);
+    registerRunningReactionForOperation({ target, key, type: 'get' });
     return findObservable(proto.get.apply(target, arguments));
   },
-  add: function add(key) {
-    var target = proxyToRaw.get(this);
-    var proto = Reflect.getPrototypeOf(this);
-    var hadKey = proto.has.call(target, key);
+  add(key) {
+    const target = proxyToRaw.get(this);
+    const proto = Reflect.getPrototypeOf(this);
+    const hadKey = proto.has.call(target, key);
     // forward the operation before queueing reactions
-    var result = proto.add.apply(target, arguments);
+    const result = proto.add.apply(target, arguments);
     if (!hadKey) {
-      queueReactionsForOperation({ target: target, key: key, value: key, type: 'add' });
+      queueReactionsForOperation({ target, key, value: key, type: 'add' });
     }
     return result;
   },
-  set: function set(key, value) {
-    var target = proxyToRaw.get(this);
-    var proto = Reflect.getPrototypeOf(this);
-    var hadKey = proto.has.call(target, key);
-    var oldValue = proto.get.call(target, key);
+  set(key, value) {
+    const target = proxyToRaw.get(this);
+    const proto = Reflect.getPrototypeOf(this);
+    const hadKey = proto.has.call(target, key);
+    const oldValue = proto.get.call(target, key);
     // forward the operation before queueing reactions
-    var result = proto.set.apply(target, arguments);
+    const result = proto.set.apply(target, arguments);
     if (!hadKey) {
-      queueReactionsForOperation({ target: target, key: key, value: value, type: 'add' });
+      queueReactionsForOperation({ target, key, value, type: 'add' });
     } else if (value !== oldValue) {
-      queueReactionsForOperation({ target: target, key: key, value: value, oldValue: oldValue, type: 'set' });
+      queueReactionsForOperation({ target, key, value, oldValue, type: 'set' });
     }
     return result;
   },
-  delete: function delete$1(key) {
-    var target = proxyToRaw.get(this);
-    var proto = Reflect.getPrototypeOf(this);
-    var hadKey = proto.has.call(target, key);
-    var oldValue = proto.get ? proto.get.call(target, key) : undefined;
+  delete(key) {
+    const target = proxyToRaw.get(this);
+    const proto = Reflect.getPrototypeOf(this);
+    const hadKey = proto.has.call(target, key);
+    const oldValue = proto.get ? proto.get.call(target, key) : undefined;
     // forward the operation before queueing reactions
-    var result = proto.delete.apply(target, arguments);
+    const result = proto.delete.apply(target, arguments);
     if (hadKey) {
-      queueReactionsForOperation({ target: target, key: key, oldValue: oldValue, type: 'delete' });
+      queueReactionsForOperation({ target, key, oldValue, type: 'delete' });
     }
     return result;
   },
-  clear: function clear() {
-    var target = proxyToRaw.get(this);
-    var proto = Reflect.getPrototypeOf(this);
-    var hadItems = target.size !== 0;
-    var oldTarget = target instanceof Map ? new Map(target) : new Set(target);
+  clear() {
+    const target = proxyToRaw.get(this);
+    const proto = Reflect.getPrototypeOf(this);
+    const hadItems = target.size !== 0;
+    const oldTarget = target instanceof Map ? new Map(target) : new Set(target);
     // forward the operation before queueing reactions
-    var result = proto.clear.apply(target, arguments);
+    const result = proto.clear.apply(target, arguments);
     if (hadItems) {
-      queueReactionsForOperation({ target: target, oldTarget: oldTarget, type: 'clear' });
+      queueReactionsForOperation({ target, oldTarget, type: 'clear' });
     }
     return result;
   },
-  forEach: function forEach(cb) {
-    var args = [], len = arguments.length - 1;
-    while ( len-- > 0 ) args[ len ] = arguments[ len + 1 ];
-
-    var target = proxyToRaw.get(this);
-    var proto = Reflect.getPrototypeOf(this);
-    registerRunningReactionForOperation({ target: target, type: 'iterate' });
+  forEach(cb, ...args) {
+    const target = proxyToRaw.get(this);
+    const proto = Reflect.getPrototypeOf(this);
+    registerRunningReactionForOperation({ target, type: 'iterate' });
     // swap out the raw values with their observable pairs
     // before passing them to the callback
-    var wrappedCb = function (value) {
-      var rest = [], len = arguments.length - 1;
-      while ( len-- > 0 ) rest[ len ] = arguments[ len + 1 ];
-
-      return cb.apply(void 0, [ findObservable(value) ].concat( rest ));
-    };
-    return (ref = proto.forEach).call.apply(ref, [ target, wrappedCb ].concat( args ));
-    var ref;
+    const wrappedCb = (value, ...rest) => cb(findObservable(value), ...rest);
+    return proto.forEach.call(target, wrappedCb, ...args);
   },
-  keys: function keys() {
-    var target = proxyToRaw.get(this);
-    var proto = Reflect.getPrototypeOf(this);
-    registerRunningReactionForOperation({ target: target, type: 'iterate' });
+  keys() {
+    const target = proxyToRaw.get(this);
+    const proto = Reflect.getPrototypeOf(this);
+    registerRunningReactionForOperation({ target, type: 'iterate' });
     return proto.keys.apply(target, arguments);
   },
-  values: function values() {
-    var target = proxyToRaw.get(this);
-    var proto = Reflect.getPrototypeOf(this);
-    registerRunningReactionForOperation({ target: target, type: 'iterate' });
-    var iterator = proto.values.apply(target, arguments);
+  values() {
+    const target = proxyToRaw.get(this);
+    const proto = Reflect.getPrototypeOf(this);
+    registerRunningReactionForOperation({ target, type: 'iterate' });
+    const iterator = proto.values.apply(target, arguments);
     return patchIterator(iterator, false);
   },
-  entries: function entries() {
-    var target = proxyToRaw.get(this);
-    var proto = Reflect.getPrototypeOf(this);
-    registerRunningReactionForOperation({ target: target, type: 'iterate' });
-    var iterator = proto.entries.apply(target, arguments);
+  entries() {
+    const target = proxyToRaw.get(this);
+    const proto = Reflect.getPrototypeOf(this);
+    registerRunningReactionForOperation({ target, type: 'iterate' });
+    const iterator = proto.entries.apply(target, arguments);
     return patchIterator(iterator, true);
   },
+  [Symbol.iterator]() {
+    const target = proxyToRaw.get(this);
+    const proto = Reflect.getPrototypeOf(this);
+    registerRunningReactionForOperation({ target, type: 'iterate' });
+    const iterator = proto[Symbol.iterator].apply(target, arguments);
+    return patchIterator(iterator, target instanceof Map);
+  },
   get size() {
-    var target = proxyToRaw.get(this);
-    var proto = Reflect.getPrototypeOf(this);
-    registerRunningReactionForOperation({ target: target, type: 'iterate' });
+    const target = proxyToRaw.get(this);
+    const proto = Reflect.getPrototypeOf(this);
+    registerRunningReactionForOperation({ target, type: 'iterate' });
     return Reflect.get(proto, 'size', target);
   }
 };
-instrumentations[Symbol.iterator] = function () {
-    var target = proxyToRaw.get(this);
-    var proto = Reflect.getPrototypeOf(this);
-    registerRunningReactionForOperation({ target: target, type: 'iterate' });
-    var iterator = proto[Symbol.iterator].apply(target, arguments);
-    return patchIterator(iterator, target instanceof Map);
-  };
 
 var collectionHandlers = {
-  get: function get(target, key, receiver) {
+  get(target, key, receiver) {
     // instrument methods and property accessors to be reactive
     target = hasOwnProperty.call(instrumentations, key) ? instrumentations : target;
     return Reflect.get(target, key, receiver);
@@ -332,18 +311,16 @@ var collectionHandlers = {
 };
 
 // eslint-disable-next-line
-var globalObj = typeof window === 'object' ? window : Function('return this')();
+const globalObj = typeof window === 'object' ? window : Function('return this')();
 
 // built-in object can not be wrapped by Proxies
 // their methods expect the object instance as the 'this' instead of the Proxy wrapper
 // complex objects are wrapped with a Proxy of instrumented methods
 // which switch the proxy to the raw object and to add reactive wiring
-var handlers = new Map([[Map, collectionHandlers], [Set, collectionHandlers], [WeakMap, collectionHandlers], [WeakSet, collectionHandlers], [Object, false], [Array, false], [Int8Array, false], [Uint8Array, false], [Uint8ClampedArray, false], [Int16Array, false], [Uint16Array, false], [Int32Array, false], [Uint32Array, false], [Float32Array, false], [Float64Array, false]]);
+const handlers = new Map([[Map, collectionHandlers], [Set, collectionHandlers], [WeakMap, collectionHandlers], [WeakSet, collectionHandlers], [Object, false], [Array, false], [Int8Array, false], [Uint8Array, false], [Uint8ClampedArray, false], [Int16Array, false], [Uint16Array, false], [Int32Array, false], [Uint32Array, false], [Float32Array, false], [Float64Array, false]]);
 
-function shouldInstrument(ref) {
-  var constructor = ref.constructor;
-
-  var isBuiltIn = typeof constructor === 'function' && constructor.name in globalObj && globalObj[constructor.name] === constructor;
+function shouldInstrument({ constructor }) {
+  const isBuiltIn = typeof constructor === 'function' && constructor.name in globalObj && globalObj[constructor.name] === constructor;
   return !isBuiltIn || handlers.has(constructor);
 }
 
@@ -351,29 +328,29 @@ function getHandlers(obj) {
   return handlers.get(obj.constructor);
 }
 
-var hasOwnProperty$1 = Object.prototype.hasOwnProperty;
-var wellKnownSymbols = new Set(Object.getOwnPropertyNames(Symbol).map(function (key) { return Symbol[key]; }).filter(function (value) { return typeof value === 'symbol'; }));
+const hasOwnProperty$1 = Object.prototype.hasOwnProperty;
+const wellKnownSymbols = new Set(Object.getOwnPropertyNames(Symbol).map(key => Symbol[key]).filter(value => typeof value === 'symbol'));
 
 // intercept get operations on observables to know which reaction uses their properties
 function get(target, key, receiver) {
-  var result = Reflect.get(target, key, receiver);
+  const result = Reflect.get(target, key, receiver);
   // do not register (observable.prop -> reaction) pairs for well known symbols
   // these symbols are frequently retrieved in low level JavaScript under the hood
   if (typeof key === 'symbol' && wellKnownSymbols.has(key)) {
     return result;
   }
   // register and save (observable.prop -> runningReaction)
-  registerRunningReactionForOperation({ target: target, key: key, receiver: receiver, type: 'get' });
+  registerRunningReactionForOperation({ target, key, receiver, type: 'get' });
   // if we are inside a reaction and observable.prop is an object wrap it in an observable too
   // this is needed to intercept property access on that object too (dynamic observable tree)
-  var observableResult = rawToProxy.get(result);
+  const observableResult = rawToProxy.get(result);
   if (hasRunningReaction() && typeof result === 'object' && result !== null) {
     if (observableResult) {
       return observableResult;
     }
     // do not violate the none-configurable none-writable prop get handler invariant
     // fall back to none reactive mode in this case, instead of letting the Proxy throw a TypeError
-    var descriptor = Reflect.getOwnPropertyDescriptor(target, key);
+    const descriptor = Reflect.getOwnPropertyDescriptor(target, key);
     if (!descriptor || !(descriptor.writable === false && descriptor.configurable === false)) {
       return observable(result);
     }
@@ -383,14 +360,14 @@ function get(target, key, receiver) {
 }
 
 function has(target, key) {
-  var result = Reflect.has(target, key);
+  const result = Reflect.has(target, key);
   // register and save (observable.prop -> runningReaction)
-  registerRunningReactionForOperation({ target: target, key: key, type: 'has' });
+  registerRunningReactionForOperation({ target, key, type: 'has' });
   return result;
 }
 
 function ownKeys(target) {
-  registerRunningReactionForOperation({ target: target, type: 'iterate' });
+  registerRunningReactionForOperation({ target, type: 'iterate' });
   return Reflect.ownKeys(target);
 }
 
@@ -401,11 +378,11 @@ function set(target, key, value, receiver) {
     value = proxyToRaw.get(value) || value;
   }
   // save if the object had a descriptor for this key
-  var hadKey = hasOwnProperty$1.call(target, key);
+  const hadKey = hasOwnProperty$1.call(target, key);
   // save if the value changed because of this set operation
-  var oldValue = target[key];
+  const oldValue = target[key];
   // execute the set operation before running any reaction
-  var result = Reflect.set(target, key, value, receiver);
+  const result = Reflect.set(target, key, value, receiver);
   // do not queue reactions if the target of the operation is not the raw receiver
   // (possible because of prototypal inheritance)
   if (target !== proxyToRaw.get(receiver)) {
@@ -413,14 +390,14 @@ function set(target, key, value, receiver) {
   }
   // queue a reaction if it's a new property or its value changed
   if (!hadKey) {
-    queueReactionsForOperation({ target: target, key: key, value: value, receiver: receiver, type: 'add' });
+    queueReactionsForOperation({ target, key, value, receiver, type: 'add' });
   } else if (value !== oldValue) {
     queueReactionsForOperation({
-      target: target,
-      key: key,
-      value: value,
-      oldValue: oldValue,
-      receiver: receiver,
+      target,
+      key,
+      value,
+      oldValue,
+      receiver,
       type: 'set'
     });
   }
@@ -429,22 +406,20 @@ function set(target, key, value, receiver) {
 
 function deleteProperty(target, key) {
   // save if the object had the key
-  var hadKey = hasOwnProperty$1.call(target, key);
-  var oldValue = target[key];
+  const hadKey = hasOwnProperty$1.call(target, key);
+  const oldValue = target[key];
   // execute the delete operation before running any reaction
-  var result = Reflect.deleteProperty(target, key);
+  const result = Reflect.deleteProperty(target, key);
   // only queue reactions for delete operations which resulted in an actual change
   if (hadKey) {
-    queueReactionsForOperation({ target: target, key: key, oldValue: oldValue, type: 'delete' });
+    queueReactionsForOperation({ target, key, oldValue, type: 'delete' });
   }
   return result;
 }
 
-var baseHandlers = { get: get, has: has, ownKeys: ownKeys, set: set, deleteProperty: deleteProperty };
+var baseHandlers = { get, has, ownKeys, set, deleteProperty };
 
-function observable(obj) {
-  if ( obj === void 0 ) obj = {};
-
+function observable(obj = {}) {
   // if it is already an observable or it should not be wrapped, return it
   if (proxyToRaw.has(obj) || !shouldInstrument(obj)) {
     return obj;
@@ -456,8 +431,8 @@ function observable(obj) {
 
 function createObservable(obj) {
   // if it is a complex built-in object or a normal object, wrap it
-  var handlers = getHandlers(obj) || baseHandlers;
-  var observable = new Proxy(obj, handlers);
+  const handlers = getHandlers(obj) || baseHandlers;
+  const observable = new Proxy(obj, handlers);
   // save these to switch between the raw object and the wrapped object with ease later
   rawToProxy.set(obj, observable);
   proxyToRaw.set(observable, obj);

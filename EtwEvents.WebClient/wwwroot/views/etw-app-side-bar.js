@@ -2,7 +2,7 @@
 
 import { html, nothing } from '../lib/lit-html.js';
 import { classMap } from '../lib/lit-html/directives/class-map.js';
-import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
+import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
 import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import dialogPolyfill from '../lib/dialog-polyfill.js';
 import FilterFormModel from './filter-form-model.js';
@@ -144,15 +144,15 @@ class EtwAppSideBar extends LitMvvmElement {
   //#region event sinks
 
   _openEventSinkClick(e, session) {
-    const spinner = new Spinner(e.currentTarget);
-    session.openEventSink(spinner);
+    // const spinner = new Spinner(e.currentTarget);
+    // session.openEventSink(spinner);
 
-    //const configModel = new EventSinkConfigModel(0);
+    const configModel = new EventSinkConfigModel(0);
 
-    //const dlg = this.renderRoot.getElementById('dlg-event-sink');
-    //const cfg = dlg.querySelector('event-sink-config');
-    //cfg.model = configModel;
-    //dlg.showModal();
+    const dlg = this.renderRoot.getElementById('dlg-event-sink');
+    const cfg = dlg.querySelector('event-sink-config');
+    cfg.model = configModel;
+    dlg.showModal();
   }
 
   //#endregion

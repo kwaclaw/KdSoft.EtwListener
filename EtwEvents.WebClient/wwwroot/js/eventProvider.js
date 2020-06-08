@@ -1,6 +1,4 @@
-﻿import { observable } from '../lib/@nx-js/observer-util.js';
-
-class EventProvider {
+﻿class EventProvider {
   constructor(name, level, matchKeyWords = 0, disabled = false) {
     this.name = name;
     this.level = level;

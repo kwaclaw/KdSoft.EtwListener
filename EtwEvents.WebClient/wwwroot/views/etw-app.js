@@ -3,7 +3,7 @@
 import { html, nothing } from '../lib/lit-html.js';
 import { repeat } from '../lib/lit-html/directives/repeat.js';
 import { classMap } from '../lib/lit-html/directives/class-map.js';
-import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
+import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
 import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import './etw-app-side-bar.js';
 import './trace-session-view.js';

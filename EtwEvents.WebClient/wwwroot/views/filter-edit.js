@@ -1,6 +1,6 @@
 ﻿import { html } from '../lib/lit-html.js';
 import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
-import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
+import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 
 function comparePos(pos1, pos2) {

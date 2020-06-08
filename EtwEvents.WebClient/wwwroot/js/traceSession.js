@@ -1,4 +1,4 @@
-﻿import { observable, observe } from '../lib/@nx-js/observer-util.js';
+﻿import { observable, observe } from '../lib/@nx-js/observer-util/dist/es.es6.js';
 import EventSession from './eventSession.js';
 import FetchHelper from './fetchHelper.js';
 
@@ -24,7 +24,7 @@ class TraceSession {
     observe(() => {
       updateStateInternal(result);
     });
-    return result;
+    return result; 
   }
 
   get name() { return this._state ? this._state.name : (this._profile ? this._profile.name : '<unknown>'); }

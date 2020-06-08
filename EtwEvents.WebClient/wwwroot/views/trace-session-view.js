@@ -1,7 +1,6 @@
 ﻿import { html, nothing } from '../lib/lit-html.js';
 import { LitMvvmElement, css, BatchScheduler } from '../lib/@kdsoft/lit-mvvm.js';
 import { repeat } from '../lib/lit-html/directives/repeat.js';
-import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import { KdSoftGridStyle } from '../styles/kdsoft-grid-style.js';
 import * as utils from '../js/utils.js';

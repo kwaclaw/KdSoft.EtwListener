@@ -6,7 +6,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "postcss-fontawesome": "postcss src/css/fontawesome/css/all.css -o wwwroot/css/fontawesome/css/all.css",
     "postcss-src": "postcss src/css/**/*.pcss --dir wwwroot/css --ext css",
-    "snowpack": "snowpack install --dest wwwroot/lib",
+    "postinstall": "snowpack install --dest wwwroot/lib",
     "lint": "eslint",
     "po2json": "po2json-gettextjs wwwroot/de_AT.po wwwroot/de_AT.json -p",
     "build": "npm run postcss-fontawesome && npm run postcss-src && npm run po2json"
@@ -14,7 +14,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@kdsoft/lit-mvvm": "github:kwaclaw/KdSoft.lit-mvvm#master",
+    "@kdsoft/lit-mvvm": "^1.0.0",
     "@nx-js/observer-util": "^4.2.2",
     "@nx-js/queue-util": "^1.1.1",
     "dialog-polyfill": "^0.5.1",
@@ -24,8 +24,8 @@
   },
   "devDependencies": {
     "@babel/cli": "^7.10.1",
-    "@babel/core": "^7.10.1",
-    "@babel/preset-env": "^7.10.1",
+    "@babel/core": "^7.10.2",
+    "@babel/preset-env": "^7.10.2",
     "@tailwindcss/custom-forms": "^0.2.1",
     "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^14.1.0",
@@ -33,13 +33,13 @@
     "postcss-cli": "^7.1.1",
     "postcss-import": "^12.0.1",
     "postcss-modules": "^1.5.0",
-    "snowpack": "^2.0.3"
+    "snowpack": "^2.3.1"
   },
   "snowpack": {
     "install": [
       "@kdsoft/lit-mvvm",
-      "@nx-js/observer-util",
-      "@nx-js/queue-util",
+      "@nx-js/observer-util/dist/es.es6.js",
+      "@nx-js/queue-util/dist/es.es6.js",
       "lit-html",
       "lit-html/directives/repeat.js",
       "lit-html/directives/class-map.js",

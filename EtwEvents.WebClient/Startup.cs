@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
+using System.IO;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.Configuration;
@@ -19,6 +22,8 @@ namespace KdSoft.EtwEvents.WebClient
 {
     public class Startup
     {
+        IWebHostEnvironment _env;
+
         public Startup(IConfiguration configuration) {
             Configuration = configuration;
         }
@@ -89,9 +94,23 @@ namespace KdSoft.EtwEvents.WebClient
                 .ConfigureApplicationPartManager(manager => {
                     manager.FeatureProviders.Add(new EtwControllerFeatureProvider());
                 });
+
+            services.AddSingleton<AppSecretsHolder>(provider => {
+                var secretsPath = Path.Combine(_env.ContentRootPath, "appsecrets.json");
+                var localizerFactory = provider.GetService<IStringLocalizerFactory>();
+                var dataProtectionProvider = provider.GetRequiredService<IDataProtectionProvider>();
+                var result = new AppSecretsHolder(secretsPath, "KdSoft-EtwEvents-Secrets", dataProtectionProvider, localizerFactory);
+                result.EnsureProtected();
+                return result;
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
+            Contract.Assert(app != null);
+            Contract.Assert(env != null);
+
+            this._env = env;
+
             if (env.IsDevelopment()) {
                 app.UseExceptionHandler("/error-local-development");
             }
@@ -101,6 +120,10 @@ namespace KdSoft.EtwEvents.WebClient
                 app.UseHsts();
                 app.UseHttpsRedirection();
             }
+
+            // depending on development or production mode, we have to initialize the secrets differently
+            var appSecretsPath = Path.Combine(env.ContentRootPath, "appsecrets.json");
+            PrepareSecrets(env, appSecretsPath);
 
             app.UseRequestLocalization();
 
@@ -124,6 +147,27 @@ namespace KdSoft.EtwEvents.WebClient
                 endpoints.MapRazorPages();
                 endpoints.MapControllers();
             });
+        }
+
+        /// <summary>
+        /// Prepare secrets files, depending on development or production mode.
+        /// In development mode: if the secrets file is missing, it will be copied from the clearText file.
+        /// In production mode: If the clearText file is present, it will be renamed to the secrets file, replacing it.
+        /// On first run of the web application, the secrets file will be encrypted if it is in clear text.
+        /// NOTE: only the clear text file may be published.
+        /// </summary>
+        void PrepareSecrets(IWebHostEnvironment env, string secretsPath) {
+            var clearTextPath = secretsPath + ".clearText";
+            if (env.IsDevelopment()) {
+                if (!File.Exists(secretsPath))
+                    File.Copy(clearTextPath, secretsPath);
+            }
+            else {
+                if (File.Exists(clearTextPath)) {
+                    File.Delete(secretsPath);
+                    File.Move(clearTextPath, secretsPath);
+                }
+            }
         }
     }
 

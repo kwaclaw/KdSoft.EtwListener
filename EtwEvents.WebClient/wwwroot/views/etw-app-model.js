@@ -1,4 +1,4 @@
-import { observable, observe, unobserve, raw } from '../lib/@nx-js/observer-util.js';
+import { observable, observe, unobserve, raw } from '../lib/@nx-js/observer-util/dist/es.es6.js';
 import TraceSession from '../js/traceSession.js';
 import TraceSessionProfile from '../js/traceSessionProfile.js';
 import * as utils from '../js/utils.js';

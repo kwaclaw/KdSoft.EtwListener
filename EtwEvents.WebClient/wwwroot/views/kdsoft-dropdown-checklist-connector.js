@@ -1,4 +1,4 @@
-import { observable, observe, unobserve } from '../lib/@nx-js/observer-util.js';
+import { observable, observe, unobserve } from '../lib/@nx-js/observer-util/dist/es.es6.js';
 import KdSoftDropdownConnector from './kdsoft-dropdown-connector.js';
 
 function _getSelectedText(clm) {

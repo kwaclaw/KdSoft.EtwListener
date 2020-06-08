@@ -2,8 +2,8 @@ import { html, nothing } from '../lib/lit-html.js';
 import { repeat } from '../lib/lit-html/directives/repeat.js';
 import { classMap } from '../lib/lit-html/directives/class-map.js';
 import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
-import { observe, unobserve } from '../lib/@nx-js/observer-util.js';
-import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
+import { observe, unobserve } from '../lib/@nx-js/observer-util/dist/es.es6.js';
+import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
 
@@ -64,7 +64,7 @@ class KdSoftChecklist extends LitMvvmElement {
 
   // Observed attributes will trigger an attributeChangedCallback, which in turn will cause a re-render to be scheduled!
   static get observedAttributes() {
-    return [...super.observedAttributes, 'arrows', 'allow-drag-drop'];
+    return [...super.observedAttributes, 'show-checkboxes', 'arrows', 'allow-drag-drop'];
   }
 
   //#region click and key events
@@ -356,7 +356,10 @@ class KdSoftChecklist extends LitMvvmElement {
           class="bg-white border-solid border border-gray-400 overflow-y-auto"
           @keydown=${this._itemListKeydown}
         >
-          ${repeat(this.model.filteredItems, entry => this.model.getItemId(entry.item), entry => this._itemTemplate(entry.item, entry.index, showCheckboxes, hasArrows, allowDragAndDrop))}
+          ${repeat(this.model.filteredItems,
+            entry => this.model.getItemId(entry.item),
+            entry => this._itemTemplate(entry.item, entry.index, showCheckboxes, hasArrows, allowDragAndDrop)
+          )}
         </ul>
       </div>
     `;

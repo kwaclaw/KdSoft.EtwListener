@@ -1,5 +1,5 @@
 import { render } from '../lit-html.js';
-import { unobserve, observe } from '../@nx-js/observer-util.js';
+import { unobserve, observe } from '../@nx-js/observer-util/dist/es.es6.js';
 
 /**
 @license

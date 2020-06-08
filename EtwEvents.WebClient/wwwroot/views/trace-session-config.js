@@ -1,8 +1,8 @@
 ﻿import { html } from '../lib/lit-html.js';
 import { classMap } from '../lib/lit-html/directives/class-map.js';
 import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
-import { observe, unobserve } from '../lib/@nx-js/observer-util.js';
-import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
+import { observe, unobserve } from '../lib/@nx-js/observer-util/dist/es.es6.js';
+import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
 import * as utils from '../js/utils.js';

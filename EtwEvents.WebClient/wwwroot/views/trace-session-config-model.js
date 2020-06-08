@@ -1,8 +1,6 @@
-﻿
-/* global i18n */
+﻿/* global i18n */
 
-import { html } from '../lib/lit-html.js';
-import { observable, observe } from '../lib/@nx-js/observer-util.js';
+import { observable, observe } from '../lib/@nx-js/observer-util/dist/es.es6.js';
 import * as utils from '../js/utils.js';
 import TraceSessionProfile from '../js/traceSessionProfile.js';
 import FilterCarouselModel from './filter-carousel-model.js';

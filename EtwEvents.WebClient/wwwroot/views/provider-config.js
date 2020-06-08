@@ -1,12 +1,10 @@
 import { html } from '../lib/lit-html.js';
 import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
-import { observe, unobserve } from '../lib/@nx-js/observer-util.js';
-import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
+import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
 import './kdsoft-dropdown.js';
 import './kdsoft-checklist.js';
-import * as utils from '../js/utils.js';
 import TraceSessionConfigModel from './trace-session-config-model.js';
 import KdSoftDropdownModel from './kdsoft-dropdown-model.js';
 import KdSoftChecklistModel from './kdsoft-checklist-model.js';
