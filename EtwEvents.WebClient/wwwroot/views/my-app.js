@@ -5,13 +5,13 @@ import { repeat } from '../lib/lit-html/directives/repeat.js';
 import { classMap } from '../lib/lit-html/directives/class-map.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util.js';
 import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
-import './my-app-side-bar.js';
+import './etw-app-side-bar.js';
 import './trace-session-view.js';
 import './filter-form.js';
 import Spinner from '../js/spinner.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import { KdSoftGridStyle } from '../styles/kdsoft-grid-style.js';
-import myappStyleLinks from '../styles/my-app-style-links.js';
+import etwAppStyleLinks from '../styles/etw-app-style-links.js';
 
 const runBtnBase = { fas: true };
 const tabBase = { 'inline-block': true, 'py-2': true, 'no-underline': true };
@@ -26,15 +26,15 @@ const classList = {
 };
 
 
-class MyApp extends LitMvvmElement {
+class EtwApp extends LitMvvmElement {
   constructor() {
     super();
     // setting model property here because we cannot reliable set it from a non-lit-html rendered HTML page
     this.scheduler = new Queue(priorities.HIGH);
     // we must assign the model *after* the scheduler, or assign it externally
-    // this.model = new MyAppModel(); --
+    // this.model = new EtwAppModel(); --
 
-    window.myapp = this;
+    window.etwApp = this;
   }
 
   _sidebarObserverCallback(mutations) {
@@ -350,7 +350,7 @@ class MyApp extends LitMvvmElement {
   render() {
     return html`
       ${sharedStyles}
-      <link rel="stylesheet" type="text/css" href=${myappStyleLinks.myapp} />
+      <link rel="stylesheet" type="text/css" href=${etwAppStyleLinks.etwApp} />
       <link rel="stylesheet" type="text/css" href="css/spinner.css" />
       <style>
         :host {
@@ -360,7 +360,7 @@ class MyApp extends LitMvvmElement {
 
       <div id="container" class="sidebar-expanded">
 
-        <my-app-side-bar id="sidebar" .model=${this.model} aria-expanded="true"></my-app-side-bar>
+        <etw-app-side-bar id="sidebar" .model=${this.model} aria-expanded="true"></etw-app-side-bar>
 
         <div id="sidebar-resize" @pointerdown=${this._sidebarSizeDown} @pointerup=${this._sidebarSizeUp}></div>
 
@@ -439,4 +439,4 @@ class MyApp extends LitMvvmElement {
   //#endregion
 }
 
-window.customElements.define('my-app', MyApp);
+window.customElements.define('etw-app', EtwApp);

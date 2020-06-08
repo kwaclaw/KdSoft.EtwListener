@@ -24,7 +24,7 @@ function getProfileFromState(state) {
   return new TraceSessionProfile(state.name, state.host, state.enabledProviders);
 }
 
-class MyAppModel {
+class EtwAppModel {
   constructor() {
     this._traceSessions = observable(new Map());
     this._visibleSessionNames = observable(new Set());
@@ -42,7 +42,7 @@ class MyAppModel {
     this.fetcher = new FetchHelper('/Etw');
     this.fetcher.getJson('GetSessionStates')
       .then(st => this._updateTraceSessions(st.sessions))
-      .catch(error => window.myapp.defaultHandleError(error));
+      .catch(error => window.etwApp.defaultHandleError(error));
 
     const es = new EventSource('Etw/GetSessionStates');
     es.onmessage = e => {
@@ -229,4 +229,4 @@ class MyAppModel {
   }
 }
 
-export default MyAppModel;
+export default EtwAppModel;

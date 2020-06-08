@@ -8,7 +8,7 @@
     <!-- Seems that fonts cannot be loaded from within a web component -->
     <link rel="stylesheet" type="text/css" href="~/css/fontawesome/css/all.css" />
     <style>
-        my-app {
+        etw-app {
             height: 100vh;
         }
     </style>
@@ -32,12 +32,12 @@
         @* i18n.setLocale('de_AT'); *@
     </script>
 
-    <script type="module" src="~/views/my-app.js"></script>
+    <script type="module" src="~/views/etw-app.js"></script>
     <script type="module">
-        import MyAppModel from '/views/my-app-model.js';
-        const myapp = document.querySelector('my-app');
-        myapp.model = new MyAppModel();
+        import EtwAppModel from '/views/etw-app-model.js';
+        const etwApp = document.querySelector('etw-app');
+        etwApp.model = new EtwAppModel();
     </script>
 }
 
-<my-app appTitle="ETW Listener"></my-app>
+<etw-app appTitle="ETW Listener"></etw-app>

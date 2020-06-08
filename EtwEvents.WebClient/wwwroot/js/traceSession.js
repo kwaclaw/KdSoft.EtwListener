@@ -41,7 +41,7 @@ class TraceSession {
       await this.fetcher.withProgress(progress).post('CloseRemoteSession', { name: this._profile.name });
       //console.log(response);
     } catch (error) {
-      window.myapp.defaultHandleError(error);
+      window.etwApp.defaultHandleError(error);
     }
   }
 
@@ -55,7 +55,7 @@ class TraceSession {
       this._restartedProviders = response.restartedProviders;
       return true;
     } catch (error) {
-      window.myapp.defaultHandleError(error);
+      window.etwApp.defaultHandleError(error);
     }
 
     return false;
@@ -66,13 +66,13 @@ class TraceSession {
       try {
         await this.fetcher.withProgress(progress).post('StopEvents', { sessionName: this._profile.name });
       } catch (error) {
-        window.myapp.defaultHandleError(error);
+        window.etwApp.defaultHandleError(error);
       }
     } else {
       try {
         await this.fetcher.withProgress(progress).get('StartEvents', { sessionName: this._profile.name });
       } catch (error) {
-        window.myapp.defaultHandleError(error);
+        window.etwApp.defaultHandleError(error);
       }
     }
   }
@@ -92,7 +92,7 @@ class TraceSession {
     evs = new EventSession(
       `wss://${window.location.host}/Etw/ObserveEvents?sessionName=${this.profile.name}`,
       900,
-      error => window.myapp.defaultHandleError(error)
+      error => window.etwApp.defaultHandleError(error)
     );
     evs.connect();
     observe(() => {
@@ -155,7 +155,7 @@ class TraceSession {
       const data = [evr];
       await this.fetcher.withProgress(progress).postJson('OpenEventSinks', { sessionName: this._profile.name }, data);
     } catch (error) {
-      window.myapp.defaultHandleError(error);
+      window.etwApp.defaultHandleError(error);
     }
   }
 }

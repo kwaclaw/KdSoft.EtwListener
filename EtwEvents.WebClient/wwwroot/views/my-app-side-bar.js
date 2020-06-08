@@ -17,7 +17,7 @@ import * as utils from '../js/utils.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import { KdSoftGridStyle } from '../styles/kdsoft-grid-style.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
-import myappStyleLinks from '../styles/my-app-style-links.js';
+import etwAppStyleLinks from '../styles/etw-app-style-links.js';
 
 const runBtnBase = { fas: true };
 
@@ -48,7 +48,7 @@ function formSaveHandler(e) {
 }
 
 
-class MyAppSideBar extends LitMvvmElement {
+class EtwAppSideBar extends LitMvvmElement {
   constructor() {
     super();
     this.scheduler = new Queue(priorities.HIGH);
@@ -294,7 +294,7 @@ class MyAppSideBar extends LitMvvmElement {
     return html`
       ${sharedStyles}
       ${dialogStyle}
-      <link rel="stylesheet" type="text/css" href=${myappStyleLinks.myapp} />
+      <link rel="stylesheet" type="text/css" href=${etwAppStyleLinks.etwApp} />
       <link rel="stylesheet" type="text/css" href="css/spinner.css" />
       <style>
         :host {
@@ -330,58 +330,58 @@ class MyAppSideBar extends LitMvvmElement {
               </div>
             </div>
           `)
-      }
+        }
         <div class="flex text-white bg-gray-500">
           <label class="pl-3 font-bold text-xl">${i18n.gettext('Sessions')}</label>
         </div>
         <div>
-        ${traceSessionList.map(ses => {
-        const eventsClasses = ses.state.isRunning ? classList.stopBtn : classList.startBtn;
-        return html`
-            <kdsoft-tree-node>
-              <div slot="content" class="flex flex-wrap">
-                <label class="font-bold text-xl">${ses.name}</label>
-                <div class="ml-auto">
-                  <button type="button" class="px-1 py-1" @click=${e => this._watchSessionClick(e, ses)}><i class="fas fa-lg fa-eye"></i></button>
-                  <button type="button"  class="px-1 py-1" @click=${e => this._toggleSessionEvents(e, ses)}><i class=${classMap(eventsClasses)}></i></button>
-                  <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._filterSessionClick(e, ses)}><i class="fas fa-filter"></i></button>
-                  <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._closeSessionClick(e, ses)}><i class="far fa-lg fa-trash-alt"></i></button>
+          ${traceSessionList.map(ses => {
+            const eventsClasses = ses.state.isRunning ? classList.stopBtn : classList.startBtn;
+            return html`
+              <kdsoft-tree-node>
+                <div slot="content" class="flex flex-wrap">
+                  <label class="font-bold text-xl">${ses.name}</label>
+                  <div class="ml-auto">
+                    <button type="button" class="px-1 py-1" @click=${e => this._watchSessionClick(e, ses)}><i class="fas fa-lg fa-eye"></i></button>
+                    <button type="button"  class="px-1 py-1" @click=${e => this._toggleSessionEvents(e, ses)}><i class=${classMap(eventsClasses)}></i></button>
+                    <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._filterSessionClick(e, ses)}><i class="fas fa-filter"></i></button>
+                    <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._closeSessionClick(e, ses)}><i class="far fa-lg fa-trash-alt"></i></button>
+                  </div>
                 </div>
-              </div>
-              <div slot="children">
-                <div class="flex">
-                  <label class="font-bold">${i18n.gettext('Event Sinks')}</label>
-                   <button class="px-1 py-1 ml-auto" @click=${e => this._openEventSinkClick(e, ses)} title="Open Event Sink"><i class="fas fa-lg fa-plus"></i></button>
-                </div>
-                ${ses.state.eventSinks.map(ev => {
-          const evsType = ev.error ? i18n.gettext('Failed') : (ev.isLocal ? i18n.gettext('Local') : i18n.gettext('External'));
-          const evsColor = ev.error ? 'text-red-500' : (ev.isLocal ? 'text-blue-500' : 'inherited');
-          return html`
+                <div slot="children">
+                  <div class="flex">
+                    <label class="font-bold">${i18n.gettext('Event Sinks')}</label>
+                      <button class="px-1 py-1 ml-auto" @click=${e => this._openEventSinkClick(e, ses)} title="Open Event Sink"><i class="fas fa-lg fa-plus"></i></button>
+                  </div>
+                  ${ses.state.eventSinks.map(ev => {
+                    const evsType = ev.error ? i18n.gettext('Failed') : (ev.isLocal ? i18n.gettext('Local') : i18n.gettext('External'));
+                    const evsColor = ev.error ? 'text-red-500' : (ev.isLocal ? 'text-blue-500' : 'inherited');
+                    return html`
+                      <kdsoft-tree-node class="session-details">
+                        <div slot="content" class="truncate ${evsColor}">
+                          <i class="fas fa-lg fa-eye"></i> ${evsType}
+                        </div>
+                        <div slot="children">
+                          <div>Name</div><div>${ev.name}</div>
+                          ${ev.error ? html`<div>Error</div><div>${ev.error}</div>` : nothing}
+                        </div>
+                      </kdsoft-tree-node>
+                    `;
+                  })}
+                  <p class="font-bold mt-3">Providers</p>
+                  ${ses.state.enabledProviders.map(ep => html`
                     <kdsoft-tree-node class="session-details">
-                      <div slot="content" class="truncate ${evsColor}">
-                        <i class="fas fa-lg fa-eye"></i> ${evsType}
-                      </div>
+                      <div slot="content" class="truncate">${ep.name}</div>
                       <div slot="children">
-                        <div>Name</div><div>${ev.name}</div>
-                        ${ev.error ? html`<div>Error</div><div>${ev.error}</div>` : nothing}
+                        <div>Level</div><div>${ep.level}</div>
+                        <div>Keywords</div><div>${ep.matchKeywords}</div>
                       </div>
                     </kdsoft-tree-node>
-                  `;
-        })}
-                <p class="font-bold mt-3">Providers</p>
-                ${ses.state.enabledProviders.map(ep => html`
-                  <kdsoft-tree-node class="session-details">
-                    <div slot="content" class="truncate">${ep.name}</div>
-                    <div slot="children">
-                      <div>Level</div><div>${ep.level}</div>
-                      <div>Keywords</div><div>${ep.matchKeywords}</div>
-                    </div>
-                  </kdsoft-tree-node>
-                `)}
-              </div>
-            </kdsoft-tree-node>
-          `;
-      })}
+                  `)}
+                </div>
+              </kdsoft-tree-node>
+            `;
+          })}
         </div>
       </nav>
 
@@ -400,4 +400,4 @@ class MyAppSideBar extends LitMvvmElement {
   //#endregion
 }
 
-window.customElements.define('my-app-side-bar', MyAppSideBar);
+window.customElements.define('etw-app-side-bar', EtwAppSideBar);

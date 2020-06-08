@@ -17,7 +17,7 @@ msgstr ""
 "X-Poedit-SearchPath-1: styles\n"
 "X-Poedit-SearchPath-2: views\n"
 
-#: views/my-app.js:347
+#: views/etw-app.js:347
 msgid "Errors"
 msgstr "Fehler"
 
