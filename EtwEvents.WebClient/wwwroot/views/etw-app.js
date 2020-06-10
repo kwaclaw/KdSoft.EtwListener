@@ -199,7 +199,7 @@ class EtwApp extends LitMvvmElement {
     // and expand/collapse the first grid column accordingly
     this._sidebarObserver = new MutationObserver(m => this._sidebarObserverCallback(m));
     const sidebar = this.renderRoot.getElementById('sidebar');
-    //this._sidebarObserver.observe(sidebar, { attributes: true, attributeOldValue: true, attributeFilter: ['aria-expanded'] });
+    this._sidebarObserver.observe(sidebar, { attributes: true, attributeOldValue: true, attributeFilter: ['aria-expanded'] });
   }
 
   rendered() {

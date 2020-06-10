@@ -11,6 +11,7 @@ import './trace-session-config.js';
 import './filter-form.js';
 import './event-sink-config.js';
 import TraceSessionConfigModel from './trace-session-config-model.js';
+import TraceSessionProfile from '../js/traceSessionProfile.js';
 import EventSinkConfigModel from './event-sink-config-model.js';
 import Spinner from '../js/spinner.js';
 import * as utils from '../js/utils.js';
@@ -72,7 +73,16 @@ class EtwAppSideBar extends LitMvvmElement {
     else host.setAttribute('aria-expanded', 'true');
   }
 
-  //#region profile
+  //#region session profile
+
+  _addSessionProfileClick(e) {
+    const configModel = new TraceSessionConfigModel(new TraceSessionProfile('<New Session Profile>'));
+
+    const dlg = this.renderRoot.getElementById('dlg-config');
+    const cfg = dlg.getElementsByTagName('trace-session-config')[0];
+    cfg.model = configModel;
+    dlg.showModal();
+  }
 
   _editSessionProfileClick(e, profile) {
     const configModel = new TraceSessionConfigModel(profile);
@@ -83,18 +93,42 @@ class EtwAppSideBar extends LitMvvmElement {
     dlg.showModal();
   }
 
-  _importProfilesClick() {
+  _importSessionProfilesClick() {
     const fileDlg = this.renderRoot.getElementById('import-profiles');
     fileDlg.click();
   }
 
-  _importProfilesSelected(e) {
+  _importSessionProfilesSelected(e) {
     this.model.importProfiles(e.currentTarget.files);
   }
 
-  _deleteProfileClick(e, profileName) {
+  _deleteSessionProfileClick(e, profileName) {
     e.stopPropagation();
     this.model.deleteProfile(profileName.toLowerCase());
+  }
+
+  //#endregion
+
+  //#region event sink
+
+  _addEventSinkProfileClick(e) {
+    //
+  }
+
+  _editEventSinkProfileClick(e, profile) {
+    //
+  }
+
+  _importEventSinkProfilesClick() {
+    //
+  }
+
+  _importEventSinkProfilesSelected(e) {
+    //
+  }
+
+  _deleteEventSinkProfileClick(e, profileName) {
+    //
   }
 
   //#endregion
@@ -315,74 +349,104 @@ class EtwAppSideBar extends LitMvvmElement {
             </a>
           <!-- </div> -->
         </div>
-        <div class="flex pr-1 text-white bg-gray-500">
-          <label class="pl-3 font-bold text-xl">${i18n.gettext('Session Profiles')}</label>
-          <input id="import-profiles" type="file" @change=${this._importProfilesSelected} multiple class="hidden"></input>
-          <button class="px-1 py-1 ml-auto" @click=${this._importProfilesClick} title="Import Profiles"><i class="fas fa-lg fa-file-import"></i></button>
-        </div>
-        ${this.model.sessionProfiles.map(p => html`
-            <div class="flex flex-wrap">
-              <label class="pl-3 font-bold text-xl">${p.name}</label>
-              <div class="ml-auto pr-1">
-                <button type="button" class="px-1 py-1" @click=${e => this._openSessionFromProfileClick(e, p)}><i class="fas fa-lg fa-wifi"></i></button>
-                <button type="button" class="px-1 py-1" @click=${e => this._editSessionProfileClick(e, p)}><i class="fas fa-lg fa-edit"></i></button>
-                <button type="button" class="px-1 py-1" @click=${e => this._deleteProfileClick(e, p.name)}><i class="far fa-lg fa-trash-alt"></i></button>
-              </div>
-            </div>
-          `)
-        }
-        <div class="flex text-white bg-gray-500">
-          <label class="pl-3 font-bold text-xl">${i18n.gettext('Sessions')}</label>
-        </div>
-        <div>
-          ${traceSessionList.map(ses => {
-            const eventsClasses = ses.state.isRunning ? classList.stopBtn : classList.startBtn;
-            return html`
-              <kdsoft-tree-node>
-                <div slot="content" class="flex flex-wrap">
-                  <label class="font-bold text-xl">${ses.name}</label>
-                  <div class="ml-auto">
-                    <button type="button" class="px-1 py-1" @click=${e => this._watchSessionClick(e, ses)}><i class="fas fa-lg fa-eye"></i></button>
-                    <button type="button"  class="px-1 py-1" @click=${e => this._toggleSessionEvents(e, ses)}><i class=${classMap(eventsClasses)}></i></button>
-                    <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._filterSessionClick(e, ses)}><i class="fas fa-filter"></i></button>
-                    <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._closeSessionClick(e, ses)}><i class="far fa-lg fa-trash-alt"></i></button>
+
+        <kdsoft-tree-node>
+          <div slot="content" class="flex pr-1 text-white bg-gray-500">
+            <label class="pl-3 font-bold text-xl">${i18n.gettext('Session Profiles')}</label>
+            <button type="button" class="px-1 py-1 ml-auto" @click=${e => this._addSessionProfileClick(e)}><i class="fas fa-lg fa-plus"></i></button>
+            <input id="import-profiles" type="file" @change=${this._importSessionProfilesSelected} multiple class="hidden"></input>
+            <button class="px-1 py-1" @click=${this._importSessionProfilesClick} title="${i18n.gettext('Import Session Profiles')}"><i class="fas fa-lg fa-file-import"></i></button>
+          </div>
+          <div slot="children">
+            ${this.model.sessionProfiles.map(p => html`
+                <div class="flex flex-wrap">
+                  <label class="pl-3 font-bold text-xl">${p.name}</label>
+                  <div class="ml-auto pr-1">
+                    <button type="button" class="px-1 py-1" @click=${e => this._openSessionFromProfileClick(e, p)}><i class="fas fa-lg fa-wifi"></i></button>
+                    <button type="button" class="px-1 py-1" @click=${e => this._editSessionProfileClick(e, p)}><i class="fas fa-lg fa-edit"></i></button>
+                    <button type="button" class="px-1 py-1" @click=${e => this._deleteSessionProfileClick(e, p.name)}><i class="far fa-lg fa-trash-alt"></i></button>
                   </div>
                 </div>
-                <div slot="children">
-                  <div class="flex">
-                    <label class="font-bold">${i18n.gettext('Event Sinks')}</label>
-                      <button class="px-1 py-1 ml-auto" @click=${e => this._openEventSinkClick(e, ses)} title="Open Event Sink"><i class="fas fa-lg fa-plus"></i></button>
+              `)
+            }
+          </div>
+        </kdsoft-tree-node>
+
+        <kdsoft-tree-node>
+          <div slot="content" class="flex pr-1 text-white bg-gray-500">
+            <label class="pl-3 font-bold text-xl">${i18n.gettext('Event Sinks')}</label>
+            <button type="button" class="px-1 py-1 ml-auto" @click=${e => this._addEventSinkProfileClick(e)}><i class="fas fa-lg fa-plus"></i></button>
+            <input id="import-event-sinks" type="file" @change=${this._importEventSinkProfilesSelected} multiple class="hidden"></input>
+            <button class="px-1 py-1" @click=${this._importEventSinkProfilesClick} title="${i18n.gettext('Import Event Sinks')}"><i class="fas fa-lg fa-file-import"></i></button>
+          </div>
+          <div slot="children">
+            ${this.model.eventSinkProfiles.map(p => html`
+                <div class="flex flex-wrap">
+                  <label class="pl-3 font-bold text-xl">${p.name}</label>
+                  <div class="ml-auto pr-1">
+                    <button type="button" class="px-1 py-1" @click=${e => this._editEventSinkProfileClick(e, p)}><i class="fas fa-lg fa-edit"></i></button>
+                    <button type="button" class="px-1 py-1" @click=${e => this._deleteEventSinkProfileClick(e, p.name)}><i class="far fa-lg fa-trash-alt"></i></button>
                   </div>
-                  ${ses.state.eventSinks.map(ev => {
-                    const evsType = ev.error ? i18n.gettext('Failed') : (ev.isLocal ? i18n.gettext('Local') : i18n.gettext('External'));
-                    const evsColor = ev.error ? 'text-red-500' : (ev.isLocal ? 'text-blue-500' : 'inherited');
-                    return html`
+                </div>
+              `)
+            }
+          </div>
+        </kdsoft-tree-node>
+        
+        <kdsoft-tree-node>
+          <div slot="content" class="flex text-white bg-gray-500">
+            <label class="pl-3 font-bold text-xl">${i18n.gettext('Sessions')}</label>
+          </div>
+          <div slot="children">
+            ${traceSessionList.map(ses => {
+              const eventsClasses = ses.state.isRunning ? classList.stopBtn : classList.startBtn;
+              return html`
+                <kdsoft-tree-node>
+                  <div slot="content" class="flex flex-wrap">
+                    <label class="font-bold text-xl">${ses.name}</label>
+                    <div class="ml-auto">
+                      <button type="button" class="px-1 py-1" @click=${e => this._watchSessionClick(e, ses)}><i class="fas fa-lg fa-eye"></i></button>
+                      <button type="button"  class="px-1 py-1" @click=${e => this._toggleSessionEvents(e, ses)}><i class=${classMap(eventsClasses)}></i></button>
+                      <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._filterSessionClick(e, ses)}><i class="fas fa-filter"></i></button>
+                      <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._closeSessionClick(e, ses)}><i class="far fa-lg fa-trash-alt"></i></button>
+                    </div>
+                  </div>
+                  <div slot="children">
+                    <div class="flex">
+                      <label class="font-bold">${i18n.gettext('Event Sinks')}</label>
+                        <button class="px-1 py-1 ml-auto" @click=${e => this._openEventSinkClick(e, ses)} title="Open Event Sink"><i class="fas fa-lg fa-plus"></i></button>
+                    </div>
+                    ${ses.state.eventSinks.map(ev => {
+                      const evsType = ev.error ? i18n.gettext('Failed') : (ev.isLocal ? i18n.gettext('Local') : i18n.gettext('External'));
+                      const evsColor = ev.error ? 'text-red-500' : (ev.isLocal ? 'text-blue-500' : 'inherited');
+                      return html`
+                        <kdsoft-tree-node class="session-details">
+                          <div slot="content" class="truncate ${evsColor}">
+                            <i class="fas fa-lg fa-eye"></i> ${evsType}
+                          </div>
+                          <div slot="children">
+                            <div>Name</div><div>${ev.name}</div>
+                            ${ev.error ? html`<div>Error</div><div>${ev.error}</div>` : nothing}
+                          </div>
+                        </kdsoft-tree-node>
+                      `;
+                    })}
+                    <p class="font-bold mt-3">Providers</p>
+                    ${ses.state.enabledProviders.map(ep => html`
                       <kdsoft-tree-node class="session-details">
-                        <div slot="content" class="truncate ${evsColor}">
-                          <i class="fas fa-lg fa-eye"></i> ${evsType}
-                        </div>
+                        <div slot="content" class="truncate">${ep.name}</div>
                         <div slot="children">
-                          <div>Name</div><div>${ev.name}</div>
-                          ${ev.error ? html`<div>Error</div><div>${ev.error}</div>` : nothing}
+                          <div>Level</div><div>${ep.level}</div>
+                          <div>Keywords</div><div>${ep.matchKeywords}</div>
                         </div>
                       </kdsoft-tree-node>
-                    `;
-                  })}
-                  <p class="font-bold mt-3">Providers</p>
-                  ${ses.state.enabledProviders.map(ep => html`
-                    <kdsoft-tree-node class="session-details">
-                      <div slot="content" class="truncate">${ep.name}</div>
-                      <div slot="children">
-                        <div>Level</div><div>${ep.level}</div>
-                        <div>Keywords</div><div>${ep.matchKeywords}</div>
-                      </div>
-                    </kdsoft-tree-node>
-                  `)}
-                </div>
+                    `)}
+                  </div>
               </kdsoft-tree-node>
             `;
           })}
         </div>
+        </kdsoft-tree-node>
       </nav>
 
       <dialog id="dlg-config" class="${utils.html5DialogSupported ? '' : 'fixed'}">

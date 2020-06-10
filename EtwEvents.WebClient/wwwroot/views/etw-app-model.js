@@ -33,6 +33,8 @@ class EtwAppModel {
 
     this.sessionProfiles = loadSessionProfiles();
 
+    this.eventSinkProfiles = [];
+
     this._errorSequenceNo = 0;
     this.fetchErrors = new RingBuffer(50);
     this.showLastError = false;
