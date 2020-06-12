@@ -6,6 +6,7 @@ import { observe, unobserve } from '../lib/@nx-js/observer-util/dist/es.es6.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
+import KdSoftDragDropProvider from './kdsoft-drag-drop-provider.js';
 
 const arrowBase = { far: true, 'fa-lg': true, 'text-gray-500': true, 'align-text-bottom': true };
 
@@ -15,6 +16,10 @@ const classList = {
   downArrowVisible: { ...arrowBase, 'fa-caret-square-down': true },
   downArrowHidden: { ...arrowBase, 'fa-caret-square-down': true, invisible: true },
 };
+
+function getListItemId(item) {
+  return Number(item.dataset.itemIndex);
+}
 
 // and: https://web.dev/more-capable-form-controls/
 
@@ -30,6 +35,19 @@ class KdSoftChecklist extends LitMvvmElement {
     this.scheduler = new Queue(priorities.HIGH);
     //this.scheduler = new BatchScheduler(0);
     this.getItemTemplate = item => html`${item}`;
+
+    this._onNodeMove = e => {
+      const fromIndex = Number(e.detail.fromId);
+      const toIndex = Number(e.detail.toId);
+      this.model.moveItem(fromIndex, toIndex);
+
+      // setting the focus on the dropped item should be done when when the data-item-index
+      // attributes are set, so we schedule it at the end of the next render cycle
+      this.scheduler.add(() => {
+        const dropped = this.shadowRoot.querySelector(`[data-item-index="${toIndex}"]`);
+        if (dropped) dropped.focus();
+      });
+    };
   }
 
   get showCheckboxes() { return this.hasAttribute('show-checkboxes'); }
@@ -134,68 +152,6 @@ class KdSoftChecklist extends LitMvvmElement {
 
   //#endregion
 
-  //#region drag and drop
-
-  _dragStart(e) {
-    e.dataTransfer.setData('text/plain', e.currentTarget.dataset.itemIndex);
-    e.dataTransfer.effectAllowed = 'move';
-  }
-
-  _dragOver(e) {
-    e.preventDefault();
-  }
-
-  // need to maintain a drag enter counter for the item, as the drag enter/leave event happen when a child
-  // node is being moved over and we know only that we left the parent element when the counter reaches 0.
-  _dragEnter(e) {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-
-    const itemIndex = Number(e.currentTarget.dataset.itemIndex);
-    const item = this.model.items[itemIndex];
-    const dragEnterCount = item.dragEnterCount || 0;
-    if (dragEnterCount <= 0) {
-      item.dragEnterCount = 1;
-      e.currentTarget.classList.add('droppable');
-    } else {
-      item.dragEnterCount = dragEnterCount + 1;
-    }
-  }
-
-  _dragLeave(e) {
-    e.preventDefault();
-    const itemIndex = Number(e.currentTarget.dataset.itemIndex);
-    const item = this.model.items[itemIndex];
-
-    item.dragEnterCount -= 1;
-    if (item.dragEnterCount <= 0) {
-      e.currentTarget.classList.remove('droppable');
-    }
-  }
-
-  _drop(e) {
-    e.preventDefault();
-
-    const toIndex = Number(e.currentTarget.dataset.itemIndex);
-    this.model.items[toIndex].dragEnterCount = 0;
-    e.currentTarget.classList.remove('droppable');
-
-    const fromData = e.dataTransfer.getData('text/plain');
-    const fromIndex = Number(fromData);
-
-    // this will trigger a re-render and update the data-item-index attributes
-    this.model.moveItem(fromIndex, toIndex);
-
-    // setting the focus on the dropped item should be done when when the data-item-index
-    // attributes are set, so we schedule it at the end of the next render cycle
-    this.scheduler.add(() => {
-      const dropped = this.shadowRoot.querySelector(`[data-item-index="${toIndex}"]`);
-      if (dropped) dropped.focus();
-    });
-  }
-
-  //#endregion
-
   // NOTE: the checked status of a checkbox may not be properly rendered when the checked attribute is set,
   //       because that applies to inital rendering only. However, setting the checked property works!
   _checkBoxTemplate(model, item) {
@@ -210,9 +166,19 @@ class KdSoftChecklist extends LitMvvmElement {
     `;
   }
 
+  connectedCallback() {
+    super.connectedCallback();
+    this.addEventListener('kdsoft-node-move', this._onNodeMove);
+  }
+
+  disconnectedCallback() {
+    this.removeEventListener('kdsoft-node-move', this._onNodeMove);
+    super.disconnectedCallback();
+  }
+
   /* eslint-disable indent, no-else-return */
 
-  _itemTemplate(item, indx, showCheckboxes, hasArrows, allowDragAndDrop) {
+  _itemTemplate(item, indx, showCheckboxes, hasArrows) {
     const disabledString = item.disabled ? 'disabled' : '';
     const tabindex = indx === 0 ? '0' : '-1';
     const upArrowClasses = indx === 0 ? classList.upArrowHidden : classList.upArrowVisible;
@@ -232,37 +198,15 @@ class KdSoftChecklist extends LitMvvmElement {
       </div>
     `;
 
-    let result;
-
-    if (allowDragAndDrop) {
-      result = html`
-        <li data-item-index="${indx}"
-            tabindex="${tabindex}"
-            draggable="true"
-            class="list-item whitespace-no-wrap ${disabledString}"
-            @click=${this._itemClicked}
-            @dragstart=${this._dragStart}
-            @dragenter=${this._dragEnter}
-            @dragover=${this._dragOver}
-            @dragleave=${this._dragLeave}
-            @drop=${this._drop}
-        >
-          ${listItemContent}
-        </li>
-      `;
-    } else {
-      result = html`
-        <li data-item-index="${indx}"
-            tabindex="${tabindex}"
-            class="list-item whitespace-no-wrap ${disabledString}"
-            @click=${this._itemClicked}
-        >
-          ${listItemContent}
-        </li>
-      `;
-    }
-
-    return result;
+    return html`
+      <li data-item-index="${indx}"
+          tabindex="${tabindex}"
+          class="list-item whitespace-no-wrap ${disabledString}"
+          @click=${this._itemClicked}
+      >
+        ${listItemContent}
+      </li>
+    `;
   }
 
   // scrolls to first selected item
@@ -344,7 +288,6 @@ class KdSoftChecklist extends LitMvvmElement {
   render() {
     const showCheckboxes = this.showCheckboxes;
     const hasArrows = this.arrows;
-    const allowDragAndDrop = this.allowDragDrop;
 
     const result = html`
       ${sharedStyles}
@@ -358,12 +301,26 @@ class KdSoftChecklist extends LitMvvmElement {
         >
           ${repeat(this.model.filteredItems,
             entry => this.model.getItemId(entry.item),
-            entry => this._itemTemplate(entry.item, entry.index, showCheckboxes, hasArrows, allowDragAndDrop)
+            entry => this._itemTemplate(entry.item, entry.index, showCheckboxes, hasArrows)
           )}
         </ul>
       </div>
     `;
     return result;
+  }
+
+  rendered() {
+    if (this.allowDragDrop) {
+      const listItems = this.renderRoot.querySelectorAll('li.list-item');
+      for (const li of listItems) {
+        li.setAttribute('draggable', true);
+        if (!li._dragdrop) {
+          const dragdrop = new KdSoftDragDropProvider(li, getListItemId);
+          li._dragdrop = dragdrop;
+          dragdrop.connect();
+        }
+      }
+    }
   }
 }
 
