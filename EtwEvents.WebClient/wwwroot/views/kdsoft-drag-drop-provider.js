@@ -60,9 +60,8 @@ function drop(e) {
 
 
 class KdSoftDragDropProvider {
-  constructor(element, getItemId) {
-    this._element = element;
-    this._getItemId = getItemId.bind(this);
+  constructor(getItemId) {
+    this._getItemId = getItemId;
 
     this._dragStart = dragStart.bind(this);
     this._dragEnter = dragEnter.bind(this);
@@ -71,8 +70,12 @@ class KdSoftDragDropProvider {
     this._drop = drop.bind(this);
   }
 
-  connect() {
-    const h = this._element.shadowRoot || this._element;
+  connect(element) {
+    this.disconnect();
+
+    this._element = element;
+    const h = this._element;
+
     h.addEventListener('dragstart', this._dragStart);
     h.addEventListener('dragenter', this._dragEnter);
     h.addEventListener('dragover', this._dragOver);
@@ -81,7 +84,11 @@ class KdSoftDragDropProvider {
   }
 
   disconnect() {
-    const h = this._element.shadowRoot || this._element;
+    if (!this.element) return;
+
+    const h = this._element;
+    this._element = null;
+
     h.removeEventListener('dragstart', this._dragStart);
     h.removeEventListener('dragenter', this._dragEnter);
     h.removeEventListener('dragover', this._dragOver);

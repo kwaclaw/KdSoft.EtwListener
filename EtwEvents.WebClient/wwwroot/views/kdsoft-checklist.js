@@ -166,16 +166,6 @@ class KdSoftChecklist extends LitMvvmElement {
     `;
   }
 
-  connectedCallback() {
-    super.connectedCallback();
-    this.addEventListener('kdsoft-node-move', this._onNodeMove);
-  }
-
-  disconnectedCallback() {
-    this.removeEventListener('kdsoft-node-move', this._onNodeMove);
-    super.disconnectedCallback();
-  }
-
   /* eslint-disable indent, no-else-return */
 
   _itemTemplate(item, indx, showCheckboxes, hasArrows) {
@@ -226,7 +216,13 @@ class KdSoftChecklist extends LitMvvmElement {
     }
   }
 
+  connectedCallback() {
+    super.connectedCallback();
+    this.addEventListener('kdsoft-node-move', this._onNodeMove);
+  }
+
   disconnectedCallback() {
+    this.removeEventListener('kdsoft-node-move', this._onNodeMove);
     if (this._selectObserver) unobserve(this._selectObserver);
     super.disconnectedCallback();
   }
@@ -315,9 +311,8 @@ class KdSoftChecklist extends LitMvvmElement {
       for (const li of listItems) {
         li.setAttribute('draggable', true);
         if (!li._dragdrop) {
-          const dragdrop = new KdSoftDragDropProvider(li, getListItemId);
-          li._dragdrop = dragdrop;
-          dragdrop.connect();
+          li._dragdrop = new KdSoftDragDropProvider(getListItemId);
+          li._dragdrop.connect(li);
         }
       }
     }
