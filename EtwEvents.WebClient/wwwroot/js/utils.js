@@ -146,6 +146,7 @@ export function setTargetProperties(target, source) {
 
     Object.defineProperty(target, key, sourceDescriptor);
   }
+  return target;
 }
 
 export const isoDurationRx = /^P(?:\d+Y)?(?:\d+M)?(?:\d+D)?(?:T(?:\d+H)?(?:\d+M)?(?:\d+(?:\.\d+)?S)?)?$/;
