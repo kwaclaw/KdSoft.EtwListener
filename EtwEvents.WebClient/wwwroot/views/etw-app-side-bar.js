@@ -7,6 +7,7 @@ import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import dialogPolyfill from '../lib/dialog-polyfill.js';
 import FilterFormModel from './filter-form-model.js';
 import './kdsoft-tree-node.js';
+import './kdsoft-expander.js';
 import './trace-session-config.js';
 import './filter-form.js';
 import './event-sink-config.js';
@@ -112,7 +113,12 @@ class EtwAppSideBar extends LitMvvmElement {
   //#region event sink
 
   _addEventSinkProfileClick(e) {
-    //
+    const configModel = new EventSinkConfigModel(0);
+
+    const dlg = this.renderRoot.getElementById('dlg-event-sink');
+    const cfg = dlg.querySelector('event-sink-config');
+    cfg.model = configModel;
+    dlg.showModal();
   }
 
   _editEventSinkProfileClick(e, profile) {
@@ -180,13 +186,6 @@ class EtwAppSideBar extends LitMvvmElement {
   _openEventSinkClick(e, session) {
     // const spinner = new Spinner(e.currentTarget);
     // session.openEventSink(spinner);
-
-    const configModel = new EventSinkConfigModel(0);
-
-    const dlg = this.renderRoot.getElementById('dlg-event-sink');
-    const cfg = dlg.querySelector('event-sink-config');
-    cfg.model = configModel;
-    dlg.showModal();
   }
 
   //#endregion
@@ -372,14 +371,14 @@ class EtwAppSideBar extends LitMvvmElement {
           </div>
         </kdsoft-tree-node>
 
-        <kdsoft-tree-node>
-          <div slot="content" class="flex pr-1 text-white bg-gray-500">
+        <kdsoft-expander>
+          <div slot="header" class="flex pr-1 text-white bg-gray-500">
             <label class="pl-3 font-bold text-xl">${i18n.gettext('Event Sinks')}</label>
             <button type="button" class="px-1 py-1 ml-auto" @click=${e => this._addEventSinkProfileClick(e)}><i class="fas fa-lg fa-plus"></i></button>
             <input id="import-event-sinks" type="file" @change=${this._importEventSinkProfilesSelected} multiple class="hidden"></input>
             <button class="px-1 py-1" @click=${this._importEventSinkProfilesClick} title="${i18n.gettext('Import Event Sinks')}"><i class="fas fa-lg fa-file-import"></i></button>
           </div>
-          <div slot="children">
+          <div slot="content">
             ${this.model.eventSinkProfiles.map(p => html`
                 <div class="flex flex-wrap">
                   <label class="pl-3 font-bold text-xl">${p.name}</label>
@@ -391,7 +390,7 @@ class EtwAppSideBar extends LitMvvmElement {
               `)
             }
           </div>
-        </kdsoft-tree-node>
+        </kdsoft-expander>
         
         <kdsoft-tree-node>
           <div slot="content" class="flex text-white bg-gray-500">

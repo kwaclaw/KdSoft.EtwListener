@@ -1,12 +1,19 @@
-﻿import { html } from '../lib/lit-html.js';
+﻿import { html, nothing } from '../lib/lit-html.js';
+import { repeat } from '../lib/lit-html/directives/repeat.js';
 import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
+import { observable } from '../lib/@nx-js/observer-util/dist/es.es6.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
+import * as utils from '../js/utils.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
 import './kdsoft-dropdown.js';
 import './kdsoft-checklist.js';
+import './kdsoft-expander.js';
+import './kdsoft-drop-target.js';
+import './kdsoft-tree-view.js';
 import KdSoftDropdownModel from './kdsoft-dropdown-model.js';
 import KdSoftDropdownChecklistConnector from './kdsoft-dropdown-checklist-connector.js';
+import KdSoftTreeNodeModel from './kdsoft-tree-node-model.js';
 
 function getSelectedSinkTypeText(checkListModel) {
   let result = null;
@@ -27,6 +34,25 @@ class EventSinkConfig extends LitMvvmElement {
       () => this.renderRoot.getElementById('sinkTypeList'),
       getSelectedSinkTypeText
     );
+
+    this.rootNode = this._createTreeModel();
+  }
+
+  _createTreeModel() {
+    const grandChildren = [];
+    for (let indx = 0; indx < 15; indx += 1) {
+      const nodeModel = new KdSoftTreeNodeModel(`3-${indx}`, [], { type: 'gc', text: `Grand child blah blah ${indx}` });
+      grandChildren.push(nodeModel);
+    }
+
+    const children = [];
+    for (let indx = 0; indx < 5; indx += 1) {
+      const gci = indx * 3;
+      const nodeModel = new KdSoftTreeNodeModel(`2-${indx}`, grandChildren.slice(gci, gci + 3), { type: 'c', text: `Child blah blah ${indx}` });
+      children.push(nodeModel);
+    }
+
+    return new KdSoftTreeNodeModel('0-0', children, { type: 'r', text: `Root Node` });
   }
 
   _cancel() {
@@ -52,33 +78,33 @@ class EventSinkConfig extends LitMvvmElement {
     this.model.export();
   }
 
-  // _profileChange(e) {
-  //   e.stopPropagation();
-  //   this.model[e.target.name] = e.target.value;
-  // }
-
-  // _addProviderClick() {
-  //   const newProvider = new EventProvider('<New Provider>', 0);
-  //   this.model.providers.splice(0, 0, newProvider);
-  //   this.model.providers.forEach(p => {
-  //     p.expanded = false;
-  //   });
-  //   newProvider.expanded = true;
-  // }
-
-  // _providerDelete(e) {
-  //   const provider = e.detail.model;
-  //   const index = this.model.providers.findIndex(p => p.name === provider.name);
-  //   if (index >= 0) this.model.providers.splice(index, 1);
-  // }
-
   /* eslint-disable indent, no-else-return */
+
+  _getTreeNodeContentTemplate(nodeModel) {
+    let cls = '';
+    switch (nodeModel.type) {
+      case 'gc':
+        cls = 'text-red-600';
+        break;
+      case 'c':
+        cls = 'text-blue-600';
+        break;
+      case 'r':
+        cls = 'text-black-600';
+        break;
+      default:
+        break;
+    }
+    return html`<span class=${cls}>${nodeModel.text}</span>`;
+  }
 
   connectedCallback() {
     super.connectedCallback();
+    // this.addEventListener('kdsoft-node-move', this.rootNode.moveNode);
   }
 
   disconnectedCallback() {
+    // this.removeEventListener('kdsoft-node-move', this.rootNode.moveNode);
     super.disconnectedCallback();
   }
 
@@ -89,6 +115,10 @@ class EventSinkConfig extends LitMvvmElement {
 
   beforeFirstRender() {
     // model is defined, because of our shouldRender() override
+  }
+
+  firstRendered() {
+    //
   }
 
   rendered() {
@@ -154,6 +184,7 @@ class EventSinkConfig extends LitMvvmElement {
           position: relative;
           width: 40%;
         }
+
       `,
     ];
   }
@@ -178,8 +209,15 @@ class EventSinkConfig extends LitMvvmElement {
             </kdsoft-checklist>
           </kdsoft-dropdown>
         </nav>
-        <div id="container" class="mb-4">
+        
+        <div id="container" class="mb-4 relative">
+          <kdsoft-tree-view
+            .model=${this.rootNode}
+            .contentTemplateCallback=${this._getTreeNodeContentTemplate}
+            style="max-width:400px;max-height:100%;overflow-y:auto;"
+          ></kdsoft-tree-view>
         </div>
+
         <hr class="mb-4" />
         <div id="ok-cancel-buttons" class="flex flex-wrap mt-2 bt-1">
           <button type="button" class="py-1 px-2" @click=${this._export} title="Export">
@@ -188,7 +226,7 @@ class EventSinkConfig extends LitMvvmElement {
           <button type="button" class="py-1 px-2 ml-auto" @click=${this._apply} title="Save">
             <i class="fas fa-lg fa-check text-green-500"></i>
           </button>
-          <button type="button" class="py-1 px-2" @click=${this._cancel} title="Cancel">
+          <button type="button" class="py-1 px-2" @click=${this._cancel} title="Cancel" autofocus>
             <i class="fas fa-lg fa-times text-red-500"></i>
           </button>
         </div>
