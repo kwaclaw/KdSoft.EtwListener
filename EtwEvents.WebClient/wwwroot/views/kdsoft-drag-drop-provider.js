@@ -15,13 +15,12 @@ function dragEnter(e) {
   e.preventDefault();
   e.dataTransfer.dropEffect = 'move';
 
-  const item = e.currentTarget;
-  const dragEnterCount = item._dragEnterCount || 0;
+  const dragEnterCount = this._dragEnterCount || 0;
   if (dragEnterCount <= 0) {
-    item._dragEnterCount = 1;
-    item.classList.add('droppable');
+    this._dragEnterCount = 1;
+    e.currentTarget.classList.add('droppable');
   } else {
-    item._dragEnterCount = dragEnterCount + 1;
+    this._dragEnterCount = dragEnterCount + 1;
   }
 }
 
@@ -29,12 +28,11 @@ function dragLeave(e) {
   e.stopPropagation();
   e.preventDefault();
 
-  const item = e.currentTarget;
-  const dragEnterCount = item._dragEnterCount || 0;
-  item._dragEnterCount = dragEnterCount - 1;
+  const dragEnterCount = this._dragEnterCount || 0;
+  this._dragEnterCount = dragEnterCount - 1;
 
-  if (item._dragEnterCount <= 0) {
-    item.classList.remove('droppable');
+  if (this._dragEnterCount <= 0) {
+    e.currentTarget.classList.remove('droppable');
   }
 }
 
@@ -42,8 +40,9 @@ function drop(e) {
   e.stopPropagation();
   e.preventDefault();
 
+  this._dragEnterCount = 0;
+
   const item = e.currentTarget;
-  item._dragEnterCount = 0;
   item.classList.remove('droppable');
 
   const fromData = e.dataTransfer.getData('text/plain');
