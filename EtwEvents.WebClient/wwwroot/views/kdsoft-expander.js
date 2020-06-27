@@ -1,8 +1,7 @@
-import { html, nothing } from '../lib/lit-html.js';
+import { html } from '../lib/lit-html.js';
 import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
-import KdSoftDragDropProvider from './kdsoft-drag-drop-provider.js';
 
 function toggleExpansion(element, doExpand) {
   // get the height of the element's inner content, regardless of its actual size
@@ -44,7 +43,7 @@ class KdSoftExpander extends LitMvvmElement {
 
   // Observed attributes will trigger an attributeChangedCallback, which in turn will cause a re-render to be scheduled!
   static get observedAttributes() {
-    return [...super.observedAttributes, 'aria-expanded', 'draggable'];
+    return [...super.observedAttributes, 'aria-expanded'];
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -52,21 +51,8 @@ class KdSoftExpander extends LitMvvmElement {
       const children = this.renderRoot.getElementById('content-slot');
       if (!children) return;
       toggleExpansion(children, newValue !== null);
-    } else if (name === 'draggable') {
-      this._enableDragDrop(newValue === 'true');
     }
-  }
-
-  _enableDragDrop(enable) {
-    if (enable) {
-      if (!this.dragdrop) {
-        this.dragdrop = new KdSoftDragDropProvider(item => item.id);
-        this.dragdrop.connect(this.renderRoot.host);
-      }
-    } else if (this.dragdrop) {
-      this.dragdrop.disconnect();
-      this.dragdrop = null;
-    }
+    super.attributeChangedCallback(name, oldValue, newValue);
   }
 
   _expanderClicked() {
@@ -75,30 +61,12 @@ class KdSoftExpander extends LitMvvmElement {
 
   /* eslint-disable indent, no-else-return */
 
-  connectedCallback() {
-    // run this before render gets called from super.connectedCallback()
-    const draggable = this.renderRoot.host.getAttribute('draggable');
-    this._enableDragDrop(draggable === 'true');
-
-    super.connectedCallback();
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-
-    if (this.dragdrop) {
-      this.dragdrop.disconnect();
-      this.dragdrop = null;
-    }
-  }
-
   static get styles() {
     return [
       css`
-        /* :host(.droppable) {
-          outline: 2px solid darkgray;
-          outline-offset: -2px;
-        } */
+        :host {
+          display: block;
+        }
 
         #container {
           display: grid;
@@ -106,7 +74,7 @@ class KdSoftExpander extends LitMvvmElement {
           padding: var(--content-padding, 5px);
         }
 
-        #expander {
+        #expander, #expander::slotted(div) {
           display: flex;
           align-items: center;
           justify-content: space-evenly;
@@ -118,15 +86,11 @@ class KdSoftExpander extends LitMvvmElement {
           outline: none;
         }
 
-        #expander i[part=expander-grip]:hover {
-          cursor: grab;
-        }
-
-        #expander i[part=expander-icon] {
+        #expander-icon {
           transition: transform var(--trans-time, 300ms) ease;
         }
 
-        :host([aria-expanded]) #expander i[part=expander-icon] {
+        :host([aria-expanded]) #expander-icon {
           transform: rotate(90deg);
         }
 
@@ -146,19 +110,10 @@ class KdSoftExpander extends LitMvvmElement {
   render() {
     const result = html`
       ${sharedStyles}
-      <style>
-        :host {
-          display: block;
-        }
-      </style>
       <div id="container">
-        <div id="expander" tabindex="1" @click=${this._expanderClicked}>
-          ${this.dragdrop
-            ? html`<i part="expander-grip" class="fas fa-xs fa-ellipsis-v text-gray-400"></i>`
-            : nothing
-          }
-          <i part="expander-icon" class="fas fa-lg fa-caret-right text-blue"></i>
-        </div>
+        <slot name="expander" id="expander" tabindex="1" @click=${this._expanderClicked}>
+          <i id="expander-icon" class="fas fa-lg fa-caret-right text-blue"></i>
+        </slot>
         <div id="header-slot">
           <slot name="header" tabindex="2">No header provided.</slot>
         </div>

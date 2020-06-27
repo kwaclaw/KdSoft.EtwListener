@@ -6,7 +6,6 @@ import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
 import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import dialogPolyfill from '../lib/dialog-polyfill.js';
 import FilterFormModel from './filter-form-model.js';
-import './kdsoft-tree-node.js';
 import './kdsoft-expander.js';
 import './trace-session-config.js';
 import './filter-form.js';
@@ -308,7 +307,7 @@ class EtwAppSideBar extends LitMvvmElement {
           width: 275px;
         }
 
-        kdsoft-tree-node.session-details [slot="children"] {
+        kdsoft-expander.session-details [slot="children"] {
           display: grid;
           grid-gap: 0 1em;
           grid-template-columns: max-content auto;
@@ -349,14 +348,14 @@ class EtwAppSideBar extends LitMvvmElement {
           <!-- </div> -->
         </div>
 
-        <kdsoft-tree-node>
-          <div slot="content" class="flex pr-1 text-white bg-gray-500">
+        <kdsoft-expander>
+          <div slot="header" class="flex pr-1 text-white bg-gray-500">
             <label class="pl-3 font-bold text-xl">${i18n.gettext('Session Profiles')}</label>
             <button type="button" class="px-1 py-1 ml-auto" @click=${e => this._addSessionProfileClick(e)}><i class="fas fa-lg fa-plus"></i></button>
             <input id="import-profiles" type="file" @change=${this._importSessionProfilesSelected} multiple class="hidden"></input>
             <button class="px-1 py-1" @click=${this._importSessionProfilesClick} title="${i18n.gettext('Import Session Profiles')}"><i class="fas fa-lg fa-file-import"></i></button>
           </div>
-          <div slot="children">
+          <div slot="content">
             ${this.model.sessionProfiles.map(p => html`
                 <div class="flex flex-wrap">
                   <label class="pl-3 font-bold text-xl">${p.name}</label>
@@ -369,7 +368,7 @@ class EtwAppSideBar extends LitMvvmElement {
               `)
             }
           </div>
-        </kdsoft-tree-node>
+        </kdsoft-expander>
 
         <kdsoft-expander>
           <div slot="header" class="flex pr-1 text-white bg-gray-500">
@@ -392,16 +391,16 @@ class EtwAppSideBar extends LitMvvmElement {
           </div>
         </kdsoft-expander>
         
-        <kdsoft-tree-node>
-          <div slot="content" class="flex text-white bg-gray-500">
+        <kdsoft-expander>
+          <div slot="header" class="flex text-white bg-gray-500">
             <label class="pl-3 font-bold text-xl">${i18n.gettext('Sessions')}</label>
           </div>
-          <div slot="children">
+          <div slot="content">
             ${traceSessionList.map(ses => {
               const eventsClasses = ses.state.isRunning ? classList.stopBtn : classList.startBtn;
               return html`
-                <kdsoft-tree-node>
-                  <div slot="content" class="flex flex-wrap">
+                <kdsoft-expander>
+                  <div slot="header" class="flex flex-wrap">
                     <label class="font-bold text-xl">${ses.name}</label>
                     <div class="ml-auto">
                       <button type="button" class="px-1 py-1" @click=${e => this._watchSessionClick(e, ses)}><i class="fas fa-lg fa-eye"></i></button>
@@ -410,7 +409,7 @@ class EtwAppSideBar extends LitMvvmElement {
                       <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._closeSessionClick(e, ses)}><i class="far fa-lg fa-trash-alt"></i></button>
                     </div>
                   </div>
-                  <div slot="children">
+                  <div slot="content">
                     <div class="flex">
                       <label class="font-bold">${i18n.gettext('Event Sinks')}</label>
                         <button class="px-1 py-1 ml-auto" @click=${e => this._openEventSinkClick(e, ses)} title="Open Event Sink"><i class="fas fa-lg fa-plus"></i></button>
@@ -419,33 +418,33 @@ class EtwAppSideBar extends LitMvvmElement {
                       const evsType = ev.error ? i18n.gettext('Failed') : (ev.isLocal ? i18n.gettext('Local') : i18n.gettext('External'));
                       const evsColor = ev.error ? 'text-red-500' : (ev.isLocal ? 'text-blue-500' : 'inherited');
                       return html`
-                        <kdsoft-tree-node class="session-details">
-                          <div slot="content" class="truncate ${evsColor}">
+                        <kdsoft-expander class="session-details">
+                          <div slot="header" class="truncate ${evsColor}">
                             <i class="fas fa-lg fa-eye"></i> ${evsType}
                           </div>
-                          <div slot="children">
+                          <div slot="content">
                             <div>Name</div><div>${ev.name}</div>
                             ${ev.error ? html`<div>Error</div><div>${ev.error}</div>` : nothing}
                           </div>
-                        </kdsoft-tree-node>
+                        </kdsoft-expander>
                       `;
                     })}
                     <p class="font-bold mt-3">Providers</p>
                     ${ses.state.enabledProviders.map(ep => html`
-                      <kdsoft-tree-node class="session-details">
-                        <div slot="content" class="truncate">${ep.name}</div>
-                        <div slot="children">
+                      <kdsoft-expander class="session-details">
+                        <div slot="header" class="truncate">${ep.name}</div>
+                        <div slot="content">
                           <div>Level</div><div>${ep.level}</div>
                           <div>Keywords</div><div>${ep.matchKeywords}</div>
                         </div>
-                      </kdsoft-tree-node>
+                      </kdsoft-expander>
                     `)}
                   </div>
-              </kdsoft-tree-node>
+              </kdsoft-expander>
             `;
           })}
         </div>
-        </kdsoft-tree-node>
+        </kdsoft-expander>
       </nav>
 
       <dialog id="dlg-config" class="${utils.html5DialogSupported ? '' : 'fixed'}">

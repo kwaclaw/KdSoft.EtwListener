@@ -35,6 +35,7 @@ class KdSoftChecklist extends LitMvvmElement {
     this.scheduler = new Queue(priorities.HIGH);
     //this.scheduler = new BatchScheduler(0);
     this.getItemTemplate = item => html`${item}`;
+    this._dragdropChanged = true;
 
     this._onNodeMove = e => {
       const fromIndex = Number(e.detail.fromId);
@@ -83,6 +84,14 @@ class KdSoftChecklist extends LitMvvmElement {
   // Observed attributes will trigger an attributeChangedCallback, which in turn will cause a re-render to be scheduled!
   static get observedAttributes() {
     return [...super.observedAttributes, 'show-checkboxes', 'arrows', 'allow-drag-drop'];
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === 'allow-drag-drop') {
+      this._dragdropChanged = true;
+    }
+    // trigger re-render
+    super.attributeChangedCallback(name, oldValue, newValue);
   }
 
   //#region click and key events
@@ -306,13 +315,23 @@ class KdSoftChecklist extends LitMvvmElement {
   }
 
   rendered() {
+    if (!this._dragdropChanged) return;
+    this._dragdropChanged = false;
+
+    const listItems = this.renderRoot.querySelectorAll('li.list-item');
     if (this.allowDragDrop) {
-      const listItems = this.renderRoot.querySelectorAll('li.list-item');
       for (const li of listItems) {
         li.setAttribute('draggable', true);
         if (!li._dragdrop) {
-          li._dragdrop = new KdSoftDragDropProvider(getListItemId);
-          li._dragdrop.connect(li);
+          li._dragdrop = new KdSoftDragDropProvider(getListItemId).connect(li);
+        }
+      }
+    } else {
+      for (const li of listItems) {
+        li.removeAttribute('draggable');
+        if (li._dragdrop) {
+          li._dragdrop.disconnect();
+          li._dragdrop = null;
         }
       }
     }

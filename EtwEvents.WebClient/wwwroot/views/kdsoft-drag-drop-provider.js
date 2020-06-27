@@ -72,14 +72,16 @@ class KdSoftDragDropProvider {
   connect(element) {
     this.disconnect();
 
-    this._element = element;
-    const h = this._element;
+    const h = element;
+    this._element = h;
 
     h.addEventListener('dragstart', this._dragStart);
     h.addEventListener('dragenter', this._dragEnter);
     h.addEventListener('dragover', this._dragOver);
     h.addEventListener('dragleave', this._dragLeave);
     h.addEventListener('drop', this._drop);
+
+    return this;
   }
 
   disconnect() {

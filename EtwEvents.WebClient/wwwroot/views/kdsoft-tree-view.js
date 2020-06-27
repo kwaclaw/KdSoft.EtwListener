@@ -4,6 +4,7 @@ import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
 import './kdsoft-expander.js';
 import './kdsoft-drop-target.js';
+import KdSoftDragDropProvider from './kdsoft-drag-drop-provider.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 
 class KdSoftTreeView extends LitMvvmElement {
@@ -37,8 +38,16 @@ class KdSoftTreeView extends LitMvvmElement {
   static get styles() {
     return [
       css`
-        kdsoft-expander {
-          /* z-index: auto; */
+        .expander-icon {
+          transition: transform var(--trans-time, 300ms) ease;
+        }
+
+        kdsoft-expander[aria-expanded]>[slot="expander"]>.expander-icon {
+          transform: rotate(90deg);
+        }
+
+        .expander-grip:hover {
+          cursor: grab;
         }
 
         [data-drop-mode].droppable {
@@ -57,28 +66,41 @@ class KdSoftTreeView extends LitMvvmElement {
     ];
   }
 
-  createTreeView(nodeModel, isLast) {
+  createTreeView(nodeModel, isLast, isRoot) {
     return html`
-      <div is="kdsoft-drop-target" id=${nodeModel.id} data-drop-mode="before"></div>
+      ${isRoot ? nothing : html`<div is="kdsoft-drop-target" id=${nodeModel.id} data-drop-mode="before"></div>`}
       <kdsoft-expander id=${nodeModel.id} draggable="true" data-drop-mode="inside">
+        <div slot="expander">
+          <i class="expander-grip fas fa-xs fa-ellipsis-v text-gray-400"></i>
+          <i class="expander-icon fas fa-lg fa-caret-right text-blue"></i>
+        </div>
         <div slot="header">${this._getContentTemplate(nodeModel)}</div>
         <div slot="content">
           ${repeat(
             nodeModel.children,
             childModel => childModel.id,
-            (childModel, index) => this.createTreeView(childModel, index === nodeModel.children.length - 1))
+            (childModel, index) => this.createTreeView(childModel, index === nodeModel.children.length - 1), false)
           }
         </div>
       </kdsoft-expander>
-      ${isLast ? html`<div is="kdsoft-drop-target" id=${nodeModel.id} data-drop-mode="after"></div>` : nothing}
+      ${isLast && !isRoot ? html`<div is="kdsoft-drop-target" id=${nodeModel.id} data-drop-mode="after"></div>` : nothing}
     `;
   }
 
   render() {
     return html`
       ${sharedStyles}
-      ${this.createTreeView(this.model, true)}
+      ${this.createTreeView(this.model, true, true)}
     `;
+  }
+
+  rendered() {
+    const draggables = this.renderRoot.querySelectorAll('kdsoft-expander');
+    for (const dr of draggables) {
+      if (!dr.dargdrop) {
+        dr.dragdrop = new KdSoftDragDropProvider(item => item.id).connect(dr);
+      }
+    }
   }
 }
 
