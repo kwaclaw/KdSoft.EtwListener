@@ -4,7 +4,7 @@ import { observable, observe } from '../lib/@nx-js/observer-util/dist/es.es6.js'
 import * as utils from '../js/utils.js';
 import TraceSessionProfile from '../js/traceSessionProfile.js';
 import FilterCarouselModel from './filter-carousel-model.js';
-import KdSoftChecklistModel from './kdsoft-checklist-model.js';
+import KdSoftChecklistModel from '../components/kdsoft-checklist-model.js';
 
 const traceLevelList = () => [
   { name: i18n.__('Always'), value: 0 },

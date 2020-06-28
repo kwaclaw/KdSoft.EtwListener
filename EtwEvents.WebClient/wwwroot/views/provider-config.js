@@ -3,12 +3,12 @@ import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
-import './kdsoft-dropdown.js';
-import './kdsoft-checklist.js';
+import '../components/kdsoft-dropdown.js';
+import '../components/kdsoft-checklist.js';
 import TraceSessionConfigModel from './trace-session-config-model.js';
-import KdSoftDropdownModel from './kdsoft-dropdown-model.js';
-import KdSoftChecklistModel from './kdsoft-checklist-model.js';
-import KdSoftDropdownChecklistConnector from './kdsoft-dropdown-checklist-connector.js';
+import KdSoftDropdownModel from '../components/kdsoft-dropdown-model.js';
+import KdSoftChecklistModel from '../components/kdsoft-checklist-model.js';
+import KdSoftDropdownChecklistConnector from '../components/kdsoft-dropdown-checklist-connector.js';
 
 class ProviderConfig extends LitMvvmElement {
   constructor() {

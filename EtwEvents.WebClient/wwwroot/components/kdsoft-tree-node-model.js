@@ -1,6 +1,5 @@
 
 import { observable } from '../lib/@nx-js/observer-util/dist/es.es6.js';
-import * as utils from '../js/utils.js';
 
 function* treeNodeEntries(node, parent) {
   if (!node) return;

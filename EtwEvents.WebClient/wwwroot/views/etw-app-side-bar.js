@@ -6,7 +6,7 @@ import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
 import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import dialogPolyfill from '../lib/dialog-polyfill.js';
 import FilterFormModel from './filter-form-model.js';
-import './kdsoft-expander.js';
+import '../components/kdsoft-expander.js';
 import './trace-session-config.js';
 import './filter-form.js';
 import './event-sink-config.js';

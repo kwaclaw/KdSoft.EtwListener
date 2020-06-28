@@ -2,7 +2,7 @@
 /* global i18n */
 
 import { observable, observe } from '../lib/@nx-js/observer-util/dist/es.es6.js';
-import KdSoftChecklistModel from './kdsoft-checklist-model.js';
+import KdSoftChecklistModel from '../components/kdsoft-checklist-model.js';
 
 const sinkTypeList = () => [
   { name: i18n.__('File Sink'), value: 'FileSink' },

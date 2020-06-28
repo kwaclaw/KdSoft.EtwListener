@@ -1,19 +1,18 @@
 ﻿import { html, nothing } from '../lib/lit-html.js';
 import { repeat } from '../lib/lit-html/directives/repeat.js';
 import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
-import { observable } from '../lib/@nx-js/observer-util/dist/es.es6.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
 import * as utils from '../js/utils.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
-import './kdsoft-dropdown.js';
-import './kdsoft-checklist.js';
-import './kdsoft-expander.js';
-import './kdsoft-drop-target.js';
-import './kdsoft-tree-view.js';
-import KdSoftDropdownModel from './kdsoft-dropdown-model.js';
-import KdSoftDropdownChecklistConnector from './kdsoft-dropdown-checklist-connector.js';
-import KdSoftTreeNodeModel from './kdsoft-tree-node-model.js';
+import '../components/kdsoft-dropdown.js';
+import '../components/kdsoft-checklist.js';
+import '../components/kdsoft-expander.js';
+import '../components/kdsoft-drop-target.js';
+import '../components/kdsoft-tree-view.js';
+import KdSoftDropdownModel from '../components/kdsoft-dropdown-model.js';
+import KdSoftDropdownChecklistConnector from '../components/kdsoft-dropdown-checklist-connector.js';
+import KdSoftTreeNodeModel from '../components/kdsoft-tree-node-model.js';
 
 function getSelectedSinkTypeText(checkListModel) {
   let result = null;
