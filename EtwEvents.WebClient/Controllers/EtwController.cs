@@ -7,7 +7,8 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
-using KdSoft.EtwEvents.WebClient.EventSinks;
+using KdSoft.EtwEvents.Client.Shared;
+using KdSoft.EtwEvents.EventSinks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -46,7 +47,7 @@ namespace KdSoft.EtwEvents.WebClient
 
         X509Certificate2? GetClientCertificate() {
             string thumbprint = "";
-            StoreLocation location = StoreLocation.CurrentUser;
+            var location = StoreLocation.CurrentUser;
 
             var currentCert = this.HttpContext.Connection.ClientCertificate;
             if (_clientCertOptions.Value.Thumbprint.Length > 0) {
@@ -99,29 +100,48 @@ namespace KdSoft.EtwEvents.WebClient
 
         IEventSink CreateEventSink(Models.EventSinkRequest request, EventSinkHolder holder) {
             IEventSink result;
-            var jsonSerializerOptions = _jsonOptions.Value.JsonSerializerOptions;
             switch (request.SinkType) {
-                case nameof(EventSinks.MongoSink):
-                    var optsElement = (JsonElement)request.Options;
-                    var sinkOptions = optsElement.ToObject<MongoSinkOptions>(jsonSerializerOptions);
-                    var credsElement = (JsonElement)request.Credentials;
-                    result = new EventSinks.MongoSink(
-                        request.Name,
-                        sinkOptions,
-                        credsElement.GetProperty("database").GetString(),
-                        credsElement.GetProperty("user").GetString(),
-                        credsElement.GetProperty("password").GetString(),
-                        CancellationToken.None);
-                    break;
                 case nameof(EventSinks.DummySink):
-                default:
                     result = new EventSinks.DummySink(request.Name);
+                    break;
+                default:
+                    var factoryType = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetEventSinkFactories(request.SinkType)).FirstOrDefault();
+                    if (factoryType == null)
+                        throw new InvalidOperationException($"Cannot load event sink {request.SinkType}.");
+                    var factory = (IEventSinkFactory)Activator.CreateInstance(factoryType);
+                    result = factory.Create(request.)
                     break;
 
             }
             AddEventSink(result, holder);
             return result;
         }
+
+        //IEventSink CreateEventSink(Models.EventSinkRequest request, EventSinkHolder holder) {
+        //    IEventSink result;
+        //    var jsonSerializerOptions = _jsonOptions.Value.JsonSerializerOptions;
+        //    switch (request.SinkType) {
+        //        case nameof(MongoSink):
+        //            var optsElement = (JsonElement)request.Options;
+        //            var sinkOptions = optsElement.ToObject<MongoSinkOptions>(jsonSerializerOptions);
+        //            var credsElement = (JsonElement)request.Credentials;
+        //            result = new MongoSink(
+        //                request.Name,
+        //                sinkOptions,
+        //                credsElement.GetProperty("database").GetString(),
+        //                credsElement.GetProperty("user").GetString(),
+        //                credsElement.GetProperty("password").GetString(),
+        //                CancellationToken.None);
+        //            break;
+        //        case nameof(EventSinks.DummySink):
+        //        default:
+        //            result = new EventSinks.DummySink(request.Name);
+        //            break;
+
+        //    }
+        //    AddEventSink(result, holder);
+        //    return result;
+        //}
 
         void AddEventSink(IEventSink sink, EventSinkHolder holder) {
             holder.AddEventSink(sink);

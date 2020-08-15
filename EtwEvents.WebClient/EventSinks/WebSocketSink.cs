@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
 
 namespace KdSoft.EtwEvents.WebClient.EventSinks

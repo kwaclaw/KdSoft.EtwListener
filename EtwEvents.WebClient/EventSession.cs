@@ -15,11 +15,11 @@ namespace KdSoft.EtwEvents.WebClient
         readonly Timer _flushTimer;
         readonly EventSinkHolder _eventSinks;
         readonly AggregatingNotifier<Models.TraceSessionStates> _changeNotifier;
+        readonly IDisposable _pushFrequencyMonitor;
+        readonly ActionBlock<(EtwEvent?, long)> _jobQueue;
 
         AsyncServerStreamingCall<EtwEvent>? _streamingCall;
         int _pushFrequencyMillisecs;
-        IDisposable _pushFrequencyMonitor;
-        ActionBlock<(EtwEvent?, long)> _jobQueue;
 
         int _started = 0;
         int _stopped = 0;

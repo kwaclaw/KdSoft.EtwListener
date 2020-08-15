@@ -34,9 +34,8 @@ namespace KdSoft.EtwEvents.WebClient
         }
 
         [Route("/error")]
-        public ActionResult Error([FromServices] IWebHostEnvironment webHostEnvironment) {
+        public ActionResult Error() {
             var feature = HttpContext.Features.Get<IExceptionHandlerPathFeature>();
-            var ex = feature?.Error;
 
             var problemDetails = new ProblemDetails {
                 Status = (int)HttpStatusCode.InternalServerError,

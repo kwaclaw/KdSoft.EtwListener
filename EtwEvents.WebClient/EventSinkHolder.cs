@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
+using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
 
 namespace KdSoft.EtwEvents.WebClient
