@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
@@ -10,12 +11,14 @@ using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Localization;
+using OrchardCore.Localization;
 
 #pragma warning disable CA1822 // Mark members as static
 
@@ -82,8 +85,21 @@ namespace KdSoft.EtwEvents.WebClient
             services.AddSingleton<TraceSessionManager>();
 
             services.AddPortableObjectLocalization(options => options.ResourcesPath = "Resources");
+            services.Replace(ServiceDescriptor.Singleton<ILocalizationFileLocationProvider, LocalizationFileProvider>());
             // workaround for bug in OrchardCore
-            services.TryAddTransient(typeof(IStringLocalizer<>), typeof(StringLocalizer<>));
+            //services.TryAddTransient(typeof(IStringLocalizer<>), typeof(StringLocalizer<>));
+            services.Configure<RequestLocalizationOptions>(options => {
+                var supportedCultures = new List<CultureInfo> {
+                    new CultureInfo("en-US"),
+                    new CultureInfo("fr"),
+                    new CultureInfo("es"),
+                    new CultureInfo("de")
+                };
+
+                options.DefaultRequestCulture = new RequestCulture("en-US");
+                options.SupportedCultures = supportedCultures;
+                options.SupportedUICultures = supportedCultures;
+            });
 
             services.AddRazorPages();
 
