@@ -8,7 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
 using KdSoft.EtwEvents.Client.Shared;
-using KdSoft.EtwEvents.EventSinks;
+using KdSoft.EtwEvents.WebClient.EventSinks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -23,6 +23,7 @@ namespace KdSoft.EtwEvents.WebClient
     class EtwController: ControllerBase
     {
         readonly TraceSessionManager _sessionManager;
+        readonly EventSinkService _evtSinkService;
         readonly IOptionsMonitor<Models.EventSessionOptions> _optionsMonitor;
         readonly IOptions<Models.ClientCertOptions> _clientCertOptions;
         readonly IOptions<JsonOptions> _jsonOptions;
@@ -30,12 +31,14 @@ namespace KdSoft.EtwEvents.WebClient
 
         public EtwController(
             TraceSessionManager sessionManager,
+            EventSinkService evtSinkService,
             IOptionsMonitor<Models.EventSessionOptions> optionsMonitor,
             IOptions<Models.ClientCertOptions> clientCertOptions,
             IOptions<JsonOptions> jsonOptions,
             IStringLocalizer<EtwController> localize
         ) {
             this._sessionManager = sessionManager;
+            this._evtSinkService = evtSinkService;
             this._optionsMonitor = optionsMonitor;
             this._clientCertOptions = clientCertOptions;
             this._jsonOptions = jsonOptions;
@@ -98,21 +101,22 @@ namespace KdSoft.EtwEvents.WebClient
 
         public const int SessionNotFoundWebSocketStatus = 4901;
 
-        IEventSink CreateEventSink(Models.EventSinkRequest request, EventSinkHolder holder) {
+        async Task<IEventSink> CreateEventSink(Models.EventSinkRequest request, EventSinkHolder holder) {
             IEventSink result;
             switch (request.SinkType) {
-                case nameof(EventSinks.DummySink):
-                    result = new EventSinks.DummySink(request.Name);
+                case nameof(DummySink):
+                    result = new DummySink(request.Name);
                     break;
                 default:
-                    var factoryType = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetEventSinkFactories(request.SinkType)).FirstOrDefault();
-                    if (factoryType == null)
+                    var factory = _evtSinkService.LoadEventSinkFactory(request.SinkType);
+                    if (factory == null)
                         throw new InvalidOperationException($"Cannot load event sink {request.SinkType}.");
-                    var factory = (IEventSinkFactory)Activator.CreateInstance(factoryType);
-                    result = factory.Create(request.)
+                    var optionsJson = JsonSerializer.Serialize(request.Options);
+                    var credentialsJson = JsonSerializer.Serialize(request.Credentials);
+                    result = await factory!.Create(request.Name, optionsJson, credentialsJson).ConfigureAwait(false);
                     break;
-
             }
+
             AddEventSink(result, holder);
             return result;
         }
@@ -269,7 +273,8 @@ namespace KdSoft.EtwEvents.WebClient
         public async Task<IActionResult> OpenEventSinks(string sessionName, [FromBody]IEnumerable<Models.EventSinkRequest> sinkRequests) {
             if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
                 var traceSession = await sessionEntry.SessionTask.ConfigureAwait(false);
-                var sinkList = sinkRequests.Select(sr => CreateEventSink(sr, traceSession.EventSinks));
+                var sinkTasks = sinkRequests.Select(sr => CreateEventSink(sr, traceSession.EventSinks));
+                var sinkList = await Task.WhenAll(sinkTasks).ConfigureAwait(false);
                 traceSession.EventSinks.AddEventSinks(sinkList);
                 await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
                 return Ok();

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace KdSoft.EtwEvents.Client.Shared
 {
@@ -19,20 +19,26 @@ namespace KdSoft.EtwEvents.Client.Shared
             }
         }
 
-        static bool HasEventSinkAttribute(Type type, string name) {
-            var atts = Attribute.GetCustomAttributes(type, typeof(EventSinkAttribute));
-            for (int indx = 0; indx < atts.Length; indx++) {
-                var att = (EventSinkAttribute)atts[indx];
-                if (string.Equals(att.Name, name, StringComparison.OrdinalIgnoreCase))
-                    return true;
+        static string? GetEventSinkType(Type type) {
+            var atts = CustomAttributeData.GetCustomAttributes(type);
+            for (int indx = 0; indx < atts.Count; indx++) {
+                var att = atts[indx];
+                if (att.AttributeType == typeof(EventSinkAttribute))
+                    return att.ConstructorArguments[0].Value as string;
             }
-            return false;
+            return null;
         }
 
-        public static IEnumerable<Type> GetEventSinkFactories(this Assembly assembly, string name) {
+        public static IEnumerable<Type> GetEventSinkFactoriesBySinkType(this Assembly assembly, string sinkType) {
             var factoryType = typeof(IEventSinkFactory);
-            var factories = GetLoadableTypes(assembly).Where(x => factoryType.IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract);
-            return factories.Where(f => HasEventSinkAttribute(f, name));
+            var factories = GetLoadableTypes(assembly).Where(x => factoryType.IsAssignableFrom(x) && x.IsClass && !x.IsAbstract);
+            return factories.Where(f => GetEventSinkType(f) == sinkType);
+        }
+
+        public static IEnumerable<(Type factoryType, string sinkType)> GetEventSinkFactories(this Assembly assembly) {
+            var factoryType = typeof(IEventSinkFactory);
+            var factoryTypes = GetLoadableTypes(assembly).Where(x => factoryType.IsAssignableFrom(x) && x.IsClass && !x.IsAbstract);
+            return factoryTypes.Select(ft => (ft, GetEventSinkType(ft) ?? "")).Where(valueTuple => !string.IsNullOrEmpty(valueTuple.Item2));
         }
     }
 }

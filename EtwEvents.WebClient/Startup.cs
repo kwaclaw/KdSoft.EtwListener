@@ -5,6 +5,7 @@ using System.IO;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using KdSoft.EtwEvents.WebClient.EventSinks;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
@@ -94,6 +95,8 @@ namespace KdSoft.EtwEvents.WebClient
                 .ConfigureApplicationPartManager(manager => {
                     manager.FeatureProviders.Add(new EtwControllerFeatureProvider());
                 });
+
+            services.AddSingleton<EventSinkService>();
 
             services.AddSingleton<AppSecretsHolder>(provider => {
                 var secretsPath = Path.Combine(_env.ContentRootPath, "appsecrets.json");
