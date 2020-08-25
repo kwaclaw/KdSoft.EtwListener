@@ -37,14 +37,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\views\" />
+    <None Update="EventSinks/**/*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\EtwEvents.Interfaces\EtwEvents.Client.Shared.csproj" />
     <ProjectReference Include="..\EtwEvents.MongoSink\EtwEvents.MongoSink.csproj" />
   </ItemGroup>
-  
+
+ 
   <Target Name="PostCSS" BeforeTargets="Build">
     <Exec Command="npm run build"></Exec>
     <Copy SourceFiles="@(FontAwsomeSprites)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeSprites->'wwwroot/css/fontawesome/sprites/%(RecursiveDir)%(Filename)%(Extension)')" />

@@ -19,4 +19,8 @@
     <ProjectReference Include="..\EtwEvents.Interfaces\EtwEvents.Client.Shared.csproj" />
   </ItemGroup>
 
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="SET mongoSinkDir=&quot;$(SolutionDir)EtwEvents.WebClient/EventSinks/MongoSink/&quot;&#xD;&#xA;IF NOT EXIST %25mongoSinkDir%25 MKDIR %25mongoSinkDir%25&#xD;&#xA;COPY /Y $(TargetDir)* %25mongoSinkDir%25" />
+  </Target>
+
 </Project>
