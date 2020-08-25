@@ -13,9 +13,10 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
     {
         readonly TraceSessionManager _sessionManager;
         readonly IHostEnvironment _env;
-        readonly IStringLocalizer<EventSinkController> _;
+        readonly IStringLocalizer<EventSinkService> _;
+        const string SinkAssemblyFilter = "*Sink.dll";
 
-        public EventSinkService(TraceSessionManager sessionManager, IHostEnvironment env, IStringLocalizer<EventSinkController> localize) {
+        public EventSinkService(TraceSessionManager sessionManager, IHostEnvironment env, IStringLocalizer<EventSinkService> localize) {
             this._sessionManager = sessionManager;
             this._env = env;
             this._ = localize;
@@ -32,13 +33,16 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
             var evtSinkDirectories = dirInfo.EnumerateDirectories();
 
             foreach (var evtSinkDir in evtSinkDirectories) {
-                var evtSinkFile = evtSinkDir.GetFiles($"*.Sink.dll").FirstOrDefault();
+                var evtSinkFile = evtSinkDir.GetFiles(SinkAssemblyFilter).FirstOrDefault();
                 if (evtSinkFile != null) {
                     var evtSinkAssembly = Assembly.ReflectionOnlyLoadFrom(evtSinkFile.FullName);
-                    var evtSinkInfos = evtSinkAssembly.GetEventSinkFactories();
-                    foreach (var evtSinkInfo in evtSinkInfos) {
-                        yield return new EventSinkInfo { SinkType = evtSinkInfo.sinkType, Description = _.GetString(evtSinkInfo.sinkType) };
-                        break;  // only interested in first one
+                    var evtSinkFactories = evtSinkAssembly.GetEventSinkFactories();
+                    foreach (var evtSinkFactory in evtSinkFactories) {
+                        var sinkType = evtSinkFactory.GetEventSinkType();
+                        if (sinkType != null) {
+                            yield return new EventSinkInfo { SinkType = sinkType, Description = _.GetString(sinkType) };
+                            break;  // only interested in first one
+                        }
                     }
                 }
             }
@@ -50,14 +54,16 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
             var evtSinkDirectories = dirInfo.EnumerateDirectories();
 
             foreach (var evtSinkDir in evtSinkDirectories) {
-                var evtSinkFile = evtSinkDir.GetFiles($"*.Sink.dll").FirstOrDefault();
+                var evtSinkFile = evtSinkDir.GetFiles(SinkAssemblyFilter).FirstOrDefault();
                 if (evtSinkFile != null) {
                     var evtSinkAssembly = Assembly.ReflectionOnlyLoadFrom(evtSinkFile.FullName);
                     var factoryTypes = evtSinkAssembly.GetEventSinkFactoriesBySinkType(sinkType);
                     foreach (var factoryType in factoryTypes) {
                         var factoryAssembly = Assembly.LoadFrom(evtSinkFile.FullName);
+                        var factoryTypeName = factoryType.FullName;
                         // only interested in first one
-                        return (IEventSinkFactory?)factoryAssembly.CreateInstance(factoryType.FullName);
+                        if (factoryTypeName != null)
+                            return (IEventSinkFactory?)factoryAssembly.CreateInstance(factoryTypeName);
                     }
                 }
             }
