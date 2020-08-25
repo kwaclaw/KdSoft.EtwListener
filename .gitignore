@@ -38,3 +38,5 @@ wwwroot/lib
 */publish/
 out/
 dev/
+
+EtwEvents.WebClient/EventSinks/**/
