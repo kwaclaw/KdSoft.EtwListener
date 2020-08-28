@@ -2,6 +2,7 @@
 import { repeat } from '../lib/lit-html/directives/repeat.js';
 import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
+import { observable, observe, unobserve, raw } from '../lib/@nx-js/observer-util/dist/es.es6.js';
 import * as utils from '../js/utils.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
@@ -10,9 +11,10 @@ import '../components/kdsoft-checklist.js';
 import '../components/kdsoft-expander.js';
 import '../components/kdsoft-drop-target.js';
 import '../components/kdsoft-tree-view.js';
+import EventSinkConfigModel from './event-sink-config-model.js';
 import KdSoftDropdownModel from '../components/kdsoft-dropdown-model.js';
 import KdSoftDropdownChecklistConnector from '../components/kdsoft-dropdown-checklist-connector.js';
-import KdSoftTreeNodeModel from '../components/kdsoft-tree-node-model.js';
+
 
 function getSelectedSinkTypeText(checkListModel) {
   let result = null;
@@ -27,31 +29,8 @@ class EventSinkConfig extends LitMvvmElement {
   constructor() {
     super();
     this.scheduler = new Queue(priorities.HIGH);
-    this.sinkTypeDropDownModel = new KdSoftDropdownModel();
-    this.sinkTypeChecklistConnector = new KdSoftDropdownChecklistConnector(
-      () => this.renderRoot.getElementById('sinkType'),
-      () => this.renderRoot.getElementById('sinkTypeList'),
-      getSelectedSinkTypeText
-    );
-
-    this.rootNode = this._createTreeModel();
-  }
-
-  _createTreeModel() {
-    const grandChildren = [];
-    for (let indx = 0; indx < 15; indx += 1) {
-      const nodeModel = new KdSoftTreeNodeModel(`3-${indx}`, [], { type: 'gc', text: `Grand child blah blah ${indx}` });
-      grandChildren.push(nodeModel);
-    }
-
-    const children = [];
-    for (let indx = 0; indx < 5; indx += 1) {
-      const gci = indx * 3;
-      const nodeModel = new KdSoftTreeNodeModel(`2-${indx}`, grandChildren.slice(gci, gci + 3), { type: 'c', text: `Child blah blah ${indx}` });
-      children.push(nodeModel);
-    }
-
-    return new KdSoftTreeNodeModel('0-0', children, { type: 'r', text: `Root Node` });
+    // for "nothing" to work we need to render raw(this.sinkTypeTemplateHolder.value)
+    this.sinkTypeTemplateHolder = observable({ value: nothing });
   }
 
   _cancel() {
@@ -79,24 +58,6 @@ class EventSinkConfig extends LitMvvmElement {
 
   /* eslint-disable indent, no-else-return */
 
-  _getTreeNodeContentTemplate(nodeModel) {
-    let cls = '';
-    switch (nodeModel.type) {
-      case 'gc':
-        cls = 'text-red-600';
-        break;
-      case 'c':
-        cls = 'text-blue-600';
-        break;
-      case 'r':
-        cls = 'text-black-600';
-        break;
-      default:
-        break;
-    }
-    return html`<span class=${cls}>${nodeModel.text}</span>`;
-  }
-
   connectedCallback() {
     super.connectedCallback();
     // this.addEventListener('kdsoft-node-move', this.rootNode.moveNode);
@@ -118,6 +79,19 @@ class EventSinkConfig extends LitMvvmElement {
 
   firstRendered() {
     //
+    this._sinkTypeObserver = observe(async () => {
+      if (this.model.selectedSinkTypeIndex >= 0) {
+        const href = EventSinkConfigModel.sinkTypeList[this.model.selectedSinkTypeIndex].href;
+        try {
+          const module = await import(href);
+          this.sinkTypeTemplateHolder.value = module.default;
+        } catch(error) {
+          // for "nothing" to work we need to render raw(this.sinkTypeTemplateHolder.value)
+          this.sinkTypeTemplateHolder.value = nothing;
+          window.etwApp.defaultHandleError(error);
+        }
+      }
+    });
   }
 
   rendered() {
@@ -133,6 +107,35 @@ class EventSinkConfig extends LitMvvmElement {
           display: flex;
           flex-direction: column;
           align-items: stretch;
+        }
+
+        #form-content {
+          position: relative;
+          flex-grow: 1;
+        }
+
+        #select-grid {
+          display:grid;
+          position:absolute;
+          left:0;
+          top:0;
+          right:0;
+          bottom:0;
+          /* only way to have background, but not children, semi-transparent */
+          background: rgba(255,255,255,0.3);
+          z-index:999;
+        }
+
+        #select-grid div {
+          margin:auto;
+          max-height:100%;
+          max-width:100%;
+          min-width: 12rem;
+          z-index:1000;
+        }
+
+        #select-grid kdsoft-checklist {
+          width: 100%;
         }
 
         #container {
@@ -188,6 +191,25 @@ class EventSinkConfig extends LitMvvmElement {
     ];
   }
 
+  getSelectTemplate(alreadySelected) {
+    if (alreadySelected) {
+      return nothing;
+    }
+    return html`
+      <div id="select-grid">
+        <div>
+          <p>Select Event Sink Type</p>
+          <kdsoft-checklist
+            id="sinkTypeList" 
+            class="text-black" 
+            .model=${this.model.sinkTypeCheckListModel}
+            .getItemTemplate=${item => html`${item.name}`}>
+          </kdsoft-checklist>
+        </div>
+      </div>
+    `;
+  }
+
   render() {
     const result = html`
       ${sharedStyles}
@@ -195,26 +217,15 @@ class EventSinkConfig extends LitMvvmElement {
       <style>
         :host {
           display: block;
+          height:100%;
         }
       </style>
       <form>
-        <nav class="flex flex-col sm:flex-row mb-4">
-          <kdsoft-dropdown id="sinkType" class="py-0" .model=${this.sinkTypeDropDownModel} .connector=${this.sinkTypeChecklistConnector}>
-            <kdsoft-checklist
-              id="sinkTypeList" 
-              class="text-black" 
-              .model=${this.model.sinkTypeCheckListModel}
-              .getItemTemplate=${item => html`${item.name}`}>
-            </kdsoft-checklist>
-          </kdsoft-dropdown>
-        </nav>
-        
-        <div id="container" class="mb-4 relative">
-          <kdsoft-tree-view
-            .model=${this.rootNode}
-            .contentTemplateCallback=${this._getTreeNodeContentTemplate}
-            style="max-width:400px;max-height:100%;overflow-y:auto;"
-          ></kdsoft-tree-view>
+        <div id="form-content">
+          ${this.getSelectTemplate(this.model.selectedSinkTypeIndex >= 0)}
+          <div id="container" class="mb-4 relative">
+            ${raw(this.sinkTypeTemplateHolder.value)}
+          </div>
         </div>
 
         <hr class="mb-4" />

@@ -112,7 +112,7 @@ class EtwAppSideBar extends LitMvvmElement {
   //#region event sink
 
   _addEventSinkProfileClick(e) {
-    const configModel = new EventSinkConfigModel(0);
+    const configModel = new EventSinkConfigModel(null);
 
     const dlg = this.renderRoot.getElementById('dlg-event-sink');
     const cfg = dlg.querySelector('event-sink-config');
@@ -412,7 +412,7 @@ class EtwAppSideBar extends LitMvvmElement {
                   <div slot="content">
                     <div class="flex">
                       <label class="font-bold">${i18n.gettext('Event Sinks')}</label>
-                        <button class="px-1 py-1 ml-auto" @click=${e => this._openEventSinkClick(e, ses)} title="Open Event Sink"><i class="fas fa-lg fa-plus"></i></button>
+                      <button class="px-1 py-1 ml-auto" @click=${e => this._openEventSinkClick(e, ses)} title="Open Event Sink"><i class="fas fa-lg fa-plus"></i></button>
                     </div>
                     ${ses.state.eventSinks.map(ev => {
                       const evsType = ev.error ? i18n.gettext('Failed') : (ev.isLocal ? i18n.gettext('Local') : i18n.gettext('External'));

@@ -5,17 +5,17 @@ import { observable, observe } from '../lib/@nx-js/observer-util/dist/es.es6.js'
 import KdSoftChecklistModel from '../components/kdsoft-checklist-model.js';
 
 const sinkTypeList = () => [
-  { name: i18n.__('File Sink'), value: 'FileSink' },
-  { name: i18n.__('Mongo Sink'), value: 'MongoSink' },
+  { name: i18n.__('File Sink'), value: 'FileSink', href: './file-sink-config.js' },
+  { name: i18n.__('Mongo Sink'), value: 'MongoSink', href: './mongo-sink-config.js' },
 ];
 
 class EventSinkConfigModel {
   constructor(selectedSinkTypeIndex) {
-    this.selectedSinkTypeIndex = selectedSinkTypeIndex;
+    this.selectedSinkTypeIndex = selectedSinkTypeIndex || -1;
     this.sinkTypeCheckListModel = new KdSoftChecklistModel(
       sinkTypeList(),
       // 'variable == null' checks for both, null and undefined
-      selectedSinkTypeIndex == null ? [] : [this.selectedSinkTypeIndex],
+      this.selectedSinkTypeIndex < 0 ? [] : [this.selectedSinkTypeIndex],
       false,
       item => item.value
     );
@@ -24,8 +24,9 @@ class EventSinkConfigModel {
 
     // observe checklist model changes
     this._sinkTypeListObserver = observe(() => {
-      const selIndexes = this.sinkTypeCheckListModel.selectedIndexes;
-      this.selectedSinkTypeIndex = selIndexes.length === 0 ? null : selIndexes[0];
+      const selIndexes = result.sinkTypeCheckListModel.selectedIndexes;
+      // use result to trigger observers
+      result.selectedSinkTypeIndex = selIndexes.length === 0 ? -1 : selIndexes[0];
     });
 
     return result;
