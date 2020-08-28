@@ -114,14 +114,14 @@ namespace KdSoft.EtwEvents.WebClient
 
             services.AddSingleton<EventSinkService>();
 
-            services.AddSingleton<AppSecretsHolder>(provider => {
-                var secretsPath = Path.Combine(_env.ContentRootPath, "appsecrets.json");
-                var localizerFactory = provider.GetService<IStringLocalizerFactory>();
-                var dataProtectionProvider = provider.GetRequiredService<IDataProtectionProvider>();
-                var result = new AppSecretsHolder(secretsPath, "KdSoft-EtwEvents-Secrets", dataProtectionProvider, localizerFactory);
-                result.EnsureProtected();
-                return result;
-            });
+            //services.AddSingleton<AppSecretsHolder>(provider => {
+            //    var secretsPath = Path.Combine(_env.ContentRootPath, "appsecrets.json");
+            //    var localizerFactory = provider.GetService<IStringLocalizerFactory>();
+            //    var dataProtectionProvider = provider.GetRequiredService<IDataProtectionProvider>();
+            //    var result = new AppSecretsHolder(secretsPath, "KdSoft-EtwEvents-Secrets", dataProtectionProvider, localizerFactory);
+            //    result.EnsureProtected();
+            //    return result;
+            //});
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
@@ -141,8 +141,8 @@ namespace KdSoft.EtwEvents.WebClient
             }
 
             // depending on development or production mode, we have to initialize the secrets differently
-            var appSecretsPath = Path.Combine(env.ContentRootPath, "appsecrets.json");
-            PrepareSecrets(env, appSecretsPath);
+            //var appSecretsPath = Path.Combine(env.ContentRootPath, "appsecrets.json");
+            //PrepareSecrets(env, appSecretsPath);
 
             app.UseRequestLocalization();
 
@@ -175,19 +175,19 @@ namespace KdSoft.EtwEvents.WebClient
         /// On first run of the web application, the secrets file will be encrypted if it is in clear text.
         /// NOTE: only the clear text file may be published.
         /// </summary>
-        void PrepareSecrets(IWebHostEnvironment env, string secretsPath) {
-            var clearTextPath = secretsPath + ".clearText";
-            if (env.IsDevelopment()) {
-                if (!File.Exists(secretsPath))
-                    File.Copy(clearTextPath, secretsPath);
-            }
-            else {
-                if (File.Exists(clearTextPath)) {
-                    File.Delete(secretsPath);
-                    File.Move(clearTextPath, secretsPath);
-                }
-            }
-        }
+        //void PrepareSecrets(IWebHostEnvironment env, string secretsPath) {
+        //    var clearTextPath = secretsPath + ".clearText";
+        //    if (env.IsDevelopment()) {
+        //        if (!File.Exists(secretsPath))
+        //            File.Copy(clearTextPath, secretsPath);
+        //    }
+        //    else {
+        //        if (File.Exists(clearTextPath)) {
+        //            File.Delete(secretsPath);
+        //            File.Move(clearTextPath, secretsPath);
+        //        }
+        //    }
+        //}
     }
 
     class EtwControllerFeatureProvider: ControllerFeatureProvider
