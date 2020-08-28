@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MongoDB.Driver" Version="2.11.0" />
+    <PackageReference Include="MongoDB.Driver" Version="2.11.1" />
     <PackageReference Include="Newtonsoft.Json.Schema" Version="3.0.13" />
     <PackageReference Include="System.Collections.Immutable" Version="1.7.1" />
     <PackageReference Include="System.Text.Json" Version="4.7.2" />
@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="SET mongoSinkDir=&quot;$(SolutionDir)EtwEvents.WebClient/EventSinks/MongoSink/&quot;&#xD;&#xA;IF NOT EXIST %25mongoSinkDir%25 MKDIR %25mongoSinkDir%25&#xD;&#xA;COPY /Y $(TargetDir)* %25mongoSinkDir%25" />
+    <Exec Command="SET mongoSinkDir=&quot;../EtwEvents.WebClient/EventSinks/MongoSink/&quot;&#xD;&#xA;IF NOT EXIST %25mongoSinkDir%25 MKDIR %25mongoSinkDir%25&#xD;&#xA;COPY /Y $(TargetDir)* %25mongoSinkDir%25" />
   </Target>
 
 </Project>
