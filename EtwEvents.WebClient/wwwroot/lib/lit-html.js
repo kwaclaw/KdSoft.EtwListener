@@ -474,7 +474,6 @@ class TemplateInstance {
         return fragment;
     }
 }
-//# sourceMappingURL=template-instance.js.map
 
 /**
  * @license
@@ -601,7 +600,6 @@ class SVGTemplateResult extends TemplateResult {
         return template;
     }
 }
-//# sourceMappingURL=template-result.js.map
 
 /**
  * @license
@@ -1072,7 +1070,6 @@ const getOptions = (o) => o &&
     (eventOptionsSupported ?
         { capture: o.capture, passive: o.passive, once: o.once } :
         o.capture);
-//# sourceMappingURL=parts.js.map
 
 /**
  * @license
@@ -1124,7 +1121,6 @@ class DefaultTemplateProcessor {
     }
 }
 const defaultTemplateProcessor = new DefaultTemplateProcessor();
-//# sourceMappingURL=default-template-processor.js.map
 
 /**
  * @license
@@ -1242,6 +1238,5 @@ const html = (strings, ...values) => new TemplateResult(strings, values, 'html',
  * render to and update a container.
  */
 const svg = (strings, ...values) => new SVGTemplateResult(strings, values, 'svg', defaultTemplateProcessor);
-//# sourceMappingURL=lit-html.js.map
 
 export { AttributeCommitter, AttributePart, BooleanAttributePart, DefaultTemplateProcessor, EventPart, NodePart, PropertyCommitter, PropertyPart, SVGTemplateResult, Template, TemplateInstance, TemplateResult, createMarker, defaultTemplateProcessor, directive, html, isDirective, isIterable, isPrimitive, isTemplatePartActive, noChange, nothing, parts, removeNodes, render, reparentNodes, svg, templateCaches, templateFactory };

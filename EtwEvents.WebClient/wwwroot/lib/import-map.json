@@ -1,5 +1,6 @@
 {
   "imports": {
+    "@fortawesome/fontawesome-free": "./@fortawesome/fontawesome-free.js",
     "@kdsoft/lit-mvvm": "./@kdsoft/lit-mvvm.js",
     "@nx-js/observer-util/dist/es.es6.js": "./@nx-js/observer-util/dist/es.es6.js",
     "@nx-js/queue-util/dist/es.es6.js": "./@nx-js/queue-util/dist/es.es6.js",
