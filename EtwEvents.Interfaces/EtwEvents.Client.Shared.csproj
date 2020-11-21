@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <RootNamespace>KdSoft.EtwEvents.Client.Shared</RootNamespace>
     <AssemblyName>KdSoft.EtwEvents.Client.Shared</AssemblyName>
     <LangVersion>8.0</LangVersion>
@@ -16,9 +16,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Google.Protobuf" Version="3.13.0" />
-    <PackageReference Include="Grpc.Core.Api" Version="2.31.0" />
-    <PackageReference Include="Grpc.Tools" Version="2.31.0">
+    <PackageReference Include="Google.Protobuf" Version="3.14.0" />
+    <PackageReference Include="Grpc.Core.Api" Version="2.33.1" />
+    <PackageReference Include="Grpc.Tools" Version="2.33.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
