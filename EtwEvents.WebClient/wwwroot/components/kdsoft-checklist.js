@@ -45,7 +45,7 @@ class KdSoftChecklist extends LitMvvmElement {
       // setting the focus on the dropped item should be done when when the data-item-index
       // attributes are set, so we schedule it at the end of the next render cycle
       this.scheduler.add(() => {
-        const dropped = this.shadowRoot.querySelector(`[data-item-index="${toIndex}"]`);
+        const dropped = this.renderRoot.querySelector(`[data-item-index="${toIndex}"]`);
         if (dropped) dropped.focus();
       });
     };
@@ -256,7 +256,7 @@ class KdSoftChecklist extends LitMvvmElement {
     return [
       css`
         :host {
-          display: inline-block;
+          display: block;
         }
         #container {
           position: relative;

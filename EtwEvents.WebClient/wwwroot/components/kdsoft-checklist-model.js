@@ -141,14 +141,22 @@ class KdSoftChecklistModel {
   moveItem(from, to) {
     if (from === to) return;
 
+    const items = raw(this.items);
+
     // this algorithm keeps the array length constant
-    const itemToMove = this.items[from];
+    const itemToMove = items[from];
     if (to > from) {
-      this.items.copyWithin(from, from + 1, to + 1);
+      items.copyWithin(from, from + 1, to + 1);
     } else if (to < from) {
-      this.items.copyWithin(to + 1, to, from);
+      items.copyWithin(to + 1, to, from);
     }
-    this.items[to] = itemToMove;
+    items[to] = itemToMove;
+
+    // we made changes on the raw array, because copyWithin and assignments applied to the proxy
+    // 'this.items' strip the copied/assigned array elements of any proxies that might wrap them.
+    // So we need to trigger a reaction explicity on this.items by clearing and re-assigning to it.
+    this.items = [];
+    this.items = items;
   }
 
   unselectAll() {
