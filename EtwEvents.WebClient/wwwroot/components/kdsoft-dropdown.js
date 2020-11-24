@@ -139,7 +139,7 @@ class KdSoftDropdown extends LitMvvmElement {
       </style>
       <div id="container" class="border">
         <span id="seltext"
-          class="my-auto p-1 flex-grow whitespace-no-wrap overflow-x-hidden"
+          class="my-auto p-1 flex-grow whitespace-nowrap overflow-x-hidden"
           tabindex="1"
           title="${selText}"
           @focus="${this._seltextFocused}"

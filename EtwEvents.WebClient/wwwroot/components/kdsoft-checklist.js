@@ -200,7 +200,7 @@ class KdSoftChecklist extends LitMvvmElement {
     return html`
       <li data-item-index="${indx}"
           tabindex="${tabindex}"
-          class="list-item whitespace-no-wrap ${disabledString}"
+          class="list-item whitespace-nowrap ${disabledString}"
           @click=${this._itemClicked}
       >
         ${listItemContent}

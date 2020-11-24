@@ -247,17 +247,17 @@ class TraceSessionConfig extends LitMvvmElement {
             <fieldset>
               <label for="name">Name</label>
               <div class="flex flex-col">
-                <input id="name" name="name" type="text" required class="form-input" .value=${this.model.name} />
+                <input id="name" name="name" type="text" required .value=${this.model.name} />
                 <span class="text-gray-600 text-sm italic">Modifying the name creates a clone of the current profile.</span>
               </div>
             </fieldset>
             <fieldset>
               <label for="host">Host</label>
-              <input id="host" name="host" type="url" class="form-input" .value=${this.model.host} />
+              <input id="host" name="host" type="url" .value=${this.model.host} />
             </fieldset>
             <fieldset>
               <label for="lifeTime">Life Time</label>
-              <input id="lifeTime" name="lifeTime" type="text" class="form-input"
+              <input id="lifeTime" name="lifeTime" type="text"
                 .value=${this.model.lifeTime}
                 placeholder="ISO Duration (PnYnMnDTnHnMnS)"
                 pattern=${utils.isoDurationRx.source} />
@@ -300,9 +300,9 @@ class TraceSessionConfig extends LitMvvmElement {
               </kdsoft-checklist>
               <div class="w-full self-end mt-auto pt-4 pb-1 flex items-center">
                 <!-- <label class="mr-4" for="payload-field">New</label> -->
-                <input id="payload-field" type="text" form="" class="form-input mr-2" placeholder="field name" required @blur=${this._payloadFieldBlur} />
-                <input id="payload-label" type="text" form="" class="form-input mr-2" placeholder="field label" required />
-                <select id="payload-type" class="form-select">
+                <input id="payload-field" type="text" form="" class="mr-2" placeholder="field name" required @blur=${this._payloadFieldBlur} />
+                <input id="payload-label" type="text" form="" class="mr-2" placeholder="field label" required />
+                <select id="payload-type">
                   ${TraceSessionProfile.columnType.map(ct => html`<option>${ct}</option>`)}
                 </select>
                 <span class="text-gray-500 fas fa-lg fa-plus ml-auto pl-4 cursor-pointer select-none" @click=${this._addPayloadColumnClick}></span>

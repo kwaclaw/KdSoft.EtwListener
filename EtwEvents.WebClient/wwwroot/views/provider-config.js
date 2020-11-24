@@ -161,12 +161,12 @@ class ProviderConfig extends LitMvvmElement {
         <div class="border-l-2 ${borderColor}">
           <header class="flex items-center justify-start pl-1 cursor-pointer select-none">
             <input name="name" type="text"
-              class="${htColor} form-input mr-2 w-full" 
+              class="${htColor} mr-2 w-full" 
               ?readonly=${!expanded}
               .value=${this.model.name}
             />
-            <span class="${timesClasses} w-7 h-7 ml-auto mr-2" @click=${this._deleteClicked}></span>
-            <span class="${chevronClasses} w-7 h-7" @click=${this._expandClicked}></span>
+            <span class="${timesClasses} ml-auto mr-2" @click=${this._deleteClicked}></span>
+            <span class="${chevronClasses}" @click=${this._expandClicked}></span>
           </header>
           <div class="mt-2" ?hidden=${!expanded}>
             <div class="provider pl-8 pb-1">
@@ -183,7 +183,7 @@ class ProviderConfig extends LitMvvmElement {
               </fieldset>
               <fieldset>
                 <label class="text-gray-600" for="keyWords">MatchKeyWords</label>
-                <input id="keyWords" name="matchKeyWords" type="number" min="0" class="form-input" .value=${this.model.matchKeyWords} />
+                <input id="keyWords" name="matchKeyWords" type="number" min="0" .value=${this.model.matchKeyWords} />
               </fieldset>
               <fieldset>
                 <label class="text-gray-600" for="isDisabled">Disabled</label>

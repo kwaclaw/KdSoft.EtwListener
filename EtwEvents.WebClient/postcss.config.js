@@ -1,16 +1,16 @@
 ﻿module.exports = {
-  plugins: [
-    require('postcss-import')(),
-    require('postcss-copy')({
+  plugins: {
+    'postcss-import': {},
+    'postcss-copy': {
       basePath: ['node_modules'],
       template: '[path]/[name].[ext][query]',
       dest: 'wwwroot/css/assets'
-    }),
-    require('tailwindcss')({
+    },
+    'tailwindcss': {
       theme: {},
       variants: {},
-      plugins: [require('@tailwindcss/custom-forms')],
-    }),
-    require('autoprefixer'),
-  ]
+      plugins: [require('@tailwindcss/forms')]
+    },
+    'autoprefixer': {},
+  }
 }
