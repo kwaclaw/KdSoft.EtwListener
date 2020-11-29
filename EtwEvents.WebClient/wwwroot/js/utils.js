@@ -109,7 +109,7 @@ export const dateFormat = new Intl.DateTimeFormat('default', {
 export function cloneObject(target, source) {
   // eslint-disable-next-line guard-for-in
   for (const key in source) {
-    // Use getOwnPropertyDescriptor instead of source[key] to prevent from triggering setter/getter.
+    // Use getOwnPropertyDescriptor instead of source[key] to avoid triggering setter/getter.
     const descriptor = Object.getOwnPropertyDescriptor(source, key);
     if (descriptor.value instanceof String) {
       target[key] = descriptor.value.slice(0);
@@ -140,7 +140,7 @@ export function setTargetProperties(target, source) {
   for (const key in target) {
     const descriptor = Object.getOwnPropertyDescriptor(target, key);
     if (typeof descriptor === 'undefined') continue;
-    // Use getOwnPropertyDescriptor instead of source[key] to prevent from triggering setter/getter.
+    // Use getOwnPropertyDescriptor instead of source[key] to avoid triggering setter/getter.
     const sourceDescriptor = Object.getOwnPropertyDescriptor(source, key);
     if (typeof sourceDescriptor === 'undefined') continue;
 
