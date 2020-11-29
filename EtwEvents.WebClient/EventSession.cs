@@ -40,8 +40,8 @@ namespace KdSoft.EtwEvents.WebClient
                 MaxDegreeOfParallelism = 1
             });
 
-            this._flushTimer = new Timer(state => {
-                _jobQueue.Post((null, 0));
+            this._flushTimer = new Timer(async state => {
+                await _jobQueue.SendAsync((null, 0)).ConfigureAwait(false);
             });
 
             this._pushFrequencyMillisecs = (int)optionsMonitor.CurrentValue.PushFrequency.TotalMilliseconds;
@@ -83,7 +83,7 @@ namespace KdSoft.EtwEvents.WebClient
                     if (evt.TimeStamp == null)
                         continue;
 
-                    if (!_jobQueue.Post((evt, sequenceNo)))
+                    if (!await _jobQueue.SendAsync((evt, sequenceNo)).ConfigureAwait(false))
                         break;
 
                     sequenceNo += 1;
