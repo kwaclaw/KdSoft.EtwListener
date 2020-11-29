@@ -1,6 +1,7 @@
 import { observable, observe, unobserve, raw } from '../lib/@nx-js/observer-util/dist/es.es6.js';
 import TraceSession from '../js/traceSession.js';
 import TraceSessionProfile from '../js/traceSessionProfile.js';
+import EventSinkProfile from '../js/eventSinkProfile.js';
 import * as utils from '../js/utils.js';
 import RingBuffer from '../js/ringBuffer.js';
 import FetchHelper from '../js/fetchHelper.js';
@@ -20,7 +21,23 @@ function loadSessionProfiles() {
   return sessionProfiles;
 }
 
-function getProfileFromState(state) {
+function loadEventSinkProfiles() {
+  const sinkProfiles = [];
+  for (let i = 0; i < localStorage.length; i += 1) {
+    const key = localStorage.key(i);
+    if (key.startsWith('sink-profile-')) {
+      const item = JSON.parse(localStorage.getItem(key));
+      const sinkProfile = new EventSinkProfile();
+      utils.setTargetProperties(sinkProfile, item);
+      sinkProfiles.push(sinkProfile);
+    }
+  }
+  sinkProfiles.sort((x, y) => String.prototype.localeCompare.call(x.name, y.name));
+  return sinkProfiles;
+}
+
+
+function getSessionProfileFromState(state) {
   return new TraceSessionProfile(state.name, state.host, state.enabledProviders);
 }
 
@@ -33,7 +50,7 @@ class EtwAppModel {
 
     this.sessionProfiles = loadSessionProfiles();
 
-    this.eventSinkProfiles = [];
+    this.eventSinkProfiles = loadEventSinkProfiles();
 
     this._errorSequenceNo = 0;
     this.fetchErrors = new RingBuffer(50);
@@ -58,6 +75,25 @@ class EtwAppModel {
 
     return observable(this);
   }
+
+  handleFetchError(error) {
+    this._errorSequenceNo += 1;
+    if (!error.timeStamp) error.timeStamp = new Date();
+    error.sequenceNo = this._errorSequenceNo;
+
+    this.fetchErrors.addItem(error);
+    this.showLastError = true;
+    if (this._errorTimeout) window.clearTimeout(this._errorTimeout);
+    this._errorTimeout = window.setTimeout(() => { this.showLastError = false; }, 9000);
+  }
+
+  keepErrorsOpen() {
+    if (this._errorTimeout) {
+      window.clearTimeout(this._errorTimeout);
+    }
+  }
+
+  //#region TraceSession
 
   get traceSessions() { return this._traceSessions; }
   get activeSession() { return this._traceSessions.get(this.activeSessionName); }
@@ -122,6 +158,14 @@ class EtwAppModel {
     this.activeSessionName = sessionName.toLowerCase();
   }
 
+  closeSession(session, progress) {
+    session.closeRemoteSession(progress);
+  }
+
+  //#endregion TraceSession
+
+  //#region TraceSessionProfile
+
   _updateTraceSessions(sessionStates) {
     const localSessionKeys = new Set(this.traceSessions.keys());
     const profiles = this.sessionProfiles;
@@ -135,7 +179,7 @@ class EtwAppModel {
       if (traceSession) {
         traceSession.updateState(state);
       } else {
-        const profile = profileIndex >= 0 ? profiles[profileIndex] : getProfileFromState(state);
+        const profile = profileIndex >= 0 ? profiles[profileIndex] : getSessionProfileFromState(state);
         if (profileIndex < 0) this.saveProfile(profile);
         traceSession = new TraceSession(profile, state);
         this.traceSessions.set(sessionName, traceSession);
@@ -147,23 +191,6 @@ class EtwAppModel {
     // remove sessions not present on the server
     for (const sessionKey of localSessionKeys) {
       this.traceSessions.delete(sessionKey);
-    }
-  }
-
-  handleFetchError(error) {
-    this._errorSequenceNo += 1;
-    if (!error.timeStamp) error.timeStamp = new Date();
-    error.sequenceNo = this._errorSequenceNo;
-
-    this.fetchErrors.addItem(error);
-    this.showLastError = true;
-    if (this._errorTimeout) window.clearTimeout(this._errorTimeout);
-    this._errorTimeout = window.setTimeout(() => { this.showLastError = false; }, 9000);
-  }
-
-  keepErrorsOpen() {
-    if (this._errorTimeout) {
-      window.clearTimeout(this._errorTimeout);
     }
   }
 
@@ -186,10 +213,6 @@ class EtwAppModel {
         }
       }
     }
-  }
-
-  closeSession(session, progress) {
-    session.closeRemoteSession(progress);
   }
 
   saveProfile(profileModel) {
@@ -229,6 +252,24 @@ class EtwAppModel {
       }
     }
   }
+
+  //#endregion TraceSessionProfile
+
+  //#region EventSinkProfile
+
+  saveSinkProfile(sinkConfigModel) {
+    const sinkProfileToSave = new EventSinkProfile(sinkConfigModel.name, sinkConfigModel.type);
+    sinkProfileToSave.definition = sinkConfigModel.definition;
+    localStorage.setItem(`sink-profile-${sinkConfigModel.name.toLowerCase()}`, JSON.stringify(sinkProfileToSave));
+    this.eventSinkProfiles = loadEventSinkProfiles();
+  }
+
+  deleteSinkProfile(sinkProfileName) {
+    localStorage.removeItem(`sink-profile-${sinkProfileName.toLowerCase()}`);
+    this.eventSinkProfiles = loadEventSinkProfiles();
+  }
+
+  //#endregion EventSink Definition
 }
 
 export default EtwAppModel;

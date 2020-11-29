@@ -11,10 +11,21 @@ import '../components/kdsoft-checklist.js';
 import '../components/kdsoft-expander.js';
 import '../components/kdsoft-drop-target.js';
 import '../components/kdsoft-tree-view.js';
-import EventSinkConfigModel from './event-sink-config-model.js';
+import EventSinkProfile from '../js/eventSinkProfile.js';
 import KdSoftDropdownModel from '../components/kdsoft-dropdown-model.js';
 import KdSoftDropdownChecklistConnector from '../components/kdsoft-dropdown-checklist-connector.js';
 
+async function loadSinkDefinitionTemplate(sinkType) {
+  const elementModule = await import(sinkType.href);
+  const configElement = elementModule.default;
+  return configElement; 
+}
+
+async function loadSinkDefinitionModel(sinkType) {
+  const modelModule = await import(sinkType.model.href);
+  const modelClass = modelModule.default;
+  return new modelClass();
+}
 
 function getSelectedSinkTypeText(checkListModel) {
   let result = null;
@@ -30,72 +41,100 @@ class EventSinkConfig extends LitMvvmElement {
     super();
     this.scheduler = new Queue(priorities.HIGH);
     // for "nothing" to work we need to render raw(this.sinkTypeTemplateHolder.value)
-    this.sinkTypeTemplateHolder = observable({ value: nothing });
+    this.sinkTypeTemplateHolder = observable({ tag: nothing });
   }
 
   _cancel() {
+    const container = this.renderRoot.getElementById('container');
+    const model = container ? container.children[0].model : null;
     const evt = new CustomEvent('kdsoft-done', {
       // composed allows bubbling beyond shadow root
-      bubbles: true, composed: true, cancelable: true, detail: { model: this.model, canceled: true }
+      bubbles: true, composed: true, cancelable: true, detail: { model, canceled: true }
+    });
+    this.dispatchEvent(evt);
+
+  }
+
+  _apply(e) {
+    const container = this.renderRoot.getElementById('container');
+    const configElement = container.children[0];
+    const evt = new CustomEvent('kdsoft-done', {
+      // composed allows bubbling beyond shadow root
+      bubbles: true, composed: true, cancelable: true, detail: { model: configElement.model, canceled: false }
     });
     this.dispatchEvent(evt);
   }
 
-  _apply() {
-    const valid = this.renderRoot.querySelector('form').reportValidity();
-    if (!valid) return;
+  _isValid() {
+    return this.renderRoot.querySelector('form').reportValidity();
+  }
 
-    const evt = new CustomEvent('kdsoft-done', {
-      // composed allows bubbling beyond shadow root
-      bubbles: true, composed: true, cancelable: true, detail: { model: this.model, canceled: false }
-    });
-    this.dispatchEvent(evt);
+  async _loadConfigComponent() {
+    const sinkType = this.model.selectedSinkType;
+    if (sinkType) {
+      try {
+        const configFormTemplate = await loadSinkDefinitionTemplate(sinkType);
+        const configModel = await loadSinkDefinitionModel(sinkType);
+
+        const sinkProfile = this.model.sinkProfile;
+        if (sinkProfile) {
+          utils.setTargetProperties(configModel, sinkProfile);
+        } else {
+          const nameInput = this.renderRoot.getElementById('sinkDefinitionName');
+          configModel.name = nameInput.value;
+          configModel.type = sinkType.value;
+        }
+
+        this.sinkTypeTemplateHolder.tag = configFormTemplate(configModel);
+      } catch(error) {
+        // for "nothing" to work we need to render raw(this.sinkTypeTemplateHolder.value)
+        this.sinkTypeTemplateHolder.tag = nothing;
+        window.etwApp.defaultHandleError(error);
+      }
+    } else {
+      this.sinkTypeTemplateHolder.tag = nothing;
+    }
+  }
+
+  async _continue() {
+    if (this._isValid()) await this._loadConfigComponent();
   }
 
   _export() {
-    this.model.export();
+    const container = this.renderRoot.getElementById('container');
+    const sinkConfigModel = container.children[0].model;
+
+    const profileToExport = new EventSinkProfile(sinkConfigModel.name, sinkConfigModel.type);
+    profileToExport.definition = sinkConfigModel.definition;
+    const profileString = JSON.stringify(profileToExport, null, 2);
+    const profileURL = `data:text/plain,${profileString}`;
+
+    const a = document.createElement('a');
+    try {
+      a.style.display = 'none';
+      a.href = profileURL;
+      a.download = `${profileToExport.name}.json`;
+      document.body.appendChild(a);
+      a.click();
+    } finally {
+      document.body.removeChild(a);
+    }
   }
 
   /* eslint-disable indent, no-else-return */
-
-  connectedCallback() {
-    super.connectedCallback();
-    // this.addEventListener('kdsoft-node-move', this.rootNode.moveNode);
-  }
-
-  disconnectedCallback() {
-    // this.removeEventListener('kdsoft-node-move', this.rootNode.moveNode);
-    super.disconnectedCallback();
-  }
 
   shouldRender() {
     const result = !!this.model;
     return result;
   }
 
-  beforeFirstRender() {
+  async beforeFirstRender() {
     // model is defined, because of our shouldRender() override
-  }
-
-  firstRendered() {
-    //
-    this._sinkTypeObserver = observe(async () => {
-      if (this.model.selectedSinkTypeIndex >= 0) {
-        const href = EventSinkConfigModel.sinkTypeList[this.model.selectedSinkTypeIndex].href;
-        try {
-          const module = await import(href);
-          this.sinkTypeTemplateHolder.value = module.default;
-        } catch(error) {
-          // for "nothing" to work we need to render raw(this.sinkTypeTemplateHolder.value)
-          this.sinkTypeTemplateHolder.value = nothing;
-          window.etwApp.defaultHandleError(error);
-        }
-      }
-    });
-  }
-
-  rendered() {
-    //
+    if (this.model.sinkProfile) {
+      await this._loadConfigComponent();
+    } else {
+      this.sinkTypeTemplateHolder.tag = nothing;
+    }
   }
 
   static get styles() {
@@ -107,35 +146,22 @@ class EventSinkConfig extends LitMvvmElement {
           display: flex;
           flex-direction: column;
           align-items: stretch;
+          justify-content: flex-end;
         }
 
         #form-content {
-          position: relative;
+          display: flex;
+          flex-direction: column;
           flex-grow: 1;
+          min-height: 400px;
         }
 
         #select-grid {
           display:grid;
-          position:absolute;
-          left:0;
-          top:0;
-          right:0;
-          bottom:0;
-          /* only way to have background, but not children, semi-transparent */
+          grid-template-columns: 7em 1fr;
+          margin: auto;
           background: rgba(255,255,255,0.3);
           z-index:999;
-        }
-
-        #select-grid div {
-          margin:auto;
-          max-height:100%;
-          max-width:100%;
-          min-width: 12rem;
-          z-index:1000;
-        }
-
-        #select-grid kdsoft-checklist {
-          width: 100%;
         }
 
         #container {
@@ -144,70 +170,58 @@ class EventSinkConfig extends LitMvvmElement {
           overflow-y: auto;
         }
 
-        section {
-          position: relative;
-        }
-
-        section:not(.active) {
-          display: none !important;
-        }
-
-        #general {
-          display: grid;
-          grid-template-columns: 1fr 2fr;
-          align-items: baseline;
-          align-content: start;
-          grid-gap: 5px;
-          min-width: 480px;
-        }
-
-        fieldset {
-          display: contents;
-        }
-
         label {
           font-weight: bolder;
           color: #718096;
         }
 
-        #filters {
-          height: 100%;
-        }
-
         #ok-cancel-buttons {
           margin-top: auto;
         }
-
-        #name:invalid, #host:invalid, #lifeTime:invalid {
-          border: 2px solid red;
-        }
-
-        #standard-cols-wrapper {
-          position: relative;
-          width: 40%;
-        }
-
       `,
     ];
   }
 
-  getSelectTemplate(alreadySelected) {
-    if (alreadySelected) {
-      return nothing;
-    }
+  getSelectTemplate() {
     return html`
+      <h3>Create Event Sink Definition</h3>
       <div id="select-grid">
-        <div>
-          <p>Select Event Sink Type</p>
-          <kdsoft-checklist
-            id="sinkTypeList" 
-            class="text-black" 
-            .model=${this.model.sinkTypeCheckListModel}
-            .getItemTemplate=${item => html`${item.name}`}>
-          </kdsoft-checklist>
-        </div>
+        <label for="sinkTypeList">Name</label>
+        <input type="text" id="sinkDefinitionName" value="New Event Sink" required></input>
+        <label for="sinkTypeList">Type</label>
+        <kdsoft-checklist
+          id="sinkTypeList" 
+          class="text-black" 
+          .model=${this.model.sinkTypeCheckListModel}
+          .getItemTemplate=${item => html`${item.name}`}
+          required>
+        </kdsoft-checklist>
       </div>
     `;
+  }
+
+  getDefinitionTemplate() {
+    return html`
+      <div id="container" class="mb-4 relative">
+        ${this.sinkTypeTemplateHolder.tag}
+      </div>
+    `;
+  }
+
+  getOkButtonTemplate() {
+    if (raw(this.sinkTypeTemplateHolder.tag) == nothing) {
+      return html`
+          <button type="button" class="py-1 px-2 ml-auto" @click=${this._continue} title="Continue">
+            <i class="fas fa-lg fa-chevron-right text-blue-500"></i>
+          </button>
+      `;
+    } else {
+      return html`
+        <button type="button" class="py-1 px-2 ml-auto" @click=${this._apply} title="Save">
+          <i class="fas fa-lg fa-check text-green-500"></i>
+        </button>
+      `;
+    }
   }
 
   render() {
@@ -222,10 +236,7 @@ class EventSinkConfig extends LitMvvmElement {
       </style>
       <form>
         <div id="form-content">
-          ${this.getSelectTemplate(this.model.selectedSinkTypeIndex >= 0)}
-          <div id="container" class="mb-4 relative">
-            ${raw(this.sinkTypeTemplateHolder.value)}
-          </div>
+          ${raw(this.sinkTypeTemplateHolder.tag) == nothing ? this.getSelectTemplate(): this.getDefinitionTemplate()}
         </div>
 
         <hr class="mb-4" />
@@ -233,9 +244,7 @@ class EventSinkConfig extends LitMvvmElement {
           <button type="button" class="py-1 px-2" @click=${this._export} title="Export">
             <i class="fas fa-lg fa-file-export text-gray-600"></i>
           </button>
-          <button type="button" class="py-1 px-2 ml-auto" @click=${this._apply} title="Save">
-            <i class="fas fa-lg fa-check text-green-500"></i>
-          </button>
+          ${this.getOkButtonTemplate()}
           <button type="button" class="py-1 px-2" @click=${this._cancel} title="Cancel" autofocus>
             <i class="fas fa-lg fa-times text-red-500"></i>
           </button>

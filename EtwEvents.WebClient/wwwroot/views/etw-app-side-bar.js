@@ -33,6 +33,8 @@ function formDoneHandler(e) {
       this.model.saveProfile(e.detail.model.session.profile);
     } else if (e.target.localName === 'trace-session-config') {
       this.model.saveProfile(e.detail.model.cloneAsProfile());
+    } else if (e.target.localName === 'event-sink-config') {
+      this.model.saveSinkProfile(e.detail.model);
     }
   }
 
@@ -45,6 +47,8 @@ function formSaveHandler(e) {
     this.model.saveProfile(e.detail.model.session.profile);
   } else if (e.target.localName === 'trace-session-config') {
     this.model.saveProfile(e.detail.model.cloneAsProfile());
+  } else if (e.target.localName === 'event-sink-config') {
+    this.model.saveSinkProfile(e.detail.model);
   }
 }
 
@@ -75,8 +79,8 @@ class EtwAppSideBar extends LitMvvmElement {
 
   //#region session profile
 
-  _addSessionProfileClick(e) {
-    const configModel = new TraceSessionConfigModel(new TraceSessionProfile('<New Session Profile>'));
+  _showSessionProfileDialog(profile) {
+    const configModel = new TraceSessionConfigModel(profile);
 
     const dlg = this.renderRoot.getElementById('dlg-config');
     const cfg = dlg.getElementsByTagName('trace-session-config')[0];
@@ -84,13 +88,12 @@ class EtwAppSideBar extends LitMvvmElement {
     dlg.showModal();
   }
 
-  _editSessionProfileClick(e, profile) {
-    const configModel = new TraceSessionConfigModel(profile);
+  _addSessionProfileClick(e) {
+    this._showSessionProfileDialog(new TraceSessionProfile('<New Session Profile>'));
+  }
 
-    const dlg = this.renderRoot.getElementById('dlg-config');
-    const cfg = dlg.getElementsByTagName('trace-session-config')[0];
-    cfg.model = configModel;
-    dlg.showModal();
+  _editSessionProfileClick(e, profile) {
+    this._showSessionProfileDialog(profile);
   }
 
   _importSessionProfilesClick() {
@@ -109,10 +112,10 @@ class EtwAppSideBar extends LitMvvmElement {
 
   //#endregion
 
-  //#region event sink
+  //#region event sink profile
 
-  _addEventSinkProfileClick(e) {
-    const configModel = new EventSinkConfigModel(null);
+  async _showSinkProfileDialog(sinkProfile) {
+    const configModel = await EventSinkConfigModel.create(sinkProfile);
 
     const dlg = this.renderRoot.getElementById('dlg-event-sink');
     const cfg = dlg.querySelector('event-sink-config');
@@ -120,8 +123,12 @@ class EtwAppSideBar extends LitMvvmElement {
     dlg.showModal();
   }
 
-  _editEventSinkProfileClick(e, profile) {
-    //
+  async _addEventSinkProfileClick(e) {
+    await this._showSinkProfileDialog(null);
+  }
+
+  async _editEventSinkProfileClick(e, sinkProfile) {
+    await this._showSinkProfileDialog(sinkProfile);
   }
 
   _importEventSinkProfilesClick() {
@@ -132,8 +139,9 @@ class EtwAppSideBar extends LitMvvmElement {
     //
   }
 
-  _deleteEventSinkProfileClick(e, profileName) {
-    //
+  _deleteEventSinkProfileClick(e, sinkDefinitionName) {
+    e.stopPropagation();
+    this.model.deleteSinkProfile(sinkDefinitionName.toLowerCase());
   }
 
   //#endregion
@@ -299,8 +307,8 @@ class EtwAppSideBar extends LitMvvmElement {
         #dlg-event-sink {
           width: 800px;
           min-height: 400px;
-          height: 500px;
-          max-height: 600px;
+          /* height: 500px; */
+          max-height: 800px;
         }
 
         #sessionProfiles {
@@ -372,7 +380,7 @@ class EtwAppSideBar extends LitMvvmElement {
 
         <kdsoft-expander>
           <div slot="header" class="flex pr-1 text-white bg-gray-500">
-            <label class="pl-3 font-bold text-xl">${i18n.gettext('Event Sinks')}</label>
+            <label class="pl-3 font-bold text-xl">${i18n.gettext('Event Sink Definitions')}</label>
             <button type="button" class="px-1 py-1 ml-auto" @click=${e => this._addEventSinkProfileClick(e)}><i class="fas fa-lg fa-plus"></i></button>
             <input id="import-event-sinks" type="file" @change=${this._importEventSinkProfilesSelected} multiple class="hidden"></input>
             <button class="px-1 py-1" @click=${this._importEventSinkProfilesClick} title="${i18n.gettext('Import Event Sinks')}"><i class="fas fa-lg fa-file-import"></i></button>
