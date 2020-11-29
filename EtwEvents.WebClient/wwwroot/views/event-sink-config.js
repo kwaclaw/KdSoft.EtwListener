@@ -58,6 +58,8 @@ class EventSinkConfig extends LitMvvmElement {
   _apply(e) {
     const container = this.renderRoot.getElementById('container');
     const configElement = container.children[0];
+    if (!configElement.isValid()) return;
+
     const evt = new CustomEvent('kdsoft-done', {
       // composed allows bubbling beyond shadow root
       bubbles: true, composed: true, cancelable: true, detail: { model: configElement.model, canceled: false }
@@ -158,10 +160,13 @@ class EventSinkConfig extends LitMvvmElement {
 
         #select-grid {
           display:grid;
-          grid-template-columns: 7em 1fr;
+          grid-template-columns: auto auto;
           margin: auto;
           background: rgba(255,255,255,0.3);
           z-index:999;
+          align-items: baseline;
+          row-gap: 5px;
+          column-gap: 10px;
         }
 
         #container {
@@ -208,6 +213,18 @@ class EventSinkConfig extends LitMvvmElement {
     `;
   }
 
+  getExportButtonTemplate() {
+    if (raw(this.sinkTypeTemplateHolder.tag) == nothing) {
+      return nothing;
+    } else {
+      return html`
+          <button type="button" class="py-1 px-2" @click=${this._export} title="Export">
+            <i class="fas fa-lg fa-file-export text-gray-600"></i>
+          </button>
+      `;
+    }
+  }
+
   getOkButtonTemplate() {
     if (raw(this.sinkTypeTemplateHolder.tag) == nothing) {
       return html`
@@ -241,9 +258,7 @@ class EventSinkConfig extends LitMvvmElement {
 
         <hr class="mb-4" />
         <div id="ok-cancel-buttons" class="flex flex-wrap mt-2 bt-1">
-          <button type="button" class="py-1 px-2" @click=${this._export} title="Export">
-            <i class="fas fa-lg fa-file-export text-gray-600"></i>
-          </button>
+          ${this.getExportButtonTemplate()}
           ${this.getOkButtonTemplate()}
           <button type="button" class="py-1 px-2" @click=${this._cancel} title="Cancel" autofocus>
             <i class="fas fa-lg fa-times text-red-500"></i>

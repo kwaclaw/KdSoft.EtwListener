@@ -31,27 +31,35 @@ class MongoSinkConfig extends LitMvvmElement {
     this.model.definition.credentials[e.target.name] = e.target.value;
   }
 
+  _validateHostUrls(hostElement) {
+    const hostStr = (hostElement.value || '').trim();
+    if (!hostStr)
+      return [];
+
+    const hosts = hostStr.split(';');
+    const checkUrl = this.renderRoot.getElementById('check-url');
+
+    const invalidUrls = [];
+    for (const host of hosts) {
+      checkUrl.value = host;
+      if (!checkUrl.validity.valid) {
+        invalidUrls.push(host);
+      }
+    }
+    
+    if (invalidUrls.length > 0) {
+      hostElement.setCustomValidity(`Invalid URL(s): ${invalidUrls.join(';')}`);
+    } else {
+      hostElement.setCustomValidity('');
+    }
+
+    return hosts;
+  }
+
   _hostChanged(e) {
     e.stopPropagation();
-    console.log(`${e.target.name}=${e.target.value}`);
-    // if (e.target.validity.valid && e.target.value && e.target.value.trim()) {
-    //   this.model.options.hosts.push(e.target.value);
-    //   e.target.value = '';
-    // }
-    let isValid = true;
-    if (e.target.value && e.target.value.trim()) {
-      const hosts = e.target.value.split(';');
-      const checkUrl = this.renderRoot.getElementById('check-url');
-      for (const host of hosts) {
-        checkUrl.value = host;
-        isValid = isValid && checkUrl.validity.valid;
-      }
-      this.model.definition.options.hosts = hosts;
-    }
-    else {
-      this.model.definition.options.hosts = [];
-    }
-    e.target.setCustomValidity(isValid ? '' : 'Not an URL');
+    const hosts = this._validateHostUrls(e.target);
+    this.model.definition.options.hosts = hosts;
     e.target.reportValidity();
   }
 
@@ -93,9 +101,10 @@ class MongoSinkConfig extends LitMvvmElement {
 
         section fieldset > div {
           display:grid;
-          grid-template-columns: 12em 1fr;
+          grid-template-columns: auto auto;
           align-items: baseline;
-          grid-gap: 5px;
+          row-gap: 5px;
+          column-gap: 10px;
         }
 
         input:invalid {
@@ -125,13 +134,13 @@ class MongoSinkConfig extends LitMvvmElement {
             <legend>Options</legend>
             <div>
               <label for="hosts">Hosts</label>
-              <input type="text" id="hosts" name="hosts" size="50" @change=${this._hostChanged} value=${hostsList}></input>
+              <input type="text" id="hosts" name="hosts" size="50" @change=${this._hostChanged} value=${hostsList} required></input>
               <label for="replicaset">Replica Set</label>
-              <input type="text" id="replicaset" name="replicaset" value=${opts.replicaSet}></input>
+              <input type="text" id="replicaset" name="replicaset" value=${opts.replicaset}></input>
               <label for="database">Database</label>
-              <input type="text" id="database" name="database" value=${opts.database}></input>
+              <input type="text" id="database" name="database" value=${opts.database} required></input>
               <label for="collection">Collection</label>
-              <input type="text" id="collection" name="collection" value=${opts.database}></input>
+              <input type="text" id="collection" name="collection" value=${opts.collection} required></input>
             </div>
           </fieldset>
         </section>
@@ -140,11 +149,11 @@ class MongoSinkConfig extends LitMvvmElement {
             <legend>Credentials</legend>
             <div>
               <label for="cred-database">Database</label>
-              <input type="text" id="cred-database" name="cred-database" value=${creds.database}></input>
+              <input type="text" id="cred-database" name="database" value=${creds.database} required></input>
               <label for="user">User</label>
-              <input type="text" id="user" name="user" value=${creds.user}></input>
+              <input type="text" id="user" name="user" value=${creds.user} required></input>
               <label for="password">Password</label>
-              <input type="password" id="password" name="password">${creds.password}</input>
+              <input type="password" id="password" name="password" value=${creds.password} required></input>
             </div>
           </fieldset>
         </section>
