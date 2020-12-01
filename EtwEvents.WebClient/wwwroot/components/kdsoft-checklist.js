@@ -178,10 +178,11 @@ class KdSoftChecklist extends LitMvvmElement {
   /* eslint-disable indent, no-else-return */
 
   _itemTemplate(item, indx, showCheckboxes, hasArrows) {
-    const disabledString = item.disabled ? 'disabled' : '';
     const tabindex = indx === 0 ? '0' : '-1';
     const upArrowClasses = indx === 0 ? classList.upArrowHidden : classList.upArrowVisible;
     const downArrowClasses = indx >= (this.model.items.length - 1) ? classList.downArrowHidden : classList.downArrowVisible;
+    const selectedClass = this.model.isItemSelected(item) ? 'item-selected' : '';
+    const disabledClass = item.disabled ? 'disabled' : '';
 
     const listItemContent = html`
       <div class="w-full inline-flex items-baseline">
@@ -200,7 +201,7 @@ class KdSoftChecklist extends LitMvvmElement {
     return html`
       <li data-item-index="${indx}"
           tabindex="${tabindex}"
-          class="list-item whitespace-nowrap ${disabledString}"
+          class="list-item whitespace-nowrap ${selectedClass} ${disabledClass}"
           @click=${this._itemClicked}
       >
         ${listItemContent}
@@ -218,7 +219,7 @@ class KdSoftChecklist extends LitMvvmElement {
       break;
     }
     if (firstSelEntry) {
-      const firstSelected = this.shadowRoot.querySelector(`.list-item[data-item-index="${firstSelEntry.index}"]`);
+      const firstSelected = this.renderRoot.querySelector(`.list-item[data-item-index="${firstSelEntry.index}"]`);
       //firstSelected.scrollIntoView(true); --  does not work in ShadowDom
       const op = firstSelected.offsetParent;
       if (op) op.scrollTop = firstSelected.offsetTop;
@@ -289,6 +290,18 @@ class KdSoftChecklist extends LitMvvmElement {
     ];
   }
 
+  _getItemSelectedClass(showCheckboxes) {
+    if (showCheckboxes) {
+      return css``;
+    } else {
+      return css`
+        .item-selected {
+          background-color: lightgray;
+        }
+      `;
+    }
+  }
+
   // using the repeat directive
   render() {
     const showCheckboxes = this.showCheckboxes;
@@ -298,6 +311,7 @@ class KdSoftChecklist extends LitMvvmElement {
       ${sharedStyles}
       <link rel="stylesheet" type="text/css" href=${styleLinks.checkbox} />
       <style>
+        ${this._getItemSelectedClass(showCheckboxes)}
       </style>
       <div id="container">
         <ul id="item-list"
