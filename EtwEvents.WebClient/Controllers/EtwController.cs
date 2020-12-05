@@ -50,26 +50,42 @@ namespace KdSoft.EtwEvents.WebClient
 
         X509Certificate2? GetClientCertificate() {
             string thumbprint = "";
+            string subject = "";
             var location = StoreLocation.CurrentUser;
 
             var currentCert = this.HttpContext.Connection.ClientCertificate;
             if (_clientCertOptions.Value.Thumbprint.Length > 0) {
                 thumbprint = _clientCertOptions.Value.Thumbprint;
+                subject = _clientCertOptions.Value.Subject;
                 location = _clientCertOptions.Value.Location;
             }
             else if (currentCert != null) {
                 thumbprint = currentCert.Thumbprint;
             }
 
-            if (thumbprint.Length == 0)
+            if (thumbprint.Length == 0 && subject.Length == 0)
                 return null;
 
+            // find matching certificate, use thumbprint if available, otherwise use subject common name (CN)
             using (var store = new X509Store(location)) {
                 store.Open(OpenFlags.ReadOnly);
-                var certs = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, true);
-                if (certs.Count == 0)
-                    return null;
-                return certs[0];
+                X509Certificate2? cert = null;
+                if (thumbprint.Length > 0) {
+                    var certs = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, true);
+                    if (certs.Count > 0)
+                        cert = certs[0];
+                }
+                else {
+                    var certs = store.Certificates.Find(X509FindType.FindBySubjectName, subject, true);
+                    foreach (var matchingCert in certs) {
+                        var cn = matchingCert.GetNameInfo(X509NameType.SimpleName, false);
+                        if (string.Equals(cn, subject, StringComparison.InvariantCultureIgnoreCase)) {
+                            cert = matchingCert;
+                            break;
+                        }
+                    }
+                }
+                return cert;
             }
         }
 
@@ -94,7 +110,7 @@ namespace KdSoft.EtwEvents.WebClient
         }
 
         [HttpPost]
-        public async Task<IActionResult> CloseRemoteSession([FromQuery]string name) {
+        public async Task<IActionResult> CloseRemoteSession([FromQuery] string name) {
             var success = await _sessionManager.CloseRemoteSession(name).ConfigureAwait(false);
             return Ok(success);
         }
@@ -270,7 +286,7 @@ namespace KdSoft.EtwEvents.WebClient
         }
 
         [HttpPost]
-        public async Task<IActionResult> OpenEventSinks(string sessionName, [FromBody]IEnumerable<Models.EventSinkRequest> sinkRequests) {
+        public async Task<IActionResult> OpenEventSinks(string sessionName, [FromBody] IEnumerable<Models.EventSinkRequest> sinkRequests) {
             if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
                 var traceSession = await sessionEntry.SessionTask.ConfigureAwait(false);
                 var sinkTasks = sinkRequests.Select(sr => CreateEventSink(sr, traceSession.EventSinks));
@@ -289,7 +305,7 @@ namespace KdSoft.EtwEvents.WebClient
         }
 
         [HttpPost]
-        public async Task<IActionResult> CloseEventSinks(string sessionName, [FromBody]IEnumerable<string> sinkNames) {
+        public async Task<IActionResult> CloseEventSinks(string sessionName, [FromBody] IEnumerable<string> sinkNames) {
             if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
                 var traceSession = await sessionEntry.SessionTask.ConfigureAwait(false);
                 var closedSinks = traceSession.EventSinks.RemoveEventSinks(sinkNames);
@@ -345,7 +361,7 @@ namespace KdSoft.EtwEvents.WebClient
         }
 
         [HttpPost]
-        public async Task<IActionResult> SetCSharpFilter([FromBody]Models.SetFilterRequest request) {
+        public async Task<IActionResult> SetCSharpFilter([FromBody] Models.SetFilterRequest request) {
             if (request == null)
                 return BadRequest();
             string csharpFilter = string.Empty;  // protobuf does not allow nulls
@@ -369,7 +385,7 @@ namespace KdSoft.EtwEvents.WebClient
         }
 
         [HttpPost]
-        public async Task<IActionResult> TestCSharpFilter([FromBody]Models.TestFilterRequest request) {
+        public async Task<IActionResult> TestCSharpFilter([FromBody] Models.TestFilterRequest request) {
             if (request == null)
                 return BadRequest();
             if (string.IsNullOrWhiteSpace(request.Host))

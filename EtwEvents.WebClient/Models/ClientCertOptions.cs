@@ -5,6 +5,7 @@ namespace KdSoft.EtwEvents.WebClient.Models
     public class ClientCertOptions
     {
         public string Thumbprint { get; set; } = "";
+        public string Subject { get; set; } = "";
         public StoreLocation Location { get; set; } = StoreLocation.CurrentUser;
     }
 }
