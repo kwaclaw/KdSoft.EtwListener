@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwEvents.WebClient.Models;
 using Microsoft.Extensions.Hosting;
@@ -14,12 +15,14 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
         readonly TraceSessionManager _sessionManager;
         readonly IHostEnvironment _env;
         readonly IStringLocalizer<EventSinkService> _;
+        readonly string[] _runtimeAssemblyPaths;
         const string SinkAssemblyFilter = "*Sink.dll";
 
         public EventSinkService(TraceSessionManager sessionManager, IHostEnvironment env, IStringLocalizer<EventSinkService> localize) {
             this._sessionManager = sessionManager;
             this._env = env;
             this._ = localize;
+            this._runtimeAssemblyPaths = Directory.GetFiles(RuntimeEnvironment.GetRuntimeDirectory(), "*.dll");
         }
 
         /// <summary>
@@ -32,15 +35,24 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
             var dirInfo = new DirectoryInfo(eventSinksDir);
             var evtSinkDirectories = dirInfo.EnumerateDirectories();
 
+            var assemblyPaths = new List<string>(_runtimeAssemblyPaths);
+            assemblyPaths.Add(typeof(IEventSinkFactory).Assembly.Location);
             foreach (var evtSinkDir in evtSinkDirectories) {
                 var evtSinkFile = evtSinkDir.GetFiles(SinkAssemblyFilter).FirstOrDefault();
                 if (evtSinkFile != null) {
-                    var evtSinkAssembly = Assembly.ReflectionOnlyLoadFrom(evtSinkFile.FullName);
-                    var evtSinkFactories = evtSinkAssembly.GetEventSinkFactories();
-                    foreach (var evtSinkFactory in evtSinkFactories) {
-                        var sinkType = evtSinkFactory.GetEventSinkType();
-                        if (sinkType != null) {
-                            yield return new EventSinkInfo { SinkType = sinkType, Description = _.GetString(sinkType) };
+                    assemblyPaths.Add(evtSinkFile.FullName);
+                }
+            }
+
+            // Create PathAssemblyResolver that can resolve assemblies using the created list.
+            var resolver = new PathAssemblyResolver(assemblyPaths);
+            using (var metaLoadContext = new MetadataLoadContext(resolver)) {
+                foreach (var evtSinkDir in evtSinkDirectories) {
+                    var evtSinkFile = evtSinkDir.GetFiles(SinkAssemblyFilter).FirstOrDefault();
+                    if (evtSinkFile != null) {
+                        var evtSinkTypes = metaLoadContext.GetEventSinkTypes(evtSinkFile.FullName);
+                        foreach (var evtSinkType in evtSinkTypes) {
+                            yield return new EventSinkInfo { SinkType = evtSinkType, Description = _.GetString(evtSinkType) };
                             break;  // only interested in first one
                         }
                     }
@@ -53,17 +65,30 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
             var dirInfo = new DirectoryInfo(eventSinksDir);
             var evtSinkDirectories = dirInfo.EnumerateDirectories();
 
+            var assemblyPaths = new List<string>(_runtimeAssemblyPaths);
+            assemblyPaths.Add(typeof(IEventSinkFactory).Assembly.Location);
             foreach (var evtSinkDir in evtSinkDirectories) {
                 var evtSinkFile = evtSinkDir.GetFiles(SinkAssemblyFilter).FirstOrDefault();
                 if (evtSinkFile != null) {
-                    var evtSinkAssembly = Assembly.ReflectionOnlyLoadFrom(evtSinkFile.FullName);
-                    var factoryTypes = evtSinkAssembly.GetEventSinkFactoriesBySinkType(sinkType);
-                    foreach (var factoryType in factoryTypes) {
-                        var factoryAssembly = Assembly.LoadFrom(evtSinkFile.FullName);
-                        var factoryTypeName = factoryType.FullName;
-                        // only interested in first one
-                        if (factoryTypeName != null)
-                            return (IEventSinkFactory?)factoryAssembly.CreateInstance(factoryTypeName);
+                    assemblyPaths.Add(evtSinkFile.FullName);
+                }
+            }
+
+            // Create PathAssemblyResolver that can resolve assemblies using the created list.
+            var resolver = new PathAssemblyResolver(assemblyPaths);
+            using (var metaLoadContext = new MetadataLoadContext(resolver)) {
+                foreach (var evtSinkDir in evtSinkDirectories) {
+                    var evtSinkFile = evtSinkDir.GetFiles(SinkAssemblyFilter).FirstOrDefault();
+                    if (evtSinkFile != null) {
+                        var factoryTypes = metaLoadContext.GetEventSinkFactoriesBySinkType(evtSinkFile.FullName, sinkType);
+                        foreach (var factoryType in factoryTypes) {
+                            var factoryTypeName = factoryType.FullName;
+                            // only interested in first one
+                            if (factoryTypeName != null) {
+                                var factoryAssembly = Assembly.LoadFrom(evtSinkFile.FullName);
+                                return (IEventSinkFactory?)factoryAssembly.CreateInstance(factoryTypeName);
+                            }
+                        }
                     }
                 }
             }
