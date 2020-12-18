@@ -25,6 +25,7 @@ function iterateSelectedItems(items, selectedItems) {
   };
 }
 
+// selected items are always included
 function iterateFilter(items, selectedItems, filter) {
   let current;
 
@@ -81,6 +82,11 @@ class KdSoftChecklistModel {
   get multiSelect() { return _multiSelect.get(this); }
 
   get selectedEntries() { return iterateSelectedItems(this.items, this._selectedItems); }
+
+  get firstSelectedEntry() {
+    const nextValue = this.selectedEntries[Symbol.iterator]().next().value;
+    return nextValue ? nextValue.item : nextValue;
+  }
 
   get selectedIndexes() {
     return Array.from(this.selectedEntries, entry => entry.index);

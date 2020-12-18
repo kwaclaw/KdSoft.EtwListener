@@ -49,7 +49,6 @@ class EtwAppModel {
     this.activeSessionName = null;
 
     this.sessionProfiles = loadSessionProfiles();
-
     this.eventSinkProfiles = loadEventSinkProfiles();
 
     this._errorSequenceNo = 0;

@@ -13,6 +13,7 @@ import './event-sink-config.js';
 import TraceSessionConfigModel from './trace-session-config-model.js';
 import TraceSessionProfile from '../js/traceSessionProfile.js';
 import EventSinkConfigModel from './event-sink-config-model.js';
+import KdSoftChecklistModel from '../components/kdsoft-checklist-model.js';
 import Spinner from '../js/spinner.js';
 import * as utils from '../js/utils.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
@@ -190,9 +191,24 @@ class EtwAppSideBar extends LitMvvmElement {
 
   //#region event sinks
 
-  _openEventSinkClick(e, session) {
-    // const spinner = new Spinner(e.currentTarget);
-    // session.openEventSink(spinner);
+  _chooseEventSinkClick(e, session) {
+    const checklist = this.renderRoot.getElementById('eventSinkProfileList');
+    checklist.model = new KdSoftChecklistModel(this.model.eventSinkProfiles, [], false, item => item.name);
+    checklist.model.session = session;
+    const dlg = this.renderRoot.getElementById('dlg-event-sink-chooser');
+    dlg.showModal();
+  }
+
+  _openEventSinkClick(e) {
+    const dlg = this.renderRoot.getElementById('dlg-event-sink-chooser');
+    dlg.close();
+    const checklist = this.renderRoot.getElementById('eventSinkProfileList');
+    const selectedSinkProfile = checklist.model.firstSelectedEntry;
+    const session = checklist.model.session;
+    if (selectedSinkProfile && session) {
+      const spinner = new Spinner(e.currentTarget);
+      session.openEventSink(selectedSinkProfile, spinner);
+    }
   }
 
   //#endregion
@@ -420,7 +436,7 @@ class EtwAppSideBar extends LitMvvmElement {
                   <div slot="content">
                     <div class="flex">
                       <label class="font-bold">${i18n.gettext('Event Sinks')}</label>
-                      <button class="px-1 py-1 ml-auto" @click=${e => this._openEventSinkClick(e, ses)} title="Open Event Sink"><i class="fas fa-lg fa-plus"></i></button>
+                      <button class="px-1 py-1 ml-auto" @click=${e => this._chooseEventSinkClick(e, ses)} title="Open Event Sink"><i class="fas fa-lg fa-plus"></i></button>
                     </div>
                     ${ses.state.eventSinks.map(ev => {
                       const evsType = ev.error ? i18n.gettext('Failed') : (ev.isLocal ? i18n.gettext('Local') : i18n.gettext('External'));
@@ -463,6 +479,20 @@ class EtwAppSideBar extends LitMvvmElement {
       </dialog>
       <dialog id="dlg-event-sink" class="${utils.html5DialogSupported ? '' : 'fixed'}">
         <event-sink-config></event-sink-config>
+      </dialog>
+      <dialog id="dlg-event-sink-chooser" class="${utils.html5DialogSupported ? '' : 'fixed'}">
+        <form>
+          <h3 class="mb-3">Open Event Sink</h3>
+          <kdsoft-checklist
+            id="eventSinkProfileList"
+            .getItemTemplate=${item => html`${item.name}`}>
+          </kdsoft-checklist>
+          <hr class="mb-4" />
+          <div id="ok-cancel-buttons" class="flex flex-wrap mt-2 bt-1">
+            <button type="button" class="py-1 px-2 ml-auto" @click=${this._openEventSinkClick} title="Save"><i class="fas fa-lg fa-check text-green-500"></i></button>
+            <button type="button" class="py-1 px-2" @click=${e => e.target.closest('dialog').close()} title="Cancel"><i class="fas fa-lg fa-times text-red-500"></i></button>
+          </div>
+        </form>
       </dialog>
     `;
   }

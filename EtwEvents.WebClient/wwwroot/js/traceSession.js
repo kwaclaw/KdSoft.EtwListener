@@ -133,27 +133,32 @@ class TraceSession {
     return this._callFilter('TestCSharpFilter', { host: this.profile.host, csharpFilter: filter || null }, progress);
   }
 
-  async openEventSink(progress) {
+  async openEventSink(sinkProfile, progress) {
     try {
+      // const evr = {
+      //   sinkType: 'MongoSink',
+      //   name: 'MongoTest',
+      //   options: {
+      //     hosts: ['mongodb.mosaiq.mobi:27017', 'mongodbqa.mosaiq.mobi:27017', 'mongodbshow3.mosaiq.mobi:27017'],
+      //     replicaSet: 'rs0',
+      //     database: 'Dev1',
+      //     collection: 'logs',
+      //     eventFilterFields: ['Timestamp', 'ProviderName', 'Id', 'Level', 'Keywords', 'Opcode', 'TaskName'],
+      //     payloadFilterFields: [],
+      //   },
+      //   credentials: {
+      //     database: 'admin',
+      //     user: 'loggy',
+      //     password: 'chickenshit'
+      //   }
+      // };
       const evr = {
-        sinkType: 'MongoSink',
-        name: 'MongoTest',
-        options: {
-          hosts: ['mongodb.mosaiq.mobi:27017', 'mongodbqa.mosaiq.mobi:27017', 'mongodbshow3.mosaiq.mobi:27017'],
-          replicaSet: 'rs0',
-          database: 'Dev1',
-          collection: 'logs',
-          eventFilterFields: ['Timestamp', 'ProviderName', 'Id', 'Level', 'Keywords', 'Opcode', 'TaskName'],
-          payloadFilterFields: [],
-        },
-        credentials: {
-          database: 'admin',
-          user: 'loggy',
-          password: 'chickenshit'
-        }
+        sinkType: sinkProfile.type,
+        name: sinkProfile.name,
+        options: sinkProfile.definition.options,
+        credentials: sinkProfile.definition.credentials
       };
-      const data = [evr];
-      await this.fetcher.withProgress(progress).postJson('OpenEventSinks', { sessionName: this._profile.name }, data);
+      await this.fetcher.withProgress(progress).postJson('OpenEventSinks', { sessionName: this._profile.name }, [evr]);
     } catch (error) {
       window.etwApp.defaultHandleError(error);
     }
