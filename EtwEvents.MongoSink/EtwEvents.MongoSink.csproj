@@ -9,6 +9,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="config\mongo-sink-config-model.js">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="config\mongo-sink-config.js">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="MongoDB.Driver" Version="2.11.5" />
     <PackageReference Include="Newtonsoft.Json.Schema" Version="3.0.13" />
     <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
@@ -20,7 +31,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="SET mongoSinkDir=&quot;../EtwEvents.WebClient/EventSinks/MongoSink/&quot;&#xD;&#xA;IF NOT EXIST %25mongoSinkDir%25 MKDIR %25mongoSinkDir%25&#xD;&#xA;COPY /Y $(TargetDir)* %25mongoSinkDir%25" />
+    <Exec Command="SET mongoSinkDir=&quot;../EtwEvents.WebClient/EventSinks/MongoSink/&quot;&#xD;&#xA;IF NOT EXIST %25mongoSinkDir%25 MKDIR %25mongoSinkDir%25&#xD;&#xA;&#xD;&#xA;COPY /Y $(TargetDir)* %25mongoSinkDir%25&#xD;&#xA;XCOPY /Y /E /I $(ProjectDir)config %25mongoSinkDir%25config" />
   </Target>
 
 </Project>

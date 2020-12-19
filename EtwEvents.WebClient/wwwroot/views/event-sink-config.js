@@ -1,5 +1,4 @@
 ﻿import { html, nothing } from '../lib/lit-html.js';
-import { repeat } from '../lib/lit-html/directives/repeat.js';
 import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
 import { observable, observe, unobserve, raw } from '../lib/@nx-js/observer-util/dist/es.es6.js';
@@ -12,17 +11,15 @@ import '../components/kdsoft-expander.js';
 import '../components/kdsoft-drop-target.js';
 import '../components/kdsoft-tree-view.js';
 import EventSinkProfile from '../js/eventSinkProfile.js';
-import KdSoftDropdownModel from '../components/kdsoft-dropdown-model.js';
-import KdSoftDropdownChecklistConnector from '../components/kdsoft-dropdown-checklist-connector.js';
 
 async function loadSinkDefinitionTemplate(sinkType) {
-  const elementModule = await import(sinkType.href);
+  const elementModule = await import(sinkType.configViewUrl);
   const configElement = elementModule.default;
   return configElement; 
 }
 
 async function loadSinkDefinitionModel(sinkType) {
-  const modelModule = await import(sinkType.model.href);
+  const modelModule = await import(sinkType.configModelUrl);
   const modelClass = modelModule.default;
   return new modelClass();
 }

@@ -1,13 +1,13 @@
-﻿import { html, nothing } from '../lib/lit-html.js';
-import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
-import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
-import sharedStyles from '../styles/kdsoft-shared-styles.js';
-import styleLinks from '../styles/kdsoft-style-links.js';
-import '../components/kdsoft-dropdown.js';
-import '../components/kdsoft-checklist.js';
-import '../components/kdsoft-expander.js';
-import '../components/kdsoft-drop-target.js';
-import '../components/kdsoft-tree-view.js';
+﻿import { html, nothing } from '../../../lib/lit-html.js';
+import { LitMvvmElement, css } from '../../../lib/@kdsoft/lit-mvvm.js';
+import { Queue, priorities } from '../../../lib/@nx-js/queue-util/dist/es.es6.js';
+import sharedStyles from '../../../styles/kdsoft-shared-styles.js';
+import styleLinks from '../../../styles/kdsoft-style-links.js';
+import '../../../components/kdsoft-dropdown.js';
+import '../../../components/kdsoft-checklist.js';
+import '../../../components/kdsoft-expander.js';
+import '../../../components/kdsoft-drop-target.js';
+import '../../../components/kdsoft-tree-view.js';
 
 class MongoSinkConfig extends LitMvvmElement {
   constructor() {

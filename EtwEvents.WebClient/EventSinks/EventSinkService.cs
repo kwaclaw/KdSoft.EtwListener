@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -30,10 +31,12 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
         /// The subdirectory name defines the event sink type.
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<EventSinkInfo> GetEventSinkTypes() {
+        public IEnumerable<EventSinkInfo> GetEventSinkInfos() {
             var eventSinksDir = Path.Combine(_env.ContentRootPath, "EventSinks");
-            var dirInfo = new DirectoryInfo(eventSinksDir);
-            var evtSinkDirectories = dirInfo.EnumerateDirectories();
+            var eventSinksDirInfo = new DirectoryInfo(eventSinksDir);
+            // trailing '/' is important for building relative Uris
+            var eventSinksDirUri = new Uri($"file:///{eventSinksDirInfo.FullName}/");
+            var evtSinkDirectories = eventSinksDirInfo.EnumerateDirectories();
 
             var assemblyPaths = new List<string>(_runtimeAssemblyPaths);
             assemblyPaths.Add(typeof(IEventSinkFactory).Assembly.Location);
@@ -50,10 +53,18 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
                 foreach (var evtSinkDir in evtSinkDirectories) {
                     var evtSinkFile = evtSinkDir.GetFiles(SinkAssemblyFilter).FirstOrDefault();
                     if (evtSinkFile != null) {
-                        var evtSinkTypes = metaLoadContext.GetEventSinkTypes(evtSinkFile.FullName);
-                        foreach (var evtSinkType in evtSinkTypes) {
-                            yield return new EventSinkInfo { SinkType = evtSinkType, Description = _.GetString(evtSinkType) };
-                            break;  // only interested in first one
+                        var evtSinkType = metaLoadContext.GetEventSinkTypes(evtSinkFile.FullName).FirstOrDefault();
+                        if (evtSinkType != null) {
+                            var configView = evtSinkDir.GetFiles(@"config/*-config.js").First();
+                            var configViewUri = new Uri($"file:///{configView.FullName}");
+                            var configModel = evtSinkDir.GetFiles(@"config/*-config-model.js").First();
+                            var configModelUri = new Uri($"file:///{configModel.FullName}");
+                            yield return new EventSinkInfo { 
+                                SinkType = evtSinkType,
+                                Description = _.GetString(evtSinkType),
+                                ConfigViewUrl = eventSinksDirUri.MakeRelativeUri(configViewUri),
+                                ConfigModelUrl = eventSinksDirUri.MakeRelativeUri(configModelUri),
+                            };
                         }
                     }
                 }

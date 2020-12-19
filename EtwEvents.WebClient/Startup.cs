@@ -153,6 +153,10 @@ namespace KdSoft.EtwEvents.WebClient
             app.UseWebSockets(webSocketOptions);
 
             app.UseStaticFiles();
+            app.UseStaticFiles(new StaticFileOptions {
+                FileProvider = new PhysicalFileProvider(Path.Combine(env.ContentRootPath, "EventSinks")),
+                RequestPath = new PathString("/eventSinks")
+            });
 
             app.UseCookiePolicy();
 

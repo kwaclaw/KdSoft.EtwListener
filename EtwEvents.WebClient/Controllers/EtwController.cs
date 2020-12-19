@@ -117,6 +117,12 @@ namespace KdSoft.EtwEvents.WebClient
 
         public const int SessionNotFoundWebSocketStatus = 4901;
 
+        [HttpGet]
+        public IActionResult GetEventSinkInfos() {
+            var result = _evtSinkService.GetEventSinkInfos();
+            return Ok(result);
+        }
+
         async Task<IEventSink> CreateEventSink(Models.EventSinkRequest request, EventSinkHolder holder) {
             IEventSink result;
             switch (request.SinkType) {
@@ -136,32 +142,6 @@ namespace KdSoft.EtwEvents.WebClient
             AddEventSink(result, holder);
             return result;
         }
-
-        //IEventSink CreateEventSink(Models.EventSinkRequest request, EventSinkHolder holder) {
-        //    IEventSink result;
-        //    var jsonSerializerOptions = _jsonOptions.Value.JsonSerializerOptions;
-        //    switch (request.SinkType) {
-        //        case nameof(MongoSink):
-        //            var optsElement = (JsonElement)request.Options;
-        //            var sinkOptions = optsElement.ToObject<MongoSinkOptions>(jsonSerializerOptions);
-        //            var credsElement = (JsonElement)request.Credentials;
-        //            result = new MongoSink(
-        //                request.Name,
-        //                sinkOptions,
-        //                credsElement.GetProperty("database").GetString(),
-        //                credsElement.GetProperty("user").GetString(),
-        //                credsElement.GetProperty("password").GetString(),
-        //                CancellationToken.None);
-        //            break;
-        //        case nameof(EventSinks.DummySink):
-        //        default:
-        //            result = new EventSinks.DummySink(request.Name);
-        //            break;
-
-        //    }
-        //    AddEventSink(result, holder);
-        //    return result;
-        //}
 
         void AddEventSink(IEventSink sink, EventSinkHolder holder) {
             holder.AddEventSink(sink);

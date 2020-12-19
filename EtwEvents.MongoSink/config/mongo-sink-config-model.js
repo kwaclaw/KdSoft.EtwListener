@@ -1,7 +1,7 @@
 ﻿
 /* global i18n */
 
-import { observable, observe } from '../lib/@nx-js/observer-util/dist/es.es6.js';
+import { observable, observe } from '../../../lib/@nx-js/observer-util/dist/es.es6.js';
 
 class MongoSinkConfigModel {
   constructor(name, type) {
