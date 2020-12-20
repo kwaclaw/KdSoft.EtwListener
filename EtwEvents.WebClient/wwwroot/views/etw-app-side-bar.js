@@ -447,8 +447,8 @@ class EtwAppSideBar extends LitMvvmElement {
                             <i class="fas fa-lg fa-eye"></i> ${evsType}
                           </div>
                           <div slot="content">
-                            <div>Name</div><div>${ev.name}</div>
-                            ${ev.error ? html`<div>Error</div><div>${ev.error}</div>` : nothing}
+                            <div>Name</div><div class="ml-4">${ev.name}</div>
+                            ${ev.error ? html`<div>Error</div><div class="ml-4">${ev.error}</div>` : nothing}
                           </div>
                         </kdsoft-expander>
                       `;

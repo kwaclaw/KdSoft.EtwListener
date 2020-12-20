@@ -62,6 +62,7 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
                             yield return new EventSinkInfo { 
                                 SinkType = evtSinkType,
                                 Description = _.GetString(evtSinkType),
+                                // relative Uri does not include "EventSinks" path component (has a trailing '/')
                                 ConfigViewUrl = eventSinksDirUri.MakeRelativeUri(configViewUri),
                                 ConfigModelUrl = eventSinksDirUri.MakeRelativeUri(configModelUri),
                             };

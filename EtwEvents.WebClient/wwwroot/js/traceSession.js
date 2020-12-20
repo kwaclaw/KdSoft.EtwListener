@@ -139,7 +139,7 @@ class TraceSession {
       //   sinkType: 'MongoSink',
       //   name: 'MongoTest',
       //   options: {
-      //     hosts: ['mongodb.mosaiq.mobi:27017', 'mongodbqa.mosaiq.mobi:27017', 'mongodbshow3.mosaiq.mobi:27017'],
+      //     origin: 'mongodb://mongodb.mosaiq.mobi:27017,mongodbqa.mosaiq.mobi:27017,mongodbshow3.mosaiq.mobi:27017',
       //     replicaSet: 'rs0',
       //     database: 'Dev1',
       //     collection: 'logs',
