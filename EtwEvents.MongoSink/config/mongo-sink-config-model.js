@@ -9,7 +9,7 @@ class MongoSinkConfigModel {
     this.type = type;
     this.definition = {
       options: observable({
-        hosts: [],
+        origin: 'mongodb://',
         replicaset: '',
         database: '',
         collection: '',

@@ -31,43 +31,6 @@ class MongoSinkConfig extends LitMvvmElement {
     this.model.definition.credentials[e.target.name] = e.target.value;
   }
 
-  _validateHostUrls(hostElement) {
-    const hostStr = (hostElement.value || '').trim();
-    if (!hostStr)
-      return [];
-
-    const hosts = hostStr.split(';');
-    const checkUrl = this.renderRoot.getElementById('check-url');
-
-    const invalidUrls = [];
-    for (const host of hosts) {
-      checkUrl.value = host;
-      if (!checkUrl.validity.valid) {
-        invalidUrls.push(host);
-      }
-    }
-    
-    if (invalidUrls.length > 0) {
-      hostElement.setCustomValidity(`Invalid URL(s): ${invalidUrls.join(';')}`);
-    } else {
-      hostElement.setCustomValidity('');
-    }
-
-    return hosts;
-  }
-
-  _hostChanged(e) {
-    e.stopPropagation();
-    const hosts = this._validateHostUrls(e.target);
-    this.model.definition.options.hosts = hosts;
-    e.target.reportValidity();
-  }
-
-  _hostDeleted(e, index) {
-    e.stopPropagation();
-    this.model.definition.options.hosts.splice(index, 1);
-  }
-
   static get styles() {
     return [
       css`
@@ -117,7 +80,6 @@ class MongoSinkConfig extends LitMvvmElement {
   render() {
     const opts = this.model.definition.options;
     const creds = this.model.definition.credentials;
-    const hostsList = opts.hosts.join(';');
     const result = html`
       ${sharedStyles}
       <link rel="stylesheet" type="text/css" href=${styleLinks.checkbox} />
@@ -133,8 +95,8 @@ class MongoSinkConfig extends LitMvvmElement {
           <fieldset>
             <legend>Options</legend>
             <div>
-              <label for="hosts">Hosts</label>
-              <input type="text" id="hosts" name="hosts" size="50" @change=${this._hostChanged} value=${hostsList} required></input>
+              <label for="origin">Origin</label>
+              <input type="url" id="origin" name="origin" size="50" value=${opts.origin} required></input>
               <label for="replicaset">Replica Set</label>
               <input type="text" id="replicaset" name="replicaset" value=${opts.replicaset}></input>
               <label for="database">Database</label>

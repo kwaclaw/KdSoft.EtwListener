@@ -13,6 +13,8 @@ namespace KdSoft.EtwEvents.EventSinks
     [EventSink(nameof(MongoSink))]
     public class MongoSinkFactory: IEventSinkFactory
     {
+        static readonly JsonSerializerOptions _serializerOptions;
+
         static MongoSinkFactory() {
             ResolveEventHandler handler;
 
@@ -29,7 +31,7 @@ namespace KdSoft.EtwEvents.EventSinks
                 }
 
                 try {
-                    var requestedFile = Path.Combine(evtSinkDir, requestedAssembly.Name + ".dll");
+                    var requestedFile = Path.Combine(evtSinkDir ?? "", requestedAssembly.Name + ".dll");
                     return Assembly.LoadFrom(requestedFile);
                 }
                 catch (FileNotFoundException) {
@@ -38,6 +40,10 @@ namespace KdSoft.EtwEvents.EventSinks
             };
 
             AppDomain.CurrentDomain.AssemblyResolve += handler;
+
+            _serializerOptions = new JsonSerializerOptions {
+                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
         }
 
         public Task<IEventSink> Create(string name, MongoSinkOptions options, string database, string dbUser, string dbPwd) {
@@ -46,9 +52,9 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         public Task<IEventSink> Create(string name, string optionsJson, string credentialsJson) {
-            var options = JsonSerializer.Deserialize<MongoSinkOptions>(optionsJson);
-            var creds = JsonSerializer.Deserialize<MongoSinkCredentials>(credentialsJson);
-            return Create(name, options, creds.Database, creds.User, creds.Password);
+            var options = JsonSerializer.Deserialize<MongoSinkOptions>(optionsJson, _serializerOptions);
+            var creds = JsonSerializer.Deserialize<MongoSinkCredentials>(credentialsJson, _serializerOptions);
+            return Create(name, options!, creds!.Database, creds!.User, creds!.Password);
         }
 
         string GetJsonSchema<T>() {
