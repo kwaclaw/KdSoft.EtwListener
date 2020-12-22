@@ -8,11 +8,16 @@ import '../../../components/kdsoft-checklist.js';
 import '../../../components/kdsoft-expander.js';
 import '../../../components/kdsoft-drop-target.js';
 import '../../../components/kdsoft-tree-view.js';
+import KdSoftDropdownModel from '../../../components/kdsoft-dropdown-model.js';
+import KdSoftChecklistModel from '../../../components/kdsoft-checklist-model.js';
+import KdSoftDropdownChecklistConnector from '../../../components/kdsoft-dropdown-checklist-connector.js';
+import MongoSinkConfigModel from './mongo-sink-config-model.js';
 
 class MongoSinkConfig extends LitMvvmElement {
   constructor() {
     super();
     this.scheduler = new Queue(priorities.HIGH);
+    this.evtFieldsDropDownModel = new KdSoftDropdownModel();
   }
 
   isValid() {
@@ -25,11 +30,45 @@ class MongoSinkConfig extends LitMvvmElement {
     this.model.definition.options[e.target.name] = e.target.value;
   }
 
+  _fieldListChange(e) {
+    e.stopPropagation();
+    console.log(`${e.target.name}=${e.target.value}`);
+    // regular expression for splitting, removes whitespace around comma
+    const sepRegex = /\s*(?:,|$)\s*/;
+    this.model.definition.options[e.target.name] = (e.target.value || '').split(sepRegex);
+  }
+
   _credentialsChange(e) {
     e.stopPropagation();
     console.log(`${e.target.name}=${e.target.value}`);
     this.model.definition.credentials[e.target.name] = e.target.value;
   }
+
+  // first event when model is available
+  beforeFirstRender() {
+    if (!this.evtFieldChecklistModel) {
+      this.evtFieldChecklistModel = new KdSoftChecklistModel(
+        MongoSinkConfigModel.eventFields,
+        [],
+        true,
+        item => item.id
+      );
+      // we select by item ids as we have these readily available
+      this.evtFieldChecklistModel.selectIds(this.model.definition.options.eventFilterFields || [], true);
+    }
+
+    this.evtFieldsChecklistConnector = new KdSoftDropdownChecklistConnector(
+      () => this.renderRoot.getElementById('evtFields'),
+      () => this.renderRoot.getElementById('evtFieldList'),
+      (chkListModel) => {
+        const selectedIds = Array.from(chkListModel.selectedEntries).map(entry => entry.item.id);
+        // since we are already reacting to the selection change, let's update the underlying model
+        this.model.definition.options.eventFilterFields = selectedIds;
+        return selectedIds.join(', ');
+      }
+    );
+  }
+
 
   static get styles() {
     return [
@@ -80,6 +119,8 @@ class MongoSinkConfig extends LitMvvmElement {
   render() {
     const opts = this.model.definition.options;
     const creds = this.model.definition.credentials;
+    const payloadFieldsList = opts.payloadFilterFields.join(', ');
+
     const result = html`
       ${sharedStyles}
       <link rel="stylesheet" type="text/css" href=${styleLinks.checkbox} />
@@ -103,6 +144,18 @@ class MongoSinkConfig extends LitMvvmElement {
               <input type="text" id="database" name="database" value=${opts.database} required></input>
               <label for="collection">Collection</label>
               <input type="text" id="collection" name="collection" value=${opts.collection} required></input>
+              <label for="eventFilterFields">Event Filter Fields</label>
+              <kdsoft-dropdown id="evtFields" class="py-0" .model=${this.evtFieldsDropDownModel} .connector=${this.evtFieldsChecklistConnector}>
+                <kdsoft-checklist
+                  id="evtFieldList"
+                  class="text-black"
+                  .model=${this.evtFieldChecklistModel}
+                  .getItemTemplate=${item => html`${item.id}`}
+                  show-checkboxes>
+                </kdsoft-checklist>
+              </kdsoft-dropdown>
+              <label for="payloadFilterFields">Payload Filter Fields</label>
+              <input type="text" id="payloadFilterFields" name="payloadFilterFields" value=${payloadFieldsList} @change=${this._fieldListChange}></input>
             </div>
           </fieldset>
         </section>

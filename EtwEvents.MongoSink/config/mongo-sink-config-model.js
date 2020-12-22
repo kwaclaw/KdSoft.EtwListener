@@ -1,5 +1,4 @@
-﻿
-/* global i18n */
+﻿/* global i18n */
 
 import { observable, observe } from '../../../lib/@nx-js/observer-util/dist/es.es6.js';
 
@@ -13,7 +12,7 @@ class MongoSinkConfigModel {
         replicaset: '',
         database: '',
         collection: '',
-        eventFilterFields: [],
+        eventFilterFields: ['Timestamp', 'ProviderName', 'Id', 'Level', 'Keywords', 'Opcode', 'TaskName'],
         payloadFilterFields: []
       }),
       credentials: observable({
@@ -25,6 +24,13 @@ class MongoSinkConfigModel {
     
     const result = observable(this);
     return result;
+  }
+
+  static get eventFields() {
+    // if intended to be the source for a KdSoftChecklistModel, then the entries must be objects
+    return [{ id: 'Timestamp' }, { id: 'ProviderName' }, { id: 'Channel' }, { id: 'Id' }, { id: 'Level' }, { id: 'Keywords' },
+      { id: 'Opcode' }, { id: 'OpcodeName' }, { id: 'TaskName' }, { id: 'Version' }
+    ];
   }
 
   export() {
