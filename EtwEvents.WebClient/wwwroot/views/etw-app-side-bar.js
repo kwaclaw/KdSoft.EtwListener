@@ -337,6 +337,10 @@ class EtwAppSideBar extends LitMvvmElement {
           grid-template-columns: max-content auto;
           justify-items: start;
         }
+
+        .fa-lg.fa-eye, .fa-lg.fa-file-archive {
+          min-width: 2em;
+        }
       `
     ];
   }
@@ -441,13 +445,14 @@ class EtwAppSideBar extends LitMvvmElement {
                     ${ses.state.eventSinks.map(ev => {
                       const evsType = ev.error ? i18n.gettext('Failed') : (ev.isLocal ? i18n.gettext('Local') : i18n.gettext('External'));
                       const evsColor = ev.error ? 'text-red-500' : (ev.isLocal ? 'text-blue-500' : 'inherited');
+                      const evsIcon = ev.isLocal ? 'fa-eye' : 'fa-file-archive ml-1';
                       return html`
                         <kdsoft-expander class="session-details">
                           <div slot="header" class="truncate ${evsColor}">
-                            <i class="fas fa-lg fa-eye"></i> ${evsType}
+                            <i class="fas fa-lg ${evsIcon}"></i>${ev.name}
                           </div>
                           <div slot="content">
-                            <div>Name</div><div class="ml-4">${ev.name}</div>
+                            <div>Type</div><div class="ml-4 ${evsColor}">${evsType}</div>
                             ${ev.error ? html`<div>Error</div><div class="ml-4">${ev.error}</div>` : nothing}
                           </div>
                         </kdsoft-expander>
