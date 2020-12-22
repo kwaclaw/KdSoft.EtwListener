@@ -106,23 +106,52 @@ class KdSoftChecklistModel {
   }
 
   selectId(id, select) {
-    let item = null;
+    let selItem = null;
     for (let indx = 0; indx < this.items.length; indx += 1) {
       const tempItem = this.items[indx];
-      if (this.getItemId(item) === id) {
-        item = tempItem;
+      if (this.getItemId(tempItem) === id) {
+        selItem = tempItem;
         break;
       }
     }
-    if (item === null) return;
+    if (selItem === null) return;
 
     if (this.multiSelect) {
-      if (select) this._selectedItems.add(raw(item));
-      else this._selectedItems.delete(raw(item));
+      if (select) this._selectedItems.add(raw(selItem));
+      else this._selectedItems.delete(raw(selItem));
     } else if (select) {
-      this._selectedItems = new WeakSet([raw(item)]);
+      this._selectedItems = new WeakSet([raw(selItem)]);
     } else {
       this._selectedItems = new WeakSet();
+    }
+  }
+
+  selectIds(ids, select) {
+    if (!this.multiSelect && (ids || []).length > 1) {
+      throw new Error('Must not select multiple items');
+    }
+
+    let selItems = [];
+    for (let indx = 0; indx < this.items.length; indx += 1) {
+      const tempItem = this.items[indx];
+      for (const id of ids) {
+        if (this.getItemId(tempItem) === id) {
+          selItems.push(tempItem);
+          break;
+        }
+      }
+    }
+
+    for (let indx = 0; indx < selItems.length; indx += 1) {
+      const selItem = raw(selItems[indx]);
+      if (this.multiSelect) {
+        if (select) this._selectedItems.add(selItem);
+        else this._selectedItems.delete(selItem);
+      } else if (select) {
+        this._selectedItems = new WeakSet([selItem]);
+      } else {
+        this._selectedItems = new WeakSet();
+      }
     }
   }
 
