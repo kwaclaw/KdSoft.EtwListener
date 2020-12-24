@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
@@ -8,6 +9,24 @@ namespace KdSoft.EtwEvents.Client.Shared
 {
     public static class Utils
     {
+        public static Assembly? DirectoryResolveAssembly(string assemblyDir, ResolveEventArgs args) {
+            var requestedAssembly = new AssemblyName(args.Name);
+
+            var alreadyLoadedAssembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == requestedAssembly.Name);
+
+            if (alreadyLoadedAssembly != null) {
+                return alreadyLoadedAssembly;
+            }
+
+            try {
+                var requestedFile = Path.Combine(assemblyDir ?? "", requestedAssembly.Name + ".dll");
+                return Assembly.LoadFrom(requestedFile);
+            }
+            catch (FileNotFoundException) {
+                return null;
+            }
+        }
+
         public static IEnumerable<Type> GetLoadableTypes(this Assembly assembly) {
             if (assembly == null)
                 throw new ArgumentNullException("assembly");

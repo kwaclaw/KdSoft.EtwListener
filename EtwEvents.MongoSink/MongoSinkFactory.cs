@@ -20,26 +20,7 @@ namespace KdSoft.EtwEvents.EventSinks
 
             var evtSinkAssembly = Assembly.GetExecutingAssembly();
             var evtSinkDir = Path.GetDirectoryName(evtSinkAssembly.Location);
-
-            handler = (sender, args) => {
-                var requestedAssembly = new AssemblyName(args.Name);
-
-                var alreadyLoadedAssembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == requestedAssembly.Name);
-
-                if (alreadyLoadedAssembly != null) {
-                    return alreadyLoadedAssembly;
-                }
-
-                try {
-                    var requestedFile = Path.Combine(evtSinkDir ?? "", requestedAssembly.Name + ".dll");
-                    return Assembly.LoadFrom(requestedFile);
-                }
-                catch (FileNotFoundException) {
-                    return null;
-                }
-            };
-
-            AppDomain.CurrentDomain.AssemblyResolve += handler;
+            AppDomain.CurrentDomain.AssemblyResolve += (sender, args) => Utils.DirectoryResolveAssembly(evtSinkDir!, args);
 
             _serializerOptions = new JsonSerializerOptions {
                  PropertyNamingPolicy = JsonNamingPolicy.CamelCase
