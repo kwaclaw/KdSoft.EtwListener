@@ -68,8 +68,8 @@ class EtwAppModel {
       const st = JSON.parse(e.data);
       this._updateTraceSessions(st.sessions);
     };
-    es.onerror = err => {
-      console.error(err);
+    es.onerror = (e) => {
+      console.error('GetSessionStates event source error.');
     };
 
     return observable(this);
