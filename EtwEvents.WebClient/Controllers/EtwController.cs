@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
+using shared = KdSoft.EtwEvents.Client.Shared;
 
 namespace KdSoft.EtwEvents.WebClient
 {
@@ -54,39 +55,17 @@ namespace KdSoft.EtwEvents.WebClient
             var location = StoreLocation.CurrentUser;
 
             var currentCert = this.HttpContext.Connection.ClientCertificate;
-            if (_clientCertOptions.Value.Thumbprint.Length > 0) {
-                thumbprint = _clientCertOptions.Value.Thumbprint;
-                subject = _clientCertOptions.Value.Subject;
-                location = _clientCertOptions.Value.Location;
+            var opts = _clientCertOptions.Value;
+            if (opts.Thumbprint.Length > 0 || opts.SubjectCN.Length > 0) {
+                location = opts.Location;
+                thumbprint = opts.Thumbprint;
+                subject = opts.SubjectCN;
             }
             else if (currentCert != null) {
                 thumbprint = currentCert.Thumbprint;
             }
 
-            if (thumbprint.Length == 0 && subject.Length == 0)
-                return null;
-
-            // find matching certificate, use thumbprint if available, otherwise use subject common name (CN)
-            using (var store = new X509Store(location)) {
-                store.Open(OpenFlags.ReadOnly);
-                X509Certificate2? cert = null;
-                if (thumbprint.Length > 0) {
-                    var certs = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, true);
-                    if (certs.Count > 0)
-                        cert = certs[0];
-                }
-                else {
-                    var certs = store.Certificates.Find(X509FindType.FindBySubjectName, subject, true);
-                    foreach (var matchingCert in certs) {
-                        var cn = matchingCert.GetNameInfo(X509NameType.SimpleName, false);
-                        if (string.Equals(cn, subject, StringComparison.InvariantCultureIgnoreCase)) {
-                            cert = matchingCert;
-                            break;
-                        }
-                    }
-                }
-                return cert;
-            }
+            return shared.Utils.GetCertificate(location, thumbprint, subject);
         }
 
         [HttpPost]

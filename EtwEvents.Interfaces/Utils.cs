@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 
 namespace KdSoft.EtwEvents.Client.Shared
 {
@@ -70,6 +71,40 @@ namespace KdSoft.EtwEvents.Client.Shared
                 .Select(ft => GetEventSinkType(ft, sinkAttributeType))
                 .Where(est => est != null);
 #nullable enable
+        }
+
+        /// <summary>
+        /// Get certificate from certificate store based on thumprint oor subject common name.
+        /// </summary>
+        /// <param name="location">Store location.</param>
+        /// <param name="thumbprint">Certificate thumprint to look for. Takes precedence over subjectCN when both are specified.</param>
+        /// <param name="subjectCN">Subject common name to look for.</param>
+        /// <returns>Matching certificate, or <c>null</c> if none was found.</returns>
+        public static X509Certificate2? GetCertificate(StoreLocation location, string thumbprint, string subjectCN) {
+            if (thumbprint.Length == 0 && subjectCN.Length == 0)
+                return null;
+
+            // find matching certificate, use thumbprint if available, otherwise use subject common name (CN)
+            using (var store = new X509Store(location)) {
+                store.Open(OpenFlags.ReadOnly);
+                X509Certificate2? cert = null;
+                if (thumbprint.Length > 0) {
+                    var certs = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, true);
+                    if (certs.Count > 0)
+                        cert = certs[0];
+                }
+                else {
+                    var certs = store.Certificates.Find(X509FindType.FindBySubjectName, subjectCN, true);
+                    foreach (var matchingCert in certs) {
+                        var cn = matchingCert.GetNameInfo(X509NameType.SimpleName, false);
+                        if (string.Equals(cn, subjectCN, StringComparison.InvariantCultureIgnoreCase)) {
+                            cert = matchingCert;
+                            break;
+                        }
+                    }
+                }
+                return cert;
+            }
         }
     }
 }
