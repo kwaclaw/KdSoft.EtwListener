@@ -44,7 +44,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\EtwEvents.Interfaces\EtwEvents.Client.Shared.csproj" />
-    <ProjectReference Include="..\EtwEvents.MongoSink\EtwEvents.MongoSink.csproj" />
   </ItemGroup>
 
  
