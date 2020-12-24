@@ -43,24 +43,11 @@ namespace KdSoft.EtwEvents.EventSinks
                 mcs.Credential = MongoCredential.CreateCredential(authDb, dbUser, dbPwd);
 
                 _client = new MongoClient(mcs);
-
-                Initialize(cancelToken);
-            }
-            catch (Exception ex) {
-                var errStr = $@"Error in {nameof(MongoSink)} initialization encountered:{Environment.NewLine}{ex.Message}";
-                //healthReporter.ReportProblem(errStr, EventFlowContextIdentifiers.Configuration);
-                throw;
-            }
-        }
-
-        void Initialize(CancellationToken cancelToken) {
-            this._cancelToken = cancelToken;
-            try {
                 _db = _client.GetDatabase(_sinkInfo.Database);
                 _coll = _db.GetCollection<BsonDocument>(_sinkInfo.Collection);
             }
             catch (Exception ex) {
-                var errStr = $@"Error in {nameof(MongoSink)} initialization:{Environment.NewLine}{ex.Message}";
+                var errStr = $@"Error in {nameof(MongoSink)} initialization encountered:{Environment.NewLine}{ex.Message}";
                 //healthReporter.ReportProblem(errStr, EventFlowContextIdentifiers.Configuration);
                 throw;
             }

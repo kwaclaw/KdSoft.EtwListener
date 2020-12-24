@@ -130,7 +130,6 @@ class MongoSinkConfig extends LitMvvmElement {
         }
       </style>
       <form>
-        <input type="url" id="check-url" style="display:none"></input>
         <h3>Mongo Sink "${this.model.name}"</h3>
         <section id="options" class="center mb-5" @change=${this._optionsChange}>
           <fieldset>
