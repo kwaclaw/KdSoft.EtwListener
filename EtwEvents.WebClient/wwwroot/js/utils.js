@@ -187,4 +187,24 @@ export function objectToFormData(obj) {
   return formData;
 }
 
+export function containerOffsetLeft(container, element) {
+  let containerLeft = 0;
+  while (element !== null) {
+    containerLeft += element.offsetLeft;
+    element = element.offsetParent;
+    if (element === container) break;
+  }
+  return containerLeft;
+}
+
+export function containerOffsetTop(container, element) {
+  let containerTop = 0;
+  while (element !== null) {
+    containerTop += element.offsetTop;
+    element = element.offsetParent;
+    if (element === container) break;
+  }
+  return containerTop;
+}
+
 export const html5DialogSupported = typeof HTMLDialogElement === 'function';
