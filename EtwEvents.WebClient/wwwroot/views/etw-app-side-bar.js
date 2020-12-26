@@ -197,6 +197,7 @@ class EtwAppSideBar extends LitMvvmElement {
     checklist.model = new KdSoftChecklistModel(this.model.eventSinkProfiles, [], false, item => item.name);
     checklist.model.session = session;
     const dlg = this.renderRoot.getElementById('dlg-event-sink-chooser');
+
     // dlg positioned in relation to :host (renderRoot)
     const containerTop = utils.containerOffsetTop(this.renderRoot.host, e.currentTarget);
     const containerLeft = utils.containerOffsetLeft(this.renderRoot.host, e.currentTarget);
@@ -279,6 +280,10 @@ class EtwAppSideBar extends LitMvvmElement {
         :host {
           display: block;
         }
+
+        dialog {
+          outline: lightgray solid 1px;
+        }
         
         #sidebar {
           display: flex;
@@ -347,7 +352,7 @@ class EtwAppSideBar extends LitMvvmElement {
           width: 275px;
         }
 
-        kdsoft-expander.session-details [slot="children"] {
+        kdsoft-expander.session-details [slot="content"] {
           display: grid;
           grid-gap: 0 1em;
           grid-template-columns: max-content auto;

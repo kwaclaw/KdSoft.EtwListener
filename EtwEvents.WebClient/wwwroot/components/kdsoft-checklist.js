@@ -279,6 +279,7 @@ class KdSoftChecklist extends LitMvvmElement {
           padding-bottom: 2px;
           padding-left: 5px;
           padding-right: 5px;
+          outline: none;
         }
         .list-item:hover {
           background-color: lightblue;
