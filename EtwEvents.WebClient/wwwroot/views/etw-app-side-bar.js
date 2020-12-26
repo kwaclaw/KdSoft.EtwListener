@@ -31,9 +31,9 @@ const classList = {
 function formDoneHandler(e) {
   if (!e.detail.canceled) {
     if (e.target.localName === 'filter-form') {
-      this.model.saveProfile(e.detail.model.session.profile);
+      this.model.saveSessionProfile(e.detail.model.session.profile);
     } else if (e.target.localName === 'trace-session-config') {
-      this.model.saveProfile(e.detail.model.cloneAsProfile());
+      this.model.saveSessionProfile(e.detail.model.cloneAsProfile());
     } else if (e.target.localName === 'event-sink-config') {
       this.model.saveSinkProfile(e.detail.model);
     }
@@ -45,9 +45,9 @@ function formDoneHandler(e) {
 
 function formSaveHandler(e) {
   if (e.target.localName === 'filter-form') {
-    this.model.saveProfile(e.detail.model.session.profile);
+    this.model.saveSessionProfile(e.detail.model.session.profile);
   } else if (e.target.localName === 'trace-session-config') {
-    this.model.saveProfile(e.detail.model.cloneAsProfile());
+    this.model.saveSessionProfile(e.detail.model.cloneAsProfile());
   } else if (e.target.localName === 'event-sink-config') {
     this.model.saveSinkProfile(e.detail.model);
   }
@@ -98,17 +98,17 @@ class EtwAppSideBar extends LitMvvmElement {
   }
 
   _importSessionProfilesClick() {
-    const fileDlg = this.renderRoot.getElementById('import-profiles');
+    const fileDlg = this.renderRoot.getElementById('import-session-profiles');
     fileDlg.click();
   }
 
   _importSessionProfilesSelected(e) {
-    this.model.importProfiles(e.currentTarget.files);
+    this.model.importSessionProfiles(e.currentTarget.files);
   }
 
   _deleteSessionProfileClick(e, profileName) {
     e.stopPropagation();
-    this.model.deleteProfile(profileName.toLowerCase());
+    this.model.deleteSessionProfile(profileName.toLowerCase());
   }
 
   //#endregion
@@ -133,11 +133,12 @@ class EtwAppSideBar extends LitMvvmElement {
   }
 
   _importEventSinkProfilesClick() {
-    //
+    const fileDlg = this.renderRoot.getElementById('import-sink-profiles');
+    fileDlg.click();
   }
 
   _importEventSinkProfilesSelected(e) {
-    //
+    this.model.importSinkProfiles(e.currentTarget.files);
   }
 
   _deleteEventSinkProfileClick(e, sinkDefinitionName) {
@@ -380,7 +381,7 @@ class EtwAppSideBar extends LitMvvmElement {
           <div slot="header" class="flex pr-1 text-white bg-gray-500">
             <label class="pl-3 font-bold text-xl">${i18n.gettext('Session Profiles')}</label>
             <button type="button" class="px-1 py-1 ml-auto" @click=${e => this._addSessionProfileClick(e)}><i class="fas fa-lg fa-plus"></i></button>
-            <input id="import-profiles" type="file" @change=${this._importSessionProfilesSelected} multiple class="hidden"></input>
+            <input id="import-session-profiles" type="file" @change=${this._importSessionProfilesSelected} multiple class="hidden"></input>
             <button class="px-1 py-1" @click=${this._importSessionProfilesClick} title="${i18n.gettext('Import Session Profiles')}"><i class="fas fa-lg fa-file-import"></i></button>
           </div>
           <div slot="content">
@@ -402,7 +403,7 @@ class EtwAppSideBar extends LitMvvmElement {
           <div slot="header" class="flex pr-1 text-white bg-gray-500">
             <label class="pl-3 font-bold text-xl">${i18n.gettext('Event Sink Definitions')}</label>
             <button type="button" class="px-1 py-1 ml-auto" @click=${e => this._addEventSinkProfileClick(e)}><i class="fas fa-lg fa-plus"></i></button>
-            <input id="import-event-sinks" type="file" @change=${this._importEventSinkProfilesSelected} multiple class="hidden"></input>
+            <input id="import-sink-profiles" type="file" @change=${this._importEventSinkProfilesSelected} multiple class="hidden"></input>
             <button class="px-1 py-1" @click=${this._importEventSinkProfilesClick} title="${i18n.gettext('Import Event Sinks')}"><i class="fas fa-lg fa-file-import"></i></button>
           </div>
           <div slot="content">

@@ -41,6 +41,25 @@ function getSessionProfileFromState(state) {
   return new TraceSessionProfile(state.name, state.host, state.enabledProviders);
 }
 
+async function importProfiles(files, saveProfile) {
+  const promises = [];
+
+  for (let i = 0; i < files.length; i += 1) {
+    const file = files[i];
+    promises.push(file.text());
+  }
+
+  const jsonResults = await Promise.all(promises);
+  for (let i = 0; i < jsonResults.length; i += 1) {
+    try {
+      const profile = JSON.parse(jsonResults[i]);
+      saveProfile(profile);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+}
+
 class EtwAppModel {
   constructor() {
     this._traceSessions = observable(new Map());
@@ -179,7 +198,7 @@ class EtwAppModel {
         traceSession.updateState(state);
       } else {
         const profile = profileIndex >= 0 ? profiles[profileIndex] : getSessionProfileFromState(state);
-        if (profileIndex < 0) this.saveProfile(profile);
+        if (profileIndex < 0) this.saveSessionProfile(profile);
         traceSession = new TraceSession(profile, state);
         this.traceSessions.set(sessionName, traceSession);
       }
@@ -214,7 +233,7 @@ class EtwAppModel {
     }
   }
 
-  saveProfile(profileModel) {
+  saveSessionProfile(profileModel) {
     let profileToSave;
     if (profileModel instanceof TraceSessionProfile) {
       profileToSave = profileModel;
@@ -227,29 +246,14 @@ class EtwAppModel {
     this.sessionProfiles = loadSessionProfiles();
   }
 
-  deleteProfile(profileName) {
+  deleteSessionProfile(profileName) {
     localStorage.removeItem(`session-profile-${profileName}`);
     this.sessionProfiles = loadSessionProfiles();
   }
 
-  // should create TraceSessions with a profile
-  async importProfiles(files) {
-    const promises = [];
-
-    for (let i = 0; i < files.length; i += 1) {
-      const file = files[i];
-      promises.push(file.text());
-    }
-
-    const jsonResults = await Promise.all(promises);
-    for (let i = 0; i < jsonResults.length; i += 1) {
-      try {
-        const profile = JSON.parse(jsonResults[i]);
-        this.saveProfile(profile);
-      } catch (err) {
-        console.log(err);
-      }
-    }
+  // returns promise
+  importSessionProfiles(files) {
+    return importProfiles(files, this.saveSessionProfile.bind(this));
   }
 
   //#endregion TraceSessionProfile
@@ -266,6 +270,11 @@ class EtwAppModel {
   deleteSinkProfile(sinkProfileName) {
     localStorage.removeItem(`sink-profile-${sinkProfileName.toLowerCase()}`);
     this.eventSinkProfiles = loadEventSinkProfiles();
+  }
+
+  // returns promise
+  importSinkProfiles(files) {
+    return importProfiles(files, this.saveSinkProfile.bind(this));
   }
 
   //#endregion EventSink Definition
