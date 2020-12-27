@@ -2,6 +2,7 @@
 
 import { html, nothing } from '../lib/lit-html.js';
 import { classMap } from '../lib/lit-html/directives/class-map.js';
+import { observe } from '../lib/@nx-js/observer-util/dist/es.es6.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
 import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import dialogPolyfill from '../lib/dialog-polyfill.js';
@@ -53,7 +54,6 @@ function formSaveHandler(e) {
   }
 }
 
-
 class EtwAppSideBar extends LitMvvmElement {
   constructor() {
     super();
@@ -62,6 +62,12 @@ class EtwAppSideBar extends LitMvvmElement {
     // this allows us to unregister the event handlers, because we maintain references to their instances
     this._formDoneHandler = formDoneHandler.bind(this);
     this._formSaveHandler = formSaveHandler.bind(this);
+    this._dialogFocusOut = {
+      handleEvent(e) {
+        e.target.closest('dialog').close();
+      },
+      capture: true,
+    };
   }
 
   showFilterDlg(session) {
@@ -194,9 +200,19 @@ class EtwAppSideBar extends LitMvvmElement {
 
   _chooseEventSinkClick(e, session) {
     const checklist = this.renderRoot.getElementById('eventSinkProfileList');
-    checklist.model = new KdSoftChecklistModel(this.model.eventSinkProfiles, [], false, item => item.name);
-    checklist.model.session = session;
+    const model = new KdSoftChecklistModel(this.model.eventSinkProfiles, [], false, item => item.name);
+    checklist.model = model;
+
     const dlg = this.renderRoot.getElementById('dlg-event-sink-chooser');
+    const openButton = e.currentTarget;
+    model.observer = observe(async () => {
+      dlg.close();
+      const selectedSinkProfile = model.firstSelectedEntry;
+      if (selectedSinkProfile && session) {
+        const spinner = new Spinner(openButton);
+        await session.openEventSink(selectedSinkProfile, spinner);
+      }
+    });
 
     // dlg positioned in relation to :host (renderRoot)
     const containerTop = utils.containerOffsetTop(this.renderRoot.host, e.currentTarget);
@@ -342,8 +358,8 @@ class EtwAppSideBar extends LitMvvmElement {
         }
 
         #dlg-event-sink-chooser {
-          color: inherit;
-          background-color: inherit;
+          color: #a0aec0;
+          background-color: #718096;
           left: unset;
           margin: 0;
         }
@@ -371,6 +387,7 @@ class EtwAppSideBar extends LitMvvmElement {
     const dialogStyle = utils.html5DialogSupported
       ? nothing
       : html`<link rel="stylesheet" type="text/css" href=${styleLinks.dialog} />`;
+
 
     return html`
       ${sharedStyles}
@@ -546,17 +563,12 @@ class EtwAppSideBar extends LitMvvmElement {
       <dialog id="dlg-event-sink" class="${utils.html5DialogSupported ? '' : 'fixed'}">
         <event-sink-config></event-sink-config>
       </dialog>
-      <dialog id="dlg-event-sink-chooser" class="${utils.html5DialogSupported ? '' : 'fixed'}">
-          <h3 class="mb-3">Open Event Sink</h3>
-          <kdsoft-checklist
-            id="eventSinkProfileList"
-            .getItemTemplate=${item => html`${item.name}`}>
-          </kdsoft-checklist>
-          <hr class="mb-4" />
-          <div id="ok-cancel-buttons" class="flex flex-wrap mt-2 bt-1">
-            <button type="button" class="py-1 px-2 ml-auto" @click=${this._openEventSinkClick} title="Save"><i class="fas fa-lg fa-check text-green-500"></i></button>
-            <button type="button" class="py-1 px-2" @click=${e => e.target.closest('dialog').close()} title="Cancel"><i class="fas fa-lg fa-times text-red-500"></i></button>
-          </div>
+      <dialog id="dlg-event-sink-chooser" class="${utils.html5DialogSupported ? '' : 'fixed'}" @focusout=${this._dialogFocusOut}>
+        <h3 class="mb-3">Open Event Sink</h3>
+        <kdsoft-checklist
+          id="eventSinkProfileList"
+          .getItemTemplate=${item => html`${item.name}`}>
+        </kdsoft-checklist>
       </dialog>
     `;
   }
