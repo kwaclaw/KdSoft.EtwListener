@@ -20,11 +20,12 @@ class TraceSession {
     this.filter = profile.activeFilter;
     this._eventSession = null;
     this.fetcher = new FetchHelper('/Etw');
+
     const result = observable(this);
     observe(() => {
       updateStateInternal(result);
     });
-    return result; 
+    return result;
   }
 
   get name() { return this._state ? this._state.name : (this._profile ? this._profile.name : '<unknown>'); }

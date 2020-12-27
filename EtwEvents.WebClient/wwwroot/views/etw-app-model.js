@@ -75,7 +75,6 @@ class EtwAppModel {
     this.showLastError = false;
     this.showErrors = false;
 
-    // this._openSessions = [];
     this.fetcher = new FetchHelper('/Etw');
     this.fetcher.getJson('GetSessionStates')
       .then(st => this._updateTraceSessions(st.sessions))

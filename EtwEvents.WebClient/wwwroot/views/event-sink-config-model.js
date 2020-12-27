@@ -5,26 +5,11 @@ import { observable, observe } from '../lib/@nx-js/observer-util/dist/es.es6.js'
 import KdSoftChecklistModel from '../components/kdsoft-checklist-model.js';
 import FetchHelper from '../js/fetchHelper.js';
 
-const sinkTypeList = () => [
-  { 
-    name: i18n.__('File Sink'),
-    value: 'FileSink',
-    configView: './file-sink-config.js',
-    configModel: './file-sink-config-model.js',
-   },
-  {
-    name: i18n.__('Mongo Sink'),
-    value: 'MongoSink',
-    configView: './mongo-sink-config.js',
-    configView: './mongo-sink-config-model.js',
-  },
-];
-
 class EventSinkConfigModel {
   constructor(sinkTypes, sinkProfile) {
     this.sinkTypes = sinkTypes;
     this.sinkProfile = sinkProfile;
-    
+
     const selectedSinkTypeIndex = sinkProfile ? sinkTypes.findIndex(item => item.value == sinkProfile.type) : -1;
     this.sinkTypeCheckListModel = new KdSoftChecklistModel(
       sinkTypes,
@@ -50,11 +35,12 @@ class EventSinkConfigModel {
       return new EventSinkConfigModel(sinkTypes, sinkProfile);
     } catch (error) {
       window.etwApp.defaultHandleError(error);
+      return null;
     }
   }
 
   //get selectedSinkType() { return this.selectedSinkTypeIndex >= 0 ? this.sinkTypes[this.selectedSinkTypeIndex] : null; }
-  get selectedSinkType() { 
+  get selectedSinkType() {
     const selIndexes = this.sinkTypeCheckListModel.selectedIndexes;
     // use result to trigger observers
     const selectedSinkTypeIndex = selIndexes.length === 0 ? -1 : selIndexes[0];
