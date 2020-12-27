@@ -400,18 +400,33 @@ class EtwAppSideBar extends LitMvvmElement {
         <kdsoft-expander>
           <div slot="header" class="flex pr-1 text-white bg-gray-500">
             <label class="pl-3 font-bold text-xl">${i18n.gettext('Session Profiles')}</label>
-            <button type="button" class="px-1 py-1 ml-auto" @click=${e => this._addSessionProfileClick(e)}><i class="fas fa-lg fa-plus"></i></button>
-            <input id="import-session-profiles" type="file" @change=${this._importSessionProfilesSelected} multiple class="hidden"></input>
-            <button class="px-1 py-1" @click=${this._importSessionProfilesClick} title="${i18n.gettext('Import Session Profiles')}"><i class="fas fa-lg fa-file-import"></i></button>
+            <button type="button" class="px-1 py-1 ml-auto" @click=${e => this._addSessionProfileClick(e)}>
+              <i class="fas fa-lg fa-plus"></i>
+            </button>
+            <input id="import-session-profiles"
+              type="file"
+              @change=${this._importSessionProfilesSelected}
+              multiple
+              class="hidden">
+            </input>
+            <button class="px-1 py-1" @click=${this._importSessionProfilesClick} title="${i18n.gettext('Import Session Profiles')}">
+              <i class="fas fa-lg fa-file-import"></i>
+            </button>
           </div>
           <div slot="content">
             ${this.model.sessionProfiles.map(p => html`
                 <div class="flex flex-wrap">
                   <label class="pl-3 font-bold text-xl">${p.name}</label>
                   <div class="ml-auto pr-1">
-                    <button type="button" class="px-1 py-1" @click=${e => this._openSessionFromProfileClick(e, p)}><i class="fas fa-lg fa-wifi"></i></button>
-                    <button type="button" class="px-1 py-1" @click=${e => this._editSessionProfileClick(e, p)}><i class="fas fa-lg fa-edit"></i></button>
-                    <button type="button" class="px-1 py-1" @click=${e => this._deleteSessionProfileClick(e, p.name)}><i class="far fa-lg fa-trash-alt"></i></button>
+                    <button type="button" class="px-1 py-1" @click=${e => this._openSessionFromProfileClick(e, p)}>
+                      <i class="fas fa-lg fa-wifi"></i>
+                    </button>
+                    <button type="button" class="px-1 py-1" @click=${e => this._editSessionProfileClick(e, p)}>
+                      <i class="fas fa-lg fa-edit"></i>
+                    </button>
+                    <button type="button" class="px-1 py-1" @click=${e => this._deleteSessionProfileClick(e, p.name)}>
+                      <i class="far fa-lg fa-trash-alt"></i>
+                    </button>
                   </div>
                 </div>
               `)
@@ -422,17 +437,30 @@ class EtwAppSideBar extends LitMvvmElement {
         <kdsoft-expander>
           <div slot="header" class="flex pr-1 text-white bg-gray-500">
             <label class="pl-3 font-bold text-xl">${i18n.gettext('Event Sink Definitions')}</label>
-            <button type="button" class="px-1 py-1 ml-auto" @click=${e => this._addEventSinkProfileClick(e)}><i class="fas fa-lg fa-plus"></i></button>
-            <input id="import-sink-profiles" type="file" @change=${this._importEventSinkProfilesSelected} multiple class="hidden"></input>
-            <button class="px-1 py-1" @click=${this._importEventSinkProfilesClick} title="${i18n.gettext('Import Event Sinks')}"><i class="fas fa-lg fa-file-import"></i></button>
+            <button type="button" class="px-1 py-1 ml-auto" @click=${e => this._addEventSinkProfileClick(e)}>
+              <i class="fas fa-lg fa-plus"></i>
+            </button>
+            <input id="import-sink-profiles"
+              type="file"
+              @change=${this._importEventSinkProfilesSelected}
+              multiple
+              class="hidden">
+            </input>
+            <button class="px-1 py-1" @click=${this._importEventSinkProfilesClick} title="${i18n.gettext('Import Event Sinks')}">
+              <i class="fas fa-lg fa-file-import">
+            </i></button>
           </div>
           <div slot="content">
             ${this.model.eventSinkProfiles.map(p => html`
                 <div class="flex flex-wrap">
                   <label class="pl-3 font-bold text-xl">${p.name}</label>
                   <div class="ml-auto pr-1">
-                    <button type="button" class="px-1 py-1" @click=${e => this._editEventSinkProfileClick(e, p)}><i class="fas fa-lg fa-edit"></i></button>
-                    <button type="button" class="px-1 py-1" @click=${e => this._deleteEventSinkProfileClick(e, p.name)}><i class="far fa-lg fa-trash-alt"></i></button>
+                    <button type="button" class="px-1 py-1" @click=${e => this._editEventSinkProfileClick(e, p)}>
+                      <i class="fas fa-lg fa-edit"></i>
+                    </button>
+                    <button type="button" class="px-1 py-1" @click=${e => this._deleteEventSinkProfileClick(e, p.name)}>
+                      <i class="far fa-lg fa-trash-alt">
+                    </i></button>
                   </div>
                 </div>
               `)
@@ -452,19 +480,31 @@ class EtwAppSideBar extends LitMvvmElement {
                   <div slot="header" class="flex flex-wrap">
                     <label class="font-bold text-xl">${ses.name}</label>
                     <div class="ml-auto">
-                      <button type="button" class="px-1 py-1" @click=${e => this._watchSessionClick(e, ses)}><i class="fas fa-lg fa-eye"></i></button>
-                      <button type="button"  class="px-1 py-1" @click=${e => this._toggleSessionEvents(e, ses)}><i class=${classMap(eventsClasses)}></i></button>
-                      <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._filterSessionClick(e, ses)}><i class="fas fa-filter"></i></button>
-                      <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._closeSessionClick(e, ses)}><i class="far fa-lg fa-trash-alt"></i></button>
+                      <button type="button" class="px-1 py-1" @click=${e => this._watchSessionClick(e, ses)}>
+                        <i class="fas fa-lg fa-eye"></i>
+                      </button>
+                      <button type="button"  class="px-1 py-1" @click=${e => this._toggleSessionEvents(e, ses)}>
+                        <i class=${classMap(eventsClasses)}></i>
+                      </button>
+                      <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._filterSessionClick(e, ses)}>
+                        <i class="fas fa-filter"></i>
+                      </button>
+                      <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._closeSessionClick(e, ses)}>
+                        <i class="far fa-lg fa-trash-alt"></i>
+                      </button>
                     </div>
                   </div>
                   <div slot="content">
                     <div class="flex">
                       <label class="font-bold">${i18n.gettext('Event Sinks')}</label>
-                      <button class="px-1 py-1 ml-auto" @click=${e => this._chooseEventSinkClick(e, ses)} title="Open Event Sink"><i class="fas fa-lg fa-plus"></i></button>
+                      <button class="px-1 py-1 ml-auto" @click=${e => this._chooseEventSinkClick(e, ses)} title="Open Event Sink">
+                        <i class="fas fa-lg fa-plus"></i>
+                      </button>
                     </div>
                     ${ses.state.eventSinks.map(ev => {
-                      const evsType = ev.error ? i18n.gettext('Failed') : (ev.isLocal ? i18n.gettext('Local') : i18n.gettext('External'));
+                      const evsType = ev.error
+                        ? i18n.gettext('Failed')
+                        : (ev.isLocal ? i18n.gettext('Local') : i18n.gettext('External'));
                       const evsColor = ev.error ? 'text-red-500' : (ev.isLocal ? 'text-blue-500' : 'inherited');
                       const evsIcon = ev.isLocal ? 'fa-eye' : 'fa-file-archive ml-1';
                       return html`
@@ -507,7 +547,6 @@ class EtwAppSideBar extends LitMvvmElement {
         <event-sink-config></event-sink-config>
       </dialog>
       <dialog id="dlg-event-sink-chooser" class="${utils.html5DialogSupported ? '' : 'fixed'}">
-        <form>
           <h3 class="mb-3">Open Event Sink</h3>
           <kdsoft-checklist
             id="eventSinkProfileList"
@@ -518,7 +557,6 @@ class EtwAppSideBar extends LitMvvmElement {
             <button type="button" class="py-1 px-2 ml-auto" @click=${this._openEventSinkClick} title="Save"><i class="fas fa-lg fa-check text-green-500"></i></button>
             <button type="button" class="py-1 px-2" @click=${e => e.target.closest('dialog').close()} title="Cancel"><i class="fas fa-lg fa-times text-red-500"></i></button>
           </div>
-        </form>
       </dialog>
     `;
   }
