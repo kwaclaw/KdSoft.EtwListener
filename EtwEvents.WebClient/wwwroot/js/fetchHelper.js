@@ -1,4 +1,3 @@
-
 import { cloneObject, objectToFormData } from './utils.js';
 
 function fetchNormal(url, options) {
@@ -18,7 +17,7 @@ function fetchNormal(url, options) {
         const respError = await response.json();
         Object.assign(error, respError);
       } else {
-        error.title = response.statusText;
+        error.title = response.statusText || `HTTP ${response.status}`;
       }
 
       return Promise.reject(error);
@@ -87,26 +86,22 @@ function buildPostOptions(options, contentType) {
   return opts;
 }
 
-const _route = new WeakMap();
-const _progress = new WeakMap();
-const _fetchCall = new WeakMap();
-
 export default class FetchHelper {
   constructor(route, progress) {
-    _route.set(this, route);
-    _progress.set(this, progress);
+    this._route = route;
+    this._progress = progress;
     if (progress) {
-      _fetchCall.set(this, (url, options) => fetchWithProgress(progress, url, options));
+      this._fetchCall = (url, options) => fetchWithProgress(progress, url, options);
     } else {
-      _fetchCall.set(this, (url, options) => fetchNormal(url, options));
+      this._fetchCall = (url, options) => fetchNormal(url, options);
     }
   }
 
-  get route() { return _route.get(this); }
+  get route() { return this._route; }
 
-  get progress() { return _progress.get(this); }
+  get progress() { return this._progress; }
 
-  get fetchCall() { return _fetchCall.get(this); }
+  get fetchCall() { return this._fetchCall; }
 
   // virtual, override if desired
   handleDefault(error) { }
