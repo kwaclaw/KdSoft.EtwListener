@@ -136,23 +136,6 @@ class TraceSession {
 
   async openEventSink(sinkProfile, progress) {
     try {
-      // const evr = {
-      //   sinkType: 'MongoSink',
-      //   name: 'MongoTest',
-      //   options: {
-      //     origin: 'mongodb://mongodb.mosaiq.mobi:27017,mongodbqa.mosaiq.mobi:27017,mongodbshow3.mosaiq.mobi:27017',
-      //     replicaSet: 'rs0',
-      //     database: 'Dev1',
-      //     collection: 'logs',
-      //     eventFilterFields: ['Timestamp', 'ProviderName', 'Id', 'Level', 'Keywords', 'Opcode', 'TaskName'],
-      //     payloadFilterFields: [],
-      //   },
-      //   credentials: {
-      //     database: 'admin',
-      //     user: 'loggy',
-      //     password: 'chickenshit'
-      //   }
-      // };
       const evr = {
         sinkType: sinkProfile.type,
         name: sinkProfile.name,
@@ -160,6 +143,14 @@ class TraceSession {
         credentials: sinkProfile.definition.credentials
       };
       await this.fetcher.withProgress(progress).postJson('OpenEventSinks', { sessionName: this._profile.name }, [evr]);
+    } catch (error) {
+      window.etwApp.defaultHandleError(error);
+    }
+  }
+
+  async closeEventSink(sinkName, progress) {
+    try {
+      await this.fetcher.withProgress(progress).postJson('CloseEventSinks', { sessionName: this._profile.name }, [sinkName]);
     } catch (error) {
       window.etwApp.defaultHandleError(error);
     }

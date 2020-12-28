@@ -205,12 +205,12 @@ class EtwAppSideBar extends LitMvvmElement {
 
     const dlg = this.renderRoot.getElementById('dlg-event-sink-chooser');
     const openButton = e.currentTarget;
-    model.observer = observe(async () => {
+    model.observer = observe(() => {
       dlg.close();
       const selectedSinkProfile = model.firstSelectedEntry;
       if (selectedSinkProfile && session) {
         const spinner = new Spinner(openButton);
-        await session.openEventSink(selectedSinkProfile, spinner);
+        session.openEventSink(selectedSinkProfile, spinner);
       }
     });
 
@@ -225,16 +225,10 @@ class EtwAppSideBar extends LitMvvmElement {
     dlg.show();
   }
 
-  _openEventSinkClick(e) {
-    const dlg = this.renderRoot.getElementById('dlg-event-sink-chooser');
-    dlg.close();
-    const checklist = this.renderRoot.getElementById('eventSinkProfileList');
-    const selectedSinkProfile = checklist.model.firstSelectedEntry;
-    const session = checklist.model.session;
-    if (selectedSinkProfile && session) {
-      const spinner = new Spinner(e.currentTarget);
-      session.openEventSink(selectedSinkProfile, spinner);
-    }
+  _closeEventSinkClick(e, session, eventSink) {
+    const closeButton = e.currentTarget;
+    const spinner = new Spinner(closeButton);
+    session.closeEventSink(eventSink.name, spinner);
   }
 
   //#endregion
@@ -507,7 +501,7 @@ class EtwAppSideBar extends LitMvvmElement {
                         <i class="fas fa-filter"></i>
                       </button>
                       <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._closeSessionClick(e, ses)}>
-                        <i class="far fa-lg fa-trash-alt"></i>
+                        <i class="fas fa-lg fa-times"></i>
                       </button>
                     </div>
                   </div>
@@ -518,20 +512,27 @@ class EtwAppSideBar extends LitMvvmElement {
                         <i class="fas fa-lg fa-plus"></i>
                       </button>
                     </div>
-                    ${ses.state.eventSinks.map(ev => {
-                      const evsType = ev.error
+                    ${ses.state.eventSinks.map(evs => {
+                      const evsType = evs.error
                         ? i18n.gettext('Failed')
-                        : (ev.isLocal ? i18n.gettext('Local') : i18n.gettext('External'));
-                      const evsColor = ev.error ? 'text-red-500' : (ev.isLocal ? 'text-blue-500' : 'inherited');
-                      const evsIcon = ev.isLocal ? 'fa-eye' : 'fa-file-archive ml-1';
+                        : (evs.isLocal ? i18n.gettext('Local') : i18n.gettext('External'));
+                      const evsColor = evs.error ? 'text-red-500' : (evs.isLocal ? 'text-blue-500' : 'inherited');
+                      const evsIcon = evs.isLocal ? 'fa-eye' : 'fa-file-archive ml-1';
                       return html`
                         <kdsoft-expander class="session-details">
-                          <div slot="header" class="truncate ${evsColor}">
-                            <i class="fas fa-lg ${evsIcon}"></i>${ev.name}
+                          <div slot="header" class="flex flex-wrap items-center">
+                            <label class="truncate ${evsColor}"><i class="fas fa-lg ${evsIcon}"></i>${evs.name}</label>
+                            <div class="ml-auto">
+                              <button type="button"
+                                class="px-1 py-1 text-gray-500"
+                                @click=${e => this._closeEventSinkClick(e, ses, evs)}>
+                                <i class="fas fa-lg fa-times"></i>
+                              </button>
+                            </div>
                           </div>
                           <div slot="content">
                             <div>Type</div><div class="ml-4 ${evsColor}">${evsType}</div>
-                            ${ev.error ? html`<div>Error</div><div class="ml-4">${ev.error}</div>` : nothing}
+                            ${evs.error ? html`<div>Error</div><div class="ml-4">${evs.error}</div>` : nothing}
                           </div>
                         </kdsoft-expander>
                       `;
