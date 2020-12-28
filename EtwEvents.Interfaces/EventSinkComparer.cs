@@ -17,7 +17,7 @@ namespace KdSoft.EtwEvents.Client.Shared
         }
 
         public int GetHashCode([DisallowNull] IEventSink obj) {
-            return obj?.Name?.GetHashCode(StringComparison.Ordinal) ?? 0;
+            return obj.Name?.GetHashCode(StringComparison.Ordinal) ?? 0;
         }
     }
 }

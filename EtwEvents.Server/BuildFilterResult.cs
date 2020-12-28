@@ -7,7 +7,7 @@ namespace KdSoft.EtwLogging
     {
         public BuildFilterResult(ImmutableArray<Diagnostic> diagnostics) : this() {
             foreach (var diag in diagnostics) {
-                LinePositionSpan lineSpan = null;
+                LinePositionSpan? lineSpan = null;
                 if (diag.Location.IsInSource) {
                     var ls = diag.Location.GetLineSpan();
                     lineSpan = new LinePositionSpan {

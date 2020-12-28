@@ -21,12 +21,12 @@ namespace KdSoft.EtwEvents.Server
 {
     class TraceSession: TimedLifeCycleAware, IDisposable
     {
-        object _syncObj = new object();
+        readonly object _syncObj = new object();
 
-        TraceEventSession _instance;
+        TraceEventSession? _instance;
         TraceEventSession Instance => CheckDisposed();
 
-        Lazy<RealTimeTraceEventSource> _realTimeSource;
+        Lazy<RealTimeTraceEventSource>? _realTimeSource;
 
         ImmutableDictionary<string, ProviderSetting> _enabledProviders = ImmutableDictionary<string, ProviderSetting>.Empty;
         public IEnumerable<ProviderSetting> EnabledProviders => _enabledProviders.Values;
@@ -34,7 +34,7 @@ namespace KdSoft.EtwEvents.Server
         public string SessionName => Instance.SessionName;
 
         TraceEventSession CheckDisposed() {
-            var inst = this._instance;
+            var inst = _instance;
             if (inst == null)
                 throw new ObjectDisposedException(nameof(TraceSession));
             return inst;
@@ -77,16 +77,16 @@ namespace KdSoft.EtwEvents.Server
 
         // will be called through life cycle management
         protected override void Close() {
-            var inst = this._instance;
+            var inst = _instance;
             if (inst != null) {
-                this._instance = null;
+                _instance = null;
                 try { inst.Dispose(); }
                 catch { /* ignore */ }
             }
 
-            var rts = this._realTimeSource;
+            var rts = _realTimeSource;
             if (rts != null) {
-                this._realTimeSource = null;
+                _realTimeSource = null;
                 if (rts.IsValueCreated) {
                     try { rts.Value.Source.Dispose(); }
                     catch { /* ignore */ }
@@ -103,7 +103,7 @@ namespace KdSoft.EtwEvents.Server
 
         #region Filters
 
-        const string filterTemplate = @"
+        const string FilterTemplate = @"
 using System;
 using Microsoft.Diagnostics.Tracing;
 
@@ -117,18 +117,18 @@ namespace KdSoft.EtwEvents.Server
     }}
 }}
 ";
-        static Assembly SystemRuntime = Assembly.Load(new AssemblyName("System.Runtime"));
-        static Assembly NetStandard20 = Assembly.Load("netstandard, Version=2.0.0.0");
+        static readonly Assembly SystemRuntime = Assembly.Load(new AssemblyName("System.Runtime"));
+        static readonly Assembly NetStandard20 = Assembly.Load("netstandard, Version=2.0.0.0");
 
-        CollectibleAssemblyLoadContext filterContext;
-        IEventFilter filter;
-        public IEventFilter GetFilter() {
+        CollectibleAssemblyLoadContext? filterContext;
+        IEventFilter? filter;
+        public IEventFilter? GetFilter() {
             lock (_syncObj) {
                 return filter;
             }
         }
 
-        void SetFilter(IEventFilter newFilter, CollectibleAssemblyLoadContext newFilterContext) {
+        void SetFilter(IEventFilter? newFilter, CollectibleAssemblyLoadContext? newFilterContext) {
             lock (_syncObj) {
                 filter = null;
                 filterContext?.Unload();
@@ -144,12 +144,12 @@ namespace KdSoft.EtwEvents.Server
 
         bool filterChanged;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool CheckFilterChanged(ref IEventFilter currentFilter) {
+        public bool CheckFilterChanged(ref IEventFilter? currentFilter) {
             bool result = filterChanged;
             if (result) {
                 filterChanged = false;
                 lock (_syncObj) {
-                    currentFilter = this.filter;
+                    currentFilter = filter;
                 }
             }
             return result;
@@ -197,7 +197,7 @@ namespace KdSoft.EtwEvents.Server
 
             var filterType = typeof(IEventFilter);
             var filterClass = filterAssembly.ExportedTypes.Where(tp => tp.IsClass && filterType.IsAssignableFrom(tp)).First();
-            var newFilter = (IEventFilter)Activator.CreateInstance(filterClass);
+            var newFilter = (IEventFilter?)Activator.CreateInstance(filterClass);
 
             SetFilter(newFilter, newFilterContext);
 
@@ -205,7 +205,7 @@ namespace KdSoft.EtwEvents.Server
         }
 
         public static CSharpCompilation CompileFilter(string filterBody) {
-            var sourceCode = string.Format(CultureInfo.InvariantCulture,  filterTemplate, filterBody);
+            var sourceCode = string.Format(CultureInfo.InvariantCulture,  FilterTemplate, filterBody);
             var sourceText = SourceText.From(sourceCode);
             var options = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest);
 
@@ -234,13 +234,13 @@ namespace KdSoft.EtwEvents.Server
 
         RealTimeTraceEventSource CreateRealTimeSource(
            Func<tracing.TraceEvent, Task> postEvent,
-           TaskCompletionSource<object> tcs,
+           TaskCompletionSource<object?> tcs,
            CancellationToken cancelToken
         ) {
             return new RealTimeTraceEventSource(this, postEvent, tcs, cancelToken);
         }
 
-        public RealTimeTraceEventSource StartEvents(Func<tracing.TraceEvent, Task> postEvent, TaskCompletionSource<object> tcs, CancellationToken cancelToken) {
+        public RealTimeTraceEventSource StartEvents(Func<tracing.TraceEvent, Task> postEvent, TaskCompletionSource<object?> tcs, CancellationToken cancelToken) {
             var newRtsLazy = new Lazy<RealTimeTraceEventSource>(() => CreateRealTimeSource(postEvent, tcs, cancelToken), false);
             var oldRtsLazy = Interlocked.Exchange(ref _realTimeSource, newRtsLazy);
 

@@ -88,9 +88,9 @@ namespace KdSoft.EtwEvents.Server
             int postCount = 0;
             var writeOptions = new WriteOptions(WriteFlags.NoCompress | WriteFlags.BufferHint);
             var flushWriteOptions = new WriteOptions(WriteFlags.NoCompress);
-            var emtpyEvent = new EtwEvent();
+            EtwEvent emtpyEvent = new EtwEvent();
 
-            Timer timer = null;
+            Timer timer;
 
             Task postEvent(tracing.TraceEvent evt) {
                 if (context.CancellationToken.IsCancellationRequested)
@@ -117,7 +117,7 @@ namespace KdSoft.EtwEvents.Server
             }
 
             // we will flush buffered events if the last Write operation was too long ago
-            TimerCallback timerCallback = async (object state) => {
+            async void timerCallback(object? state) {
                 if (context.CancellationToken.IsCancellationRequested)
                     return;
 
@@ -134,7 +134,7 @@ namespace KdSoft.EtwEvents.Server
                 }
             };
 
-            var tcs = new TaskCompletionSource<object>();
+            var tcs = new TaskCompletionSource<object?>();
             var session = GetSession(request.SessionName);
 
             using (timer = new Timer(timerCallback)) {

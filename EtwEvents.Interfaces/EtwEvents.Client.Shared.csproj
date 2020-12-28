@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
+    <LangVersion>Latest</LangVersion>
+    <Nullable>enable</Nullable>
     <RootNamespace>KdSoft.EtwEvents.Client.Shared</RootNamespace>
     <AssemblyName>KdSoft.EtwEvents.Client.Shared</AssemblyName>
     <LangVersion>8.0</LangVersion>

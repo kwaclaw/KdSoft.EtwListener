@@ -4,7 +4,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <!--<AspNetCoreHostingModel>OutOfProcess</AspNetCoreHostingModel>-->
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
-    <LangVersion>8.0</LangVersion>
+    <LangVersion>Latest</LangVersion>
     <Nullable>enable</Nullable>
     <AssemblyName>KdSoft.EtwEvents.WebClient</AssemblyName>
     <RootNamespace>KdSoft.EtwEvents.WebClient</RootNamespace>

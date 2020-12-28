@@ -7,7 +7,7 @@ namespace KdSoft.EtwEvents.Server
     {
         public CollectibleAssemblyLoadContext() : base(isCollectible: true) { }
 
-        protected override Assembly Load(AssemblyName assemblyName) {
+        protected override Assembly? Load(AssemblyName assemblyName) {
             return null;
         }
     }

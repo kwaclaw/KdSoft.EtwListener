@@ -14,14 +14,14 @@ namespace KdSoft.EtwEvents.Server
         public RealTimeTraceEventSource(
             TraceSession session,
             Func<TraceEvent, Task> postEvent,
-            TaskCompletionSource<object> tcs,
+            TaskCompletionSource<object?> tcs,
             CancellationToken cancelToken
         ) {
             var filter = session.GetFilter();
 
             Source = new ETWTraceEventSource(session.SessionName, TraceEventSourceType.Session);
 
-            Action<TraceEvent> handleEvent = async (TraceEvent evt) => {
+            async void handleEvent(TraceEvent evt) {
                 if (cancelToken.IsCancellationRequested) {
                     Source.StopProcessing(); // cannot continue once we have stopped
                     tcs.TrySetResult(null);
@@ -34,15 +34,16 @@ namespace KdSoft.EtwEvents.Server
                 if (filter == null || filter.IncludeEvent(evt)) {
                     await postEvent(evt).ConfigureAwait(false);
                 }
-            };
+            }
+
             Source.Dynamic.All += handleEvent;
 
-            Action handleCompleted = () => tcs.TrySetResult(null);
+            void handleCompleted() => tcs.TrySetResult(null);
             Source.Completed += handleCompleted;
 
             // this cannot be called multiple times in real time mode
             ProcessTask = Task.Run(Source.Process).ContinueWith(t => {
-                Debug.WriteLine(t.Exception.ToString());
+                Debug.WriteLine(t.Exception?.ToString() ?? $"Error in {session.SessionName}");
             }, TaskContinuationOptions.OnlyOnFaulted);
         }
 

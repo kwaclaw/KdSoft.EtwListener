@@ -8,7 +8,7 @@ namespace KdSoft.EtwEvents.Server
 {
     public class AuthInterceptor: Interceptor
     {
-        ISet<string> _authorizedNames;
+        readonly ISet<string> _authorizedNames;
 
         public AuthInterceptor(ISet<string> authorizedNames) {
             this._authorizedNames = authorizedNames;
@@ -34,7 +34,7 @@ namespace KdSoft.EtwEvents.Server
 
         public override Task<TResponse> UnaryServerHandler<TRequest, TResponse>(TRequest request, ServerCallContext context, UnaryServerMethod<TRequest, TResponse> continuation) {
             CheckAuthorized(context);
-            return continuation?.Invoke(request, context);
+            return continuation.Invoke(request, context);
         }
 
         public override Task ServerStreamingServerHandler<TRequest, TResponse>(TRequest request, IServerStreamWriter<TResponse> responseStream, ServerCallContext context, ServerStreamingServerMethod<TRequest, TResponse> continuation) {
