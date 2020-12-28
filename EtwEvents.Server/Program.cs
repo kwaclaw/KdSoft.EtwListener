@@ -31,6 +31,8 @@ namespace KdSoft.EtwEvents.Server
                             opts.ClientCertificateMode = ClientCertificateMode.RequireCertificate;
                             opts.ClientCertificateValidation = (cert, chain, errors) => {
                                 var thumbprint = context.Configuration["ClientValidation:RootCertificateThumbprint"];
+                                if (string.IsNullOrEmpty(thumbprint))
+                                    return true;
                                 foreach (var chainElement in chain.ChainElements) {
                                     if (chainElement.Certificate.Thumbprint.ToUpperInvariant() == thumbprint.ToUpperInvariant())
                                         return true;
