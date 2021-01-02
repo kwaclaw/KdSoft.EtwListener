@@ -5,6 +5,7 @@ using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using KdSoft.EtwLogging;
 using Microsoft.Diagnostics.Tracing.Session;
+using Microsoft.Extensions.Logging;
 using tracing = Microsoft.Diagnostics.Tracing;
 
 namespace KdSoft.EtwEvents.Server
@@ -12,10 +13,14 @@ namespace KdSoft.EtwEvents.Server
     class EtwListenerService: EtwListener.EtwListenerBase
     {
         readonly TraceSessionManager sesManager;
+        readonly ILoggerFactory loggerFactory;
+        readonly ILogger<RealTimeTraceEventSource> eventLogger;
         static readonly Task<Empty> emptyTask = Task.FromResult(new Empty());
 
-        public EtwListenerService(TraceSessionManager sesManager) {
+        public EtwListenerService(TraceSessionManager sesManager, ILoggerFactory loggerFactory) {
             this.sesManager = sesManager;
+            this.loggerFactory = loggerFactory;
+            this.eventLogger = loggerFactory.CreateLogger<RealTimeTraceEventSource>();
         }
 
         TraceSession GetSession(string name) {
@@ -28,7 +33,7 @@ namespace KdSoft.EtwEvents.Server
 
         public override Task<EnableProvidersResult> OpenSession(OpenEtwSession request, ServerCallContext context) {
             var result = new EnableProvidersResult();
-            var session = sesManager.GetOrAdd(request.Name, n => new TraceSession(n, request.LifeTime.ToTimeSpan(), request.TryAttach));
+            var session = sesManager.GetOrAdd(request.Name, n => new TraceSession(n, request.LifeTime.ToTimeSpan(), loggerFactory, request.TryAttach));
             session.GetLifeCycle().Used();
 
             if (session.IsCreated) {  // can only enable providers when new session was created
@@ -129,8 +134,11 @@ namespace KdSoft.EtwEvents.Server
                     await responseStream.WriteAsync(emtpyEvent).ConfigureAwait(false);
                 }
                 // sometimes a WriteAsync is underway when IsCancellationRequested becomes true
-                catch (InvalidOperationException) {
-                    //
+                //catch (InvalidOperationException) {
+                //    //
+                //}
+                catch (Exception ex) {
+                    eventLogger.LogError(ex, $"Error in {nameof(timerCallback)}");
                 }
             };
 

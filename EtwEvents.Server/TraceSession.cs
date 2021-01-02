@@ -15,6 +15,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.Diagnostics.Tracing.Session;
+using Microsoft.Extensions.Logging;
 using tracing = Microsoft.Diagnostics.Tracing;
 
 namespace KdSoft.EtwEvents.Server
@@ -22,6 +23,7 @@ namespace KdSoft.EtwEvents.Server
     class TraceSession: TimedLifeCycleAware, IDisposable
     {
         readonly object _syncObj = new object();
+        readonly ILoggerFactory _loggerFactory;
 
         TraceEventSession? _instance;
         TraceEventSession Instance => CheckDisposed();
@@ -40,7 +42,9 @@ namespace KdSoft.EtwEvents.Server
             return inst;
         }
 
-        public TraceSession(string name, TimeSpan lifeSpan, bool tryAttach = false) : base(lifeSpan) {
+        public TraceSession(string name, TimeSpan lifeSpan, ILoggerFactory loggerFactory, bool tryAttach = false) : base(lifeSpan) {
+            _loggerFactory = loggerFactory;
+
             IsCreated = true;
             if (tryAttach) {
                 try {
