@@ -152,7 +152,7 @@ namespace KdSoft.EtwEvents.WebClient
             var result = new T {
                 Name = Name ?? string.Empty,
                 Host = Host,
-                IsRunning = _eventsTask.IsCompleted && etwSession.IsStarted && !etwSession.IsStopped,
+                IsRunning = !_eventsTask.IsCompleted && etwSession.IsStarted && !etwSession.IsStopped,
                 IsStopped = etwSession.IsStopped,
                 EnabledProviders = etwSession.EnabledProviders.ToImmutableList()
             };
@@ -278,7 +278,8 @@ namespace KdSoft.EtwEvents.WebClient
                 _logger.LogError(ex, _.GetString("Close Session error"));
             }
             finally {
-                await DisposeAsync().ConfigureAwait(false);
+                // DisposeAsync() would call StopEvents after the remote session is closed!
+                Dispose();
             }
         }
 
