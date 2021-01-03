@@ -69,7 +69,7 @@ class TraceSession {
       } catch (error) {
         window.etwApp.defaultHandleError(error);
       }
-    } else {
+    } else if (!this.state.isStopped) {
       try {
         await this.fetcher.withProgress(progress).get('StartEvents', { sessionName: this._profile.name });
       } catch (error) {

@@ -146,8 +146,15 @@ namespace KdSoft.EtwEvents.WebClient
         public async Task<IActionResult> StartEvents(string sessionName) {
             if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
                 var traceSession = await sessionEntry.SessionTask.ConfigureAwait(false);
-                var eventSessionTask = traceSession.StartEvents(_optionsMonitor);
+                var errorMsg = traceSession.StartEvents(_optionsMonitor);
                 await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
+                if (errorMsg != null) {
+                    return Problem(
+                        title: _.GetString("Cannot start session"),
+                        instance: nameof(StartEvents),
+                        detail: errorMsg
+                    );
+                }
 
                 // If this is a WebSocket request we add a WebSocket sink
                 if (HttpContext.WebSockets.IsWebSocketRequest) {
@@ -184,6 +191,11 @@ namespace KdSoft.EtwEvents.WebClient
             }
         }
 
+        /// <summary>
+        /// Stops events from being delivered.
+        /// Since we cannot restart events in a real time session, this API is of limited usefulness.
+        /// We can achieve the same result by simply calling CloseRemoteSession().
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> StopEvents(string sessionName) {
             if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {

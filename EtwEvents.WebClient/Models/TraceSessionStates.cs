@@ -8,6 +8,7 @@ namespace KdSoft.EtwEvents.WebClient.Models
         public string Name { get; set; } = string.Empty;
         public string Host { get; set; } = string.Empty;
         public bool IsRunning { get; set; }
+        public bool IsStopped { get; set; }
         public IImmutableList<ProviderSetting> EnabledProviders { get; set; } = ImmutableList<ProviderSetting>.Empty;
         public ImmutableArray<EventSinkState> EventSinks { get; set; }
     }

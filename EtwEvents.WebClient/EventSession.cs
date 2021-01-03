@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Options;
@@ -98,14 +99,9 @@ namespace KdSoft.EtwEvents.WebClient
             }
         }
 
-        public async Task<bool> Run(CancellationToken cancelToken) {
-            var oldStarted = Interlocked.CompareExchange(ref _started, 1, 0);
-            if (oldStarted == 1)
-                return false;
-
+        async Task RunInternal(CancellationToken cancelToken) {
             try {
                 await ProcessResponseStream(cancelToken).ConfigureAwait(false);
-                return true;
             }
             catch {
                 Interlocked.Exchange(ref _started, 0);
@@ -117,12 +113,29 @@ namespace KdSoft.EtwEvents.WebClient
             }
         }
 
+        public bool Run(CancellationToken cancelToken, out Task eventsTask) {
+            var oldStarted = Interlocked.CompareExchange(ref _started, 1, 0);
+            if (oldStarted == 1) {
+                eventsTask = Task.CompletedTask;
+                return false;
+            }
+            eventsTask = RunInternal(cancelToken);
+            return true;
+        }
+
         public async Task<bool> Stop() {
             var oldStopped = Interlocked.CompareExchange(ref _stopped, 1, 0);
             if (oldStopped == 1)
                 return false;
 
-            await DisposeAsync().ConfigureAwait(false);
+            try {
+                // not strictly necessary but help with triggering session state notifications!
+                await _etwClient.StopEventsAsync(new StringValue { Value = _etwRequest.SessionName });
+            }
+            finally {
+                // this does not always trigger ServerCallContext.CancellationToken right away!
+                await DisposeAsync().ConfigureAwait(false);
+            }
             return true;
         }
 

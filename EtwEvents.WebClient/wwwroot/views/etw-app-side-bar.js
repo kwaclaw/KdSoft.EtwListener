@@ -25,7 +25,8 @@ import etwAppStyleLinks from '../styles/etw-app-style-links.js';
 const runBtnBase = { fas: true };
 
 const classList = {
-  startBtn: { ...runBtnBase, 'fa-play': true, 'text-green-500': true },
+  startBtnActive: { ...runBtnBase, 'fa-play': true, 'text-green-500': true },
+  startBtnInactive: { ...runBtnBase, 'fa-play': true },
   stopBtn: { ...runBtnBase, 'fa-stop': true, 'text-red-500': true },
 };
 
@@ -485,7 +486,9 @@ class EtwAppSideBar extends LitMvvmElement {
           </div>
           <div slot="content">
             ${traceSessionList.map(ses => {
-              const eventsClasses = ses.state.isRunning ? classList.stopBtn : classList.startBtn;
+              const eventsClasses = ses.state.isRunning
+                ? classList.stopBtn
+                : ses.state.isStopped ? classList.startBtnInactive : classList.startBtnActive;
               return html`
                 <kdsoft-expander>
                   <div slot="header" class="flex flex-wrap">
