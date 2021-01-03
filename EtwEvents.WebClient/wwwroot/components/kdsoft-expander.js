@@ -3,12 +3,21 @@ import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 
-function toggleExpansion(element, doExpand) {
+function updateExpansion(element, doExpand) {
   // get the height of the element's inner content, regardless of its actual size
   const height = element.scrollHeight;
   const style = element.style;
 
+  const oldHeight = style.height;
   style.height = doExpand ? '0px' : `${height}px`;
+
+  // when expanding to the new height of '0px', then the 'transitionend' event would not be
+  // triggered as there would not a change in height, so we run the code directly, no transiton needed
+  if (doExpand && oldHeight === style.height) {
+    style.height = null;
+    style.transition = null;
+    return;
+  }
 
   // on the next frame (as soon as the previous style change has taken effect), explicitly set
   // the element's height to its current pixel height, so we aren't transitioning out of 'auto'
@@ -28,7 +37,6 @@ function toggleExpansion(element, doExpand) {
     });
   });
 }
-
 
 class KdSoftExpander extends LitMvvmElement {
   constructor() {
@@ -50,7 +58,7 @@ class KdSoftExpander extends LitMvvmElement {
     if (name === 'aria-expanded') {
       const children = this.renderRoot.getElementById('content-slot');
       if (!children) return;
-      toggleExpansion(children, newValue !== null);
+      updateExpansion(children, newValue !== null);
     }
     super.attributeChangedCallback(name, oldValue, newValue);
   }
