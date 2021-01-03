@@ -81,8 +81,10 @@ namespace KdSoft.EtwEvents.WebClient
                     var evt = responseStream.Current;
 
                     // ignore empty messages
-                    if (evt.TimeStamp == null)
+                    if (evt.TimeStamp == null) {
+                        await _changeNotifier.PostNotification().ConfigureAwait(false);
                         continue;
+                    }
 
                     if (!await _jobQueue.SendAsync((evt, sequenceNo)).ConfigureAwait(false))
                         break;
