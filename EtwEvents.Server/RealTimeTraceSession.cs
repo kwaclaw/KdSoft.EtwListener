@@ -161,11 +161,11 @@ namespace KdSoft.EtwEvents.Server
             _logger.LogInformation($"{nameof(RealTimeTraceSession)} '{SessionName}' has started.");
 
             processTask.ContinueWith(t => {
-                if (t.IsFaulted)
-                    _logger.LogError(t.Exception, $"Error in {nameof(RealTimeTraceSession)} '{SessionName}'.");
                 Interlocked.MemoryBarrier();
                 _isStopped = 1;
                 Interlocked.MemoryBarrier();
+                if (t.IsFaulted)
+                    _logger.LogError(t.Exception, $"Error in {nameof(RealTimeTraceSession)} '{SessionName}'.");
             }, TaskContinuationOptions.ExecuteSynchronously);
 
             return processTask;

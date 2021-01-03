@@ -29,12 +29,13 @@ namespace KdSoft.EtwEvents.WebClient
         EventSession? _eventSession;
         CancellationTokenSource? _eventCts;
         EtwSession _etwSession;
+        Task _eventsTask = Task.CompletedTask;
 
         public const int StopTimeoutMilliseconds = 3000;
         public string Name { get; }
         public string Host => $"https://{_channel.Target}";
         public EventSinkHolder EventSinks { get; }
-        public Task EventStream { get; private set; } = Task.CompletedTask;
+        public Task EventsTask => _eventsTask;
 
         #region Construction
 
@@ -151,7 +152,7 @@ namespace KdSoft.EtwEvents.WebClient
             var result = new T {
                 Name = Name ?? string.Empty,
                 Host = Host,
-                IsRunning = !EventStream.IsCompleted && etwSession.IsStarted && !etwSession.IsStopped,
+                IsRunning = _eventsTask.IsCompleted && etwSession.IsStarted && !etwSession.IsStopped,
                 IsStopped = etwSession.IsStopped,
                 EnabledProviders = etwSession.EnabledProviders.ToImmutableList()
             };
@@ -228,7 +229,8 @@ namespace KdSoft.EtwEvents.WebClient
 
         public string? StartEvents(IOptionsMonitor<Models.EventSessionOptions> optionsMonitor) {
             var result = StartEventsInternal(optionsMonitor, out var eventsTask);
-            this.EventStream = eventsTask;
+            this._eventsTask = eventsTask;
+            eventsTask.ContinueWith(t => PostSessionStateChange());
             return result;
         }
 
