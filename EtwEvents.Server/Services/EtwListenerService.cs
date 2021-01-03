@@ -12,19 +12,19 @@ namespace KdSoft.EtwEvents.Server
 {
     class EtwListenerService: EtwListener.EtwListenerBase
     {
-        readonly TraceSessionManager sesManager;
-        readonly ILoggerFactory loggerFactory;
-        readonly ILogger<RealTimeTraceEventSource> eventLogger;
-        static readonly Task<Empty> emptyTask = Task.FromResult(new Empty());
+        readonly TraceSessionManager _sesManager;
+        readonly ILoggerFactory _loggerFactory;
+        readonly ILogger<EtwListenerService> _logger;
+        static readonly Task<Empty> _emptyTask = Task.FromResult(new Empty());
 
         public EtwListenerService(TraceSessionManager sesManager, ILoggerFactory loggerFactory) {
-            this.sesManager = sesManager;
-            this.loggerFactory = loggerFactory;
-            this.eventLogger = loggerFactory.CreateLogger<RealTimeTraceEventSource>();
+            this._sesManager = sesManager;
+            this._loggerFactory = loggerFactory;
+            this._logger = loggerFactory.CreateLogger<EtwListenerService>();
         }
 
-        TraceSession GetSession(string name) {
-            if (sesManager.TryGetValue(name, out var session)) {
+        RealTimeTraceSession GetSession(string name) {
+            if (_sesManager.TryGetValue(name, out var session)) {
                 session.GetLifeCycle().Used();
                 return session;
             }
@@ -33,7 +33,13 @@ namespace KdSoft.EtwEvents.Server
 
         public override Task<EnableProvidersResult> OpenSession(OpenEtwSession request, ServerCallContext context) {
             var result = new EnableProvidersResult();
-            var session = sesManager.GetOrAdd(request.Name, n => new TraceSession(n, request.LifeTime.ToTimeSpan(), loggerFactory, request.TryAttach));
+            var session = _sesManager.GetOrAdd(
+                request.Name,
+                name => {
+                    var logger = _loggerFactory.CreateLogger<RealTimeTraceSession>();
+                    return new RealTimeTraceSession(name, request.LifeTime.ToTimeSpan(), logger, request.TryAttach);
+                }
+            );
             session.GetLifeCycle().Used();
 
             if (session.IsCreated) {  // can only enable providers when new session was created
@@ -50,7 +56,7 @@ namespace KdSoft.EtwEvents.Server
             var session = GetSession(request.Name);
             session.StopEvents();
             session.GetLifeCycle().Terminate();
-            return emptyTask;
+            return _emptyTask;
         }
 
         public override Task<EnableProvidersResult> EnableProviders(EnableProvidersRequest request, ServerCallContext context) {
@@ -68,7 +74,7 @@ namespace KdSoft.EtwEvents.Server
             foreach (var provider in request.ProviderNames) {
                 session.DisableProvider(provider);
             }
-            return emptyTask;
+            return _emptyTask;
         }
 
         public override Task<SessionNamesResult> GetActiveSessionNames(Empty request, ServerCallContext context) {
@@ -81,7 +87,9 @@ namespace KdSoft.EtwEvents.Server
             var session = GetSession(request.Value);
             var result = new EtwSession {
                 SessionName = request.Value,
-                IsCreated = session.IsCreated
+                IsCreated = session.IsCreated,
+                IsStarted = session.IsStarted,
+                IsStopped = session.IsStopped
             };
             result.EnabledProviders.AddRange(session.EnabledProviders);
 
@@ -100,25 +108,19 @@ namespace KdSoft.EtwEvents.Server
             Task postEvent(tracing.TraceEvent evt) {
                 if (context.CancellationToken.IsCancellationRequested)
                     return Task.CompletedTask;
-                try {
-                    if (postCount > 100) {
-                        responseStream.WriteOptions = flushWriteOptions;
-                        postCount = 0;
-                    }
-                    else {
-                        postCount += 1;
-                        responseStream.WriteOptions = writeOptions;
-                    }
-
-                    // change just before the call, so timer won't execute concurrently with this call
-                    timer.Change(300, Timeout.Infinite);
-
-                    return responseStream.WriteAsync(new EtwEvent(evt));
+                if (postCount > 100) {
+                    responseStream.WriteOptions = flushWriteOptions;
+                    postCount = 0;
                 }
-                // sometimes a WriteAsync is underway when IsCancellationRequested becomes true
-                catch (InvalidOperationException) {
-                    return Task.CompletedTask;
+                else {
+                    postCount += 1;
+                    responseStream.WriteOptions = writeOptions;
                 }
+
+                // change just before the call, so timer won't execute concurrently with this call
+                timer.Change(300, Timeout.Infinite);
+
+                return responseStream.WriteAsync(new EtwEvent(evt));
             }
 
             // we will flush buffered events if the last Write operation was too long ago
@@ -138,18 +140,14 @@ namespace KdSoft.EtwEvents.Server
                 //    //
                 //}
                 catch (Exception ex) {
-                    eventLogger.LogError(ex, $"Error in {nameof(timerCallback)}");
+                    _logger.LogError(ex, $"Error in {nameof(timerCallback)}");
                 }
             };
 
-            var tcs = new TaskCompletionSource<object?>();
             var session = GetSession(request.SessionName);
 
             using (timer = new Timer(timerCallback)) {
-                // need to keep realTimeSource alive until tcs.Task completes
-                using (var realTimeSource = session.StartEvents(postEvent, tcs, context.CancellationToken)) {
-                    await tcs.Task.ConfigureAwait(false);
-                }
+                await session.StartEvents(postEvent, context.CancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -161,7 +159,7 @@ namespace KdSoft.EtwEvents.Server
         }
 
         public override Task<BuildFilterResult> TestCSharpFilter(TestFilterRequest request, ServerCallContext context) {
-            var diagnostics = TraceSession.TestFilter(request.CsharpFilter);
+            var diagnostics = RealTimeTraceSession.TestFilter(request.CsharpFilter);
             var result = new BuildFilterResult(diagnostics);
             return Task.FromResult(result);
         }

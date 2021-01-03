@@ -14,36 +14,38 @@ using KdSoft.Utils;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
+using Microsoft.Diagnostics.Tracing;
 using Microsoft.Diagnostics.Tracing.Session;
 using Microsoft.Extensions.Logging;
 using tracing = Microsoft.Diagnostics.Tracing;
 
 namespace KdSoft.EtwEvents.Server
 {
-    class TraceSession: TimedLifeCycleAware, IDisposable
-    {
+    class RealTimeTraceSession: TimedLifeCycleAware, IDisposable {
         readonly object _syncObj = new object();
-        readonly ILoggerFactory _loggerFactory;
+        readonly ILogger<RealTimeTraceSession> _logger;
 
         TraceEventSession? _instance;
         TraceEventSession Instance => CheckDisposed();
-
-        Lazy<RealTimeTraceEventSource>? _realTimeSource;
 
         ImmutableDictionary<string, ProviderSetting> _enabledProviders = ImmutableDictionary<string, ProviderSetting>.Empty;
         public IEnumerable<ProviderSetting> EnabledProviders => _enabledProviders.Values;
 
         public string SessionName => Instance.SessionName;
 
+        //public ETWTraceEventSource Source => Instance.Source;
+
+        #region Construction
+
         TraceEventSession CheckDisposed() {
             var inst = _instance;
             if (inst == null)
-                throw new ObjectDisposedException(nameof(TraceSession));
+                throw new ObjectDisposedException(nameof(RealTimeTraceSession));
             return inst;
         }
 
-        public TraceSession(string name, TimeSpan lifeSpan, ILoggerFactory loggerFactory, bool tryAttach = false) : base(lifeSpan) {
-            _loggerFactory = loggerFactory;
+        public RealTimeTraceSession(string name, TimeSpan lifeSpan, ILogger<RealTimeTraceSession> logger, bool tryAttach = false) : base(lifeSpan) {
+            _logger = logger;
 
             IsCreated = true;
             if (tryAttach) {
@@ -68,6 +70,112 @@ namespace KdSoft.EtwEvents.Server
 
         public bool IsCreated { get; private set; }
 
+        // will be called through life cycle management
+        protected override void Close() {
+            var inst = _instance;
+            if (inst != null) {
+                _instance = null;
+                try { inst.Dispose(); }
+                catch { /* ignore */ }
+            }
+
+            SetFilter(null, null);
+        }
+
+        // not necessary to call explicitly as life cycle management already does it
+        public void Dispose() {
+            Close();
+        }
+
+        #endregion
+
+        #region Events
+
+        int _isStarted;
+        /// <summary>
+        /// Once started, IsStarted will always be true, as a real time session cannot be restarted.
+        /// </summary>
+        public bool IsStarted {
+            get {
+                Interlocked.MemoryBarrier();
+                var result = _isStarted != 0;
+                Interlocked.MemoryBarrier();
+                return result;
+            }
+        }
+
+        int _isStopped;
+        /// <summary>
+        /// Once stopped, IsStopped will always be true, as a real time session cannot be restarted.
+        /// </summary>
+        public bool IsStopped {
+            get {
+                Interlocked.MemoryBarrier();
+                var result = _isStopped != 0;
+                Interlocked.MemoryBarrier();
+                return result;
+            }
+        }
+
+        public Task<bool> StartEvents(Func<tracing.TraceEvent, Task> postEvent, CancellationToken cancelToken) {
+            CheckDisposed();
+
+            int alreadyStarted = Interlocked.CompareExchange(ref _isStarted, 1, 0);
+            if (alreadyStarted != 0) {
+                throw new InvalidOperationException("A real time trace event session cannot be re-started!");
+            }
+
+            var filter = GetFilter();
+            async void handleEvent(TraceEvent evt) {
+                try {
+                    if (cancelToken.IsCancellationRequested) {
+                        Instance.Source.Dispose();
+                        return;
+                    }
+                    if (TplActivities.TplEventSourceGuid.Equals(evt.ProviderGuid))
+                        return;
+
+                    CheckFilterChanged(ref filter);
+                    if (filter == null || filter.IncludeEvent(evt)) {
+                        await postEvent(evt).ConfigureAwait(false);
+                    }
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, $"Error in {nameof(handleEvent)}");
+                }
+
+            }
+            Instance.Source.Dynamic.All += handleEvent;
+
+            void handleCompleted() {
+                _logger.LogInformation($"{nameof(RealTimeTraceSession)} '{SessionName}' has finished.");
+            }
+            Instance.Source.Completed += handleCompleted;
+
+            // this cannot be called multiple times for a given real-time session;
+            // once stopped we will need to close and re-open the TraceSession to continue
+            var processTask = Task.Run<bool>(Instance.Source.Process);
+            _logger.LogInformation($"{nameof(RealTimeTraceSession)} '{SessionName}' has started.");
+
+            processTask.ContinueWith(t => {
+                _logger.LogError(t.Exception, $"Error in {nameof(RealTimeTraceSession)} '{SessionName}'.");
+            }, TaskContinuationOptions.OnlyOnFaulted);
+
+            return processTask;
+        }
+
+        /// <summary>
+        /// Stops trace session from delivering events.
+        /// A real time trace session cannot be restarted after that, so this API is not really useful.
+        /// </summary>
+        public void StopEvents() {
+            Instance.Flush();
+            Instance.Stop();
+            Interlocked.MemoryBarrier();
+            _isStopped = 1;
+            Interlocked.MemoryBarrier();
+        }
+
         public bool EnableProvider(ProviderSetting setting) {
             var result = Instance.EnableProvider(setting.Name, (tracing.TraceEventLevel)setting.Level, setting.MatchKeywords);
             _enabledProviders = _enabledProviders.SetItem(setting.Name, setting);
@@ -79,31 +187,7 @@ namespace KdSoft.EtwEvents.Server
             _enabledProviders = _enabledProviders.Remove(provider);
         }
 
-        // will be called through life cycle management
-        protected override void Close() {
-            var inst = _instance;
-            if (inst != null) {
-                _instance = null;
-                try { inst.Dispose(); }
-                catch { /* ignore */ }
-            }
-
-            var rts = _realTimeSource;
-            if (rts != null) {
-                _realTimeSource = null;
-                if (rts.IsValueCreated) {
-                    try { rts.Value.Source.Dispose(); }
-                    catch { /* ignore */ }
-                }
-            }
-
-            SetFilter(null, null);
-        }
-
-        // not necessary to call explicitly as life cycle management already does it
-        public void Dispose() {
-            Close();
-        }
+        #endregion
 
         #region Filters
 
@@ -142,21 +226,21 @@ namespace KdSoft.EtwEvents.Server
                     filterContext = newFilterContext;
                 }
 
-                filterChanged = true;
+                Interlocked.Exchange(ref filterChanged, 1);
             }
         }
 
-        bool filterChanged;
+        int filterChanged;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool CheckFilterChanged(ref IEventFilter? currentFilter) {
-            bool result = filterChanged;
-            if (result) {
-                filterChanged = false;
+            var currentFilterChanged = Interlocked.CompareExchange(ref filterChanged, 0, 1);
+            if (currentFilterChanged == 1) {
                 lock (_syncObj) {
                     currentFilter = filter;
                 }
+                return true;
             }
-            return result;
+            return false;
         }
 
         public static ImmutableArray<Diagnostic> GenerateFilter(string filterBody, MemoryStream ms) {
@@ -182,6 +266,8 @@ namespace KdSoft.EtwEvents.Server
         }
 
         public ImmutableArray<Diagnostic> SetFilter(string filterBody) {
+            CheckDisposed();
+
             if (string.IsNullOrWhiteSpace(filterBody)) {
                 SetFilter(null, null);
             }
@@ -235,33 +321,6 @@ namespace KdSoft.EtwEvents.Server
         }
 
         #endregion
-
-        RealTimeTraceEventSource CreateRealTimeSource(
-           Func<tracing.TraceEvent, Task> postEvent,
-           TaskCompletionSource<object?> tcs,
-           CancellationToken cancelToken
-        ) {
-            return new RealTimeTraceEventSource(this, postEvent, tcs, cancelToken);
-        }
-
-        public RealTimeTraceEventSource StartEvents(Func<tracing.TraceEvent, Task> postEvent, TaskCompletionSource<object?> tcs, CancellationToken cancelToken) {
-            var newRtsLazy = new Lazy<RealTimeTraceEventSource>(() => CreateRealTimeSource(postEvent, tcs, cancelToken), false);
-            var oldRtsLazy = Interlocked.Exchange(ref _realTimeSource, newRtsLazy);
-
-            if (oldRtsLazy?.IsValueCreated ?? false) {
-                oldRtsLazy.Value.Dispose();
-            }
-
-            return newRtsLazy.Value;
-        }
-
-        public void StopEvents() {
-            Instance.Flush();
-            var rtsLazy = Interlocked.Exchange(ref _realTimeSource, null);
-            if (rtsLazy?.IsValueCreated ?? false) {
-                rtsLazy.Value.Stop();
-            }
-        }
     }
 
     public static class TplActivities

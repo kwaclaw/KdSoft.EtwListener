@@ -85,7 +85,9 @@ message EtwEvent {
 message EtwSession {
     string session_name = 1;
     bool is_created = 2;
-    repeated ProviderSetting enabled_providers = 3;
+    bool is_started = 3;
+    bool is_stopped = 4;
+    repeated ProviderSetting enabled_providers = 5;
 }
 
 message SetFilterRequest {
