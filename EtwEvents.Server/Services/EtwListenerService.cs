@@ -151,6 +151,12 @@ namespace KdSoft.EtwEvents.Server
             }
         }
 
+        public override Task<Empty> StopEvents(StringValue request, ServerCallContext context) {
+            var session = GetSession(request.Value);
+            session.StopEvents();
+            return _emptyTask;
+        }
+
         public override Task<BuildFilterResult> SetCSharpFilter(SetFilterRequest request, ServerCallContext context) {
             var session = GetSession(request.SessionName);
             var diagnostics = session.SetFilter(request.CsharpFilter);

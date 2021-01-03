@@ -148,6 +148,9 @@ namespace KdSoft.EtwEvents.Server
             Instance.Source.Dynamic.All += handleEvent;
 
             void handleCompleted() {
+                Interlocked.MemoryBarrier();
+                _isStopped = 1;
+                Interlocked.MemoryBarrier();
                 _logger.LogInformation($"{nameof(RealTimeTraceSession)} '{SessionName}' has finished.");
             }
             Instance.Source.Completed += handleCompleted;
@@ -158,8 +161,12 @@ namespace KdSoft.EtwEvents.Server
             _logger.LogInformation($"{nameof(RealTimeTraceSession)} '{SessionName}' has started.");
 
             processTask.ContinueWith(t => {
-                _logger.LogError(t.Exception, $"Error in {nameof(RealTimeTraceSession)} '{SessionName}'.");
-            }, TaskContinuationOptions.OnlyOnFaulted);
+                if (t.IsFaulted)
+                    _logger.LogError(t.Exception, $"Error in {nameof(RealTimeTraceSession)} '{SessionName}'.");
+                Interlocked.MemoryBarrier();
+                _isStopped = 1;
+                Interlocked.MemoryBarrier();
+            }, TaskContinuationOptions.ExecuteSynchronously);
 
             return processTask;
         }

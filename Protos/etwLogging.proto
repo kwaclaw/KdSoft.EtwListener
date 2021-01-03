@@ -17,6 +17,7 @@ service EtwListener {
   rpc EnableProviders (EnableProvidersRequest) returns (EnableProvidersResult);
   rpc DisableProviders (DisableProvidersRequest) returns (google.protobuf.Empty);
   rpc GetEvents (EtwEventRequest) returns (stream EtwEvent);
+  rpc StopEvents (google.protobuf.StringValue) returns (google.protobuf.Empty);
   rpc SetCSharpFilter(SetFilterRequest) returns (BuildFilterResult);
   rpc TestCSharpFilter(TestFilterRequest) returns (BuildFilterResult);
 }
