@@ -35,7 +35,7 @@ node_modules/
 wwwroot/css/
 wwwroot/lib
 
-*/publish/
+*/deploy/publish/
 out/
 dev/
 

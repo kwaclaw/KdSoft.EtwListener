@@ -17,6 +17,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Update="deploy/**/*">
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Google.Protobuf" Version="3.14.0" />
     <PackageReference Include="Grpc.Tools" Version="2.34.0" PrivateAssets="All" />
     <PackageReference Include="Grpc.AspNetCore.Server" Version="2.34.0" />
@@ -24,7 +31,7 @@
     <PackageReference Include="KdSoft.Utils.Portable" Version="3.6.3" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Certificate" Version="5.0.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.8.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="5.0.1">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="5.0.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

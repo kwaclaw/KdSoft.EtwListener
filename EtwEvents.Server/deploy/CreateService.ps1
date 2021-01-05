@@ -1,4 +1,6 @@
 ﻿param(
+    [Parameter(mandatory=$true)][String]$sourceDir,
+    [Parameter(mandatory=$true)][String]$targetDir,
     [Parameter(mandatory=$true)][String]$file,
     [Parameter(mandatory=$true)][String]$user,
     [String]$pwd
@@ -8,11 +10,10 @@ $serviceName = "EtwListener"
 $serviceDescription = "Forwards ETW Events"
 $serviceDisplayName = "Etw Listener"
 
-$filepath = [System.IO.Path]::GetFullPath($file)
-$dirpath = [System.IO.Path]::GetDirectoryName($filepath)
+$sourceDirPath = [System.IO.Path]::GetFullPath($sourceDir)
+$targetDirPath = [System.IO.Path]::GetFullPath($targetDir)
 
-
-# if password is empty, create a dummy one to allow have credentials for system accounts: 
+# if password is empty, create a dummy one to allow credentials for system accounts: 
 #NT AUTHORITY\LOCAL SERVICE
 #NT AUTHORITY\NETWORK SERVICE
 if ($pwd -eq "") {
@@ -26,11 +27,11 @@ $cred = New-Object System.Management.Automation.PSCredential ($user, $secpwd)
 
 #LocalSystem already has all kinds of permissions
 if ($cred.UserName -notlike '*\LocalSystem') {
-    $acl = Get-Acl "$dirpath"
+    $acl = Get-Acl "$targetDirPath"
     #$aclRuleArgs = $cred, "Read,Write,ReadAndExecute", "ContainerInherit,ObjectInherit", "None", "Allow"
     $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($user, "Read,Write,ReadAndExecute", "ContainerInherit,ObjectInherit", "None", "Allow")
     $acl.SetAccessRule($accessRule)
-    $acl | Set-Acl "$dirpath"
+    $acl | Set-Acl "$targetDirPath"
 }
 
 
@@ -45,6 +46,28 @@ if ($existingService) {
   "Waiting 5 seconds to allow service to be uninstalled."
   Start-Sleep -s 5  
 }
+  
+echo "Install Directory: $targetDirPath"
+
+# delete target bin directory
+$binPath = [System.IO.Path]::Combine($targetDirPath, "bin")
+Remove-Item $binPath -Recurse -ErrorAction SilentlyContinue
+
+# copy local appsettings file to target directory if it does not exist already
+$localSettingsPath = [System.IO.Path]::Combine($targetDirPath, "appsettings.Local.json") 
+if (!(test-path $localSettingsPath)) {
+  #make sure target directory exists
+  New-Item -ItemType "directory" -Path $targetDirPath
+  $sourceSettingsPath = [System.IO.Path]::Combine($sourceDirPath, "appsettings.Local.json")
+  Copy-Item $sourceSettingsPath -Destination $targetDirPath -ErrorAction SilentlyContinue
+}
+
+#copy source publish directory to target bin directory
+$sourceBinPath = [System.IO.Path]::Combine($sourceDirPath, "publish") 
+Copy-Item $sourceBinPath $binPath -Recurse
+
+#path of service binary executable
+$filepath = [System.IO.Path]::Combine($binPath, $file)
 
 "Installing the service."
 New-Service -Name $serviceName -BinaryPathName $filepath -Credential $cred -Description $serviceDescription -DisplayName $serviceDisplayName -StartupType Automatic 

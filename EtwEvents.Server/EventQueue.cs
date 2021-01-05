@@ -50,7 +50,7 @@ namespace KdSoft.EtwEvents.Server
                     _responseStream.WriteOptions = flushWriteOptions;
                     var batch = new EtwEventBatch();
                     batch.Events.AddRange(etwEvents);
-                    timer.Change(3000, Timeout.Infinite);
+                    timer.Change(1000, Timeout.Infinite);
                     await _responseStream.WriteAsync(batch).ConfigureAwait(false);
                 }
             }
@@ -60,7 +60,7 @@ namespace KdSoft.EtwEvents.Server
             Task processTask;
             using (var timer = new Timer(TimerCallback)) {
                 processTask = ProcessBatches(timer);
-                timer.Change(300, Timeout.Infinite);
+                timer.Change(1000, Timeout.Infinite);
                 await session.StartEvents(PostEvent, _context.CancellationToken).ConfigureAwait(false);
             }
             await _block.Completion.ConfigureAwait(false);

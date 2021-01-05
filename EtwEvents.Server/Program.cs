@@ -4,6 +4,8 @@ using System.IO;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Diagnostics.Tracing.Session;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -38,6 +40,11 @@ namespace KdSoft.EtwEvents.Server
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration((hostingContext, config) => {
+                    var env = hostingContext.HostingEnvironment;
+                    var provider = new PhysicalFileProvider(Path.Combine(env.ContentRootPath, ".."));
+                    config.AddJsonFile(provider, "appsettings.Local.json", optional: true, reloadOnChange: true);
+                })
                 .ConfigureLogging((context, loggingBuilder) => {
                     var loggingSection = context.Configuration.GetSection("Logging");
                     // fix up log file path to become a template for date-based log files
