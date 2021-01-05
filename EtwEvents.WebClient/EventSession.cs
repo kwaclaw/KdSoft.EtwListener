@@ -19,7 +19,7 @@ namespace KdSoft.EtwEvents.WebClient
         readonly IDisposable _pushFrequencyMonitor;
         readonly ActionBlock<(EtwEvent?, long)> _jobQueue;
 
-        AsyncServerStreamingCall<EtwEvent>? _streamingCall;
+        AsyncServerStreamingCall<EtwEventBatch>? _streamingCall;
         int _pushFrequencyMillisecs;
 
         int _started = 0;
@@ -78,18 +78,25 @@ namespace KdSoft.EtwEvents.WebClient
                     if (_stopped != 0 || _streamingCall == null)
                         break;
 
-                    var evt = responseStream.Current;
+                    var evtBatch = responseStream.Current;
+                    bool posted = true;
+                    foreach (var evt in evtBatch.Events) {
+                        // ignore empty messages
+                        if (evt.TimeStamp == null) {
+                            await _changeNotifier.PostNotification().ConfigureAwait(false);
+                            continue;
+                        }
 
-                    // ignore empty messages
-                    if (evt.TimeStamp == null) {
-                        await _changeNotifier.PostNotification().ConfigureAwait(false);
-                        continue;
+                        //posted = _jobQueue.Post((evt, sequenceNo));
+                        posted = await _jobQueue.SendAsync((evt, sequenceNo)).ConfigureAwait(false);
+                        if (!posted)
+                            break;
+
+                        sequenceNo += 1;
                     }
-
-                    if (!await _jobQueue.SendAsync((evt, sequenceNo)).ConfigureAwait(false))
+                    if (!posted)
                         break;
 
-                    sequenceNo += 1;
                 }
             }
             catch (RpcException rex) when (rex.StatusCode == StatusCode.Cancelled) {

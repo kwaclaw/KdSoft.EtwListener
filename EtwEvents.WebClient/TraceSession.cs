@@ -230,7 +230,11 @@ namespace KdSoft.EtwEvents.WebClient
         public string? StartEvents(IOptionsMonitor<Models.EventSessionOptions> optionsMonitor) {
             var result = StartEventsInternal(optionsMonitor, out var eventsTask);
             this._eventsTask = eventsTask;
-            eventsTask.ContinueWith(t => PostSessionStateChange());
+            eventsTask.ContinueWith(t => {
+                if (t.IsFaulted)
+                    _logger.LogError(t.Exception, $"Error in {nameof(eventsTask)}");
+                PostSessionStateChange();
+            });
             return result;
         }
 

@@ -117,7 +117,7 @@ namespace KdSoft.EtwEvents.Server
             }
         }
 
-        public Task<bool> StartEvents(Func<tracing.TraceEvent, Task> postEvent, CancellationToken cancelToken) {
+        public Task<bool> StartEvents(Action<tracing.TraceEvent> postEvent, CancellationToken cancelToken) {
             CheckDisposed();
 
             int alreadyStarted = Interlocked.CompareExchange(ref _isStarted, 1, 0);
@@ -126,7 +126,7 @@ namespace KdSoft.EtwEvents.Server
             }
 
             var filter = GetFilter();
-            async void handleEvent(TraceEvent evt) {
+            void handleEvent(TraceEvent evt) {
                 try {
                     if (cancelToken.IsCancellationRequested) {
                         Instance.Source.Dispose();
@@ -137,7 +137,7 @@ namespace KdSoft.EtwEvents.Server
 
                     CheckFilterChanged(ref filter);
                     if (filter == null || filter.IncludeEvent(evt)) {
-                        await postEvent(evt).ConfigureAwait(false);
+                        postEvent(evt);
                     }
                 }
                 catch (Exception ex) {

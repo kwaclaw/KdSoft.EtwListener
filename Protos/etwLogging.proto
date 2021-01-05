@@ -16,7 +16,7 @@ service EtwListener {
   rpc GetSession (google.protobuf.StringValue) returns (EtwSession);
   rpc EnableProviders (EnableProvidersRequest) returns (EnableProvidersResult);
   rpc DisableProviders (DisableProvidersRequest) returns (google.protobuf.Empty);
-  rpc GetEvents (EtwEventRequest) returns (stream EtwEvent);
+  rpc GetEvents (EtwEventRequest) returns (stream EtwEventBatch);
   rpc StopEvents (google.protobuf.StringValue) returns (google.protobuf.Empty);
   rpc SetCSharpFilter(SetFilterRequest) returns (BuildFilterResult);
   rpc TestCSharpFilter(TestFilterRequest) returns (BuildFilterResult);
@@ -81,6 +81,10 @@ message EtwEvent {
   google.protobuf.Timestamp time_stamp = 10;
   string formatted_message = 11;
   map<string, string> payload = 12;
+}
+
+message EtwEventBatch {
+    repeated EtwEvent events = 1;
 }
 
 message EtwSession {

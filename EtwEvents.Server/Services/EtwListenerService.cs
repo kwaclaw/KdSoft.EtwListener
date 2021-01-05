@@ -1,12 +1,9 @@
-using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using KdSoft.EtwLogging;
 using Microsoft.Diagnostics.Tracing.Session;
 using Microsoft.Extensions.Logging;
-using tracing = Microsoft.Diagnostics.Tracing;
 
 namespace KdSoft.EtwEvents.Server
 {
@@ -96,59 +93,11 @@ namespace KdSoft.EtwEvents.Server
             return Task.FromResult(result);
         }
 
-        public override async Task GetEvents(EtwEventRequest request, IServerStreamWriter<EtwEvent> responseStream, ServerCallContext context) {
-            // Need to queue events so that we can turn off WriteFlags.BufferHint when we want to flush
-            int postCount = 0;
-            var writeOptions = new WriteOptions(WriteFlags.NoCompress | WriteFlags.BufferHint);
-            var flushWriteOptions = new WriteOptions(WriteFlags.NoCompress);
-            EtwEvent emtpyEvent = new EtwEvent();
-
-            Timer timer;
-
-            Task postEvent(tracing.TraceEvent evt) {
-                if (context.CancellationToken.IsCancellationRequested)
-                    return Task.CompletedTask;
-                if (postCount > 100) {
-                    responseStream.WriteOptions = flushWriteOptions;
-                    postCount = 0;
-                }
-                else {
-                    postCount += 1;
-                    responseStream.WriteOptions = writeOptions;
-                }
-
-                // change just before the call, so timer won't execute concurrently with this call
-                timer.Change(300, Timeout.Infinite);
-
-                return responseStream.WriteAsync(new EtwEvent(evt));
-            }
-
-            // we will flush buffered events if the last Write operation was too long ago
-            async void timerCallback(object? state) {
-                if (context.CancellationToken.IsCancellationRequested)
-                    return;
-
-                postCount = 0;
-                responseStream.WriteOptions = flushWriteOptions;
-
-                try {
-                    // the empty event should be filtered out by the receiver
-                    await responseStream.WriteAsync(emtpyEvent).ConfigureAwait(false);
-                }
-                // sometimes a WriteAsync is underway when IsCancellationRequested becomes true
-                //catch (InvalidOperationException) {
-                //    //
-                //}
-                catch (Exception ex) {
-                    _logger.LogError(ex, $"Error in {nameof(timerCallback)}");
-                }
-            };
-
+        public override async Task GetEvents(EtwEventRequest request, IServerStreamWriter<EtwEventBatch> responseStream, ServerCallContext context) {
+            var logger = _loggerFactory.CreateLogger<EventQueue>();
+            var eventQueue = new EventQueue(responseStream, context, logger);
             var session = GetSession(request.SessionName);
-
-            using (timer = new Timer(timerCallback)) {
-                await session.StartEvents(postEvent, context.CancellationToken).ConfigureAwait(false);
-            }
+            await eventQueue.Process(session).ConfigureAwait(false);
         }
 
         public override Task<Empty> StopEvents(StringValue request, ServerCallContext context) {
