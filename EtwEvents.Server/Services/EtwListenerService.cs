@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
@@ -97,7 +98,12 @@ namespace KdSoft.EtwEvents.Server
             var logger = _loggerFactory.CreateLogger<EventQueue>();
             var eventQueue = new EventQueue(responseStream, context, logger);
             var session = GetSession(request.SessionName);
-            await eventQueue.Process(session).ConfigureAwait(false);
+            try {
+                await eventQueue.Process(session).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) {
+                // ignore closing of connection
+            }
         }
 
         public override Task<Empty> StopEvents(StringValue request, ServerCallContext context) {
