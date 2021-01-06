@@ -149,11 +149,12 @@ namespace KdSoft.EtwEvents.WebClient
             var etwSession = _etwSession;
             Interlocked.MemoryBarrier();
 
+            var isCompleted = _eventsTask.IsCompleted;
             var result = new T {
                 Name = Name ?? string.Empty,
                 Host = Host,
-                IsRunning = !_eventsTask.IsCompleted && etwSession.IsStarted && !etwSession.IsStopped,
-                IsStopped = etwSession.IsStopped,
+                IsRunning = !isCompleted && etwSession.IsStarted && !etwSession.IsStopped,
+                IsStopped = (isCompleted && etwSession.IsStarted) || etwSession.IsStopped,
                 EnabledProviders = etwSession.EnabledProviders.ToImmutableList()
             };
 
