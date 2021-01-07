@@ -22,7 +22,6 @@ using tracing = Microsoft.Diagnostics.Tracing;
 namespace KdSoft.EtwEvents.Server
 {
     class RealTimeTraceSession: TimedLifeCycleAware, IDisposable {
-        readonly object _syncObj = new object();
         readonly ILogger<RealTimeTraceSession> _logger;
 
         TraceEventSession? _instance;
@@ -79,7 +78,7 @@ namespace KdSoft.EtwEvents.Server
                 catch { /* ignore */ }
             }
 
-            SetFilter(null, null);
+            SetFilterHolder(null);
         }
 
         // not necessary to call explicitly as life cycle management already does it
@@ -125,7 +124,7 @@ namespace KdSoft.EtwEvents.Server
                 throw new InvalidOperationException("A real time trace event session cannot be re-started!");
             }
 
-            var filter = GetFilter();
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             void handleEvent(TraceEvent evt) {
                 try {
                     if (cancelToken.IsCancellationRequested) {
@@ -135,7 +134,7 @@ namespace KdSoft.EtwEvents.Server
                     if (TplActivities.TplEventSourceGuid.Equals(evt.ProviderGuid))
                         return;
 
-                    CheckFilterChanged(ref filter);
+                    var filter = GetCurrentFilter();
                     if (filter == null || filter.IncludeEvent(evt)) {
                         postEvent(evt);
                     }
@@ -143,7 +142,6 @@ namespace KdSoft.EtwEvents.Server
                 catch (Exception ex) {
                     _logger.LogError(ex, $"Error in {nameof(handleEvent)}");
                 }
-
             }
             Instance.Source.Dynamic.All += handleEvent;
 
@@ -215,39 +213,27 @@ namespace KdSoft.EtwEvents.Server
         static readonly Assembly SystemRuntime = Assembly.Load(new AssemblyName("System.Runtime"));
         static readonly Assembly NetStandard20 = Assembly.Load("netstandard, Version=2.0.0.0");
 
-        CollectibleAssemblyLoadContext? filterContext;
-        IEventFilter? filter;
-        public IEventFilter? GetFilter() {
-            lock (_syncObj) {
-                return filter;
+        class FilterHolder
+        {
+            public FilterHolder(IEventFilter filter, CollectibleAssemblyLoadContext loadContext) {
+                this.Filter = filter;
+                this.LoadContext = loadContext;
             }
+            public readonly IEventFilter Filter;
+            public readonly CollectibleAssemblyLoadContext LoadContext;
         }
 
-        void SetFilter(IEventFilter? newFilter, CollectibleAssemblyLoadContext? newFilterContext) {
-            lock (_syncObj) {
-                filter = null;
-                filterContext?.Unload();
-
-                if (newFilter != null) {
-                    filter = newFilter;
-                    filterContext = newFilterContext;
-                }
-
-                Interlocked.Exchange(ref filterChanged, 1);
-            }
-        }
-
-        int filterChanged;
+        FilterHolder? _filterHolder;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool CheckFilterChanged(ref IEventFilter? currentFilter) {
-            var currentFilterChanged = Interlocked.CompareExchange(ref filterChanged, 0, 1);
-            if (currentFilterChanged == 1) {
-                lock (_syncObj) {
-                    currentFilter = filter;
-                }
-                return true;
-            }
-            return false;
+        void SetFilterHolder(FilterHolder? holder) {
+            var oldFilterHolder = Interlocked.Exchange(ref _filterHolder, holder);
+            oldFilterHolder?.LoadContext.Unload();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public IEventFilter? GetCurrentFilter() {
+            var filterHolder = _filterHolder;
+            return filterHolder?.Filter;
         }
 
         public static ImmutableArray<Diagnostic> GenerateFilter(string filterBody, MemoryStream ms) {
@@ -276,7 +262,7 @@ namespace KdSoft.EtwEvents.Server
             CheckDisposed();
 
             if (string.IsNullOrWhiteSpace(filterBody)) {
-                SetFilter(null, null);
+                SetFilterHolder(null);
             }
 
             Assembly filterAssembly;
@@ -296,7 +282,7 @@ namespace KdSoft.EtwEvents.Server
             var filterClass = filterAssembly.ExportedTypes.Where(tp => tp.IsClass && filterType.IsAssignableFrom(tp)).First();
             var newFilter = (IEventFilter?)Activator.CreateInstance(filterClass);
 
-            SetFilter(newFilter, newFilterContext);
+            SetFilterHolder(new FilterHolder(newFilter!, newFilterContext));
 
             return ImmutableArray<Diagnostic>.Empty;
         }
