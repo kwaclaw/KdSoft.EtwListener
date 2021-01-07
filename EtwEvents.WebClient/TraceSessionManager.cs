@@ -5,9 +5,7 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using Google.Protobuf.WellKnownTypes;
 using KdSoft.EtwEvents.WebClient.Models;
-using KdSoft.EtwLogging;
 using KdSoft.Utils;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
@@ -43,21 +41,14 @@ namespace KdSoft.EtwEvents.WebClient
         /// <returns></returns>
         /// <remarks>When session was opened for first time, restartedProviders can be empty but not null.
         /// In other words, when restartedProviders is null, then the session was already open.</remarks>
-        public Task<Models.OpenSessionState> OpenSession(
-            string name,
-            string host,
-            X509Certificate2 clientCertificate,
-            IReadOnlyList<ProviderSetting> providers,
-            Duration lifeTime
-        ) {
+        public Task<Models.OpenSessionState> OpenSession(TraceSessionRequest request, X509Certificate2 clientCertificate ) {
             Task<(TraceSession traceSession, IImmutableList<string> restartedProviders)>? createTask = null;
 
             // NOTE: the value factory might be executed multiple times with this overload of GetOrAdd,
             //       if this is a problem then we need to use Lazy<T> instead.
-            var entry = this.GetOrAdd(name, sessionName => {
+            var entry = this.GetOrAdd(request.Name, sessionName => {
                 var sessionLogger = _loggerFactory.CreateLogger<TraceSession>();
-                createTask = TraceSession.Create(
-                    sessionName, host, clientCertificate, providers, lifeTime, sessionLogger, _changeNotifier, _localizer);
+                createTask = TraceSession.Create(request, clientCertificate, sessionLogger, _changeNotifier, _localizer);
 
                 var checkedTask = createTask.ContinueWith<TraceSession>(ct => {
                     if (!ct.IsCompletedSuccessfully) {
@@ -70,7 +61,7 @@ namespace KdSoft.EtwEvents.WebClient
                     return ct.Result.traceSession;
                 }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
 
-                return new TraceSessionEntry(checkedTask, lifeTime.ToTimeSpan());
+                return new TraceSessionEntry(checkedTask, request.LifeTime);
             });
 
             // return OpenSessionState if we just created a new Session

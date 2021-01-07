@@ -18,5 +18,9 @@ namespace KdSoft.EtwEvents.WebClient.Models
 
         [Required]
         public TimeSpan LifeTime { get; set; }
+
+        public int BatchSize { get; set; } = 100;
+
+        public TimeSpan MaxWriteDelay { get; set; } = TimeSpan.FromMilliseconds(300);
     }
 }

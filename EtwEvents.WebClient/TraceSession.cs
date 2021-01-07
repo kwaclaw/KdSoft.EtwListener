@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Net.Http;
@@ -19,6 +18,8 @@ namespace KdSoft.EtwEvents.WebClient
     {
         static ProviderSetting _nullProvider = new ProviderSetting();
 
+        readonly int _batchSize;
+        readonly Duration _maxWriteDelay;
         readonly GrpcChannel _channel;
         readonly EtwListener.EtwListenerClient _etwClient;
         readonly ILogger<TraceSession> _logger;
@@ -42,6 +43,8 @@ namespace KdSoft.EtwEvents.WebClient
         TraceSession(
             string name,
             ImmutableList<ProviderSetting> enabledProviders,
+            int batchSize,
+            Duration maxWriteDelay,
             GrpcChannel channel,
             EtwListener.EtwListenerClient etwClient,
             ILogger<TraceSession> logger,
@@ -49,6 +52,8 @@ namespace KdSoft.EtwEvents.WebClient
             IStringLocalizer<TraceSession> localizer
         ) {
             this.Name = name;
+            this._batchSize = batchSize;
+            this._maxWriteDelay = maxWriteDelay;
             this._etwSession = new EtwSession();
             this._etwSession.EnabledProviders.AddRange(enabledProviders);
             _channel = channel;
@@ -72,31 +77,28 @@ namespace KdSoft.EtwEvents.WebClient
         }
 
         public static async Task<(TraceSession traceSession, IImmutableList<string> restartedProviders)> Create(
-            string name,
-            string host,
+            Models.TraceSessionRequest request,
             X509Certificate2 clientCertificate,
-            IReadOnlyList<ProviderSetting> providers,
-            Duration lifeTime,
             ILogger<TraceSession> logger,
             AggregatingNotifier<Models.TraceSessionStates> changeNotifier,
             IStringLocalizer<TraceSession> localizer
         ) {
-            var channel = CreateChannel(host, clientCertificate);
+            var channel = CreateChannel(request.Host, clientCertificate);
 
             try {
                 var client = new EtwListener.EtwListenerClient(channel);
 
                 var openEtwSession = new OpenEtwSession {
-                    Name = name,
-                    LifeTime = lifeTime,
+                    Name = request.Name,
+                    LifeTime = request.LifeTime.ToDuration(),
                     TryAttach = false,
                 };
-                openEtwSession.ProviderSettings.AddRange(providers);
+                openEtwSession.ProviderSettings.AddRange(request.Providers);
 
                 var reply = await client.OpenSessionAsync(openEtwSession);
 
                 var matchingProviders = reply.Results.Select(r =>
-                    providers.FirstOrDefault(s => string.Equals(s.Name, r.Name, StringComparison.CurrentCultureIgnoreCase))
+                    request.Providers.FirstOrDefault(s => string.Equals(s.Name, r.Name, StringComparison.CurrentCultureIgnoreCase))
                     ??
                     _nullProvider
                 );
@@ -104,7 +106,17 @@ namespace KdSoft.EtwEvents.WebClient
 
                 var restartedProviders = reply.Results.Where(r => r.Restarted).Select(r => r.Name).ToImmutableList();
 
-                var traceSession = new TraceSession(name, enabledProviders, channel, client, logger, changeNotifier, localizer);
+                var traceSession = new TraceSession(
+                    request.Name,
+                    enabledProviders,
+                    request.BatchSize,
+                    request.MaxWriteDelay.ToDuration(),
+                    channel,
+                    client,
+                    logger,
+                    changeNotifier,
+                    localizer
+                );
                 return (traceSession, restartedProviders);
             }
             catch {
@@ -198,7 +210,9 @@ namespace KdSoft.EtwEvents.WebClient
             eventsTask = Task.CompletedTask;
 
             var etwRequest = new EtwEventRequest {
-                SessionName = this.Name
+                SessionName = this.Name,
+                BatchSize = this._batchSize,
+                MaxWriteDelay = this._maxWriteDelay
             };
 
             EventSession eventSession;

@@ -6,7 +6,6 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Google.Protobuf.WellKnownTypes;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwEvents.WebClient.EventSinks;
 using Microsoft.AspNetCore.Authorization;
@@ -81,9 +80,7 @@ namespace KdSoft.EtwEvents.WebClient
                     detail: _.GetString("Cannot find matching client certificate")
                 );
 
-            var openSessionState = await _sessionManager.OpenSession(
-                request.Name, request.Host, clientCertificate, request.Providers, request.LifeTime.ToDuration()
-            ).ConfigureAwait(false);
+            var openSessionState = await _sessionManager.OpenSession(request, clientCertificate).ConfigureAwait(false);
 
             return Ok(openSessionState);
         }
