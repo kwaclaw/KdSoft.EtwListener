@@ -96,10 +96,10 @@ namespace KdSoft.EtwEvents.Server
 
         public override async Task GetEvents(EtwEventRequest request, IServerStreamWriter<EtwEventBatch> responseStream, ServerCallContext context) {
             var logger = _loggerFactory.CreateLogger<EventQueue>();
-            var eventQueue = new EventQueue(responseStream, context, logger);
+            var eventQueue = new EventQueue(responseStream, context, logger, request.BatchSize);
             var session = GetSession(request.SessionName);
             try {
-                await eventQueue.Process(session).ConfigureAwait(false);
+                await eventQueue.Process(session, request.MaxWriteDelay.ToTimeSpan()).ConfigureAwait(false);
             }
             catch (OperationCanceledException) {
                 // ignore closing of connection

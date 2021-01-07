@@ -66,6 +66,8 @@ message DisableProvidersRequest {
 
 message EtwEventRequest {
     string session_name = 1;
+    int32 batch_size = 2;
+    google.protobuf.Duration max_write_delay = 3;
 }
 
 message EtwEvent {

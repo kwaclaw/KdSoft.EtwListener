@@ -224,7 +224,6 @@ namespace KdSoft.EtwEvents.Server
         }
 
         FilterHolder? _filterHolder;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void SetFilterHolder(FilterHolder? holder) {
             var oldFilterHolder = Interlocked.Exchange(ref _filterHolder, holder);
             oldFilterHolder?.LoadContext.Unload();

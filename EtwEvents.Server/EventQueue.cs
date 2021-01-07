@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Grpc.Core;
@@ -16,11 +17,17 @@ namespace KdSoft.EtwEvents.Server
         readonly ILogger<EventQueue> _logger;
         readonly EtwEvent _emtpyEvent = new EtwEvent();
 
-        public EventQueue(IServerStreamWriter<EtwEventBatch> responseStream, ServerCallContext context, ILogger<EventQueue> logger) {
+        public EventQueue(
+            IServerStreamWriter<EtwEventBatch> responseStream,
+            ServerCallContext context,
+            ILogger<EventQueue> logger,
+            int batchSize = 100
+        ) {
             this._logger = logger;
-            this._block = new BatchBlock<EtwEvent>(100, new GroupingDataflowBlockOptions {
+            this._block = new BatchBlock<EtwEvent>(batchSize, new GroupingDataflowBlockOptions {
                 CancellationToken = context.CancellationToken,
                 EnsureOrdered = true,
+                 
             });
             this._responseStream = responseStream;
             this._context = context;
@@ -40,7 +47,7 @@ namespace KdSoft.EtwEvents.Server
             _block.TriggerBatch();
         }
 
-        async Task ProcessBatches(Timer timer) {
+        async Task ProcessBatches(Timer timer, TimeSpan maxWriteDelay) {
             var writeOptions = new WriteOptions(WriteFlags.NoCompress | WriteFlags.BufferHint);
             var flushWriteOptions = new WriteOptions(WriteFlags.NoCompress);
 
@@ -50,17 +57,17 @@ namespace KdSoft.EtwEvents.Server
                     _responseStream.WriteOptions = flushWriteOptions;
                     var batch = new EtwEventBatch();
                     batch.Events.AddRange(etwEvents);
-                    timer.Change(1000, Timeout.Infinite);
                     await _responseStream.WriteAsync(batch).ConfigureAwait(false);
                 }
+                timer.Change(maxWriteDelay, Timeout.InfiniteTimeSpan);
             }
         }
 
-        public async Task Process(RealTimeTraceSession session) {
+        public async Task Process(RealTimeTraceSession session, TimeSpan maxWriteDelay) {
             Task processTask;
             using (var timer = new Timer(TimerCallback)) {
-                processTask = ProcessBatches(timer);
-                timer.Change(1000, Timeout.Infinite);
+                processTask = ProcessBatches(timer, maxWriteDelay);
+                timer.Change(maxWriteDelay, Timeout.InfiniteTimeSpan);
                 await session.StartEvents(PostEvent, _context.CancellationToken).ConfigureAwait(false);
             }
             await _block.Completion.ConfigureAwait(false);
