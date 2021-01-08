@@ -1,3 +1,5 @@
+/* eslint guard-for-in: "off" */
+
 import { cloneObject, objectToFormData } from './utils.js';
 
 function fetchNormal(url, options) {
@@ -48,6 +50,7 @@ function fetchWithProgress(progress, url, options) {
   );
 }
 
+// tries to convert response string to response's content type (if text or JSON)
 function unpackTextResponse(response) {
   const contentType = response.headers.get('Content-Type');
   if (!contentType) return response;
@@ -66,8 +69,38 @@ const defaultOptions = {
   headers: { 'X-Requested-With': 'XMLHttpRequest' }
 };
 
+// builds URLSearchParams instance suitable for url encoding;
+// arrays will be appended as multiple parameters with the same key, useful for query strings
+// nested objects, and functions will be skipped;
+// we also skip null and undefined properties, because URLSearchParams would encode them as "null" or "undefined";
+function urlEncode(obj) {
+  const result = new URLSearchParams();
+  for (const prop in obj) {
+    // Use getOwnPropertyDescriptor instead of params[prop] to prevent from triggering setter/getter.
+    const descriptor = Object.getOwnPropertyDescriptor(obj, prop);
+    const val = descriptor.value;
+    // "variable == null" tests for both, null and undefined, because (null == undefined) is true!, but (null === undefined) is false
+    if (val == null) {
+      // skip
+    } else if (val instanceof String) {
+      result.append(prop, val);
+    } else if (val instanceof Array) {
+      for (let i = 0; i < val.length; i += 1) {
+        result.append(prop, val[i]);
+      }
+    } else if (val instanceof Function) {
+      // skip
+    } else if (val instanceof Object) {
+      //skip
+    } else {
+      result.append(prop, val);
+    }
+  }
+  return result;
+}
+
 function buildUrl(route, url, params) {
-  return params ? `${route}/${url}?${new URLSearchParams(params)}` : `${route}/${url}`;
+  return params ? `${route}/${url}?${urlEncode(params)}` : `${route}/${url}`;
 }
 
 function buildGetOptions(options, acceptType) {
@@ -106,24 +139,33 @@ export default class FetchHelper {
   // virtual, override if desired
   handleDefault(error) { }
 
-  // can be used to return a clone of the current instance with the overriddent value of useProgress, override in subclass
+  // can be used to return a clone of the current instance with the overriddent value of progress, override in subclass
   withProgress(progress) {
     if (this.progress === progress) return this;
     return new FetchHelper(this.route, progress);
   }
 
-  // generic GET, params must be an object
+  // generic GET
+  // params: query string parameters, must be an object with simple or array property values, nested objects are not supported
+  // options: fetch options - see note above class declaration
+  // returns promise
   get(url, params, options) {
     return this.fetchCall(buildUrl(this.route, url, params), buildGetOptions(options)).then(unpackTextResponse);
   }
 
-  // params must be an object, returns promise resolving to string
+  // GETs a string
+  // params: query string parameters, must be an object with simple or array property values, nested objects are not supported
+  // options: fetch options - see note above class declaration
+  // returns promise resolving to string
   getText(url, params, options) {
     options = buildGetOptions(options, 'text/plain');
     return this.fetchCall(buildUrl(this.route, url, params), options).then(response => response.text());
   }
 
-  // params must be an object, returns promise resolving to JSON object
+  // GETs a JSON object
+  // params: query string parameters, must be an object with simple or array property values, nested objects are not supported
+  // options: fetch options - see note above class declaration
+  // returns promise resolving to JSON object
   getJson(url, params, options) {
     options = buildGetOptions(options, 'application/json');
     return this.fetchCall(buildUrl(this.route, url, params), options)
@@ -137,7 +179,10 @@ export default class FetchHelper {
       });
   }
 
-  // params must be an object, returns promise resolving to string
+  // GETs a string, expecting it to be HTML
+  // params: query string parameters, must be an object with simple or array property values, nested objects are not supported
+  // options: fetch options - see note above class declaration
+  // returns promise resolving to string
   getHtml(url, params, options) {
     options = buildGetOptions(options, 'text/html');
     return this.fetchCall(buildUrl(this.route, url, params), options).then(response => response.text());
@@ -147,21 +192,33 @@ export default class FetchHelper {
   // returned is not specified, but inferred from the MIME type of the response.
   // when possible, the result returned is resolved to a string or JSON promise
 
-  // generic POST, params must be an object, tries to resolve response to string or JSON object
+  // generic POST
+  // params: query string parameters, must be an object with simple or array property values, nested objects are not supported
+  // data: passed as body of POST request
+  // options: fetch options - see note above class declaration
+  // returns promise resolving to string or JSON object
   post(url, params, data, options) {
     options = buildPostOptions(options);
     options.body = data;
     return this.fetchCall(buildUrl(this.route, url, params), options).then(unpackTextResponse);
   }
 
-  // params must be an object, data is assumed to be a string, tries to resolve response to string or JSON object
+  // POST with body as string
+  // params: query string parameters, must be an object with simple or array property values, nested objects are not supported
+  // data: passed as body with content type 'text/plain; charset=utf-8'
+  // options: fetch options - see note above class declaration
+  // returns promise resolving to string or JSON object
   postText(url, params, data, options) {
     options = buildPostOptions(options, 'text/plain; charset=utf-8');
     options.body = data;
     return this.fetchCall(buildUrl(this.route, url, params), options).then(unpackTextResponse);
   }
 
-  // params and data must be objects, data will be converted to JSON, tries to resolve response to string or JSON object
+  // POST with body as JSON string
+  // params: query string parameters, must be an object with simple or array property values, nested objects are not supported
+  // data: must be object, passed as JSON string body with content type 'application/json; charset=utf-8'
+  // options: fetch options - see note above class declaration
+  // returns promise resolving to string or JSON object
   postJson(url, params, data, options) {
     options = buildPostOptions(options, 'application/json; charset=utf-8');
     options.body = JSON.stringify(data);
@@ -170,27 +227,24 @@ export default class FetchHelper {
 
   // see https://stackoverflow.com/questions/46640024/how-do-i-post-form-data-with-fetch-api
 
-  // params must be object, data must be *flat* object (no nested object properties),
-  // tries to resolve response to string or JSON object;
-  // this will work with multiple simple type arguments in the Asp.Net Core action method
+  // POST with body as URL encoded form, will work with multiple *simple* type arguments in the Asp.Net Core action method
+  // params: query string parameters, must be an object with simple or array property values, nested objects are not supported
+  // data: must be *flat* object (no nested object properties), passed as content type 'application/x-www-form-urlencoded; charset=utf-8'
+  // options: fetch options - see note above class declaration
+  // returns promise resolving to string or JSON object
   postForm(url, params, data, options) {
     options = buildPostOptions(options, 'application/x-www-form-urlencoded; charset=utf-8');
-    // we remove null and undefined properties, because URLSearchParams would encode them as "null" or "undefined";
-    // "variable == null" tests for both, null and undefined, because (null == undefined) is true!, but (null === undefined) is false
-    for (const prop in data) {
-      if (Object.prototype.hasOwnProperty.call(data, prop) && data[prop] == null) {
-        delete data[prop];
-      }
-    }
-    const body = new URLSearchParams(data);
-    options.body = body;
+    // this skips null and undefined properties, because URLSearchParams would encode them as "null" or "undefined";
+    options.body = urlEncode(data);
     return this.fetchCall(buildUrl(this.route, url, params), options).then(unpackTextResponse);
   }
 
-  // params must be an object, data should be a FormData instance, will try to convert if possible;
-  // this will work with multiple complex type arguments in the Asp.Net Core action method;
-  // must not have a content-type header for formMultipart;
-  // tries to resolve response to string or JSON object
+  // POST with body as FormData object, will work with multiple *complex* type arguments in the Asp.Net Core action method
+  // params: query string parameters, must be an object with simple or array property values, nested objects are not supported
+  // data: should be a FormData instance, will try to convert a Javascript object to FormData using objectToFormData()
+  // options: fetch options - see note above class declaration
+  //          Note: must *not* have a content-type header for formMultipart
+  // returns promise resolving to string or JSON object
   postFormMultipart(url, params, data, options) {
     options = buildPostOptions(options);
     if (data instanceof FormData) {
