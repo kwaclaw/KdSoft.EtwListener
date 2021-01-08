@@ -23,6 +23,8 @@ class TraceSessionConfigModel extends TraceSessionProfile {
       utils.cloneObject([], profile.filters || []),
       profile.activeFilterIndex,
       (profile.lifeTime || '').slice(0),
+      (profile.batchSize || 100),
+      (profile.maxWriteDelayMS || 300),
       utils.cloneObject([], profile.standardColumnOrder || []),
       (profile.standardColumns || []).slice(0),
       utils.cloneObject([], profile.payloadColumnList || []),

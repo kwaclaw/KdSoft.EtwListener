@@ -110,7 +110,7 @@ namespace KdSoft.EtwEvents.WebClient
                     request.Name,
                     enabledProviders,
                     request.BatchSize,
-                    request.MaxWriteDelay.ToDuration(),
+                    new Duration { Nanos = request.MaxWriteDelayMS * 1000000 },
                     channel,
                     client,
                     logger,

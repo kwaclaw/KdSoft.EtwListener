@@ -48,7 +48,14 @@ class TraceSession {
 
   async openSession(progress) {
     const p = this._profile;
-    const request = { name: p.name, host: p.host, providers: p.providers, lifeTime: p.lifeTime };
+    const request = {
+      name: p.name,
+      host: p.host,
+      providers: p.providers,
+      lifeTime: p.lifeTime,
+      batchSize: p.batchSize,
+      maxWriteDelayMS: p.maxWriteDelayMS
+    };
 
     try {
       const response = await this.fetcher.withProgress(progress).postJson('OpenSession', null, request);

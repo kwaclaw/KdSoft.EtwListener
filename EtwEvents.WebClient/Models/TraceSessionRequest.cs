@@ -21,6 +21,6 @@ namespace KdSoft.EtwEvents.WebClient.Models
 
         public int BatchSize { get; set; } = 100;
 
-        public TimeSpan MaxWriteDelay { get; set; } = TimeSpan.FromMilliseconds(300);
+        public int MaxWriteDelayMS { get; set; } = 300;
     }
 }

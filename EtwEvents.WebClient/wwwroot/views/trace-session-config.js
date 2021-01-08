@@ -262,6 +262,14 @@ class TraceSessionConfig extends LitMvvmElement {
                 placeholder="ISO Duration (PnYnMnDTnHnMnS)"
                 pattern=${utils.isoDurationRx.source} />
             </fieldset>
+            <fieldset>
+              <label for="batchSize">Batch Size</label>
+              <input id="batchSize" name="batchSize" type="number" .value=${this.model.batchSize} min="1" />
+            </fieldset>
+            <fieldset>
+              <label for="maxWriteDelayMS">Max Write Delay Millisecs</label>
+              <input id="maxWriteDelayMS" name="maxWriteDelayMS" type="number" .value=${this.model.maxWriteDelayMS} min="1" />
+            </fieldset>
           </section>
 
           <section id="providers" class="${this._sectionClass('providers')}">
