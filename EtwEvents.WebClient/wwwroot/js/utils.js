@@ -187,6 +187,26 @@ export function objectToFormData(obj) {
   return formData;
 }
 
+// returns Javascript value corresponding to input elements type
+export function getFieldValue(input) {
+  let val;
+  switch (input.type) {
+    case 'number':
+      val = input.valueAsNumber;
+      break;
+    case 'date':
+      val = input.valueAsDate;
+      break;
+    case 'checkbox':
+      val = input.checked;
+      break;
+    default:
+      val = input.value;
+      break;
+  }
+  return val;
+}
+
 export function containerOffsetLeft(container, element) {
   let containerLeft = 0;
   while (element !== null) {

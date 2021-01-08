@@ -74,7 +74,7 @@ class TraceSessionConfig extends LitMvvmElement {
 
   _profileChange(e) {
     e.stopPropagation();
-    this.model[e.target.name] = e.target.value;
+    this.model[e.target.name] = utils.getFieldValue(e.target);
   }
 
   _addProviderClick() {

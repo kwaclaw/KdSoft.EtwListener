@@ -5,6 +5,7 @@ import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
 import '../components/kdsoft-dropdown.js';
 import '../components/kdsoft-checklist.js';
+import * as utils from '../js/utils.js';
 import TraceSessionConfigModel from './trace-session-config-model.js';
 import KdSoftDropdownModel from '../components/kdsoft-dropdown-model.js';
 import KdSoftChecklistModel from '../components/kdsoft-checklist-model.js';
@@ -59,22 +60,7 @@ class ProviderConfig extends LitMvvmElement {
 
   _fieldChange(e) {
     e.stopPropagation();
-    let val;
-    switch (e.target.type) {
-      case 'number':
-        val = e.target.valueAsNumber;
-        break;
-      case 'date':
-        val = e.target.valueAsDate;
-        break;
-      case 'checkbox':
-        val = e.target.checked;
-        break;
-      default:
-        val = e.target.value;
-        break;
-    }
-    this.model[e.target.name] = val;
+    this.model[e.target.name] = utils.getFieldValue(e.target);
   }
 
   /* eslint-disable indent, no-else-return */
