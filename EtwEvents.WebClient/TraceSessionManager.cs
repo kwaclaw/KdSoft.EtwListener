@@ -55,14 +55,13 @@ namespace KdSoft.EtwEvents.WebClient
             var sessionLogger = _loggerFactory.CreateLogger<TraceSession>();
             var entry = this.GetOrAdd(request.Name, sessionName => CreateTraceSessionEntry(request, clientCertificate, sessionLogger));
 
-            // we created the task as not running/started, so we avoid a race condition where the same code
-            // with the same arguments might run multiple times;
-            // instead, we start the task now, handling the exception that indicates it was already started
+            // we created the task using Lazy<T> so it is not already running when accessed for the first time,
+            // avoiding a race condition where TraceSession.Create() might run multiple times with the same arguments;
             bool justStarted = !entry.SessionTask.IsValueCreated;
-
             TraceSession traceSession;
             try {
-                traceSession = await entry.SessionTask.Value.ConfigureAwait(false);
+                // runs TraceSession.Create() when TraceSessionEntry instance is awaited for the first time
+                traceSession = await entry;
             }
             catch (Exception ex) {
                 _ = this.TryRemove(request.Name, out var failedEntry);
@@ -91,53 +90,10 @@ namespace KdSoft.EtwEvents.WebClient
             return openSessionState;
         }
 
-        //public Task<Models.OpenSessionState> OpenSession(TraceSessionRequest request, X509Certificate2 clientCertificate ) {
-        //    Task<(TraceSession traceSession, IImmutableList<string> restartedProviders)>? createTask = null;
-
-        //    // NOTE: the value factory might be executed multiple times with this overload of GetOrAdd,
-        //    //       if this is a problem then we need to use Lazy<T> instead.
-        //    var entry = this.GetOrAdd(request.Name, sessionName => {
-        //        var sessionLogger = _loggerFactory.CreateLogger<TraceSession>();
-        //        createTask = TraceSession.Create(request, clientCertificate, sessionLogger, _changeNotifier, _localizer);
-
-        //        var checkedTask = createTask.ContinueWith<TraceSession>(ct => {
-        //            if (!ct.IsCompletedSuccessfully) {
-        //                _ = this.TryRemove(sessionName, out var failedEntry);
-        //            }
-        //            PostSessionStateChange().AsTask().ContinueWith(pst => {
-        //                var ex = pst.Exception;
-        //                sessionLogger.LogError(ex, "Error in PostSessionStateChange");
-        //            }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Current);
-        //            return ct.Result.traceSession;
-        //        }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
-
-        //        return new TraceSessionEntry(checkedTask, request.LifeTime);
-        //    });
-
-        //    // return OpenSessionState if we just created a new Session
-        //    if (createTask != null && createTask.IsCompletedSuccessfully) {
-        //        return createTask.ContinueWith<Models.OpenSessionState>(ct => {
-        //            var session = ct.Result.traceSession;
-        //            var openSessionState = session.GetSessionStateSnapshot<Models.OpenSessionState>();
-        //            openSessionState.RestartedProviders = ct.Result.restartedProviders;
-        //            openSessionState.AlreadyOpen = false;
-        //            return openSessionState;
-        //        }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
-        //    }
-
-        //    return entry.SessionTask.ContinueWith<Models.OpenSessionState>(st => {
-        //        var session = st.Result;
-        //        var openSessionState = session.GetSessionStateSnapshot<Models.OpenSessionState>();
-        //        openSessionState.RestartedProviders = ImmutableList<string>.Empty;
-        //        openSessionState.AlreadyOpen = true;
-        //        return openSessionState;
-        //    }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
-        //}
-
         public async Task<bool> CloseRemoteSession(string name) {
             if (this.TryRemove(name, out var entry)) {
-                var session = await entry.SessionTask.Value.ConfigureAwait(false);
-                await session.CloseRemote().ConfigureAwait(false);
+                var traceSession = await entry;
+                await traceSession.CloseRemote().ConfigureAwait(false);
                 await PostSessionStateChange().ConfigureAwait(false);
                 return true;
             }

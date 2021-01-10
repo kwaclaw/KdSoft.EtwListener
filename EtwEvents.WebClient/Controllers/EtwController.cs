@@ -142,7 +142,7 @@ namespace KdSoft.EtwEvents.WebClient
         [HttpGet]
         public async Task<IActionResult> StartEvents(string sessionName) {
             if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
-                var traceSession = await sessionEntry.SessionTask.Value.ConfigureAwait(false);
+                var traceSession = await sessionEntry;
                 var errorMsg = traceSession.StartEvents(_optionsMonitor);
                 await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
                 if (errorMsg != null) {
@@ -196,7 +196,7 @@ namespace KdSoft.EtwEvents.WebClient
         [HttpPost]
         public async Task<IActionResult> StopEvents(string sessionName) {
             if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
-                var traceSession = await sessionEntry.SessionTask.Value.ConfigureAwait(false);
+                var traceSession = await sessionEntry;
                 await traceSession.StopEvents().ConfigureAwait(false);
                 await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
                 return Ok();
@@ -215,7 +215,7 @@ namespace KdSoft.EtwEvents.WebClient
             if (HttpContext.WebSockets.IsWebSocketRequest) {
                 var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
                 if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
-                    var traceSession = await sessionEntry.SessionTask.Value.ConfigureAwait(false);
+                    var traceSession = await sessionEntry;
 
                     // the WebSocketSink has a life-cycle tied to the EventSession, while other sinks can be added and removed dynamically
                     var webSocketName = Guid.NewGuid().ToString();
@@ -256,7 +256,7 @@ namespace KdSoft.EtwEvents.WebClient
         [HttpPost]
         public async Task<IActionResult> OpenEventSinks(string sessionName, [FromBody] IEnumerable<Models.EventSinkRequest> sinkRequests) {
             if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
-                var traceSession = await sessionEntry.SessionTask.Value.ConfigureAwait(false);
+                var traceSession = await sessionEntry;
                 var sinkTasks = sinkRequests.Select(sr => CreateEventSink(sr, traceSession.EventSinks));
                 var sinkList = await Task.WhenAll(sinkTasks).ConfigureAwait(false);
                 traceSession.EventSinks.AddEventSinks(sinkList);
@@ -275,7 +275,7 @@ namespace KdSoft.EtwEvents.WebClient
         [HttpPost]
         public async Task<IActionResult> CloseEventSinks(string sessionName, [FromBody] IEnumerable<string> sinkNames) {
             if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
-                var traceSession = await sessionEntry.SessionTask.Value.ConfigureAwait(false);
+                var traceSession = await sessionEntry;
                 var closedSinks = traceSession.EventSinks.RemoveEventSinks(sinkNames);
                 var disposeTasks = closedSinks.Select(sink => sink.DisposeAsync()).ToArray();
                 foreach (var disposeTask in disposeTasks) {
@@ -338,7 +338,7 @@ namespace KdSoft.EtwEvents.WebClient
             }
 
             if (_sessionManager.TryGetValue(request.SessionName!, out var sessionEntry)) {
-                var traceSession = await sessionEntry.SessionTask.Value.ConfigureAwait(false);
+                var traceSession = await sessionEntry;
                 var result = await traceSession.SetCSharpFilter(csharpFilter).ConfigureAwait(false);
                 await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
                 return Ok(result);
