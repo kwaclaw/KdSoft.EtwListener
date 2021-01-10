@@ -383,7 +383,6 @@ class EtwAppSideBar extends LitMvvmElement {
       ? nothing
       : html`<link rel="stylesheet" type="text/css" href=${styleLinks.dialog} />`;
 
-
     return html`
       ${sharedStyles}
       ${dialogStyle}
@@ -398,7 +397,9 @@ class EtwAppSideBar extends LitMvvmElement {
         <!-- <div class="pr-2"> -->
           <button id="nav-toggle" @click=${this._toggleNav} class="px-3 py-3 text-gray-600 border-gray-600 hover:text-gray-800">
             <i class="fas fa-lg fa-bars"></i>
-            <!-- <svg class="fill-current h-3 w-3" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Menu</title><path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"/></svg> -->
+            <!-- <svg class="fill-current h-3 w-3" viewBox="0 0 20 20"
+              xmlns="http://www.w3.org/2000/svg"><title>Menu</title><path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"/>
+            </svg> -->
           </button>
         <!-- </div> -->
         <div class="flex pl-8">
@@ -500,10 +501,10 @@ class EtwAppSideBar extends LitMvvmElement {
                       <button type="button"  class="px-1 py-1" @click=${e => this._toggleSessionEvents(e, ses)}>
                         <i class=${classMap(eventsClasses)}></i>
                       </button>
-                      <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._filterSessionClick(e, ses)}>
+                      <button type="button" class="px-1 py-1" @click=${e => this._filterSessionClick(e, ses)}>
                         <i class="fas fa-filter"></i>
                       </button>
-                      <button type="button" class="px-1 py-1 text-gray-500" @click=${e => this._closeSessionClick(e, ses)}>
+                      <button type="button" class="px-1 py-1" @click=${e => this._closeSessionClick(e, ses)}>
                         <i class="fas fa-lg fa-times"></i>
                       </button>
                     </div>

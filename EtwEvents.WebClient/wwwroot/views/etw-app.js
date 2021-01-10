@@ -17,11 +17,12 @@ const runBtnBase = { fas: true };
 const tabBase = { 'inline-block': true, 'py-2': true, 'no-underline': true };
 
 const classList = {
-  startBtn: { ...runBtnBase, 'fa-play': true, 'text-green-500': true },
+  startBtnActive: { ...runBtnBase, 'fa-play': true, 'text-green-500': true },
+  startBtnInactive: { ...runBtnBase, 'fa-play': true },
   stopBtn: { ...runBtnBase, 'fa-stop': true, 'text-red-500': true },
   tabActive: { ...tabBase, 'pl-4': true, 'pr-2': true, 'text-white': true },
-  tabInactive: { ...tabBase, 'px-4': true, 'text-gray-600': true, 'hover:text-gray-200': true, 'hover:text-underline': true },
-  tabButtonsActive: { 'inline-block': true },
+  tabInactive: { ...tabBase, 'px-4': true, 'text-gray-800': true, 'hover:text-gray-200': true, 'hover:text-underline': true },
+  tabButtonsActive: { 'inline-block': true, 'text-gray-500': true },
   tabButtonsInActive: { hidden: true }
 };
 
@@ -370,19 +371,24 @@ class EtwApp extends LitMvvmElement {
             ${this.model.visibleSessions.map(ses => {
               const isActiveTab = this.model.activeSession === ses;
               const tabClasses = isActiveTab ? classList.tabActive : classList.tabInactive;
-              const eventsClasses = ses.state.isRunning ? classList.stopBtn : classList.startBtn;
+              const eventsClasses = ses.state.isRunning
+                ? classList.stopBtn
+                : ses.state.isStopped ? classList.startBtnInactive : classList.startBtnActive;
 
               return html`
-                <li class="mr-2 pr-1 ${isActiveTab ? 'bg-gray-700' : ''}" data-session-name=${ses.name.toLowerCase()} @click=${this._sessionTabClick}>
+                <li class="mr-2 pr-1 ${isActiveTab ? 'bg-gray-700' : ''}"
+                  data-session-name=${ses.name.toLowerCase()}
+                  @click=${this._sessionTabClick}
+                >
                   <a class=${classMap(tabClasses)} href="#">${ses.name}</a>
                   <div id="tab-buttons" class=${classMap(isActiveTab ? classList.tabButtonsActive : classList.tabButtonsInActive)}>
                     <button type="button" @click=${e => this._toggleSessionEvents(e, ses)}>
                       <i class=${classMap(eventsClasses)}></i>
                     </button>
-                    <button type="button" class="text-gray-500" @click=${e => this._filterSessionClick(e, ses)}>
+                    <button type="button" @click=${e => this._filterSessionClick(e, ses)}>
                       <i class="fas fa-filter"></i>
                     </button>
-                    <button type="button" class="text-gray-500" @click=${e => this._unwatchSessionClick(e, ses)}>
+                    <button type="button" @click=${e => this._unwatchSessionClick(e, ses)}>
                       <i class="fas fa-lg fa-times"></i>
                     </button>
                   </div>
