@@ -18,6 +18,7 @@ namespace KdSoft.EtwEvents.WebClient
     {
         static ProviderSetting _nullProvider = new ProviderSetting();
 
+        readonly IImmutableList<string> _restartedProviders;
         readonly int _batchSize;
         readonly Duration _maxWriteDelay;
         readonly GrpcChannel _channel;
@@ -35,6 +36,7 @@ namespace KdSoft.EtwEvents.WebClient
         public const int StopTimeoutMilliseconds = 3000;
         public string Name { get; }
         public string Host => $"https://{_channel.Target}";
+        public IImmutableList<string> RestartedProviders => _restartedProviders;
         public EventSinkHolder EventSinks { get; }
         public Task EventsTask => _eventsTask;
 
@@ -42,7 +44,8 @@ namespace KdSoft.EtwEvents.WebClient
 
         TraceSession(
             string name,
-            ImmutableList<ProviderSetting> enabledProviders,
+            IImmutableList<ProviderSetting> enabledProviders,
+            IImmutableList<string> restartedProviders,
             int batchSize,
             Duration maxWriteDelay,
             GrpcChannel channel,
@@ -56,6 +59,7 @@ namespace KdSoft.EtwEvents.WebClient
             this._maxWriteDelay = maxWriteDelay;
             this._etwSession = new EtwSession();
             this._etwSession.EnabledProviders.AddRange(enabledProviders);
+            this._restartedProviders = restartedProviders;
             _channel = channel;
             _etwClient = etwClient;
             _logger = logger;
@@ -76,7 +80,7 @@ namespace KdSoft.EtwEvents.WebClient
             return channel;
         }
 
-        public static async Task<(TraceSession traceSession, IImmutableList<string> restartedProviders)> Create(
+        public static async Task<TraceSession> Create(
             Models.TraceSessionRequest request,
             X509Certificate2 clientCertificate,
             ILogger<TraceSession> logger,
@@ -109,6 +113,7 @@ namespace KdSoft.EtwEvents.WebClient
                 var traceSession = new TraceSession(
                     request.Name,
                     enabledProviders,
+                    restartedProviders,
                     request.BatchSize,
                     new Duration { Nanos = request.MaxWriteDelayMS * 1000000 },
                     channel,
@@ -117,7 +122,7 @@ namespace KdSoft.EtwEvents.WebClient
                     changeNotifier,
                     localizer
                 );
-                return (traceSession, restartedProviders);
+                return traceSession;
             }
             catch {
                 channel.Dispose();
