@@ -17,6 +17,9 @@ namespace KdSoft.EtwEvents.Server
         readonly BatchBlock<EtwEvent> _block;
         readonly ILogger<EventQueue> _logger;
 
+        long _lastCheckedTicks;
+        long _maxWriteDelayTicks;
+
         public EventQueue(
             IServerStreamWriter<EtwEventBatch> responseStream,
             ServerCallContext context,
@@ -31,6 +34,7 @@ namespace KdSoft.EtwEvents.Server
             });
             this._responseStream = responseStream;
             this._context = context;
+            this._lastCheckedTicks = Environment.TickCount64;
         }
 
         public Task Completion => _block.Completion;
@@ -40,11 +44,16 @@ namespace KdSoft.EtwEvents.Server
             var posted = _block.Post(new EtwEvent(evt));
             if (!posted)
                 _logger.LogInformation($"Could not post trace event {evt.EventIndex}.");
-
+            Volatile.Write(ref _lastCheckedTicks, Environment.TickCount64);
         }
 
+        // TimerCallback get called periodically, but we do not always want to trigger a batch
         void TimerCallback(object? state) {
-            _block.TriggerBatch();
+            var lastCheckedTicks = Interlocked.Exchange(ref _lastCheckedTicks, Environment.TickCount64);
+            var deltaTicks = Environment.TickCount64 - lastCheckedTicks;
+            if (deltaTicks > _maxWriteDelayTicks) {
+                _block.TriggerBatch();
+            }
         }
 
         async Task ProcessBatches(Timer timer, TimeSpan maxWriteDelay) {
@@ -58,11 +67,13 @@ namespace KdSoft.EtwEvents.Server
                     var batch = new EtwEventBatch();
                     batch.Events.AddRange(etwEvents);
                     await _responseStream.WriteAsync(batch).ConfigureAwait(false);
+                    Volatile.Write(ref _lastCheckedTicks, Environment.TickCount64);
                 }
             }
         }
 
         public async Task Process(RealTimeTraceSession session, TimeSpan maxWriteDelay) {
+            this._maxWriteDelayTicks = (long)maxWriteDelay.TotalMilliseconds;
             Task processTask;
             using (var timer = new Timer(TimerCallback)) {
                 processTask = ProcessBatches(timer, maxWriteDelay);
