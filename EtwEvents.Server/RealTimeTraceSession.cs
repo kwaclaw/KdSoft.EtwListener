@@ -32,8 +32,6 @@ namespace KdSoft.EtwEvents.Server
 
         public string SessionName => Instance.SessionName;
 
-        //public ETWTraceEventSource Source => Instance.Source;
-
         #region Construction
 
         TraceEventSession CheckDisposed() {

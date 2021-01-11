@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -15,7 +16,6 @@ namespace KdSoft.EtwEvents.Server
         readonly ServerCallContext _context;
         readonly BatchBlock<EtwEvent> _block;
         readonly ILogger<EventQueue> _logger;
-        readonly EtwEvent _emtpyEvent = new EtwEvent();
 
         public EventQueue(
             IServerStreamWriter<EtwEventBatch> responseStream,
@@ -35,6 +35,7 @@ namespace KdSoft.EtwEvents.Server
 
         public Task Completion => _block.Completion;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void PostEvent(tracing.TraceEvent evt) {
             var posted = _block.Post(new EtwEvent(evt));
             if (!posted)
@@ -43,7 +44,6 @@ namespace KdSoft.EtwEvents.Server
         }
 
         void TimerCallback(object? state) {
-            _block.Post(_emtpyEvent);
             _block.TriggerBatch();
         }
 
@@ -59,7 +59,6 @@ namespace KdSoft.EtwEvents.Server
                     batch.Events.AddRange(etwEvents);
                     await _responseStream.WriteAsync(batch).ConfigureAwait(false);
                 }
-                timer.Change(maxWriteDelay, Timeout.InfiniteTimeSpan);
             }
         }
 
@@ -67,7 +66,7 @@ namespace KdSoft.EtwEvents.Server
             Task processTask;
             using (var timer = new Timer(TimerCallback)) {
                 processTask = ProcessBatches(timer, maxWriteDelay);
-                timer.Change(maxWriteDelay, Timeout.InfiniteTimeSpan);
+                timer.Change(maxWriteDelay, maxWriteDelay);
                 await session.StartEvents(PostEvent, _context.CancellationToken).ConfigureAwait(false);
             }
             await _block.Completion.ConfigureAwait(false);
