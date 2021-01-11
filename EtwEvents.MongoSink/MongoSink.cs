@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
@@ -88,8 +89,9 @@ namespace KdSoft.EtwEvents.EventSinks
                     payloadDoc.Add(payload.Key, BsonValue.Create(payload.Value));
             }
 
+            //TODO should we ignore sequenceNo?
             var replacement = new BsonDocument()
-                .Add("SequenceNo", BsonValue.Create(sequenceNo))
+                //.Add("SequenceNo", BsonValue.Create(sequenceNo))
                 .Add("Timestamp", new BsonDateTime(evt.TimeStamp.ToDateTime()))
                 .Add("ProviderName", BsonValue.Create(evt.ProviderName))
                 .Add("Channel", BsonValue.Create(evt.Channel))
@@ -123,6 +125,15 @@ namespace KdSoft.EtwEvents.EventSinks
             }
             var writeModel = FromEvent(evt, sequenceNo);
             _evl.Add(writeModel);
+            return new ValueTask<bool>(true);
+        }
+
+        public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch, long sequenceNo) {
+            if (_cancelToken.IsCancellationRequested) {
+                _tcs.TrySetCanceled(_cancelToken);
+                return new ValueTask<bool>(false);
+            }
+            _evl.AddRange(evtBatch.Events.Select(evt => FromEvent(evt, sequenceNo++)));
             return new ValueTask<bool>(true);
         }
 

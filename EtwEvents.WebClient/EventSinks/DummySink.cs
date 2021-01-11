@@ -35,5 +35,9 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
         public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
             return new ValueTask<bool>(true);
         }
+
+        public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch, long sequenceNo) {
+            return new ValueTask<bool>(true);
+        }
     }
 }

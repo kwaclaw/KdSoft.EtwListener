@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.WebSockets;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -91,15 +92,8 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
             }
         }
 
-        public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
-            if (_webSocket.State != WebSocketState.Open)
-                return new ValueTask<bool>(false);
-
-            if (_startNewMessage) {
-                _startNewMessage = false;
-                _jsonWriter.WriteStartArray();
-            }
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void WriteEventJson(EtwEvent evt, long sequenceNo) {
             _jsonWriter.WriteStartObject();
 
             _jsonWriter.WriteNumber("sequenceNo", sequenceNo);
@@ -123,6 +117,32 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
             _jsonWriter.WriteEndObject();
 
             _jsonWriter.WriteEndObject();
+        }
+
+        public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
+            if (_webSocket.State != WebSocketState.Open)
+                return new ValueTask<bool>(false);
+
+            if (_startNewMessage) {
+                _startNewMessage = false;
+                _jsonWriter.WriteStartArray();
+            }
+            WriteEventJson(evt, sequenceNo);
+
+            return new ValueTask<bool>(WriteAsync(false));
+        }
+
+        public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch, long sequenceNo) {
+            if (_webSocket.State != WebSocketState.Open)
+                return new ValueTask<bool>(false);
+
+            if (_startNewMessage) {
+                _startNewMessage = false;
+                _jsonWriter.WriteStartArray();
+            }
+            foreach (var evt in evtBatch.Events) {
+                WriteEventJson(evt, sequenceNo++);
+            }
 
             return new ValueTask<bool>(WriteAsync(false));
         }

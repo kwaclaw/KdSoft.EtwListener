@@ -141,7 +141,32 @@ namespace KdSoft.EtwEvents.WebClient
             }
         }
 
-        public async Task<bool> ProcessEvent(EtwEvent? evt, long sequenceNo) {
+        async Task<bool> CheckEventSinkTasks((IEventSink sink, ValueTask<bool> task)[] taskList, int taskCount) {
+            var result = true;
+            for (int indx = 0; indx < taskCount; indx++) {
+                var (sink, task) = taskList[indx];
+                try {
+                    var success = await task.ConfigureAwait(false);
+                    if (!success) {
+                        HandleFailedEventSink(sink, null);
+                        result = false;
+                    }
+                }
+                catch (Exception ex) {
+                    HandleFailedEventSink(sink, ex);
+                    result = false;
+                }
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Write a batch of ETW events to each event sink, and flush them afterwards.
+        /// </summary>
+        /// <param name="evtBatch"></param>
+        /// <param name="sequenceNo"></param>
+        /// <returns></returns>
+        public async Task<bool> ProcessEventBatch(EtwEventBatch evtBatch, long sequenceNo) {
             // We do not use a lock here because reference field access is atomic
             // and we do not exactly care which version of the field value we get. 
             var eventSinks = this._eventSinks;
@@ -150,31 +175,19 @@ namespace KdSoft.EtwEvents.WebClient
             var taskList = this._eventSinkTaskPool.Rent(eventSinks.Count);
             try {
                 int indx = 0;
-                if (evt == null) {
-                    foreach (var entry in eventSinks) {
-                        taskList[indx++] = (entry.Value, entry.Value.FlushAsync());
-                    }
+                foreach (var entry in eventSinks) {
+                    taskList[indx++] = (entry.Value, entry.Value.WriteAsync(evtBatch, sequenceNo));
                 }
-                else {
-                    foreach (var entry in eventSinks) {
-                        taskList[indx++] = (entry.Value, entry.Value.WriteAsync(evt, sequenceNo));
-                    }
-                }
+                result = await CheckEventSinkTasks(taskList, eventSinks.Count);
+                if (!result)
+                    return result;
 
-                for (indx = 0; indx < eventSinks.Count; indx++) {
-                    var entry = taskList[indx];
-                    try {
-                        var success = await entry.task.ConfigureAwait(false);
-                        if (!success) {
-                            HandleFailedEventSink(entry.sink, null);
-                            result = false;
-                        }
-                    }
-                    catch (Exception ex) {
-                        HandleFailedEventSink(entry.sink, ex);
-                        result = false;
-                    }
+                // WriteAsync() and FlushAsync() must not be called concurrently on the same event sink
+                indx = 0;
+                foreach (var entry in eventSinks) {
+                    taskList[indx++] = (entry.Value, entry.Value.FlushAsync());
                 }
+                result = await CheckEventSinkTasks(taskList, eventSinks.Count);
             }
             finally {
                 this._eventSinkTaskPool.Return(taskList);

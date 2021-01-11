@@ -17,10 +17,10 @@ namespace KdSoft.EtwEvents.WebClient
         readonly EventSinkHolder _eventSinks;
         readonly AggregatingNotifier<Models.TraceSessionStates> _changeNotifier;
         readonly IDisposable _pushFrequencyMonitor;
-        readonly ActionBlock<(EtwEvent?, long)> _jobQueue;
+        readonly ActionBlock<(EtwEventBatch, long)> _jobQueue;
+        readonly EtwEventBatch _emptyBatch;
 
         AsyncServerStreamingCall<EtwEventBatch>? _streamingCall;
-        int _pushFrequencyMillisecs;
 
         int _started = 0;
         int _stopped = 0;
@@ -36,30 +36,29 @@ namespace KdSoft.EtwEvents.WebClient
             this._eventSinks = eventSinks;
             this._changeNotifier = changeNotifier;
 
-            this._jobQueue = new ActionBlock<(EtwEvent?, long)>(ProcessResponse, new ExecutionDataflowBlockOptions {
+            this._jobQueue = new ActionBlock<(EtwEventBatch, long)>(ProcessResponse, new ExecutionDataflowBlockOptions {
+                BoundedCapacity = optionsMonitor.CurrentValue.EventQueueCapacity,
                 EnsureOrdered = true,
                 MaxDegreeOfParallelism = 1
             });
+            this._emptyBatch = new EtwEventBatch();
 
-            this._flushTimer = new Timer(async state => {
-                await _jobQueue.SendAsync((null, 0)).ConfigureAwait(false);
+            this._flushTimer = new Timer(state => {
+                _jobQueue.Post((_emptyBatch, 0));
             });
 
-            this._pushFrequencyMillisecs = (int)optionsMonitor.CurrentValue.PushFrequency.TotalMilliseconds;
+            var pushFrequency = (int)optionsMonitor.CurrentValue.PushFrequency.TotalMilliseconds;
+            this._flushTimer.Change(pushFrequency, pushFrequency);
             this._pushFrequencyMonitor = optionsMonitor.OnChange((opts, name) => {
-                Interlocked.Exchange(ref this._pushFrequencyMillisecs, (int)opts.PushFrequency.TotalMilliseconds);
+                var pushFrequency = (int)opts.PushFrequency.TotalMilliseconds;
+                this._flushTimer.Change(pushFrequency, pushFrequency);
             });
         }
 
-        async Task ProcessResponse((EtwEvent? evt, long sequenceNo) args) {
-            var success = await this._eventSinks.ProcessEvent(args.evt, args.sequenceNo).ConfigureAwait(false);
+        async Task ProcessResponse((EtwEventBatch evtBatch, long sequenceNo) args) {
+            var success = await this._eventSinks.ProcessEventBatch(args.evtBatch, args.sequenceNo).ConfigureAwait(false);
             if (!success) {
                 await _changeNotifier.PostNotification().ConfigureAwait(false);
-            }
-
-            if (args.evt == null) {
-                var pushFrequency = this._pushFrequencyMillisecs;
-                this._flushTimer?.Change(pushFrequency, Timeout.Infinite);
             }
         }
 
@@ -68,35 +67,25 @@ namespace KdSoft.EtwEvents.WebClient
             var streamer = _streamingCall = _etwClient.GetEvents(_etwRequest);
             var responseStream = streamer.ResponseStream;
 
-            var pushFrequency = this._pushFrequencyMillisecs;
-            this._flushTimer?.Change(pushFrequency, Timeout.Infinite);
             try {
                 while (await responseStream.MoveNext(cancelToken).ConfigureAwait(false)) {
-
                     // we should not call CloseAsync while still sending
                     Interlocked.MemoryBarrier();
                     if (_stopped != 0 || _streamingCall == null)
                         break;
 
                     var evtBatch = responseStream.Current;
-                    bool posted = true;
-                    foreach (var evt in evtBatch.Events) {
-                        // ignore empty messages
-                        if (evt.TimeStamp == null) {
-                            await _changeNotifier.PostNotification().ConfigureAwait(false);
-                            continue;
-                        }
 
-                        //posted = _jobQueue.Post((evt, sequenceNo));
-                        posted = await _jobQueue.SendAsync((evt, sequenceNo)).ConfigureAwait(false);
-                        if (!posted)
-                            break;
-
-                        sequenceNo += 1;
-                    }
-                    if (!posted)
+                    // an empty batch means: post a "flush" message
+                    var posted = _jobQueue.Post((evtBatch, sequenceNo));
+                    //posted = await _jobQueue.SendAsync((evt, sequenceNo)).ConfigureAwait(false);
+                    if (!posted) {
+                        //_logger.LogInformation($"Could not post trace event {evt.Id}."
                         break;
+                    }
+                    sequenceNo += evtBatch.Events.Count;
 
+                    await _changeNotifier.PostNotification().ConfigureAwait(false);
                 }
             }
             catch (RpcException rex) when (rex.StatusCode == StatusCode.Cancelled) {

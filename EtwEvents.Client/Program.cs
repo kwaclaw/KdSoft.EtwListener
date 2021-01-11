@@ -91,15 +91,17 @@ return result;
             };
             using (var streamer = client.GetEvents(request)) {
                 while (await streamer.ResponseStream.MoveNext()) {
-                    var evt = streamer.ResponseStream.Current;
+                    var evtBatch = streamer.ResponseStream.Current;
                     string message; string methodName;
-                    evt.Payload.TryGetValue("HostReference", out var hostRef);
-                    evt.Payload.TryGetValue("AppDomain", out var appDomain);
-                    evt.Payload.TryGetValue("Duration", out var duration);
-                    bool gotMessage = evt.Payload.TryGetValue("Message", out message) || evt.Payload.TryGetValue("message", out message);
-                    bool gotName = evt.Payload.TryGetValue("MethodName", out methodName) || evt.Payload.TryGetValue("name", out methodName);
-                    string src = appDomain ?? hostRef;
-                    Console.WriteLine($"{evt.ProviderName} :: {src}\n\t{evt.TimeStamp}-{evt.Level}:{duration}ms\n\t{evt.TaskName}-{methodName}\n\t{message}");
+                    foreach (var evt in evtBatch.Events) {
+                        evt.Payload.TryGetValue("HostReference", out var hostRef);
+                        evt.Payload.TryGetValue("AppDomain", out var appDomain);
+                        evt.Payload.TryGetValue("Duration", out var duration);
+                        bool gotMessage = evt.Payload.TryGetValue("Message", out message) || evt.Payload.TryGetValue("message", out message);
+                        bool gotName = evt.Payload.TryGetValue("MethodName", out methodName) || evt.Payload.TryGetValue("name", out methodName);
+                        string src = appDomain ?? hostRef;
+                        Console.WriteLine($"{evt.ProviderName} :: {src}\n\t{evt.TimeStamp}-{evt.Level}:{duration}ms\n\t{evt.TaskName}-{methodName}\n\t{message}");
+                    }
                 }
             }
 

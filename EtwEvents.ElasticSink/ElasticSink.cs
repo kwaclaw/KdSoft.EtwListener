@@ -8,12 +8,14 @@ using KdSoft.EtwLogging;
 using Elasticsearch.Net;
 using System.Linq;
 using Google.Protobuf;
+using System.Runtime.CompilerServices;
 
 namespace KdSoft.EtwEvents.EventSinks
 {
     public class ElasticSink: IEventSink
     {
         readonly ElasticSinkOptions _sinkInfo;
+        readonly string _bulkMeta;
         readonly ConnectionConfiguration _config;
         readonly TaskCompletionSource<bool> _tcs;
         readonly List<InsertRecord> _evl;
@@ -33,6 +35,7 @@ namespace KdSoft.EtwEvents.EventSinks
 
             _evl = new List<InsertRecord>();
             _sinkInfo = sinkInfo;
+            _bulkMeta = $@"{{ ""index"": {{ ""_index"" : ""{_sinkInfo.Index}"" }} }}";
 
             try {
                 IConnectionPool connectionPool;
@@ -79,17 +82,29 @@ namespace KdSoft.EtwEvents.EventSinks
             return false;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        InsertRecord FromEvent(EtwEvent evt, long sequenceNo) {
+            //TODO should we ignore sequenceNo?
+            var bulkSource = JsonFormatter.Default.Format(evt);
+            return new InsertRecord(_bulkMeta, bulkSource);
+        }
+
         //TODO maybe use Interlocked and two lists to keep queueing while a bulk write is in process
         public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
             if (_cancelToken.IsCancellationRequested) {
                 _tcs.TrySetCanceled(_cancelToken);
                 return new ValueTask<bool>(false);
             }
+            _evl.Add(FromEvent(evt, sequenceNo));
+            return new ValueTask<bool>(true);
+        }
 
-            var bulkMeta = $@"{{ ""index"": {{ ""_index"" : ""{_sinkInfo.Index}"" }} }}";
-            var bulkSource = JsonFormatter.Default.Format(evt);
-            _evl.Add(new InsertRecord(bulkMeta, bulkSource));
-
+        public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch, long sequenceNo) {
+            if (_cancelToken.IsCancellationRequested) {
+                _tcs.TrySetCanceled(_cancelToken);
+                return new ValueTask<bool>(false);
+            }
+            _evl.AddRange(evtBatch.Events.Select(evt => FromEvent(evt, sequenceNo++)));
             return new ValueTask<bool>(true);
         }
 

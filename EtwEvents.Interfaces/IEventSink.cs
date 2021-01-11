@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using KdSoft.EtwLogging;
 
@@ -28,8 +29,19 @@ namespace KdSoft.EtwEvents.Client.Shared
         ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo);
 
         /// <summary>
+        /// Writes events asynchronously. This may queue events for batched writing and may return synchronously.
+        /// Must not be called concurrently with itself or <see cref="FlushAsync"/>.
+        /// Must not throw exception before <see cref="ValueTask"/> is returned.
+        /// </summary>
+        /// <param name="evts">Events to write.</param>
+        /// <param name="sequenceNo">Starting sequence number for first event. On subsequent calls the
+        /// sequence number will be incremented by the size of the last batch.</param>
+        /// <returns><c>true</c> if writing was successful (and can continue), <c>false</c> otherwise.</returns>
+        ValueTask<bool> WriteAsync(EtwEventBatch evtBatch, long sequenceNo);
+
+        /// <summary>
         /// Flushes queue, performs pending writes.
-        /// Must not be called concurrently with itself or <see cref="WriteAsync(EtwEvent, long)"/>.
+        /// Must not be called concurrently with itself or <see cref="WriteAsync"/>.
         /// Must not throw exception before <see cref="ValueTask"/> is returned.
         /// </summary>
         /// <returns><c>true</c> if flushing was successful (and can continue), <c>false</c> otherwise.</returns>
