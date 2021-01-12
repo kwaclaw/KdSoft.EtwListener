@@ -94,11 +94,20 @@ namespace KdSoft.EtwEvents.Server
             return Task.FromResult(result);
         }
 
+        async Task WakeUpClient(IServerStreamWriter<EtwEventBatch> responseStream, ServerCallContext context) {
+            await context.WriteResponseHeadersAsync(Metadata.Empty).ConfigureAwait(false);
+            var batch = new EtwEventBatch();
+            batch.Events.Add(new EtwEvent());
+            await responseStream.WriteAsync(batch).ConfigureAwait(false);
+        }
+
         public override async Task GetEvents(EtwEventRequest request, IServerStreamWriter<EtwEventBatch> responseStream, ServerCallContext context) {
             var logger = _loggerFactory.CreateLogger<EventQueue>();
             var eventQueue = new EventQueue(responseStream, context, logger, request.BatchSize);
             var session = GetSession(request.SessionName);
             try {
+                // not strictly necessary, but helps "waking" up the receiving end
+                await WakeUpClient(responseStream, context).ConfigureAwait(false);
                 await eventQueue.Process(session, request.MaxWriteDelay.ToTimeSpan()).ConfigureAwait(false);
             }
             catch (OperationCanceledException) {
