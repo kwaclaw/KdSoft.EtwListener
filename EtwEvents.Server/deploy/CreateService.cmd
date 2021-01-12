@@ -1,3 +1,4 @@
+@echo off
 
 REM switch to batch file directory (needed when running as administrator)
 pushd "%~dp0"
