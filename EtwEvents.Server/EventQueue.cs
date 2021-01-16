@@ -60,7 +60,7 @@ namespace KdSoft.EtwEvents.Server
             var writeOptions = new WriteOptions(WriteFlags.NoCompress | WriteFlags.BufferHint);
             var flushWriteOptions = new WriteOptions(WriteFlags.NoCompress);
 
-            while (await _block.OutputAvailableAsync()) { //blocks here until data arrives or .Complete is called
+            while (await _block.OutputAvailableAsync().ConfigureAwait(false)) { //blocks here until data arrives or .Complete is called
                 while (_block.TryReceive(null, out var etwEvents)) {
                     _logger.LogInformation($"Received batch with {etwEvents.Length} events.");
                     _responseStream.WriteOptions = flushWriteOptions;

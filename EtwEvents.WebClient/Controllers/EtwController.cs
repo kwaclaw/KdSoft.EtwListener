@@ -239,8 +239,8 @@ namespace KdSoft.EtwEvents.WebClient
                 else {
                     // Returning HTTP status codes does not work with WebSockets, we need to close
                     // the WebSocket again with a custom status code in the range 40000 - 4999
-                    await webSocket.CloseAsync
-                        ((WebSocketCloseStatus)SessionNotFoundWebSocketStatus,
+                    await webSocket.CloseAsync(
+                        (WebSocketCloseStatus)SessionNotFoundWebSocketStatus,
                         _.GetString("Session not found"),
                         CancellationToken.None
                     ).ConfigureAwait(false);
@@ -306,7 +306,7 @@ namespace KdSoft.EtwEvents.WebClient
             var jsonSerializerOptions = _jsonOptions.Value.JsonSerializerOptions;
 
             var changes = _sessionManager.GetSessionStateChanges();
-            await foreach (var change in changes.WithCancellation(cancelToken)) {
+            await foreach (var change in changes.WithCancellation(cancelToken).ConfigureAwait(false)) {
                 var statusJson = System.Text.Json.JsonSerializer.Serialize(change, jsonSerializerOptions);
                 await resp.WriteAsync($"data:{statusJson}\n\n").ConfigureAwait(false);
                 await resp.Body.FlushAsync().ConfigureAwait(false);

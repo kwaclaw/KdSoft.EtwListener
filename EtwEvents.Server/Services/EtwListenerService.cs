@@ -106,7 +106,7 @@ namespace KdSoft.EtwEvents.Server
             var eventQueue = new EventQueue(responseStream, context, logger, request.BatchSize);
             var session = GetSession(request.SessionName);
             try {
-                // not strictly necessary, but helps "waking" up the receiving end
+                // not strictly necessary, but helps "waking" up the receiving end by sending an initial message
                 await WakeUpClient(responseStream, context).ConfigureAwait(false);
                 await eventQueue.Process(session, request.MaxWriteDelay.ToTimeSpan()).ConfigureAwait(false);
             }

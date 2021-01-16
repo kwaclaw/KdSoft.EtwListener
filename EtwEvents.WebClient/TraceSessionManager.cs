@@ -81,7 +81,7 @@ namespace KdSoft.EtwEvents.WebClient
             }
 
             try {
-                await PostSessionStateChange();
+                await PostSessionStateChange().ConfigureAwait(false);
             }
             catch (Exception ex) {
                 sessionLogger.LogError(ex, $"Error in {nameof(PostSessionStateChange)}");

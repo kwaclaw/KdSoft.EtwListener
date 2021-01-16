@@ -178,7 +178,7 @@ namespace KdSoft.EtwEvents.WebClient
                 foreach (var entry in eventSinks) {
                     taskList[indx++] = (entry.Value, entry.Value.WriteAsync(evtBatch, sequenceNo));
                 }
-                result = await CheckEventSinkTasks(taskList, eventSinks.Count);
+                result = await CheckEventSinkTasks(taskList, eventSinks.Count).ConfigureAwait(false);
                 if (!result)
                     return result;
 
@@ -187,7 +187,7 @@ namespace KdSoft.EtwEvents.WebClient
                 foreach (var entry in eventSinks) {
                     taskList[indx++] = (entry.Value, entry.Value.FlushAsync());
                 }
-                result = await CheckEventSinkTasks(taskList, eventSinks.Count);
+                result = await CheckEventSinkTasks(taskList, eventSinks.Count).ConfigureAwait(false);
             }
             finally {
                 this._eventSinkTaskPool.Return(taskList);
