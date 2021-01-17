@@ -30,6 +30,8 @@ const classList = {
   stopBtn: { ...runBtnBase, 'fa-stop': true, 'text-red-500': true },
 };
 
+const dialogClass = utils.html5DialogSupported ? '' : 'fixed';
+
 function formDoneHandler(e) {
   if (!e.detail.canceled) {
     if (e.target.localName === 'filter-form') {
@@ -204,8 +206,15 @@ class EtwAppSideBar extends LitMvvmElement {
     const model = new KdSoftChecklistModel(this.model.eventSinkProfiles, [], false, item => item.name);
     checklist.model = model;
 
-    const dlg = this.renderRoot.getElementById('dlg-event-sink-chooser');
     const openButton = e.currentTarget;
+    const dlg = this.renderRoot.getElementById('dlg-event-sink-chooser');
+    if (dlg.openedBy === openButton) {
+      // do not re-open from same button if already open
+      dlg.openedBy = null;
+      return;
+    }
+    dlg.openedBy = openButton;
+
     model.observer = observe(() => {
       dlg.close();
       const selectedSinkProfile = model.firstSelectedEntry;
@@ -353,7 +362,7 @@ class EtwAppSideBar extends LitMvvmElement {
         }
 
         #dlg-event-sink-chooser {
-          color: #a0aec0;
+          color: inherit;
           background-color: #718096;
           left: unset;
           margin: 0;
@@ -559,16 +568,16 @@ class EtwAppSideBar extends LitMvvmElement {
         </kdsoft-expander>
       </nav>
 
-      <dialog id="dlg-config" class="${utils.html5DialogSupported ? '' : 'fixed'}">
+      <dialog id="dlg-config" class="${dialogClass}">
         <trace-session-config class="h-full"></trace-session-config>
       </dialog>
-      <dialog id="dlg-filter" class="${utils.html5DialogSupported ? '' : 'fixed'}">
+      <dialog id="dlg-filter" class="${dialogClass}">
         <filter-form></filter-form>
       </dialog>
-      <dialog id="dlg-event-sink" class="${utils.html5DialogSupported ? '' : 'fixed'}">
+      <dialog id="dlg-event-sink" class="${dialogClass}">
         <event-sink-config></event-sink-config>
       </dialog>
-      <dialog id="dlg-event-sink-chooser" class="${utils.html5DialogSupported ? '' : 'fixed'}" @focusout=${this._dialogFocusOut}>
+      <dialog id="dlg-event-sink-chooser" class="${dialogClass}" @focusout=${this._dialogFocusOut}>
         <h3 class="mb-3">Open Event Sink</h3>
         <kdsoft-checklist
           id="eventSinkProfileList"
