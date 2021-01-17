@@ -17,8 +17,8 @@ namespace KdSoft.EtwEvents.Server
         readonly BatchBlock<EtwEvent> _block;
         readonly ILogger<EventQueue> _logger;
 
-        long _lastCheckedTicks;
-        long _maxWriteDelayTicks;
+        int _lastCheckedMSecs;
+        int _maxWriteDelayMSecs;
 
         public EventQueue(
             IServerStreamWriter<EtwEventBatch> responseStream,
@@ -34,7 +34,7 @@ namespace KdSoft.EtwEvents.Server
             });
             this._responseStream = responseStream;
             this._context = context;
-            this._lastCheckedTicks = Environment.TickCount64;
+            this._lastCheckedMSecs = Environment.TickCount;
         }
 
         public Task Completion => _block.Completion;
@@ -44,14 +44,16 @@ namespace KdSoft.EtwEvents.Server
             var posted = _block.Post(new EtwEvent(evt));
             if (!posted)
                 _logger.LogInformation($"Could not post trace event {evt.EventIndex}.");
-            Volatile.Write(ref _lastCheckedTicks, Environment.TickCount64);
+            Volatile.Write(ref _lastCheckedMSecs, Environment.TickCount);
         }
 
         // TimerCallback get called periodically, but we do not always want to trigger a batch
         void TimerCallback(object? state) {
-            var lastCheckedTicks = Interlocked.Exchange(ref _lastCheckedTicks, Environment.TickCount64);
-            var deltaTicks = Environment.TickCount64 - lastCheckedTicks;
-            if (deltaTicks > _maxWriteDelayTicks) {
+            var lastCheckedTicks = Interlocked.Exchange(ref _lastCheckedMSecs, Environment.TickCount);
+            // integer subtraction is immune to rollover, e.g. unchecked(int.MaxValue + y) - (int.MaxValue - x) = y + x;
+            // Environment.TickCount rolls over from int.Maxvalue to int.MinValue!
+            var deltaTicks = Environment.TickCount - lastCheckedTicks;
+            if (deltaTicks > _maxWriteDelayMSecs) {
                 _block.TriggerBatch();
             }
         }
@@ -67,13 +69,13 @@ namespace KdSoft.EtwEvents.Server
                     var batch = new EtwEventBatch();
                     batch.Events.AddRange(etwEvents);
                     await _responseStream.WriteAsync(batch).ConfigureAwait(false);
-                    Volatile.Write(ref _lastCheckedTicks, Environment.TickCount64);
+                    Volatile.Write(ref _lastCheckedMSecs, Environment.TickCount);
                 }
             }
         }
 
         public async Task Process(RealTimeTraceSession session, TimeSpan maxWriteDelay) {
-            this._maxWriteDelayTicks = (long)maxWriteDelay.TotalMilliseconds;
+            this._maxWriteDelayMSecs = (int)maxWriteDelay.TotalMilliseconds;
             Task processTask;
             using (var timer = new Timer(TimerCallback)) {
                 processTask = ProcessBatches(timer, maxWriteDelay);
