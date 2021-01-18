@@ -106,8 +106,12 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
             _jsonWriter.WriteString("opcodeName", evt.OpcodeName);
             _jsonWriter.WriteString("taskName", evt.TaskName);
             // timeStamp will be passed as milliseconds to Javascript
-            var timeStamp = (evt.TimeStamp.Seconds * 1000) + (evt.TimeStamp.Nanos / 1000000);
-            _jsonWriter.WriteNumber("timeStamp", timeStamp);
+            if (evt.TimeStamp == null)
+                _jsonWriter.WriteNull("timeStamp");
+            else {
+                var timeStamp = (evt.TimeStamp.Seconds * 1000) + (evt.TimeStamp.Nanos / 1000000);
+                _jsonWriter.WriteNumber("timeStamp", timeStamp);
+            }
             _jsonWriter.WriteNumber("version", evt.Version);
 
             _jsonWriter.WriteStartObject("payload");
