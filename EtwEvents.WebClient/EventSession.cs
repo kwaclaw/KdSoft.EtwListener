@@ -128,7 +128,7 @@ namespace KdSoft.EtwEvents.WebClient
 
             try {
                 // not strictly necessary but help with triggering session state notifications!
-                await _etwClient.StopEventsAsync(new StringValue { Value = _etwRequest.SessionName });
+                await _etwClient.StopEventsAsync(new StringValue { Value = _etwRequest.SessionName }).ResponseAsync.ConfigureAwait(false);
             }
             finally {
                 // this does not always trigger ServerCallContext.CancellationToken right away!

@@ -99,7 +99,7 @@ namespace KdSoft.EtwEvents.WebClient
                 };
                 openEtwSession.ProviderSettings.AddRange(request.Providers);
 
-                var reply = await client.OpenSessionAsync(openEtwSession);
+                var reply = await client.OpenSessionAsync(openEtwSession).ResponseAsync.ConfigureAwait(false);
 
                 var matchingProviders = reply.Results.Select(r =>
                     request.Providers.FirstOrDefault(s => string.Equals(s.Name, r.Name, StringComparison.CurrentCultureIgnoreCase))
@@ -155,7 +155,7 @@ namespace KdSoft.EtwEvents.WebClient
         #region TraceSessionState
 
         public async Task UpdateSessionState() {
-            var etwSession = await _etwClient.GetSessionAsync(new StringValue { Value = Name });
+            var etwSession = await _etwClient.GetSessionAsync(new StringValue { Value = Name }).ResponseAsync.ConfigureAwait(false);
             Interlocked.MemoryBarrier();
             _etwSession = etwSession;
             Interlocked.MemoryBarrier();
@@ -296,7 +296,7 @@ namespace KdSoft.EtwEvents.WebClient
         internal async Task CloseRemote() {
             try {
                 var closeEtwSession = new CloseEtwSession { Name = this.Name };
-                var reply = await _etwClient.CloseSessionAsync(closeEtwSession);
+                var reply = await _etwClient.CloseSessionAsync(closeEtwSession).ResponseAsync.ConfigureAwait(false);
             }
             catch (Exception ex) {
                 _logger.LogError(ex, _.GetString("Close Session error"));
@@ -313,7 +313,7 @@ namespace KdSoft.EtwEvents.WebClient
 
         public async Task<BuildFilterResult> SetCSharpFilter(string csharpFilter) {
             var setFilterRequest = new KdSoft.EtwLogging.SetFilterRequest { SessionName = this.Name, CsharpFilter = csharpFilter };
-            var result = await _etwClient.SetCSharpFilterAsync(setFilterRequest);
+            var result = await _etwClient.SetCSharpFilterAsync(setFilterRequest).ResponseAsync.ConfigureAwait(false);
             return result;
         }
 
@@ -322,7 +322,7 @@ namespace KdSoft.EtwEvents.WebClient
             try {
                 var client = new EtwListener.EtwListenerClient(channel);
                 var testFilterRequest = new KdSoft.EtwLogging.TestFilterRequest { CsharpFilter = csharpFilter };
-                var result = await client.TestCSharpFilterAsync(testFilterRequest);
+                var result = await client.TestCSharpFilterAsync(testFilterRequest).ResponseAsync.ConfigureAwait(false);
                 return result;
             }
             finally {
