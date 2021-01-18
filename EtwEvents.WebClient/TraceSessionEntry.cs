@@ -46,5 +46,11 @@ namespace KdSoft.EtwEvents.WebClient
         /// </summary>
         /// <returns></returns>
         public TaskAwaiter<TraceSession> GetAwaiter() { return SessionTask.Value.GetAwaiter(); }
+
+        /// <summary>
+        /// Allows us to use <c>var traceSession = await [instance of TraceSessionEntry].ConfigureAwait()</c>
+        /// </summary>
+        /// <returns></returns>
+        public ConfiguredTaskAwaitable<TraceSession> ConfigureAwait(bool value) { return SessionTask.Value.ConfigureAwait(value); }
     }
 }

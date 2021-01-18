@@ -61,7 +61,7 @@ namespace KdSoft.EtwEvents.WebClient
             TraceSession traceSession;
             try {
                 // runs TraceSession.Create() when TraceSessionEntry instance is awaited for the first time
-                traceSession = await entry;
+                traceSession = await entry.ConfigureAwait(false);
             }
             catch (Exception ex) {
                 _ = this.TryRemove(request.Name, out var failedEntry);
@@ -92,7 +92,7 @@ namespace KdSoft.EtwEvents.WebClient
 
         public async Task<bool> CloseRemoteSession(string name) {
             if (this.TryRemove(name, out var entry)) {
-                var traceSession = await entry;
+                var traceSession = await entry.ConfigureAwait(false);
                 await traceSession.CloseRemote().ConfigureAwait(false);
                 await PostSessionStateChange().ConfigureAwait(false);
                 return true;
