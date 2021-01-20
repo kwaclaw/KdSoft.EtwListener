@@ -97,7 +97,6 @@ namespace KdSoft.EtwEvents.Server
         async Task WakeUpClient(IServerStreamWriter<EtwEventBatch> responseStream, ServerCallContext context) {
             await context.WriteResponseHeadersAsync(Metadata.Empty).ConfigureAwait(false);
             var batch = new EtwEventBatch();
-            batch.Events.Add(new EtwEvent());
             await responseStream.WriteAsync(batch).ConfigureAwait(false);
         }
 
