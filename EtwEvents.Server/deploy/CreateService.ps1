@@ -70,8 +70,12 @@ Copy-Item $sourceBinPath $binPath -Recurse
 $filepath = [System.IO.Path]::Combine($binPath, $file)
 
 "Installing the service."
-New-Service -Name $serviceName -BinaryPathName $filepath -Credential $cred -Description $serviceDescription -DisplayName $serviceDisplayName -StartupType Automatic 
-"Installed the service."
+New-Service -Name $serviceName -BinaryPathName $filepath -Credential $cred -Description $serviceDescription -DisplayName $serviceDisplayName -StartupType Automatic
+
+"Configuring the service"
+sc.exe failure $serviceName reset= 86400 actions= restart/6000/restart/6000/restart/6000
+
+"Installed and configured the service."
 
 #$ShouldStartService = Read-Host "Would you like the '$serviceName ' service started? Y or N"
 #if($ShouldStartService -eq "Y") {
