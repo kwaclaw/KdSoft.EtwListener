@@ -15,7 +15,7 @@ import EventSinkProfile from '../js/eventSinkProfile.js';
 async function loadSinkDefinitionTemplate(sinkType) {
   const elementModule = await import(sinkType.configViewUrl);
   const configElement = elementModule.default;
-  return configElement; 
+  return configElement;
 }
 
 async function loadSinkDefinitionModel(sinkType) {

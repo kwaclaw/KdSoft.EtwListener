@@ -119,15 +119,16 @@ class TraceSessionView extends LitMvvmElement {
           ${repeat(
             itemIterator,
             item => item.sequenceNo,
-            (item, indx) => {
-              return html`
+            item => html`
                 <div class="kds-row">
                   ${this._standardCols.map(col => html`<div>${renderColumn(item[col.name], col.type)}</div>`)}
                   ${this._payloadCols.map(col => html`<div>${renderColumn(item.payload[col.name], col.type)}</div>`)}
-                  ${this._expandPayload ? html`<div class="payload" hidden><pre>${JSON.stringify(item.payload, null, 2)}</pre></div>` : nothing}
+                  ${this._expandPayload
+                    ? html`<div class="payload" hidden><pre>${JSON.stringify(item.payload, null, 2)}</pre></div>`
+                    : nothing
+                  }
                 </div>
-              `;
-            }
+              `
           )}
         </div>
       </div>
