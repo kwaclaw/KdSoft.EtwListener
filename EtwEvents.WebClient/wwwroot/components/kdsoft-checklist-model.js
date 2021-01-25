@@ -92,6 +92,10 @@ class KdSoftChecklistModel {
     return Array.from(this.selectedEntries, entry => entry.index);
   }
 
+  get selectedItems() {
+    return Array.from(this.selectedEntries, entry => entry.item);
+  }
+
   get filteredItems() { return iterateFilter(this.items, this._selectedItems, this.filter); }
 
   selectIndex(index, select) {
@@ -131,7 +135,7 @@ class KdSoftChecklistModel {
       throw new Error('Must not select multiple items');
     }
 
-    let selItems = [];
+    const selItems = [];
     for (let indx = 0; indx < this.items.length; indx += 1) {
       const tempItem = this.items[indx];
       for (const id of ids) {
