@@ -11,8 +11,8 @@
 ];
 
 class TraceSessionProfile {
-  constructor(name, host, providers, filters, activeFilterIndex, lifeTime, batchSize,
-    maxWriteDelayMS, standardColumnOrder, standardColumns, payloadColumnList, payloadColumns
+  constructor(name, host, providers, filters, activeFilterIndex, lifeTime, batchSize, maxWriteDelayMS,
+    standardColumnOrder, standardColumns, payloadColumnList, payloadColumns, eventSinks
   ) {
     this.name = name;
     this.host = host;
@@ -30,6 +30,7 @@ class TraceSessionProfile {
     } else {
       this.standardColumnOrder = standardColumnOrder;
     }
+    this.eventSinks = eventSinks || []; // { name, type }
   }
 
   get activeFilter() { return this.filters[this.activeFilterIndex]; }

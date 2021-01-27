@@ -20,7 +20,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.MongoSink", "EtwE
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.Client.Shared", "EtwEvents.Interfaces\EtwEvents.Client.Shared.csproj", "{8532908E-0353-4ECD-A432-2D90209D9E1A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EtwEvents.ElasticSink", "EtwEvents.ElasticSink\EtwEvents.ElasticSink.csproj", "{8B74D4A2-55BD-403C-9570-DE6BDE31A0A4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.ElasticSink", "EtwEvents.ElasticSink\EtwEvents.ElasticSink.csproj", "{8B74D4A2-55BD-403C-9570-DE6BDE31A0A4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

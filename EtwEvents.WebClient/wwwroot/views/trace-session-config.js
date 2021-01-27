@@ -239,6 +239,7 @@ class TraceSessionConfig extends LitMvvmElement {
           <button type="button" class=${this._tabClass('providers')} data-tabid="providers">Providers</button>
           <button type="button" class=${this._tabClass('filters')} data-tabid="filters">Filters</button>
           <button type="button" class=${this._tabClass('columns')} data-tabid="columns">Columns</button>
+          <button type="button" class=${this._tabClass('initial-event-sinks')} data-tabid="initial-event-sinks">Event Sinks</button>
         </nav>
 
         <div id="container" class="mb-4">
@@ -308,23 +309,40 @@ class TraceSessionConfig extends LitMvvmElement {
               </kdsoft-checklist>
               <div class="w-full self-end mt-auto pt-4 pb-1 flex items-center">
                 <!-- <label class="mr-4" for="payload-field">New</label> -->
-                <input id="payload-field" type="text" form="" class="mr-2" placeholder="field name" required @blur=${this._payloadFieldBlur} />
+                <input id="payload-field" type="text" form="" class="mr-2"
+                  placeholder="field name" required @blur=${this._payloadFieldBlur} />
                 <input id="payload-label" type="text" form="" class="mr-2" placeholder="field label" required />
                 <select id="payload-type">
                   ${TraceSessionProfile.columnType.map(ct => html`<option>${ct}</option>`)}
                 </select>
-                <span class="text-gray-500 fas fa-lg fa-plus ml-auto pl-4 cursor-pointer select-none" @click=${this._addPayloadColumnClick}></span>
+                <span class="text-gray-500 fas fa-lg fa-plus ml-auto pl-4 cursor-pointer select-none"
+                  @click=${this._addPayloadColumnClick}>
+                </span>
               </div>
             </div>
+          </section>
+
+          <section id="initial-event-sinks" class="${this._sectionClass('initial-event-sinks')}">
+            <kdsoft-checklist id="event-sinks" class="text-black"
+                .model=${this.model.eventSinkCheckList}
+                .getItemTemplate=${item => html`${item.name} (${item.type})`}
+                show-checkboxes>
+              </kdsoft-checklist>
           </section>
 
         </div>
         
         <hr class="mb-4" />
         <div id="ok-cancel-buttons" class="flex flex-wrap mt-2 bt-1">
-          <button type="button" class="py-1 px-2" @click=${this._exportProfile} title="Export"><i class="fas fa-lg fa-file-export text-gray-600"></i></button>
-          <button type="button" class="py-1 px-2 ml-auto" @click=${this._apply} title="Save"><i class="fas fa-lg fa-check text-green-500"></i></button>
-          <button type="button" class="py-1 px-2" @click=${this._cancel} title="Cancel"><i class="fas fa-lg fa-times text-red-500"></i></button>
+          <button type="button" class="py-1 px-2" @click=${this._exportProfile} title="Export">
+            <i class="fas fa-lg fa-file-export text-gray-600"></i>
+          </button>
+          <button type="button" class="py-1 px-2 ml-auto" @click=${this._apply} title="Save">
+            <i class="fas fa-lg fa-check text-green-500"></i>
+          </button>
+          <button type="button" class="py-1 px-2" @click=${this._cancel} title="Cancel">
+            <i class="fas fa-lg fa-times text-red-500"></i>
+          </button>
         </div>
       </form>
     `;

@@ -16,7 +16,7 @@ const traceLevelList = () => [
 ];
 
 class TraceSessionConfigModel extends TraceSessionProfile {
-  constructor(profile) {
+  constructor(profile, eventSinkProfiles) {
     super((profile.name || '').slice(0),
       (profile.host || '').slice(0),
       utils.cloneObject([], profile.providers || []),
@@ -28,7 +28,8 @@ class TraceSessionConfigModel extends TraceSessionProfile {
       utils.cloneObject([], profile.standardColumnOrder || []),
       (profile.standardColumns || []).slice(0),
       utils.cloneObject([], profile.payloadColumnList || []),
-      (profile.payloadColumns || []).slice(0)
+      (profile.payloadColumns || []).slice(0),
+      (profile.eventSinks || []).slice(0)
     );
 
     this.filterCarousel = new FilterCarouselModel(profile.filters, profile.activeFilterIndex);
@@ -48,6 +49,19 @@ class TraceSessionConfigModel extends TraceSessionProfile {
       item => item.name
     );
 
+    const eventSinkIndex = es => {
+      const name = es.name.toLowerCase();
+      const type = es.type.toLowerCase();
+      return eventSinkProfiles.findIndex(esp => name === esp.name.toLowerCase() && type === es.type.toLowerCase());
+    };
+
+    this.eventSinkCheckList = new KdSoftChecklistModel(
+      eventSinkProfiles,
+      this.eventSinks.map(es => eventSinkIndex(es)).filter(esi => esi >= 0),
+      true,
+      item => `${item.type}:${item.name}`
+    );
+
     const result = observable(this);
 
     // observe checklist model changes
@@ -62,14 +76,19 @@ class TraceSessionConfigModel extends TraceSessionProfile {
       this.payloadColumns = this.payloadColumnCheckList.selectedIndexes;
     });
 
+    this._eventSinkListObserver = observe(() => {
+      this.eventSinks = this.eventSinkCheckList.selectedItems;
+    });
+
     return result;
   }
 
   static get traceLevelList() { return observable(traceLevelList()); }
 
   cloneAsProfile() {
-    const result = utils.cloneObject({}, this);
-    Reflect.setPrototypeOf(result, TraceSessionProfile.prototype);
+    // an empty instance establishes the prototype
+    const result = new TraceSessionProfile(); // establishes the prototype
+    utils.setTargetProperties(result, this);
     return result;
   }
 

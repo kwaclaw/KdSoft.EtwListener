@@ -90,7 +90,7 @@ class EtwAppSideBar extends LitMvvmElement {
   //#region session profile
 
   _showSessionProfileDialog(profile) {
-    const configModel = new TraceSessionConfigModel(profile);
+    const configModel = new TraceSessionConfigModel(profile, this.model.eventSinkProfiles);
 
     const dlg = this.renderRoot.getElementById('dlg-config');
     const cfg = dlg.getElementsByTagName('trace-session-config')[0];
@@ -203,7 +203,12 @@ class EtwAppSideBar extends LitMvvmElement {
 
   _chooseEventSinkClick(e, session) {
     const checklist = this.renderRoot.getElementById('eventSinkProfileList');
-    const model = new KdSoftChecklistModel(this.model.eventSinkProfiles, [], false, item => item.name);
+    const model = new KdSoftChecklistModel(
+      this.model.eventSinkProfiles,
+      [],
+      false,
+      item => `${item.type}:${item.name}`
+    );
     checklist.model = model;
 
     const openButton = e.currentTarget;
@@ -581,7 +586,7 @@ class EtwAppSideBar extends LitMvvmElement {
         <h3 class="mb-3">Open Event Sink</h3>
         <kdsoft-checklist
           id="eventSinkProfileList"
-          .getItemTemplate=${item => html`${item.name}`}>
+          .getItemTemplate=${item => html`${item.name} (${item.type})`}>
         </kdsoft-checklist>
       </dialog>
     `;
