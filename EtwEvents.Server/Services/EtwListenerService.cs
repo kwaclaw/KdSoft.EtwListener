@@ -5,18 +5,21 @@ using Grpc.Core;
 using KdSoft.EtwLogging;
 using Microsoft.Diagnostics.Tracing.Session;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.ObjectPool;
 
 namespace KdSoft.EtwEvents.Server
 {
     class EtwListenerService: EtwListener.EtwListenerBase
     {
         readonly TraceSessionManager _sesManager;
+        readonly ObjectPool<EtwEvent> _etwEventPool;
         readonly ILoggerFactory _loggerFactory;
         readonly ILogger<EtwListenerService> _logger;
         static readonly Task<Empty> _emptyTask = Task.FromResult(new Empty());
 
-        public EtwListenerService(TraceSessionManager sesManager, ILoggerFactory loggerFactory) {
+        public EtwListenerService(TraceSessionManager sesManager, ObjectPool<EtwEvent> etwEventPool, ILoggerFactory loggerFactory) {
             this._sesManager = sesManager;
+            this._etwEventPool = etwEventPool;
             this._loggerFactory = loggerFactory;
             this._logger = loggerFactory.CreateLogger<EtwListenerService>();
         }
@@ -102,7 +105,7 @@ namespace KdSoft.EtwEvents.Server
 
         public override async Task GetEvents(EtwEventRequest request, IServerStreamWriter<EtwEventBatch> responseStream, ServerCallContext context) {
             var logger = _loggerFactory.CreateLogger<EventQueue>();
-            var eventQueue = new EventQueue(responseStream, context, logger, request.BatchSize);
+            var eventQueue = new EventQueue(responseStream, context, _etwEventPool, logger, request.BatchSize);
             var session = GetSession(request.SessionName);
             try {
                 // not strictly necessary, but helps "waking" up the receiving end by sending an initial message

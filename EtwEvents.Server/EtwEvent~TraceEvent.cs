@@ -9,7 +9,7 @@ namespace KdSoft.EtwLogging
             SetTraceEvent(evt);
         }
 
-        internal void SetTraceEvent(TraceEvent evt) {
+        internal EtwEvent SetTraceEvent(TraceEvent evt) {
             this.ProviderName = evt.ProviderName;
             this.Channel = (uint)evt.Channel;
             this.Id = (uint)evt.ID;
@@ -24,6 +24,7 @@ namespace KdSoft.EtwLogging
                 var propName = evt.PayloadNames[indx];
                 this.Payload[propName] = evt.PayloadString(indx);
             }
+            return this;
         }
     }
 }
