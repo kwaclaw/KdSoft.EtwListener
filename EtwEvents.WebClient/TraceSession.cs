@@ -115,7 +115,8 @@ namespace KdSoft.EtwEvents.WebClient
                     enabledProviders,
                     restartedProviders,
                     request.BatchSize,
-                    new Duration { Nanos = request.MaxWriteDelayMS * 1000000 },
+                    // TimeSpan.FromMilliseconds normalizes values of MaxWriteDelayMS > 1000
+                    Duration.FromTimeSpan(TimeSpan.FromMilliseconds(request.MaxWriteDelayMS)),
                     channel,
                     client,
                     logger,
