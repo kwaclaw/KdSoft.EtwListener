@@ -225,7 +225,7 @@ class EtwAppSideBar extends LitMvvmElement {
       const selectedSinkProfile = model.firstSelectedEntry;
       if (selectedSinkProfile && session) {
         const spinner = new Spinner(openButton);
-        session.openEventSink(selectedSinkProfile, spinner);
+        session.openEventSinks([selectedSinkProfile], spinner);
       }
     });
 
@@ -243,7 +243,7 @@ class EtwAppSideBar extends LitMvvmElement {
   _closeEventSinkClick(e, session, eventSink) {
     const closeButton = e.currentTarget;
     const spinner = new Spinner(closeButton);
-    session.closeEventSink(eventSink.name, spinner);
+    session.closeEventSink([eventSink.name], spinner);
   }
 
   //#endregion

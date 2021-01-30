@@ -61,6 +61,9 @@ class TraceSession {
       const response = await this.fetcher.withProgress(progress).postJson('OpenSession', null, request);
       this._state = response;
       this._restartedProviders = response.restartedProviders;
+      if (p.eventSinks && p.eventSinks.length) {
+        await this.openEventSinks(p.eventSinks, progress);
+      }
       return true;
     } catch (error) {
       window.etwApp.defaultHandleError(error);
@@ -141,23 +144,23 @@ class TraceSession {
     return this._callFilter('TestCSharpFilter', { host: this.profile.host, csharpFilter: filter || null }, progress);
   }
 
-  async openEventSink(sinkProfile, progress) {
+  async openEventSinks(sinkProfiles, progress) {
     try {
-      const evr = {
-        sinkType: sinkProfile.type,
-        name: sinkProfile.name,
-        options: sinkProfile.definition.options,
-        credentials: sinkProfile.definition.credentials
-      };
-      await this.fetcher.withProgress(progress).postJson('OpenEventSinks', { sessionName: this._profile.name }, [evr]);
+      const evrs = sinkProfiles.map(sp => ({
+        sinkType: sp.type,
+        name: sp.name,
+        options: sp.definition.options,
+        credentials: sp.definition.credentials
+      }));
+      await this.fetcher.withProgress(progress).postJson('OpenEventSinks', { sessionName: this._profile.name }, evrs);
     } catch (error) {
       window.etwApp.defaultHandleError(error);
     }
   }
 
-  async closeEventSink(sinkName, progress) {
+  async closeEventSinks(sinkNames, progress) {
     try {
-      await this.fetcher.withProgress(progress).postJson('CloseEventSinks', { sessionName: this._profile.name }, [sinkName]);
+      await this.fetcher.withProgress(progress).postJson('CloseEventSinks', { sessionName: this._profile.name }, sinkNames);
     } catch (error) {
       window.etwApp.defaultHandleError(error);
     }
