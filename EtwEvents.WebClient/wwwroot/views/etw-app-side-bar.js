@@ -243,7 +243,7 @@ class EtwAppSideBar extends LitMvvmElement {
   _closeEventSinkClick(e, session, eventSink) {
     const closeButton = e.currentTarget;
     const spinner = new Spinner(closeButton);
-    session.closeEventSink([eventSink.name], spinner);
+    session.closeEventSinks([eventSink.name], spinner);
   }
 
   //#endregion
