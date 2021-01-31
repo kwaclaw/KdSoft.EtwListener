@@ -8,6 +8,7 @@
     <Nullable>enable</Nullable>
     <AssemblyName>KdSoft.EtwEvents.WebClient</AssemblyName>
     <RootNamespace>KdSoft.EtwEvents.WebClient</RootNamespace>
+    <UserSecretsId>aca35d68-2f97-4471-bcee-88a607e466f3</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
