@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using KdSoft.EtwLogging;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.ObjectPool;
 
 #pragma warning disable CA1822 // Mark members as static
 #pragma warning disable CA1801 // Review unused parameters
@@ -63,7 +61,6 @@ namespace KdSoft.EtwEvents.Server
             });
 
             services.AddSingleton<TraceSessionManager>(provider => new TraceSessionManager(TimeSpan.FromMinutes(3)));
-            services.AddSingleton<ObjectPool<EtwEvent>>(new DefaultObjectPool<EtwEvent>(new DefaultPooledObjectPolicy<EtwEvent>(), 1024));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

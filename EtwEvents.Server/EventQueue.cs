@@ -26,20 +26,19 @@ namespace KdSoft.EtwEvents.Server
         public EventQueue(
             IServerStreamWriter<EtwEventBatch> responseStream,
             ServerCallContext context,
-            ObjectPool<EtwEvent> etwEventPool,
             ILogger<EventQueue> logger,
             int batchSize = 100
         ) {
+            this._responseStream = responseStream;
+            this._context = context;
             this._logger = logger;
             this._channel = Channel.CreateUnbounded<EtwEvent>(new UnboundedChannelOptions {
                 AllowSynchronousContinuations = true,
                 SingleReader = true,
-                SingleWriter = true
+                SingleWriter = false
             });
-            this._responseStream = responseStream;
-            this._context = context;
             this._batchSize = batchSize;
-            this._etwEventPool = etwEventPool;
+            this._etwEventPool = new DefaultObjectPool<EtwEvent>(new DefaultPooledObjectPolicy<EtwEvent>(), batchSize);
             this._lastWrittenMSecs = Environment.TickCount;
         }
 
@@ -55,7 +54,9 @@ namespace KdSoft.EtwEvents.Server
 
         static readonly EtwEvent _emptyEvent = new EtwEvent();
 
-        // TimerCallback get called periodically, but we do not always want to trigger a batch
+        /// <summary>
+        /// Timer callback that triggers periodical write operations even if the event batch is not full
+        /// </summary>
         void TimerCallback(object? state) {
             var lastCheckedTicks = Interlocked.Exchange(ref _lastWrittenMSecs, Environment.TickCount);
             // integer subtraction is immune to rollover, e.g. unchecked(int.MaxValue + y) - (int.MaxValue - x) = y + x;
