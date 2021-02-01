@@ -1,5 +1,4 @@
-﻿using System.Globalization;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace KdSoft.EtwEvents.Client.Shared
 {

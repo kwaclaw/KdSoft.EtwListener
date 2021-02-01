@@ -92,7 +92,8 @@ return result;
             using (var streamer = client.GetEvents(request)) {
                 while (await streamer.ResponseStream.MoveNext()) {
                     var evtBatch = streamer.ResponseStream.Current;
-                    string message; string methodName;
+                    string message;
+                    string methodName;
                     foreach (var evt in evtBatch.Events) {
                         evt.Payload.TryGetValue("HostReference", out var hostRef);
                         evt.Payload.TryGetValue("AppDomain", out var appDomain);

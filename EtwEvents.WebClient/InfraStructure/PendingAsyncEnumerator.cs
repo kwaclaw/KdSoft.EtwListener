@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace KdSoft.EtwEvents
 {
-    public abstract class PendingAsyncEnumerator<T>: IAsyncEnumerator<T> where T: notnull
+    public abstract class PendingAsyncEnumerator<T>: IAsyncEnumerator<T> where T : notnull
     {
         readonly CancellationToken _cancelToken;
         readonly ManualResetValueTaskSource<bool> _vts;

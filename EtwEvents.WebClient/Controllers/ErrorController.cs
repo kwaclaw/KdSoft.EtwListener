@@ -7,7 +7,8 @@ using Microsoft.Extensions.Localization;
 
 namespace KdSoft.EtwEvents.WebClient
 {
-    public class ErrorController: Controller {
+    public class ErrorController: Controller
+    {
         readonly IStringLocalizer<ErrorController> _;
 
         public ErrorController(IStringLocalizer<ErrorController> localizer) {

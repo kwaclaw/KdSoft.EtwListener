@@ -22,8 +22,7 @@ namespace KdSoft.EtwEvents.WebClient
             IConfiguration config,
             ILoggerFactory loggerFactory,
             IStringLocalizer<TraceSession> localizer
-        ) : base(TimeSpan.TryParse(config?["ReapPeriod"], out var reapPeriod) ? reapPeriod : TimeSpan.FromMinutes(5), StringComparer.CurrentCultureIgnoreCase)
-        {
+        ) : base(TimeSpan.TryParse(config?["ReapPeriod"], out var reapPeriod) ? reapPeriod : TimeSpan.FromMinutes(5), StringComparer.CurrentCultureIgnoreCase) {
             this._loggerFactory = loggerFactory;
             this._localizer = localizer;
             this._changeNotifier = new AggregatingNotifier<Models.TraceSessionStates>(GetSessionStates);
@@ -51,7 +50,7 @@ namespace KdSoft.EtwEvents.WebClient
         /// <returns></returns>
         /// <remarks>When session was opened for first time, restartedProviders can be empty but not null.
         /// In other words, when restartedProviders is null, then the session was already open.</remarks>
-        public async Task<Models.OpenSessionState> OpenSession(TraceSessionRequest request, X509Certificate2 clientCertificate ) {
+        public async Task<Models.OpenSessionState> OpenSession(TraceSessionRequest request, X509Certificate2 clientCertificate) {
             var sessionLogger = _loggerFactory.CreateLogger<TraceSession>();
             var entry = this.GetOrAdd(request.Name, sessionName => CreateTraceSessionEntry(request, clientCertificate, sessionLogger));
 

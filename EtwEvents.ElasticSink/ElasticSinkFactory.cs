@@ -19,7 +19,7 @@ namespace KdSoft.EtwEvents.EventSinks
             AppDomain.CurrentDomain.AssemblyResolve += (sender, args) => Utils.DirectoryResolveAssembly(evtSinkDir!, args);
 
             _serializerOptions = new JsonSerializerOptions {
-                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
         }
 

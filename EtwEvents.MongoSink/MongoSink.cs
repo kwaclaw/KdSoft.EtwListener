@@ -59,8 +59,7 @@ namespace KdSoft.EtwEvents.EventSinks
 
             var efs = _sinkInfo.EventFilterFields;
             foreach (var ef in efs) {
-                filter &= ef switch
-                {
+                filter &= ef switch {
                     "Timestamp" => _fb.Eq(ef, evt.TimeStamp),
                     "ProviderName" => _fb.Eq(ef, evt.ProviderName),
                     "Channel" => filter &= _fb.Eq(ef, evt.Channel),

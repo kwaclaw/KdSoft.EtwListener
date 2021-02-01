@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Elasticsearch.Net;
+using Google.Protobuf;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
-using Elasticsearch.Net;
-using System.Linq;
-using Google.Protobuf;
-using System.Runtime.CompilerServices;
 
 namespace KdSoft.EtwEvents.EventSinks
 {

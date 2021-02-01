@@ -27,14 +27,14 @@ namespace KdSoft.EtwEvents.Server
             throw new RpcException(new Status(StatusCode.PermissionDenied, "Unauthorized Certificate"));
         }
 
+        public override Task<TResponse> UnaryServerHandler<TRequest, TResponse>(TRequest request, ServerCallContext context, UnaryServerMethod<TRequest, TResponse> continuation) {
+            CheckAuthorized(context);
+            return continuation(request, context);
+        }
+
         public override Task<TResponse> ClientStreamingServerHandler<TRequest, TResponse>(IAsyncStreamReader<TRequest> requestStream, ServerCallContext context, ClientStreamingServerMethod<TRequest, TResponse> continuation) {
             CheckAuthorized(context);
             return base.ClientStreamingServerHandler(requestStream, context, continuation);
-        }
-
-        public override Task<TResponse> UnaryServerHandler<TRequest, TResponse>(TRequest request, ServerCallContext context, UnaryServerMethod<TRequest, TResponse> continuation) {
-            CheckAuthorized(context);
-            return continuation.Invoke(request, context);
         }
 
         public override Task ServerStreamingServerHandler<TRequest, TResponse>(TRequest request, IServerStreamWriter<TResponse> responseStream, ServerCallContext context, ServerStreamingServerMethod<TRequest, TResponse> continuation) {

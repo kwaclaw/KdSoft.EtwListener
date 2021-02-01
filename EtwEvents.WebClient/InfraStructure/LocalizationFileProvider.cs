@@ -12,7 +12,7 @@ namespace KdSoft.EtwEvents
     {
         readonly IFileProvider _fileProvider;
         readonly string _resourcesContainer;
-        
+
         public LocalizationFileProvider(IHostEnvironment hostingEnvironment, IOptions<LocalizationOptions> localizationOptions) {
             _fileProvider = hostingEnvironment.ContentRootFileProvider;
             _resourcesContainer = localizationOptions.Value.ResourcesPath;

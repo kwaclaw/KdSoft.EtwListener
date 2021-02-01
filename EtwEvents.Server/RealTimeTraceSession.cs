@@ -21,7 +21,8 @@ using tracing = Microsoft.Diagnostics.Tracing;
 
 namespace KdSoft.EtwEvents.Server
 {
-    class RealTimeTraceSession: TimedLifeCycleAware, IDisposable {
+    class RealTimeTraceSession: TimedLifeCycleAware, IDisposable
+    {
         readonly ILogger<RealTimeTraceSession> _logger;
 
         TraceEventSession? _instance;
@@ -285,7 +286,7 @@ namespace KdSoft.EtwEvents.Server
         }
 
         public static CSharpCompilation CompileFilter(string filterBody) {
-            var sourceCode = string.Format(CultureInfo.InvariantCulture,  FilterTemplate, filterBody);
+            var sourceCode = string.Format(CultureInfo.InvariantCulture, FilterTemplate, filterBody);
             var sourceText = SourceText.From(sourceCode);
             var options = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest);
 

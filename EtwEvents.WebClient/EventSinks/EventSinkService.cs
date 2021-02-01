@@ -59,7 +59,7 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
                             var configViewUri = new Uri($"file:///{configView.FullName}");
                             var configModel = evtSinkDir.GetFiles(@"config/*-config-model.js").First();
                             var configModelUri = new Uri($"file:///{configModel.FullName}");
-                            yield return new EventSinkInfo { 
+                            yield return new EventSinkInfo {
                                 SinkType = evtSinkType,
                                 Description = _.GetString(evtSinkType),
                                 // relative Uri does not include "EventSinks" path component (has a trailing '/')
