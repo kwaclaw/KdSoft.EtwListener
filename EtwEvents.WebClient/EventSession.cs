@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using KdSoft.EtwLogging;
@@ -13,12 +13,9 @@ namespace KdSoft.EtwEvents.WebClient
     {
         readonly EtwListener.EtwListenerClient _etwClient;
         readonly EtwEventRequest _etwRequest;
-        readonly Timer _flushTimer;
         readonly EventSinkHolder _eventSinks;
         readonly AggregatingNotifier<Models.TraceSessionStates> _changeNotifier;
-        readonly IDisposable _pushFrequencyMonitor;
-        readonly ActionBlock<(EtwEventBatch, long)> _jobQueue;
-        readonly EtwEventBatch _emptyBatch;
+        readonly Channel<(EtwEventBatch, long)> _responseQueue;
 
         AsyncServerStreamingCall<EtwEventBatch>? _streamingCall;
 
@@ -36,30 +33,12 @@ namespace KdSoft.EtwEvents.WebClient
             this._eventSinks = eventSinks;
             this._changeNotifier = changeNotifier;
 
-            this._jobQueue = new ActionBlock<(EtwEventBatch, long)>(ProcessResponse, new ExecutionDataflowBlockOptions {
-                BoundedCapacity = optionsMonitor.CurrentValue.EventQueueCapacity,
-                EnsureOrdered = true,
-                MaxDegreeOfParallelism = 1
+            this._responseQueue = Channel.CreateBounded<(EtwEventBatch, long)>(new BoundedChannelOptions(optionsMonitor.CurrentValue.EventQueueCapacity) {
+                AllowSynchronousContinuations = true,
+                FullMode = BoundedChannelFullMode.DropOldest,
+                SingleReader = true,
+                SingleWriter = true
             });
-            this._emptyBatch = new EtwEventBatch();
-
-            this._flushTimer = new Timer(state => {
-                _jobQueue.Post((_emptyBatch, 0));
-            });
-
-            var pushFrequency = (int)optionsMonitor.CurrentValue.PushFrequency.TotalMilliseconds;
-            this._flushTimer.Change(pushFrequency, pushFrequency);
-            this._pushFrequencyMonitor = optionsMonitor.OnChange((opts, name) => {
-                var pushFrequency = (int)opts.PushFrequency.TotalMilliseconds;
-                this._flushTimer.Change(pushFrequency, pushFrequency);
-            });
-        }
-
-        async Task ProcessResponse((EtwEventBatch evtBatch, long sequenceNo) args) {
-            var success = await this._eventSinks.ProcessEventBatch(args.evtBatch, args.sequenceNo).ConfigureAwait(false);
-            if (!success) {
-                await _changeNotifier.PostNotification().ConfigureAwait(false);
-            }
         }
 
         async Task ProcessResponseStream(CancellationToken cancelToken) {
@@ -76,9 +55,7 @@ namespace KdSoft.EtwEvents.WebClient
 
                     var evtBatch = responseStream.Current;
 
-                    // an empty batch means: post a "flush" message
-                    var posted = _jobQueue.Post((evtBatch, sequenceNo));
-                    //posted = await _jobQueue.SendAsync((evt, sequenceNo)).ConfigureAwait(false);
+                    var posted = _responseQueue.Writer.TryWrite((evtBatch, sequenceNo));
                     if (!posted) {
                         //_logger.LogInformation($"Could not post trace event {evt.Id}."
                         break;
@@ -93,13 +70,25 @@ namespace KdSoft.EtwEvents.WebClient
                 // which is the only way to stop the stream from the client.
             }
             finally {
-                _jobQueue.Complete();
+                _responseQueue.Writer.Complete();
+            }
+        }
+
+        async Task ProcessResponseQueue() {
+            await foreach (var (evtBatch, sequenceNo) in _responseQueue.Reader.ReadAllAsync().ConfigureAwait(false)) {
+                var success = await this._eventSinks.ProcessEventBatch(evtBatch, sequenceNo).ConfigureAwait(false);
+                if (!success) {
+                    await _changeNotifier.PostNotification().ConfigureAwait(false);
+                }
             }
         }
 
         async Task RunInternal(CancellationToken cancelToken) {
             try {
-                await ProcessResponseStream(cancelToken).ConfigureAwait(false);
+                var streamTask = ProcessResponseStream(cancelToken);
+                var queueTask = ProcessResponseQueue();
+                await streamTask.ConfigureAwait(false);
+                await queueTask.ConfigureAwait(false);
             }
             catch {
                 Interlocked.Exchange(ref _started, 0);
@@ -144,8 +133,6 @@ namespace KdSoft.EtwEvents.WebClient
         }
 
         public void Dispose() {
-            _pushFrequencyMonitor?.Dispose();
-            _flushTimer?.Dispose();
             var oldStreamer = Interlocked.Exchange(ref _streamingCall, null);
             if (oldStreamer != null)
                 try {
