@@ -19,15 +19,16 @@ namespace KdSoft.EtwEvents.EventSinks
         readonly List<WriteModel<BsonDocument>> _evl;
         readonly TaskCompletionSource<bool> _tcs;
 
-        IMongoDatabase? _db;
-        IMongoCollection<BsonDocument>? _coll;
-        CancellationToken _cancelToken;
+        readonly IMongoDatabase? _db;
+        readonly IMongoCollection<BsonDocument>? _coll;
+
+        int _isDisposed = 0;
 
         public string Name { get; }
 
         public Task<bool> RunTask { get; }
 
-        public MongoSink(string name, MongoSinkOptions sinkInfo, string authDb, string dbUser, string dbPwd, CancellationToken cancelToken) {
+        public MongoSink(string name, MongoSinkOptions sinkInfo, string authDb, string dbUser, string dbPwd) {
             this.Name = name;
 
             _tcs = new TaskCompletionSource<bool>();
@@ -52,6 +53,36 @@ namespace KdSoft.EtwEvents.EventSinks
                 //healthReporter.ReportProblem(errStr, EventFlowContextIdentifiers.Configuration);
                 throw;
             }
+        }
+
+        public bool IsDisposed {
+            get {
+                Interlocked.MemoryBarrier();
+                var isDisposed = this._isDisposed;
+                Interlocked.MemoryBarrier();
+                return isDisposed > 0;
+            }
+        }
+
+        public void Dispose() {
+            var oldDisposed = Interlocked.CompareExchange(ref _isDisposed, 99, 0);
+            if (oldDisposed == 0) {
+                _tcs.TrySetResult(true);
+            }
+        }
+
+        // Warning: ValueTasks should not be awaited multiple times
+        public ValueTask DisposeAsync() {
+            Dispose();
+            return default;
+        }
+
+        public bool Equals([AllowNull] IEventSink other) {
+            if (object.ReferenceEquals(this, other))
+                return true;
+            if (other == null)
+                return false;
+            return StringComparer.Ordinal.Equals(this.Name, other.Name);
         }
 
         WriteModel<BsonDocument> FromEvent(EtwEvent evt, long sequenceNo) {
@@ -106,59 +137,34 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         async Task<bool> FlushAsyncInternal() {
-            if (_cancelToken.IsCancellationRequested) {
-                _tcs.TrySetCanceled(_cancelToken);
-                return false;
-            }
             var bwResult = await _coll!.BulkWriteAsync(_evl, new BulkWriteOptions { IsOrdered = false }).ConfigureAwait(false);
             _evl.Clear();
             //return bwResult;
             return true;
         }
 
+        public ValueTask<bool> FlushAsync() {
+            if (IsDisposed)
+                return new ValueTask<bool>(false);
+            if (_evl.Count == 0)
+                return new ValueTask<bool>(true);
+            return new ValueTask<bool>(FlushAsyncInternal());
+        }
+
         //TODO maybe use Interlocked and two lists to keep queueing while a bulk write is in process
         public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
-            if (_cancelToken.IsCancellationRequested) {
-                _tcs.TrySetCanceled(_cancelToken);
+            if (IsDisposed)
                 return new ValueTask<bool>(false);
-            }
             var writeModel = FromEvent(evt, sequenceNo);
             _evl.Add(writeModel);
             return new ValueTask<bool>(true);
         }
 
         public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch, long sequenceNo) {
-            if (_cancelToken.IsCancellationRequested) {
-                _tcs.TrySetCanceled(_cancelToken);
+            if (IsDisposed)
                 return new ValueTask<bool>(false);
-            }
             _evl.AddRange(evtBatch.Events.Select(evt => FromEvent(evt, sequenceNo++)));
             return new ValueTask<bool>(true);
-        }
-
-        //TODO catch exceptions here
-        public ValueTask<bool> FlushAsync() {
-            if (_evl.Count == 0)
-                return new ValueTask<bool>(true);
-            return new ValueTask<bool>(FlushAsyncInternal());
-        }
-
-        // Warning: ValueTasks should not be awaited multiple times
-        public ValueTask DisposeAsync() {
-            _tcs.TrySetResult(false);
-            return default;
-        }
-
-        public void Dispose() {
-            _tcs.TrySetResult(false);
-        }
-
-        public bool Equals([AllowNull] IEventSink other) {
-            if (object.ReferenceEquals(this, other))
-                return true;
-            if (other == null)
-                return false;
-            return StringComparer.Ordinal.Equals(this.Name, other.Name);
         }
     }
 }

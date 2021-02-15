@@ -24,7 +24,7 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         public Task<IEventSink> Create(string name, ElasticSinkOptions options, string user, string pwd) {
-            var result = new ElasticSink(name, options, user, pwd, CancellationToken.None);
+            var result = new ElasticSink(name, options, user, pwd);
             return Task.FromResult((IEventSink)result);
         }
 

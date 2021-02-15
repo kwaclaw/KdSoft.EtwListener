@@ -2,7 +2,6 @@
 using System.IO;
 using System.Reflection;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
 using Newtonsoft.Json.Schema.Generation;
@@ -25,7 +24,7 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         public Task<IEventSink> Create(string name, MongoSinkOptions options, string database, string dbUser, string dbPwd) {
-            var result = new MongoSink(name, options, database, dbUser, dbPwd, CancellationToken.None);
+            var result = new MongoSink(name, options, database, dbUser, dbPwd);
             return Task.FromResult((IEventSink)result);
         }
 
