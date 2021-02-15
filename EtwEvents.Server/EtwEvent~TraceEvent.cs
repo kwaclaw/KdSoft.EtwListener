@@ -9,6 +9,7 @@ namespace KdSoft.EtwLogging
             SetTraceEvent(evt);
         }
 
+        // we ignore TraceEvent.FormattedMessage, as it just contains a formatted representation of the Payload
         internal EtwEvent SetTraceEvent(TraceEvent evt) {
             this.ProviderName = evt.ProviderName;
             this.Channel = (uint)evt.Channel;

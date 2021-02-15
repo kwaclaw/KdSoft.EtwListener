@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Elasticsearch.Net" Version="7.10.1" />
+    <PackageReference Include="Elasticsearch.Net" Version="7.11.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,6 +31,5 @@
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="SET elasticSinkDir=&quot;../EtwEvents.WebClient/EventSinks/ElasticSink/&quot;&#xD;&#xA;IF NOT EXIST %25elasticSinkDir%25 MKDIR %25elasticSinkDir%25&#xD;&#xA;&#xD;&#xA;COPY /Y $(TargetDir)* %25elasticSinkDir%25&#xD;&#xA;XCOPY /Y /E /I $(ProjectDir)config %25elasticSinkDir%25config" />
   </Target>
-
 
 </Project>
