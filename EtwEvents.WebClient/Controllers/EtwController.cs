@@ -276,11 +276,15 @@ namespace KdSoft.EtwEvents.WebClient
         public async Task<IActionResult> CloseEventSinks(string sessionName, [FromBody] IEnumerable<string> sinkNames) {
             if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
                 var traceSession = await sessionEntry.ConfigureAwait(false);
-                var closedSinks = traceSession.EventSinks.RemoveEventSinks(sinkNames);
-                var disposeTasks = closedSinks.Select(sink => sink.DisposeAsync()).ToArray();
+
+                var removedSinks = traceSession.EventSinks.RemoveEventSinks(sinkNames);
+                var disposeTasks = removedSinks.Select(sink => sink.DisposeAsync()).ToArray();
                 foreach (var disposeTask in disposeTasks) {
                     await disposeTask.ConfigureAwait(false);
                 }
+
+                var removedFailedSinks = traceSession.EventSinks.RemoveFailedEventSinks(sinkNames);
+
                 await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
                 return Ok();
             }

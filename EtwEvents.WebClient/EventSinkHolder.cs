@@ -17,14 +17,14 @@ namespace KdSoft.EtwEvents.WebClient
 
 
         ImmutableDictionary<string, IEventSink> _eventSinks;
-        ImmutableDictionary<string, (IEventSink, Exception?)> _failedEventSinks;
+        ImmutableDictionary<string, (string, Exception)> _failedEventSinks;
 
         public IImmutableDictionary<string, IEventSink> ActiveEventSinks => _eventSinks;
-        public IImmutableDictionary<string, (IEventSink sink, Exception? error)> FailedEventSinks => _failedEventSinks;
+        public IImmutableDictionary<string, (string sinkType, Exception error)> FailedEventSinks => _failedEventSinks;
 
         public EventSinkHolder() {
             this._eventSinks = ImmutableDictionary<string, IEventSink>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
-            this._failedEventSinks = ImmutableDictionary<string, (IEventSink, Exception?)>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
+            this._failedEventSinks = ImmutableDictionary<string, (string, Exception)>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
             this._eventSinkTaskPool = ArrayPool<(IEventSink, ValueTask<bool>)>.Create();
         }
 
@@ -37,7 +37,7 @@ namespace KdSoft.EtwEvents.WebClient
             // We use a lock here to prevent race conditions, so that
             // if two concurrent updates happen, none will get lost.
             lock (_eventSinkLock) {
-                this._eventSinks = this._eventSinks.SetItem(sink.Name, sink);
+                this._eventSinks = this._eventSinks.Add(sink.Name, sink);
             }
         }
 
@@ -50,7 +50,7 @@ namespace KdSoft.EtwEvents.WebClient
             // We use a lock here to prevent race conditions, so that
             // if two concurrent updates happen, none will get lost.
             lock (_eventSinkLock) {
-                this._eventSinks = this._eventSinks.SetItems(sinks.Select(sink => new KeyValuePair<string, IEventSink>(sink.Name, sink)));
+                this._eventSinks = this._eventSinks.AddRange(sinks.Select(sink => new KeyValuePair<string, IEventSink>(sink.Name, sink)));
             }
         }
 
@@ -111,6 +111,28 @@ namespace KdSoft.EtwEvents.WebClient
         }
 
         /// <summary>
+        /// Removes named entries from list of failed sinks.
+        /// </summary>
+        /// <param name="names">Identifiers of failed <see cref="IEventSink">event sinks</see> to remove.</param>
+        /// <returns>The names of the failed <see cref="IEventSink">event sinks</see> that were removed, or an empty collection if none were found.</returns>
+        public IEnumerable<string> RemoveFailedEventSinks(IEnumerable<string> names) {
+            if (names == null)
+                throw new ArgumentNullException(nameof(names));
+            // We use a lock here to prevent race conditions, so that
+            // if two concurrent updates happen, none will get lost.
+            var oldSinks = new List<string>();
+            lock (_eventSinkLock) {
+                var oldEventSinks = this._failedEventSinks;
+                foreach (var name in names) {
+                    if (oldEventSinks.ContainsKey(name))
+                        oldSinks.Add(name);
+                }
+                this._failedEventSinks = oldEventSinks.RemoveRange(names);
+            }
+            return oldSinks;
+        }
+
+        /// <summary>
         /// Removes given <see cref="IEventSink"/> instance from processing loop.
         /// </summary>
         /// <param name="sinks"><see cref="IEventSink"/> instances to remove.</param>
@@ -123,20 +145,28 @@ namespace KdSoft.EtwEvents.WebClient
             }
         }
 
-        public (IImmutableDictionary<string, IEventSink> active, IImmutableDictionary<string, (IEventSink, Exception?)> failed) ClearEventSinks() {
+        public (IImmutableDictionary<string, IEventSink> active, IImmutableDictionary<string, (string, Exception)> failed) ClearEventSinks() {
             lock (_eventSinkLock) {
                 var active = this._eventSinks;
                 var failed = this._failedEventSinks;
                 this._eventSinks = ImmutableDictionary<string, IEventSink>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
-                this._failedEventSinks = ImmutableDictionary<string, (IEventSink, Exception?)>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
+                this._failedEventSinks = ImmutableDictionary<string, (string, Exception)>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
                 return (active, failed);
             }
         }
 
-        void HandleFailedEventSink(IEventSink failedSink, Exception? ex) {
-            if (RemoveEventSink(failedSink)) {
+        // Note: Disposes of failed IEventSink instance
+        async Task HandleFailedEventSink(IEventSink failedSink, Exception ex) {
+            var failedName = failedSink.Name;
+            var failedType = failedSink.GetType().Name;
+
+            bool removed = RemoveEventSink(failedSink);
+            try { await failedSink.DisposeAsync().ConfigureAwait(false); }
+            catch { }
+
+            if (removed) {
                 lock (_failedEventSinkLock) {
-                    this._failedEventSinks = this._failedEventSinks.SetItem(failedSink.Name, (failedSink, ex));
+                    this._failedEventSinks = this._failedEventSinks.SetItem(failedName, (failedType, ex));
                 }
             }
         }
@@ -148,12 +178,12 @@ namespace KdSoft.EtwEvents.WebClient
                 try {
                     var success = await task.ConfigureAwait(false);
                     if (!success) {
-                        HandleFailedEventSink(sink, null);
+                        RemoveEventSink(sink);
                         result = false;
                     }
                 }
                 catch (Exception ex) {
-                    HandleFailedEventSink(sink, ex);
+                    await HandleFailedEventSink(sink, ex).ConfigureAwait(false);
                     result = false;
                 }
             }

@@ -181,7 +181,7 @@ namespace KdSoft.EtwEvents.WebClient
             ).ToImmutableArray();
             var eventSinks = activeEventSinks.AddRange(EventSinks.FailedEventSinks.Select(
                 fes => new Models.EventSinkState {
-                    SinkType = fes.Value.sink.GetType().Name,
+                    SinkType = fes.Value.sinkType,
                     Name = fes.Key,
                     Error = fes.Value.error?.Message ?? _.GetString("Write Failure"),
                 }
