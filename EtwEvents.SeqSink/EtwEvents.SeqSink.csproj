@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <LangVersion>Latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <RootNamespace>KdSoft.EtwEvents.EventSinks</RootNamespace>
+    <AssemblyName>KdSoft.EtwEvents.SeqSink</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="config\seq-sink-config-model.js" />
+    <None Remove="config\seq-sink-config.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="config\seq-sink-config-model.js">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="config\seq-sink-config.js">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EtwEvents.Interfaces\EtwEvents.Client.Shared.csproj" />
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="SET seqSinkDir=&quot;../EtwEvents.WebClient/EventSinks/SeqSink/&quot;&#xD;&#xA;IF NOT EXIST %25seqSinkDir%25 MKDIR %25seqSinkDir%25&#xD;&#xA;&#xD;&#xA;COPY /Y $(TargetDir)* %25seqSinkDir%25&#xD;&#xA;XCOPY /Y /E /I $(ProjectDir)config %25seqSinkDir%25config" />
+  </Target>
+
+</Project>
