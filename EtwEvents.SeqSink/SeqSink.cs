@@ -135,9 +135,8 @@ namespace KdSoft.EtwEvents.EventSinks
             _jsonWriter.WriteNumber("opcode", evt.Opcode);
             _jsonWriter.WriteString("opcodeName", evt.OpcodeName);
             _jsonWriter.WriteString("taskName", evt.TaskName);
-            // timeStamp will be passed as milliseconds to Javascript
             if (evt.TimeStamp == null)
-                _jsonWriter.WriteNull("@t");
+                _jsonWriter.WriteString("@t", DateTimeOffset.UtcNow.ToString("o"));
             else {
                 _jsonWriter.WriteString("@t", evt.TimeStamp.ToDateTimeOffset().ToString("o"));
             }
