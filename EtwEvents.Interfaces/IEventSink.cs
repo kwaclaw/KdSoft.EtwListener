@@ -4,6 +4,11 @@ using KdSoft.EtwLogging;
 
 namespace KdSoft.EtwEvents.Client.Shared
 {
+    /// <summary>
+    /// An event sink consumes ETW events.
+    /// An event sink does not swallow exceptions, it is the application's responsibility to react to an error.
+    /// To close/stop an event sink means to dispose it.
+    /// </summary>
     public interface IEventSink: IAsyncDisposable, IDisposable, IEquatable<IEventSink>
     {
         /// <summary>

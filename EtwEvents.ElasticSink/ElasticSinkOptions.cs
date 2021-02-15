@@ -2,7 +2,7 @@
 {
     public class ElasticSinkOptions
     {
-        public ElasticSinkOptions(string[] nodes, string index) {
+        public ElasticSinkOptions(string[] nodes, string index): this() {
             this.Nodes = nodes;
             this.Index = index;
         }

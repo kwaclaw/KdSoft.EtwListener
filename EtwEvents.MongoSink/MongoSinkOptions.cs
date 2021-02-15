@@ -28,8 +28,14 @@ namespace KdSoft.EtwEvents.EventSinks
 
         public string Collection { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Event fields on which to match the target records to do an Upsert (update when matching, insert otherwise)
+        /// </summary>
         public ImmutableArray<string> EventFilterFields { get; set; }
 
+        /// <summary>
+        /// Event.Payload fields on which to match the target records to do an Upsert (update when matching, insert otherwise)
+        /// </summary>
         public ImmutableArray<string> PayloadFilterFields { get; set; }
 
         public MongoUrl GetConnectionUrl(string user, string pwd) {
