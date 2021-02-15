@@ -85,7 +85,7 @@ class EventSinkConfig extends LitMvvmElement {
         }
 
         this.sinkTypeTemplateHolder.tag = configFormTemplate(configModel);
-      } catch(error) {
+      } catch (error) {
         // for "nothing" to work we need to render raw(this.sinkTypeTemplateHolder.value)
         this.sinkTypeTemplateHolder.tag = nothing;
         window.etwApp.defaultHandleError(error);

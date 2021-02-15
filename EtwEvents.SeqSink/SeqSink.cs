@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
-using System.Net;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -17,7 +16,8 @@ namespace KdSoft.EtwEvents.EventSinks
     // - https://github.com/datalust/nlog-targets-seq, look at SeqTarget.cs
     // - https://github.com/serilog/serilog-sinks-seq
     // See also https://docs.datalust.co/docs/posting-raw-events
-    public class SeqSink: IEventSink {
+    public class SeqSink: IEventSink
+    {
         public const string BulkUploadResource = "api/events/raw?clef";
         public const string ApiKeyHeaderName = "X-Seq-ApiKey";
 
@@ -57,13 +57,13 @@ namespace KdSoft.EtwEvents.EventSinks
             _jsonWriter = new Utf8JsonWriter(_bufferWriter, _jsonOptions);
         }
 
-        public bool IsDisposed { 
+        public bool IsDisposed {
             get {
                 Interlocked.MemoryBarrier();
                 var isDisposed = this._isDisposed;
                 Interlocked.MemoryBarrier();
                 return isDisposed > 0;
-            } 
+            }
         }
 
         public void Dispose() {

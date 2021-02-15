@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Collections.Immutable;
-
-namespace KdSoft.EtwEvents.EventSinks
+﻿namespace KdSoft.EtwEvents.EventSinks
 {
     public class SeqSinkOptions
     {
