@@ -47,5 +47,13 @@ namespace KdSoft.EtwEvents.EventSinks
             };
             return mub.ToMongoUrl();
         }
+
+        public MongoUrl GetConnectionUrl() {
+            var mub = new MongoUrlBuilder(Origin) {
+                ReplicaSetName = ReplicaSet,
+                DatabaseName = Database,
+            };
+            return mub.ToMongoUrl();
+        }
     }
 }

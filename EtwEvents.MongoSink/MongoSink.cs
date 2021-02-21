@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
@@ -13,14 +14,12 @@ namespace KdSoft.EtwEvents.EventSinks
 {
     public class MongoSink: IEventSink
     {
-        readonly MongoClient _client;
-        readonly MongoSinkOptions _sinkInfo;
+        readonly IMongoCollection<BsonDocument> _coll;
+        readonly IImmutableList<string> _eventFilterFields;
+        readonly IImmutableList<string> _payloadFilterFields;
         readonly FilterDefinitionBuilder<BsonDocument> _fb;
         readonly List<WriteModel<BsonDocument>> _evl;
         readonly TaskCompletionSource<bool> _tcs;
-
-        readonly IMongoDatabase? _db;
-        readonly IMongoCollection<BsonDocument>? _coll;
 
         int _isDisposed = 0;
 
@@ -28,31 +27,22 @@ namespace KdSoft.EtwEvents.EventSinks
 
         public Task<bool> RunTask { get; }
 
-        public MongoSink(string name, MongoSinkOptions sinkInfo, string authDb, string dbUser, string dbPwd) {
+        public MongoSink(
+            string name,
+            IMongoCollection<BsonDocument> coll,
+            IImmutableList<string> eventFilterFields,
+            IImmutableList<string> payloadFilterFields
+        ) {
             this.Name = name;
+            this._coll = coll;
+            this._eventFilterFields = eventFilterFields;
+            this._payloadFilterFields = payloadFilterFields;
 
             _tcs = new TaskCompletionSource<bool>();
             RunTask = _tcs.Task;
 
             _fb = new FilterDefinitionBuilder<BsonDocument>();
             _evl = new List<WriteModel<BsonDocument>>();
-
-            _sinkInfo = sinkInfo;
-
-            try {
-                var mcs = MongoClientSettings.FromUrl(sinkInfo.GetConnectionUrl(dbUser, dbPwd));
-                mcs.UseTls = true;
-                mcs.Credential = MongoCredential.CreateCredential(authDb, dbUser, dbPwd);
-
-                _client = new MongoClient(mcs);
-                _db = _client.GetDatabase(_sinkInfo.Database);
-                _coll = _db.GetCollection<BsonDocument>(_sinkInfo.Collection);
-            }
-            catch (Exception ex) {
-                var errStr = $@"Error in {nameof(MongoSink)} initialization encountered:{Environment.NewLine}{ex.Message}";
-                //healthReporter.ReportProblem(errStr, EventFlowContextIdentifiers.Configuration);
-                throw;
-            }
         }
 
         public bool IsDisposed {
@@ -88,7 +78,7 @@ namespace KdSoft.EtwEvents.EventSinks
         WriteModel<BsonDocument> FromEvent(EtwEvent evt, long sequenceNo) {
             var filter = _fb.Empty;
 
-            var efs = _sinkInfo.EventFilterFields;
+            var efs = _eventFilterFields;
             foreach (var ef in efs) {
                 filter &= ef switch {
                     "Timestamp" => _fb.Eq(ef, evt.TimeStamp),
@@ -105,7 +95,7 @@ namespace KdSoft.EtwEvents.EventSinks
                 };
             }
 
-            var pfs = _sinkInfo.PayloadFilterFields;
+            var pfs = _payloadFilterFields;
             foreach (var pf in pfs) {
                 evt.Payload.TryGetValue(pf, out string? payloadValue);
                 filter &= _fb.Eq($"Payload.{pf}", payloadValue);
@@ -137,7 +127,7 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         async Task<bool> FlushAsyncInternal() {
-            var bwResult = await _coll!.BulkWriteAsync(_evl, new BulkWriteOptions { IsOrdered = false }).ConfigureAwait(false);
+            var bwResult = await _coll.BulkWriteAsync(_evl, new BulkWriteOptions { IsOrdered = false }).ConfigureAwait(false);
             _evl.Clear();
             //return bwResult;
             return true;

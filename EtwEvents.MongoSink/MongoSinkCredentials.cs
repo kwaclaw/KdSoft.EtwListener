@@ -10,10 +10,17 @@
             this.Password = password;
         }
 
+        public MongoSinkCredentials(string database, string certificateCommonName) : this() {
+            this.Database = database;
+            this.CertificateCommonName = certificateCommonName;
+        }
+
         public string Database { get; set; } = string.Empty;
 
         public string User { get; set; } = string.Empty;
 
         public string Password { get; set; } = string.Empty;
+
+        public string CertificateCommonName { get; set; } = string.Empty;
     }
 }

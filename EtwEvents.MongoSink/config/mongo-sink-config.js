@@ -38,10 +38,35 @@ class MongoSinkConfig extends LitMvvmElement {
     this.model.definition.options[e.target.name] = (e.target.value || '').split(sepRegex);
   }
 
+  _validateCredentials() {
+    const certCN = this.renderRoot.getElementById('certCN');
+    const user = this.renderRoot.getElementById('user');
+    const pwd = this.renderRoot.getElementById('password');
+    if (certCN.value || user.value && pwd.value) {
+      certCN.setCustomValidity('');
+      user.setCustomValidity('');
+      pwd.setCustomValidity('');
+      return true;
+    } else {
+      // change validity on first empty control, we can't really use a hidden/invisible/zero-size control
+      // as the browser will not show the message on a hidden or invisible or zero-size control
+      const msg = 'At least one of certificate or user/password information must be filled in.';
+      if (!certCN.value && !!user.value && !pwd.value) {
+        certCN.setCustomValidity(msg);
+      } else if (!user.value) {
+        user.setCustomValidity(msg);
+      } else if (!pwd.value) {
+        pwd.setCustomValidity(msg);
+      }
+      return false;
+    }
+  }
+
   _credentialsChange(e) {
     e.stopPropagation();
     console.log(`${e.target.name}=${e.target.value}`);
     this.model.definition.credentials[e.target.name] = e.target.value;
+    this._validateCredentials();
   }
 
   // first event when model is available
@@ -164,10 +189,12 @@ class MongoSinkConfig extends LitMvvmElement {
             <div>
               <label for="cred-database">Database</label>
               <input type="text" id="cred-database" name="database" value=${creds.database} required></input>
+              <label for="certCN">Certificate Common Name</label>
+              <input type="text" id="certCN" name="certificateCommonName" value=${creds.certificateCommonName}></input>
               <label for="user">User</label>
-              <input type="text" id="user" name="user" value=${creds.user} required></input>
+              <input type="text" id="user" name="user" value=${creds.user}></input>
               <label for="password">Password</label>
-              <input type="password" id="password" name="password" value=${creds.password} required></input>
+              <input type="password" id="password" name="password" value=${creds.password}></input>
             </div>
           </fieldset>
         </section>

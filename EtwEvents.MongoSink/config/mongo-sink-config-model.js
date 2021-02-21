@@ -18,7 +18,8 @@ class MongoSinkConfigModel {
       credentials: observable({
         database: '',
         user: '',
-        password: ''
+        password: '',
+        certificateCommonName: ''
       })
     };
     
