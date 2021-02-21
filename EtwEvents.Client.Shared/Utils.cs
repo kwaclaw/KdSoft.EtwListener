@@ -93,7 +93,7 @@ namespace KdSoft.EtwEvents.Client.Shared
         }
 
         /// <summary>
-        /// Get certificate from certificate store based on thumprint oor subject common name.
+        /// Get certificate from certificate store based on thumprint or subject common name.
         /// </summary>
         /// <param name="location">Store location.</param>
         /// <param name="thumbprint">Certificate thumprint to look for. Takes precedence over subjectCN when both are specified.</param>
@@ -115,6 +115,7 @@ namespace KdSoft.EtwEvents.Client.Shared
                 else {
                     var certs = store.Certificates.Find(X509FindType.FindBySubjectName, subjectCN, true);
                     foreach (var matchingCert in certs) {
+                        // X509NameType.SimpleName extracts CN from subject (common name)
                         var cn = matchingCert.GetNameInfo(X509NameType.SimpleName, false);
                         if (string.Equals(cn, subjectCN, StringComparison.InvariantCultureIgnoreCase)) {
                             cert = matchingCert;

@@ -18,7 +18,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.MongoSink", "EtwEvents.MongoSink\EtwEvents.MongoSink.csproj", "{C083A5EC-20DA-4BC6-B083-D7FD56C7826D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.Client.Shared", "EtwEvents.Interfaces\EtwEvents.Client.Shared.csproj", "{8532908E-0353-4ECD-A432-2D90209D9E1A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.Client.Shared", "EtwEvents.Client.Shared\EtwEvents.Client.Shared.csproj", "{8532908E-0353-4ECD-A432-2D90209D9E1A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.ElasticSink", "EtwEvents.ElasticSink\EtwEvents.ElasticSink.csproj", "{8B74D4A2-55BD-403C-9570-DE6BDE31A0A4}"
 EndProject
