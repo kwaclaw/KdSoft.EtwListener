@@ -49,7 +49,6 @@ class EventSinkConfig extends LitMvvmElement {
       bubbles: true, composed: true, cancelable: true, detail: { model, canceled: true }
     });
     this.dispatchEvent(evt);
-
   }
 
   _apply(e) {

@@ -118,7 +118,6 @@ namespace KdSoft.EtwEvents.EventSinks
 
         // writes a JSON object to the buffer, terminating with a new line
         // see https://github.com/serilog/serilog-formatting-compact
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void WriteEventJson(EtwEvent evt, long sequenceNo) {
             if (ExcludeEvent(evt))
                 return;
