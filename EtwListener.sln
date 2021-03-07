@@ -22,7 +22,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.Client.Shared", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.ElasticSink", "EtwEvents.ElasticSink\EtwEvents.ElasticSink.csproj", "{8B74D4A2-55BD-403C-9570-DE6BDE31A0A4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EtwEvents.SeqSink", "EtwEvents.SeqSink\EtwEvents.SeqSink.csproj", "{3606E22A-159A-4C8A-9484-22D14C766EC3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.SeqSink", "EtwEvents.SeqSink\EtwEvents.SeqSink.csproj", "{3606E22A-159A-4C8A-9484-22D14C766EC3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.RollingFileSink", "EtwEvents.RollingFileSink\EtwEvents.RollingFileSink.csproj", "{22E9656B-5F3A-4BBD-A5E8-51FB93964C01}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -58,6 +60,10 @@ Global
 		{3606E22A-159A-4C8A-9484-22D14C766EC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3606E22A-159A-4C8A-9484-22D14C766EC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3606E22A-159A-4C8A-9484-22D14C766EC3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{22E9656B-5F3A-4BBD-A5E8-51FB93964C01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{22E9656B-5F3A-4BBD-A5E8-51FB93964C01}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{22E9656B-5F3A-4BBD-A5E8-51FB93964C01}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{22E9656B-5F3A-4BBD-A5E8-51FB93964C01}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

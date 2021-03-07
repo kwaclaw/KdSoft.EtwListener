@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <LangVersion>Latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <RootNamespace>KdSoft.EtwEvents.EventSinks</RootNamespace>
+    <AssemblyName>KdSoft.EtwEvents.RollingFileSink</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="config\rolling-file-sink-config.js~RFf4169c4.TMP" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="config\rolling-file-sink-config-model.js">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="config\rolling-file-sink-config.js">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EtwEvents.Client.Shared\EtwEvents.Client.Shared.csproj" />
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="SET rollingFileSinkDir=&quot;../EtwEvents.WebClient/EventSinks/RollingFileSink/&quot;&#xD;&#xA;IF NOT EXIST %25rollingFileSinkDir%25 MKDIR %25rollingFileSinkDir%25&#xD;&#xA;&#xD;&#xA;COPY /Y $(TargetDir)* %25rollingFileSinkDir%25&#xD;&#xA;XCOPY /Y /E /I $(ProjectDir)config %25rollingFileSinkDir%25config" />
+  </Target>
+
+</Project>
