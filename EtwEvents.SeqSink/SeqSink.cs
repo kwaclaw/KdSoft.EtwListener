@@ -78,7 +78,7 @@ namespace KdSoft.EtwEvents.EventSinks
         // Warning: ValueTasks should not be awaited multiple times
         public ValueTask DisposeAsync() {
             Dispose();
-            return default;
+            return ValueTask.CompletedTask;
         }
 
         public bool Equals([AllowNull] IEventSink other) {
