@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
+using Microsoft.Net.Http.Headers;
 using shared = KdSoft.EtwEvents.Client.Shared;
 
 namespace KdSoft.EtwEvents.WebClient
@@ -304,16 +305,20 @@ namespace KdSoft.EtwEvents.WebClient
 
         async Task<IActionResult> GetSessionStateEventStream(CancellationToken cancelToken) {
             var resp = Response;
-            resp.Headers.Add("Cache-Control-Type", "no-cache");
-            resp.Headers.Add("Content-Type", EventStreamHeaderValue);
+
+            resp.ContentType = EventStreamHeaderValue;
+            resp.Headers[HeaderNames.CacheControl] = "no-cache, no-transform";
+            resp.Headers[HeaderNames.Pragma] = "no-cache";
+            // hopefully prevents buffering
+            resp.Headers[HeaderNames.ContentEncoding] = "identity";
 
             var jsonSerializerOptions = _jsonOptions.Value.JsonSerializerOptions;
 
             var changes = _sessionManager.GetSessionStateChanges();
             await foreach (var change in changes.WithCancellation(cancelToken).ConfigureAwait(false)) {
                 var statusJson = System.Text.Json.JsonSerializer.Serialize(change, jsonSerializerOptions);
-                await resp.WriteAsync($"data:{statusJson}\n\n").ConfigureAwait(false);
-                await resp.Body.FlushAsync().ConfigureAwait(false);
+                await resp.WriteAsync($"data:{statusJson}\n\n", cancelToken).ConfigureAwait(false);
+                await resp.Body.FlushAsync(cancelToken).ConfigureAwait(false);
             }
 
             // OkResult not right here, tries to set status code which is not allowed once the response has started
