@@ -10,11 +10,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="config\seq-sink-config-model.js" />
-    <None Remove="config\seq-sink-config.js" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="config\seq-sink-config-model.js">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>

@@ -24,7 +24,7 @@ namespace KdSoft.EtwEvents.Client.Shared
 
         /// <summary>
         /// Writes event asynchronously. This may queue event for batched writing and may return synchronously.
-        /// Must not be called concurrently with itself or <see cref="FlushAsync"/>.
+        /// Must not be called concurrently with itself, <see cref="FlushAsync"/> or <see cref="IAsyncDisposable.DisposeAsync"/>.
         /// Must not throw exception before <see cref="ValueTask"/> is returned.
         /// </summary>
         /// <param name="evt">Event to write.</param>
@@ -34,7 +34,7 @@ namespace KdSoft.EtwEvents.Client.Shared
 
         /// <summary>
         /// Writes events asynchronously. This may queue events for batched writing and may return synchronously.
-        /// Must not be called concurrently with itself or <see cref="FlushAsync"/>.
+        /// Must not be called concurrently with itself, <see cref="FlushAsync"/> or <see cref="IAsyncDisposable.DisposeAsync"/>.
         /// Must not throw exception before <see cref="ValueTask"/> is returned.
         /// </summary>
         /// <param name="evts">Events to write.</param>
@@ -45,7 +45,7 @@ namespace KdSoft.EtwEvents.Client.Shared
 
         /// <summary>
         /// Flushes queue, performs pending writes.
-        /// Must not be called concurrently with itself or <see cref="WriteAsync"/>.
+        /// Must not be called concurrently with itself, <see cref="WriteAsync"/> or <see cref="IAsyncDisposable.DisposeAsync"/>.
         /// Must not throw exception before <see cref="ValueTask"/> is returned.
         /// </summary>
         /// <returns><c>true</c> if flushing was successful (and can continue), <c>false</c> otherwise.</returns>

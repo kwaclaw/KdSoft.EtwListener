@@ -104,7 +104,7 @@ namespace KdSoft.EtwEvents.EventSinks
                 return true;
 
             if (bulkResponse.TryGetServerError(out var error)) {
-                // log error
+                //TODO log error
             }
             return false;
         }
