@@ -3,11 +3,7 @@ import { LitMvvmElement, css } from '../../../lib/@kdsoft/lit-mvvm.js';
 import { Queue, priorities } from '../../../lib/@nx-js/queue-util/dist/es.es6.js';
 import sharedStyles from '../../../styles/kdsoft-shared-styles.js';
 import styleLinks from '../../../styles/kdsoft-style-links.js';
-import '../../../components/kdsoft-dropdown.js';
-import '../../../components/kdsoft-checklist.js';
-import '../../../components/kdsoft-expander.js';
-import '../../../components/kdsoft-drop-target.js';
-import '../../../components/kdsoft-tree-view.js';
+import * as utils from '../../../js/utils.js';
 
 class SeqSinkConfig extends LitMvvmElement {
   constructor() {
@@ -22,13 +18,13 @@ class SeqSinkConfig extends LitMvvmElement {
   _optionsChange(e) {
     e.stopPropagation();
     console.log(`${e.target.name}=${e.target.value}`);
-    this.model.definition.options[e.target.name] = e.target.value;
+    this.model.definition.options[e.target.name] = utils.getFieldValue(e.target);
   }
 
   _credentialsChange(e) {
     e.stopPropagation();
     console.log(`${e.target.name}=${e.target.value}`);
-    this.model.definition.credentials[e.target.name] = e.target.value;
+    this.model.definition.credentials[e.target.name] = utils.getFieldValue(e.target);
   }
 
   // first event when model is available
