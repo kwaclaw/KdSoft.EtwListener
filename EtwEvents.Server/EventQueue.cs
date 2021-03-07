@@ -77,7 +77,7 @@ namespace KdSoft.EtwEvents.Server
 
                 try {
                     await foreach (var evt in _channel.Reader.ReadAllAsync().ConfigureAwait(false)) {
-                        // _emptyEvent instance indicates we should wtite the batch even if incomplete
+                        // _emptyEvent instance indicates we should write the batch even if incomplete
                         if (ReferenceEquals(_emptyEvent, evt)) {
                             if (batch.Events.Count == 0)
                                 continue;
