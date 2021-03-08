@@ -50,7 +50,6 @@ function iterateFilter(items, selectedItems, filter) {
   };
 }
 
-
 const _multiSelect = new WeakMap();
 
 class KdSoftChecklistModel {
@@ -193,9 +192,11 @@ class KdSoftChecklistModel {
 
     // we made changes on the raw array, because copyWithin and assignments applied to the proxy
     // 'this.items' strip the copied/assigned array elements of any proxies that might wrap them.
-    // So we need to trigger a reaction explicity on this.items by clearing and re-assigning to it.
-    this.items = [];
-    this.items = items;
+    // So we need to trigger a reaction explicity on this.items by cloning the items andre-assigning the property.
+    // Simply re-assigning will not trigger a reaction, as the raw itmes object would not have changed.
+    // Clearing and re-assigning will trigger a reaction, but will break code that relies on the items
+    // property not changing in size and array elements, but only in their order.
+    this.items = items.slice();
   }
 
   unselectAll() {
