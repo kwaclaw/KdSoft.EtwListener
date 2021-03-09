@@ -64,7 +64,7 @@ if (!(test-path $localSettingsPath)) {
 
 #copy source publish directory to target bin directory
 $sourceBinPath = [System.IO.Path]::Combine($sourceDirPath, "publish") 
-Copy-Item $sourceBinPath $binPath -Recurse
+Copy-Item -Path $sourceBinPath -Destination $binPath -Recurse
 
 #path of service binary executable
 $filepath = [System.IO.Path]::Combine($binPath, $file)
