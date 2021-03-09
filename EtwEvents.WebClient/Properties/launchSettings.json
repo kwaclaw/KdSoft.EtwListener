@@ -18,12 +18,10 @@
     "EtwEvents.WebClient": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "https://localhost:5099",
+      "applicationUrl": "https://localhost:5099",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
-      ,
-      "applicationUrl": "https://0.0.0.0:5099"
     }
   }
 }
