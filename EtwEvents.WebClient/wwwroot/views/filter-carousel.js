@@ -23,7 +23,7 @@ class FilterCarousel extends LitMvvmElement {
   _scrollToActiveItem(filtersControl) {
     const scrollPoint = (filtersControl.clientWidth * this.model.activeFilterIndex);
     filtersControl.scroll({ left: scrollPoint, behavior: 'smooth' });
-}
+  }
 
   _filtersKeyDown(e) {
     switch (e.key) {
@@ -116,13 +116,12 @@ class FilterCarousel extends LitMvvmElement {
       </style>
       <div id="container" @keydown=${this._filtersKeyDown}>
         <ul id="filters" class="carousel" tabindex="0">
-          ${this.model.filterModels.map((filterModel, index) => {
-            return html`
+          ${this.model.filterModels.map((filterModel, index) => html`
               <li class="carousel-item" tabindex="0">
                 <filter-edit .model=${filterModel}></filter-edit>
               </li>
-            `;
-          })}
+            `
+          )}
         </ul>
         <hr class="my-4" />
         <div id="footer">
