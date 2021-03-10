@@ -35,7 +35,7 @@
     "no-underscore-dangle": "off",
     "spaced-comment": "off",
     "max-len": [
-      "error",
+      "warn",
       {
         "code": 132,
         "ignoreComments": true
@@ -50,6 +50,7 @@
     "no-nested-ternary": "off",
     "class-methods-use-this": "off",
     "lines-between-class-members": "off",
-    "no-restricted-syntax":  "off"
+    "no-restricted-syntax":  "off",
+    "no-unused-vars":  "warn"
   }
 }

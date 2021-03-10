@@ -1,4 +1,3 @@
-
 import { observable } from '../lib/@nx-js/observer-util/dist/es.es6.js';
 
 class FilterCarouselModel {
