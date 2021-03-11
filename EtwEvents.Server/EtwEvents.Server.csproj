@@ -40,4 +40,8 @@
     <PackageReference Include="NReco.Logging.File" Version="1.1.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\EtwEvents.Server.Shared\EtwEvents.Server.Shared.csproj" />
+  </ItemGroup>
+
 </Project>

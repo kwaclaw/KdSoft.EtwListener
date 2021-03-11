@@ -21,7 +21,7 @@ using tracing = Microsoft.Diagnostics.Tracing;
 
 namespace KdSoft.EtwEvents.Server
 {
-    class RealTimeTraceSession: TimedLifeCycleAware, IDisposable
+    public class RealTimeTraceSession: TimedLifeCycleAware, IDisposable
     {
         readonly ILogger<RealTimeTraceSession> _logger;
 

@@ -12,6 +12,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Google.Protobuf" Version="3.15.5" />
+    <PackageReference Include="Grpc.Core.Api" Version="2.36.1" />
+    <PackageReference Include="Grpc.Tools" Version="2.36.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Grpc.Net.Client" Version="2.35.0" />
   </ItemGroup>
 
@@ -35,6 +41,13 @@
 
   <ItemGroup>
     <Content Remove="src/css/fontawesome/metadata/**/*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="..\Protos\etwLogging.proto" Link="etwLogging.proto">
+      <GrpcServices>Client</GrpcServices>
+      <LinkBase></LinkBase>
+    </Protobuf>
   </ItemGroup>
 
   <ItemGroup>
