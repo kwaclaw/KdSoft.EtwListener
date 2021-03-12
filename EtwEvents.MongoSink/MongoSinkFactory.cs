@@ -9,8 +9,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using Newtonsoft.Json.Schema.Generation;
 
-namespace KdSoft.EtwEvents.EventSinks
-{
+namespace KdSoft.EtwEvents.EventSinks {
     [EventSink(nameof(MongoSink))]
     public class MongoSinkFactory: IEventSinkFactory
     {
@@ -26,7 +25,7 @@ namespace KdSoft.EtwEvents.EventSinks
             };
         }
 
-        public Task<IEventSink> Create(string name, MongoSinkOptions options, MongoSinkCredentials creds) {
+        public Task<IEventSink> Create(MongoSinkOptions options, MongoSinkCredentials creds) {
             try {
                 MongoUrl connectionUrl;
                 MongoCredential credential;
@@ -58,7 +57,7 @@ namespace KdSoft.EtwEvents.EventSinks
                 var db = client.GetDatabase(options.Database);
                 var coll = db.GetCollection<BsonDocument>(options.Collection);
 
-                var result = new MongoSink(name, coll, options.EventFilterFields, options.PayloadFilterFields);
+                var result = new MongoSink(coll, options.EventFilterFields, options.PayloadFilterFields);
                 return Task.FromResult((IEventSink)result);
             }
             catch (Exception ex) {
@@ -68,10 +67,10 @@ namespace KdSoft.EtwEvents.EventSinks
             }
         }
 
-        public Task<IEventSink> Create(string name, string optionsJson, string credentialsJson) {
+        public Task<IEventSink> Create(string optionsJson, string credentialsJson) {
             var options = JsonSerializer.Deserialize<MongoSinkOptions>(optionsJson, _serializerOptions);
             var creds = JsonSerializer.Deserialize<MongoSinkCredentials>(credentialsJson, _serializerOptions);
-            return Create(name, options!, creds!);
+            return Create(options!, creds!);
         }
 
         string GetJsonSchema<T>() {

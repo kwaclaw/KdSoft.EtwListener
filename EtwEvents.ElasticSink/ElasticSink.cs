@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -10,8 +9,7 @@ using Google.Protobuf;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
 
-namespace KdSoft.EtwEvents.EventSinks
-{
+namespace KdSoft.EtwEvents.EventSinks {
     public class ElasticSink: IEventSink
     {
         readonly ElasticSinkOptions _sinkInfo;
@@ -23,13 +21,9 @@ namespace KdSoft.EtwEvents.EventSinks
 
         int _isDisposed = 0;
 
-        public string Name { get; }
-
         public Task<bool> RunTask { get; }
 
-        public ElasticSink(string name, ElasticSinkOptions sinkInfo, string dbUser, string dbPwd) {
-            this.Name = name;
-
+        public ElasticSink(ElasticSinkOptions sinkInfo, string dbUser, string dbPwd) {
             _tcs = new TaskCompletionSource<bool>();
             RunTask = _tcs.Task;
 
@@ -76,16 +70,13 @@ namespace KdSoft.EtwEvents.EventSinks
 
         // Warning: ValueTasks should not be awaited multiple times
         public ValueTask DisposeAsync() {
-            Dispose();
-            return ValueTask.CompletedTask;
-        }
-
-        public bool Equals([AllowNull] IEventSink other) {
-            if (object.ReferenceEquals(this, other))
-                return true;
-            if (other == null)
-                return false;
-            return StringComparer.Ordinal.Equals(this.Name, other.Name);
+            try {
+                Dispose();
+                return default;
+            }
+            catch (Exception ex) {
+                return ValueTask.FromException(ex);
+            }
         }
 
         static IEnumerable<string> EnumerateInsertRecords(List<InsertRecord> irList) {

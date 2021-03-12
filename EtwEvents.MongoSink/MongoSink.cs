@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,8 +9,7 @@ using KdSoft.EtwLogging;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
-namespace KdSoft.EtwEvents.EventSinks
-{
+namespace KdSoft.EtwEvents.EventSinks {
     public class MongoSink: IEventSink
     {
         readonly IMongoCollection<BsonDocument> _coll;
@@ -23,17 +21,13 @@ namespace KdSoft.EtwEvents.EventSinks
 
         int _isDisposed = 0;
 
-        public string Name { get; }
-
         public Task<bool> RunTask { get; }
 
         public MongoSink(
-            string name,
             IMongoCollection<BsonDocument> coll,
             IImmutableList<string> eventFilterFields,
             IImmutableList<string> payloadFilterFields
         ) {
-            this.Name = name;
             this._coll = coll;
             this._eventFilterFields = eventFilterFields;
             this._payloadFilterFields = payloadFilterFields;
@@ -64,15 +58,7 @@ namespace KdSoft.EtwEvents.EventSinks
         // Warning: ValueTasks should not be awaited multiple times
         public ValueTask DisposeAsync() {
             Dispose();
-            return ValueTask.CompletedTask;
-        }
-
-        public bool Equals([AllowNull] IEventSink other) {
-            if (object.ReferenceEquals(this, other))
-                return true;
-            if (other == null)
-                return false;
-            return StringComparer.Ordinal.Equals(this.Name, other.Name);
+            return default;
         }
 
         WriteModel<BsonDocument> FromEvent(EtwEvent evt, long sequenceNo) {

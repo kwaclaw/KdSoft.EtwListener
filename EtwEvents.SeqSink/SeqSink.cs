@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Buffers;
-using System.Diagnostics.CodeAnalysis;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -10,8 +9,7 @@ using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
 
-namespace KdSoft.EtwEvents.EventSinks
-{
+namespace KdSoft.EtwEvents.EventSinks {
     // There is no .NET Seq-Api needed for sending data, for an examples see
     // - https://github.com/datalust/nlog-targets-seq, look at SeqTarget.cs
     // - https://github.com/serilog/serilog-sinks-seq
@@ -36,12 +34,9 @@ namespace KdSoft.EtwEvents.EventSinks
         TraceEventLevel? _maxTraceEventLevel;
         int _isDisposed = 0;
 
-        public string Name { get; }
-
         public Task<bool> RunTask { get; }
 
-        public SeqSink(string name, HttpClient http, Uri requestUri, TraceEventLevel? maxLevel) {
-            this.Name = name;
+        public SeqSink(HttpClient http, Uri requestUri, TraceEventLevel? maxLevel) {
             this._http = http;
             this._requestUri = requestUri;
             this._maxTraceEventLevel = maxLevel;
@@ -79,14 +74,6 @@ namespace KdSoft.EtwEvents.EventSinks
         public ValueTask DisposeAsync() {
             Dispose();
             return ValueTask.CompletedTask;
-        }
-
-        public bool Equals([AllowNull] IEventSink other) {
-            if (object.ReferenceEquals(this, other))
-                return true;
-            if (other == null)
-                return false;
-            return StringComparer.Ordinal.Equals(this.Name, other.Name);
         }
 
         public static async Task<SeqLogLevel?> PostAsync(HttpClient http, Uri requestUri, ReadOnlyMemory<byte> eventBatch) {

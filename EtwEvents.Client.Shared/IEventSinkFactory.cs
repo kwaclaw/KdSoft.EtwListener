@@ -17,10 +17,9 @@ namespace KdSoft.EtwEvents.Client.Shared
         /// <summary>
         /// Creates new instance of IEventSink.
         /// </summary>
-        /// <param name="name"></param>
         /// <param name="optionsJson"></param>
         /// <param name="credentialsJson"></param>
         /// <returns></returns>
-        Task<IEventSink> Create(string name, string optionsJson, string credentialsJson);
+        Task<IEventSink> Create(string optionsJson, string credentialsJson);
     }
 }
