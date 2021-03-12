@@ -1,16 +1,14 @@
-using System;
 using System.Diagnostics;
 using System.IO;
+using KdSoft.Logging;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Diagnostics.Tracing.Session;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
-namespace KdSoft.EtwEvents.Server
-{
+namespace KdSoft.EtwEvents.Server {
     public static class Program
     {
         public static void Main(string[] args) {
@@ -24,20 +22,6 @@ namespace KdSoft.EtwEvents.Server
             CreateHostBuilder(args).Build().Run();
         }
 
-        // fix up log file base name to become a template for date-based log files
-        static string MakeLogFileTemplate(string logFilePath) {
-            var logDir = Path.GetDirectoryName(logFilePath) ?? "";
-            if (logDir == string.Empty || !Path.IsPathFullyQualified(logFilePath)) {
-                logDir = Path.Combine(AppContext.BaseDirectory, logDir);
-            }
-            var baseFileName = Path.GetFileNameWithoutExtension(logFilePath);
-            var ext = Path.GetExtension(logFilePath);
-            var logFileNameTemplate = $"{baseFileName}_{{0:yyyy}}-{{0:MM}}-{{0:dd}}{ext}";
-            var logFilePathTemplate = Path.Combine(logDir, logFileNameTemplate);
-            return logFilePathTemplate;
-        }
-
-
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((hostingContext, config) => {
@@ -46,22 +30,9 @@ namespace KdSoft.EtwEvents.Server
                     config.AddJsonFile(provider, "appsettings.Local.json", optional: true, reloadOnChange: true);
                 })
                 .ConfigureLogging((context, loggingBuilder) => {
-                    var loggingSection = context.Configuration.GetSection("Logging");
-                    // fix up log file path to become a template for date-based log files
-                    var logFilePathTemplate = MakeLogFileTemplate(loggingSection["File:Path"]);
-                    loggingSection["File:Path"] = logFilePathTemplate;
-
-                    loggingBuilder.AddFile(loggingSection, loggerOpts => {
-                        var startDate = DateTimeOffset.MinValue.Date;
-                        var logFileName = string.Format(logFilePathTemplate, startDate);
-                        loggerOpts.FormatLogFileName = logFileTemplate => {
-                            var today = DateTimeOffset.Now.Date;
-                            if (today != startDate) {
-                                startDate = today;
-                                logFileName = String.Format(logFileTemplate, today);
-                            }
-                            return logFileName;
-                        };
+                    loggingBuilder.AddRollingFileSink(opts => {
+                        // make sure opts.Directory is an absolute path
+                        opts.Directory = Path.Combine(context.HostingEnvironment.ContentRootPath, opts.Directory);
                     });
                 })
                 .UseWindowsService()
