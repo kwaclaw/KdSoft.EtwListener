@@ -145,6 +145,7 @@ namespace KdSoft.EtwEvents.EventSinks {
                     return false;
                 WriteEventJson(evt, sequenceNo);
             }
+            // batch is complete, we can write it now to the file
             return true;
         }
 

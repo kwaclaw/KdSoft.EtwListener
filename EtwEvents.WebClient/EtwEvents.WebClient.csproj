@@ -3,11 +3,11 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <!--<AspNetCoreHostingModel>OutOfProcess</AspNetCoreHostingModel>-->
-    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <LangVersion>Latest</LangVersion>
     <Nullable>enable</Nullable>
     <AssemblyName>KdSoft.EtwEvents.WebClient</AssemblyName>
     <RootNamespace>KdSoft.EtwEvents.WebClient</RootNamespace>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <UserSecretsId>aca35d68-2f97-4471-bcee-88a607e466f3</UserSecretsId>
   </PropertyGroup>
 
