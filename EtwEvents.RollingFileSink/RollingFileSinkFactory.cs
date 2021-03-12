@@ -5,8 +5,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
 
-namespace KdSoft.EtwEvents.EventSinks
-{
+namespace KdSoft.EtwEvents.EventSinks {
     [EventSink(nameof(RollingFileSink))]
     public class RollingFileSinkFactory: IEventSinkFactory
     {
@@ -23,7 +22,7 @@ namespace KdSoft.EtwEvents.EventSinks
             };
         }
 
-        public Task<IEventSink> Create(string name, RollingFileSinkOptions options) {
+        public Task<IEventSink> Create(RollingFileSinkOptions options) {
             Func<DateTimeOffset, string> fileNameSelector = (dto) => string.Format(options.FileNameFormat, dto);
             // returns options.Directory if it is an absolute path
             var absoluteDirectory = Path.Combine(_evtSinkDir, options.Directory);
@@ -39,13 +38,13 @@ namespace KdSoft.EtwEvents.EventSinks
                 options.MaxFileCount,
                 options.NewFileOnStartup
             );
-            return Task.FromResult((IEventSink)new RollingFileSink(name, rollingFileFactory));
+            return Task.FromResult((IEventSink)new RollingFileSink(rollingFileFactory));
         }
 
-        public Task<IEventSink> Create(string name, string optionsJson, string credentialsJson) {
+        public Task<IEventSink> Create(string optionsJson, string credentialsJson) {
             var options = JsonSerializer.Deserialize<RollingFileSinkOptions>(optionsJson, _serializerOptions);
             //var creds = JsonSerializer.Deserialize<RollingFileSinkCredentials>(credentialsJson, _serializerOptions);
-            return Create(name, options!);
+            return Create(options!);
         }
 
         public string GetCredentialsJsonSchema() {

@@ -2,18 +2,16 @@
 using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
 
-namespace KdSoft.EtwEvents.WebClient
-{
+namespace KdSoft.EtwEvents.WebClient {
     class EventSinkHolder
     {
         readonly object _eventSinkLock = new object();
         readonly object _failedEventSinkLock = new object();
-        readonly ArrayPool<(IEventSink sink, ValueTask<bool> task)> _eventSinkTaskPool;
+        readonly ArrayPool<(KeyValuePair<string, IEventSink> sinkEntry, ValueTask<bool> task)> _eventSinkTaskPool;
 
 
         ImmutableDictionary<string, IEventSink> _eventSinks;
@@ -25,54 +23,55 @@ namespace KdSoft.EtwEvents.WebClient
         public EventSinkHolder() {
             this._eventSinks = ImmutableDictionary<string, IEventSink>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
             this._failedEventSinks = ImmutableDictionary<string, (string, Exception)>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
-            this._eventSinkTaskPool = ArrayPool<(IEventSink, ValueTask<bool>)>.Create();
+            this._eventSinkTaskPool = ArrayPool<(KeyValuePair<string, IEventSink>, ValueTask<bool>)>.Create();
         }
 
         /// <summary>
         /// Adds new <see cref="IEventSink"/> to processing loop. 
         /// </summary>
+        /// <param name="name">Name associated with <see cref="IEventSink">.</param>
         /// <param name="sink">New <see cref="IEventSink"></see> to add.</param>
         /// <remarks>The event sink must have been initialized already!.</remarks>
-        public void AddEventSink(IEventSink sink) {
+        public void AddEventSink(string name, IEventSink sink) {
             // We use a lock here to prevent race conditions, so that
             // if two concurrent updates happen, none will get lost.
             lock (_eventSinkLock) {
-                this._eventSinks = this._eventSinks.Add(sink.Name, sink);
+                this._eventSinks = this._eventSinks.Add(name, sink);
             }
         }
 
         /// <summary>
         /// Adds new <see cref="IEventSink"/> to processing loop. 
         /// </summary>
-        /// <param name="sinks">New <see cref="IEventSink">event sinks</see> to add.</param>
+        /// <param name="sinkEntries">New named <see cref="IEventSink">event sinks</see> to add.</param>
         /// <remarks>The event sinks must have been initialized already!.</remarks>
-        public void AddEventSinks(IEnumerable<IEventSink> sinks) {
+        public void AddEventSinks(IEnumerable<KeyValuePair<string, IEventSink>> sinkEntries) {
             // We use a lock here to prevent race conditions, so that
             // if two concurrent updates happen, none will get lost.
             lock (_eventSinkLock) {
-                this._eventSinks = this._eventSinks.AddRange(sinks.Select(sink => new KeyValuePair<string, IEventSink>(sink.Name, sink)));
+                this._eventSinks = this._eventSinks.AddRange(sinkEntries);
             }
         }
 
         /// <summary>
-        /// Removes given <see cref="IEventSink"/> instance from processing loop.
+        /// Removes <see cref="IEventSink"/> instance by name from processing loop.
         /// </summary>
-        /// <param name="sink"><see cref="IEventSink"/> instance to remove.</param>
+        /// <param name="name">Name of <see cref="IEventSink"/> instance.</param>
         /// <returns><c>true></c> if event sink was found and removed, <c>false</c> otherwise.</returns>
-        public bool RemoveEventSink(IEventSink sink) {
+        public bool DeleteEventSink(string name) {
             // We use a lock here to prevent race conditions, so that
             // if two concurrent updates happen, none will get lost.
             lock (_eventSinkLock) {
                 var oldEventSinks = this._eventSinks;
-                this._eventSinks = oldEventSinks.Remove(sink.Name);
+                this._eventSinks = oldEventSinks.Remove(name);
                 return !object.ReferenceEquals(oldEventSinks, this._eventSinks);
             }
         }
 
         /// <summary>
-        /// Removes <see cref="IEventSink"/> instance from processing loop.
+        /// Removes <see cref="IEventSink"/> instance by name from processing loop.
         /// </summary>
-        /// <param name="name">Identifier of <see cref="IEventSink"/> to remove.</param>
+        /// <param name="name">Name of <see cref="IEventSink"/>.</param>
         /// <returns>The <see cref="IEventSink"/> instance that was removed, or <c>null</c> if it was not found.</returns>
         /// <remarks>It is the responsibility of the caller to dispose the <see cref="IEventSink"/> instance!</remarks>
         public IEventSink? RemoveEventSink(string name) {
@@ -88,9 +87,22 @@ namespace KdSoft.EtwEvents.WebClient
         }
 
         /// <summary>
+        /// Removes <see cref="IEventSink"/> instances by name from processing loop.
+        /// </summary>
+        /// <param name="names">Names of <see cref="IEventSink"/> instances to remove.</param>
+        public void DeleteEventSinks(IEnumerable<string> names) {
+            // We use a lock here to prevent race conditions, so that
+            // if two concurrent updates happen, none will get lost.
+            lock (_eventSinkLock) {
+                var oldEventSinks = this._eventSinks;
+                this._eventSinks = oldEventSinks.RemoveRange(names);
+            }
+        }
+
+        /// <summary>
         /// Removes <see cref="IEventSink"/> instances from processing loop.
         /// </summary>
-        /// <param name="names">Identifiers of <see cref="IEventSink">event sinks</see>/to remove.</param>
+        /// <param name="names">Names of <see cref="IEventSink">event sinks</see>/to remove.</param>
         /// <returns>The <see cref="IEventSink"/> instances that were removed, or an empty collection if none were found.</returns>
         /// <remarks>It is the responsibility of the caller to dispose the <see cref="IEventSink"/> instances!</remarks>
         public IEnumerable<IEventSink> RemoveEventSinks(IEnumerable<string> names) {
@@ -113,7 +125,7 @@ namespace KdSoft.EtwEvents.WebClient
         /// <summary>
         /// Removes named entries from list of failed sinks.
         /// </summary>
-        /// <param name="names">Identifiers of failed <see cref="IEventSink">event sinks</see> to remove.</param>
+        /// <param name="names">Names of failed <see cref="IEventSink">event sinks</see> to remove.</param>
         /// <returns>The names of the failed <see cref="IEventSink">event sinks</see> that were removed, or an empty collection if none were found.</returns>
         public IEnumerable<string> RemoveFailedEventSinks(IEnumerable<string> names) {
             if (names == null)
@@ -132,19 +144,6 @@ namespace KdSoft.EtwEvents.WebClient
             return oldSinks;
         }
 
-        /// <summary>
-        /// Removes given <see cref="IEventSink"/> instance from processing loop.
-        /// </summary>
-        /// <param name="sinks"><see cref="IEventSink"/> instances to remove.</param>
-        public void RemoveEventSinks(IEnumerable<IEventSink> sinks) {
-            // We use a lock here to prevent race conditions, so that
-            // if two concurrent updates happen, none will get lost.
-            lock (_eventSinkLock) {
-                var oldEventSinks = this._eventSinks;
-                this._eventSinks = oldEventSinks.RemoveRange(sinks.Select(sink => sink.Name));
-            }
-        }
-
         public (IImmutableDictionary<string, IEventSink> active, IImmutableDictionary<string, (string, Exception)> failed) ClearEventSinks() {
             lock (_eventSinkLock) {
                 var active = this._eventSinks;
@@ -156,12 +155,12 @@ namespace KdSoft.EtwEvents.WebClient
         }
 
         // Note: Disposes of failed IEventSink instance
-        async Task HandleFailedEventSink(IEventSink failedSink, Exception ex) {
-            var failedName = failedSink.Name;
-            var failedType = failedSink.GetType().Name;
+        async Task HandleFailedEventSink(KeyValuePair<string, IEventSink> failedSinkEntry, Exception ex) {
+            var failedName = failedSinkEntry.Key;
+            var failedType = failedSinkEntry.Value.GetType().Name;
 
-            bool removed = RemoveEventSink(failedSink);
-            try { await failedSink.DisposeAsync().ConfigureAwait(false); }
+            bool removed = DeleteEventSink(failedName);
+            try { await failedSinkEntry.Value.DisposeAsync().ConfigureAwait(false); }
             catch { }
 
             if (removed) {
@@ -171,19 +170,19 @@ namespace KdSoft.EtwEvents.WebClient
             }
         }
 
-        async Task<bool> CheckEventSinkTasks((IEventSink sink, ValueTask<bool> task)[] taskList, int taskCount) {
+        async Task<bool> CheckEventSinkTasks((KeyValuePair<string, IEventSink> sinkEntry, ValueTask<bool> task)[] taskList, int taskCount) {
             var result = true;
             for (int indx = 0; indx < taskCount; indx++) {
-                var (sink, task) = taskList[indx];
+                var (sinkEntry, task) = taskList[indx];
                 try {
                     var success = await task.ConfigureAwait(false);
                     if (!success) {
-                        RemoveEventSink(sink);
+                        RemoveEventSink(sinkEntry.Key);
                         result = false;
                     }
                 }
                 catch (Exception ex) {
-                    await HandleFailedEventSink(sink, ex).ConfigureAwait(false);
+                    await HandleFailedEventSink(sinkEntry, ex).ConfigureAwait(false);
                     result = false;
                 }
             }
@@ -206,7 +205,7 @@ namespace KdSoft.EtwEvents.WebClient
             try {
                 int indx = 0;
                 foreach (var entry in eventSinks) {
-                    taskList[indx++] = (entry.Value, entry.Value.WriteAsync(evtBatch, sequenceNo));
+                    taskList[indx++] = (entry, entry.Value.WriteAsync(evtBatch, sequenceNo));
                 }
                 result = await CheckEventSinkTasks(taskList, eventSinks.Count).ConfigureAwait(false);
                 if (!result)
@@ -215,7 +214,7 @@ namespace KdSoft.EtwEvents.WebClient
                 // WriteAsync() and FlushAsync() must not be called concurrently on the same event sink
                 indx = 0;
                 foreach (var entry in eventSinks) {
-                    taskList[indx++] = (entry.Value, entry.Value.FlushAsync());
+                    taskList[indx++] = (entry, entry.Value.FlushAsync());
                 }
                 result = await CheckEventSinkTasks(taskList, eventSinks.Count).ConfigureAwait(false);
             }

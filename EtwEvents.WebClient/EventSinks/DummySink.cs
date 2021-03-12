@@ -1,19 +1,10 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
 
-namespace KdSoft.EtwEvents.WebClient.EventSinks
-{
+namespace KdSoft.EtwEvents.WebClient.EventSinks {
     sealed class DummySink: IEventSink
     {
-        public DummySink(string name) {
-            this.Name = name;
-        }
-
-        public string Name { get; }
-
         public Task<bool> RunTask => Task<bool>.FromResult(true);
 
         public void Dispose() {
@@ -22,10 +13,6 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
 
         public ValueTask DisposeAsync() {
             return default;
-        }
-
-        public bool Equals([AllowNull] IEventSink other) {
-            return string.Equals(this.Name, other?.Name, StringComparison.OrdinalIgnoreCase);
         }
 
         public ValueTask<bool> FlushAsync() {

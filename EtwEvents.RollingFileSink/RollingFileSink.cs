@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Buffers;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text.Json;
 using System.Threading;
@@ -9,8 +8,7 @@ using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
 
-namespace KdSoft.EtwEvents.EventSinks
-{
+namespace KdSoft.EtwEvents.EventSinks {
     public class RollingFileSink: IEventSink
     {
         static readonly EtwEvent _emptyEvent = new EtwEvent();
@@ -24,12 +22,9 @@ namespace KdSoft.EtwEvents.EventSinks
 
         int _isDisposed = 0;
 
-        public string Name { get; }
-
         public Task<bool> RunTask { get; }
 
-        public RollingFileSink(string name, RollingFileFactory fileFactory) {
-            this.Name = name;
+        public RollingFileSink(RollingFileFactory fileFactory) {
             this._fileFactory = fileFactory;
             this._channel = Channel.CreateUnbounded<(EtwEvent evt, long sequenceNo)>(new UnboundedChannelOptions {
                 AllowSynchronousContinuations = true,
@@ -81,14 +76,6 @@ namespace KdSoft.EtwEvents.EventSinks
                 await _jsonWriter.DisposeAsync().ConfigureAwait(false);
                 await _fileFactory.DisposeAsync().ConfigureAwait(false);
             }
-        }
-
-        public bool Equals([AllowNull] IEventSink other) {
-            if (object.ReferenceEquals(this, other))
-                return true;
-            if (other == null)
-                return false;
-            return StringComparer.Ordinal.Equals(this.Name, other.Name);
         }
 
         // writes a JSON object to the buffer, terminating with a new line

@@ -9,13 +9,8 @@ namespace KdSoft.EtwEvents.Client.Shared
     /// An event sink does not swallow exceptions, it is the application's responsibility to react to an error.
     /// To close/stop an event sink means to dispose it.
     /// </summary>
-    public interface IEventSink: IAsyncDisposable, IDisposable, IEquatable<IEventSink>
+    public interface IEventSink: IAsyncDisposable  //, IEquatable<IEventSink>
     {
-        /// <summary>
-        /// Identifier for event sink.
-        /// </summary>
-        string Name { get; }
-
         /// <summary>
         /// Task that completes when <see cref="IEventSink"/> is finished/closed.
         /// </summary>

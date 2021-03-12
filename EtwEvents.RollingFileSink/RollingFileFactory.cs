@@ -4,8 +4,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace KdSoft.EtwEvents.EventSinks
-{
+namespace KdSoft.EtwEvents.EventSinks {
     public class RollingFileFactory: IDisposable, IAsyncDisposable
     {
         readonly DirectoryInfo _dirInfo;

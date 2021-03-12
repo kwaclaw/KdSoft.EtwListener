@@ -11,8 +11,7 @@ using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
 
-namespace KdSoft.EtwEvents.WebClient.EventSinks
-{
+namespace KdSoft.EtwEvents.WebClient.EventSinks {
     class WebSocketSink: IEventSink
     {
         readonly WebSocket _webSocket;
@@ -26,10 +25,7 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
         Task<bool> _receiveTask = Task.FromResult(false);
         public Task<bool> RunTask => _receiveTask;
 
-        public string Name { get; }
-
-        public WebSocketSink(string name, WebSocket webSocket) {
-            this.Name = name;
+        public WebSocketSink(WebSocket webSocket) {
             this._webSocket = webSocket;
             _jsonOptions = new JsonWriterOptions {
                 Indented = false,
@@ -69,13 +65,13 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
             return result;
         }
 
-        public ValueTask Initialize(CancellationToken cancelToken) {
+        public ValueTask Initialize(string name, CancellationToken cancelToken) {
             _startNewMessage = true;
             _bufferWriter.Clear();
             _jsonWriter.Reset();
             this._cancelToken = cancelToken;
             this._receiveTask = KeepReceiving(cancelToken);
-            return _webSocket.SendAsync(Encoding.UTF8.GetBytes($"\"{Name}\"").AsMemory(), WebSocketMessageType.Text, true, cancelToken);
+            return _webSocket.SendAsync(Encoding.UTF8.GetBytes($"\"{name}\"").AsMemory(), WebSocketMessageType.Text, true, cancelToken);
         }
 
         async Task<bool> WriteAsync(bool endOfMessage) {
@@ -208,14 +204,6 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
             catch (Exception ex) {
                 //TODO log exception somewhere
             }
-        }
-
-        public bool Equals([AllowNull] IEventSink other) {
-            if (object.ReferenceEquals(this, other))
-                return true;
-            if (other == null)
-                return false;
-            return StringComparer.Ordinal.Equals(this.Name, other.Name);
         }
     }
 }

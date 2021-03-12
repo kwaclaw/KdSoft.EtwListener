@@ -104,7 +104,7 @@ namespace KdSoft.EtwEvents.WebClient
             IEventSink result;
             switch (request.SinkType) {
                 case nameof(DummySink):
-                    result = new DummySink(request.Name);
+                    result = new DummySink();
                     break;
                 default:
                     var factory = _evtSinkService.LoadEventSinkFactory(request.SinkType);
@@ -112,26 +112,26 @@ namespace KdSoft.EtwEvents.WebClient
                         throw new InvalidOperationException($"Cannot load event sink {request.SinkType}.");
                     var optionsJson = JsonSerializer.Serialize(request.Options);
                     var credentialsJson = JsonSerializer.Serialize(request.Credentials);
-                    result = await factory.Create(request.Name, optionsJson, credentialsJson).ConfigureAwait(false);
+                    result = await factory.Create(optionsJson, credentialsJson).ConfigureAwait(false);
                     break;
             }
 
-            AddEventSink(result, holder);
+            AddEventSink(request.Name, result, holder);
             return result;
         }
 
-        void AddEventSink(IEventSink sink, EventSinkHolder holder) {
-            holder.AddEventSink(sink);
-            ConfigureEventSinkClosure(sink, holder);
+        void AddEventSink(string name, IEventSink sink, EventSinkHolder holder) {
+            holder.AddEventSink(name, sink);
+            ConfigureEventSinkClosure(name, sink, holder);
         }
 
-        Task ConfigureEventSinkClosure(IEventSink sink, EventSinkHolder holder) {
+        Task ConfigureEventSinkClosure(string name, IEventSink sink, EventSinkHolder holder) {
             return sink.RunTask.ContinueWith(async rt => {
                 try {
                     if (!rt.Result) { // was not disposed
                         await sink.DisposeAsync().ConfigureAwait(false);
                     }
-                    holder.RemoveEventSink(sink);
+                    holder.DeleteEventSink(name);
                     await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
                 }
                 catch (Exception ex) {
@@ -160,11 +160,11 @@ namespace KdSoft.EtwEvents.WebClient
 
                     // this WebSocketSink has a life-cycle tied to the EventSession, while other sinks can be added and removed dynamically
                     var webSocketName = Guid.NewGuid().ToString();
-                    var webSocketSink = new EventSinks.WebSocketSink(webSocketName, webSocket);
+                    var webSocketSink = new EventSinks.WebSocketSink(webSocket);
                     try {
                         // must initialize before configuring disposal
-                        await webSocketSink.Initialize(CancellationToken.None).ConfigureAwait(false);
-                        AddEventSink(webSocketSink, traceSession.EventSinks);
+                        await webSocketSink.Initialize(webSocketName, CancellationToken.None).ConfigureAwait(false);
+                        AddEventSink(webSocketName, webSocketSink, traceSession.EventSinks);
 
                         // wait for receive task to terminate
                         await webSocketSink.RunTask.ConfigureAwait(false);
@@ -224,11 +224,11 @@ namespace KdSoft.EtwEvents.WebClient
 
                     // the WebSocketSink has a life-cycle tied to the EventSession, while other sinks can be added and removed dynamically
                     var webSocketName = Guid.NewGuid().ToString();
-                    var webSocketSink = new EventSinks.WebSocketSink(webSocketName, webSocket);
+                    var webSocketSink = new EventSinks.WebSocketSink(webSocket);
                     try {
                         // must initialize before configuring disposal
-                        await webSocketSink.Initialize(CancellationToken.None).ConfigureAwait(false);
-                        AddEventSink(webSocketSink, traceSession.EventSinks);
+                        await webSocketSink.Initialize(webSocketName, CancellationToken.None).ConfigureAwait(false);
+                        AddEventSink(webSocketName, webSocketSink, traceSession.EventSinks);
                         await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
 
                         // wait for receive task to terminate
@@ -266,13 +266,14 @@ namespace KdSoft.EtwEvents.WebClient
                 var detailBuilder = new System.Text.StringBuilder();
                 try {
                     foreach (var sinkRequestTask in sinkRequestTasks) {
+                        var request = sinkRequestTask.Item1;
                         try {
                             var sink = await sinkRequestTask.Item2.ConfigureAwait(false);
-                            traceSession.EventSinks.AddEventSink(sink);
+                            traceSession.EventSinks.AddEventSink(request.Name, sink);
                         }
                         catch (Exception ex) {
                             //TODO log exception
-                            detailBuilder.AppendLine($"- {sinkRequestTask.Item1.Name}({sinkRequestTask.Item1.SinkType})");
+                            detailBuilder.AppendLine($"- {request.Name}({request.SinkType})");
                         }
                     }
                 }

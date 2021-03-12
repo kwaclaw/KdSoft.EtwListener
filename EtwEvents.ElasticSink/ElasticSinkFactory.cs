@@ -22,15 +22,15 @@ namespace KdSoft.EtwEvents.EventSinks
             };
         }
 
-        public Task<IEventSink> Create(string name, ElasticSinkOptions options, string user, string pwd) {
-            var result = new ElasticSink(name, options, user, pwd);
+        public Task<IEventSink> Create(ElasticSinkOptions options, string user, string pwd) {
+            var result = new ElasticSink(options, user, pwd);
             return Task.FromResult((IEventSink)result);
         }
 
-        public Task<IEventSink> Create(string name, string optionsJson, string credentialsJson) {
+        public Task<IEventSink> Create(string optionsJson, string credentialsJson) {
             var options = JsonSerializer.Deserialize<ElasticSinkOptions>(optionsJson, _serializerOptions);
             var creds = JsonSerializer.Deserialize<ElasticSinkCredentials>(credentialsJson, _serializerOptions);
-            return Create(name, options!, creds!.User, creds!.Password);
+            return Create(options!, creds!.User, creds!.Password);
         }
 
         public string GetCredentialsJsonSchema() {
