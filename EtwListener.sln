@@ -30,7 +30,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.Server.Shared", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.Protobuf.Shared", "EtwEvents.Protobuf.Shared\EtwEvents.Protobuf.Shared.csproj", "{026DF73B-5AC0-4C4E-A0E7-6034A987FD20}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KdSoft.RollingFileLogger", "KdSoft.RollingFileLogger\KdSoft.RollingFileLogger.csproj", "{CEB03888-075A-4DC3-855A-DB74E60ED13B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KdSoft.RollingFileLogger", "KdSoft.RollingFileLogger\KdSoft.RollingFileLogger.csproj", "{CEB03888-075A-4DC3-855A-DB74E60ED13B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

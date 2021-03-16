@@ -17,21 +17,26 @@ namespace KdSoft.Logging {
         readonly string _category;
         readonly LogLevel _minLevel;
         readonly Channel<string> _channel;
+        readonly int _batchSize;
+        readonly int _maxWriteDelayMSecs;
 
-        const int _maxWriteDelayMSecs = 400;
+        static readonly string _batchTerminator = string.Intern("##batch##");
 
         int _isDisposed = 0;
         int _lastWrittenMSecs;
+        int _batchCounter;
 
         public Task<bool> RunTask { get; }
 
-        public RollingFileLogger(RollingFileFactory fileFactory, string category, LogLevel minLevel) {
+        public RollingFileLogger(RollingFileFactory fileFactory, string category, LogLevel minLevel, int batchSize, int maxWriteDelayMSecs) {
             this._fileFactory = fileFactory;
             this._category = category;
             this._minLevel = minLevel;
+            this._batchSize = batchSize;
+            this._maxWriteDelayMSecs = maxWriteDelayMSecs;
 
             this._channel = Channel.CreateUnbounded<string>(new UnboundedChannelOptions {
-                AllowSynchronousContinuations = true,
+                AllowSynchronousContinuations = false,
                 SingleReader = true,
                 SingleWriter = false
             });
@@ -102,7 +107,16 @@ namespace KdSoft.Logging {
                 sb.Clear();
                 var timestamp = _fileFactory.UseLocalTime ? DateTimeOffset.Now : DateTimeOffset.UtcNow;
                 sb.BuildEntryText(_category, logLevel, eventId, message, exception, null, timestamp);
-                _channel.Writer.TryWrite(sb.ToString());
+                var written = _channel.Writer.TryWrite(sb.ToString());
+
+                var itemCount = Interlocked.Increment(ref _batchCounter);
+                // checking for exact match resolves issue with multiple concurrent increments,
+                // only one of them will match and trigger the bacth terminator message
+                if (itemCount == _batchSize) {
+                    Volatile.Write(ref _batchCounter, 0);
+                    Volatile.Write(ref _lastWrittenMSecs, Environment.TickCount);
+                    _channel.Writer.TryWrite(_batchTerminator);
+                }
             }
             finally {
                 _stringBuilderPool.Return(sb);
@@ -113,12 +127,22 @@ namespace KdSoft.Logging {
         /// Timer callback that triggers periodical write operations even if the event batch is not full
         /// </summary>
         void TimerCallback(object? state) {
-            _channel.Writer.TryWrite(string.Empty);
+            try {
+                var lastCheckedTicks = Interlocked.Exchange(ref _lastWrittenMSecs, Environment.TickCount);
+                // integer subtraction is immune to rollover, e.g. unchecked(int.MaxValue + y) - (int.MaxValue - x) = y + x;
+                // Environment.TickCount rolls over from int.Maxvalue to int.MinValue!
+                var deltaTicks = Environment.TickCount - lastCheckedTicks;
+                if (deltaTicks > _maxWriteDelayMSecs) {
+                    Volatile.Write(ref _batchCounter, 0);
+                    _channel.Writer.TryWrite(_batchTerminator);
+                }
+            }
+            catch { }
         }
 
         async Task<bool> ProcessBatchToBuffer() {
             await foreach (var message in _channel.Reader.ReadAllAsync().ConfigureAwait(false)) {
-                if (string.IsNullOrEmpty(message))
+                if (ReferenceEquals(message, _batchTerminator))
                     return false;
                 Encoding.UTF8.GetBytes(message, _bufferWriter);
             }

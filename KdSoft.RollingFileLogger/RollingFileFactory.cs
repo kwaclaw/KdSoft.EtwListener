@@ -15,6 +15,8 @@ namespace KdSoft.Logging {
         readonly int _maxFileCount;
         readonly bool _useLocalTime;
 
+        public const int MaxFilesToDelete = 5;
+
         public bool UseLocalTime => _useLocalTime;
 
         // used to enable file creation on startup (regardless of other checks)
@@ -53,8 +55,6 @@ namespace KdSoft.Logging {
             return int.TryParse(sequenceNoSpan, out value);
         }
 
-        //TODO handle maxfilecount
-
         FileStream CreateNextSuitableFileStream(DateTimeOffset now, bool alwaysCreateNewFile) {
             var newFnBase = _fileNameSelector(now);
             var enumOptions = new EnumerationOptions {
@@ -62,9 +62,49 @@ namespace KdSoft.Logging {
                 RecurseSubdirectories = false,
             };
             var sortedFiles = new SortedList<string, FileInfo>(StringComparer.CurrentCultureIgnoreCase);
-            foreach (var file in _dirInfo.EnumerateFiles($"{newFnBase}-*{_fileExtension}", enumOptions)) {
-                sortedFiles.Add(file.Name, file);
+            var oldFiles = new List<FileInfo>();
+
+            var newNameStart = $"{newFnBase}-";
+            int fileCount = 0;
+            foreach (var file in _dirInfo.EnumerateFiles($"*-*{_fileExtension}", enumOptions)) {
+                fileCount++;
+
+                // determine the MaxFilesToDelete oldest files
+                if (oldFiles.Count == 0)
+                    oldFiles.Add(file);
+                else {
+                    // start with the oldest file
+                    bool inserted = false;
+                    for (int indx = 0; indx < oldFiles.Count; indx++) {
+                        var oldFile = oldFiles[indx];
+                        // if file is older then insert at this position 
+                        if (file.LastWriteTimeUtc < oldFile.LastWriteTimeUtc) {
+                            oldFiles.Insert(indx, file);
+                            inserted = true;
+                            break;
+                        }
+                    }
+                    if (inserted && oldFiles.Count > MaxFilesToDelete) {
+                        oldFiles.RemoveAt(MaxFilesToDelete);
+                    }
+                    else if (oldFiles.Count < MaxFilesToDelete) {
+                        oldFiles.Add(file);
+                    }
+                }
+
+                // sort the files that match our new name (except for the sequence number)
+                if (file.Name.StartsWith(newNameStart))
+                    sortedFiles.Add(file.Name, file);
             }
+
+            // if we have too many files, delete at most <MaxFilesToDelete> old files
+            var delta = fileCount - _maxFileCount;
+            if (delta > oldFiles.Count)
+                delta = oldFiles.Count;
+            for (int indx = 0; indx < delta; indx++) {
+                oldFiles[indx].Delete();
+            }
+
             int lastSequenceNo = 0;
             if (sortedFiles.Count > 0) {
                 var lastFileName = sortedFiles.Values[sortedFiles.Count - 1].Name;
@@ -75,7 +115,8 @@ namespace KdSoft.Logging {
 
             IOException? ex = null;
             for (int sequenceNo = lastSequenceNo; sequenceNo < 1000; sequenceNo++) {
-                var newFn = $"{newFnBase}-{sequenceNo}{_fileExtension}";
+                var seqNoStr = sequenceNo.ToString("D2");
+                var newFn = $"{newFnBase}-{seqNoStr}{_fileExtension}";
                 if (sortedFiles.TryGetValue(newFn, out var newFi)) {
                     if (alwaysCreateNewFile || newFi.Length >= _fileSizeLimitBytes) {
                         continue;
@@ -83,7 +124,8 @@ namespace KdSoft.Logging {
                 }
                 try {
                     var fileName = Path.Combine(_dirInfo.FullName, newFn);
-                    return new FileStream(fileName, FileMode.Append, FileAccess.Write, FileShare.Read, 4096, useAsync: true);
+                    // NOTE: it seems when using "useAsync: true" we get random spurious stretches of null bytes in the output, why??
+                    return new FileStream(fileName, FileMode.Append, FileAccess.Write, FileShare.Read, 4096, useAsync: false);
                 }
                 catch (IOException ioex) {
                     // make one attempt to ignore an IOException because the file may have been created in the meantime
