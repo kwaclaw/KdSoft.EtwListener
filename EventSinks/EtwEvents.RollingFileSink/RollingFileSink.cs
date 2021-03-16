@@ -7,6 +7,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
+using KdSoft.Logging;
 
 namespace KdSoft.EtwEvents.EventSinks {
     public class RollingFileSink: IEventSink

@@ -101,8 +101,8 @@ namespace KdSoft.EtwEvents.Server
         }
 
         public override async Task GetEvents(EtwEventRequest request, IServerStreamWriter<EtwEventBatch> responseStream, ServerCallContext context) {
-            var logger = _loggerFactory.CreateLogger<EventQueue>();
-            var eventQueue = new EventQueue(responseStream, context, logger, request.BatchSize);
+            var logger = _loggerFactory.CreateLogger<EventProcessor>();
+            var eventQueue = new EventProcessor(responseStream, context, logger, request.BatchSize);
             var session = GetSession(request.SessionName);
             try {
                 // not strictly necessary, but helps "waking" up the receiving end by sending an initial message

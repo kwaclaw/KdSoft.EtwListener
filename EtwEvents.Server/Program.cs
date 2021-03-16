@@ -24,15 +24,15 @@ namespace KdSoft.EtwEvents.Server {
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .ConfigureAppConfiguration((hostingContext, config) => {
-                    var env = hostingContext.HostingEnvironment;
+                .ConfigureAppConfiguration((hostContext, cfgBuilder) => {
+                    var env = hostContext.HostingEnvironment;
                     var provider = new PhysicalFileProvider(Path.Combine(env.ContentRootPath, ".."));
-                    config.AddJsonFile(provider, "appsettings.Local.json", optional: true, reloadOnChange: true);
+                    cfgBuilder.AddJsonFile(provider, "appsettings.Local.json", optional: true, reloadOnChange: true);
                 })
-                .ConfigureLogging((context, loggingBuilder) => {
+                .ConfigureLogging((hostContext, loggingBuilder) => {
                     loggingBuilder.AddRollingFileSink(opts => {
                         // make sure opts.Directory is an absolute path
-                        opts.Directory = Path.Combine(context.HostingEnvironment.ContentRootPath, opts.Directory);
+                        opts.Directory = Path.Combine(hostContext.HostingEnvironment.ContentRootPath, opts.Directory);
                     });
                 })
                 .UseWindowsService()

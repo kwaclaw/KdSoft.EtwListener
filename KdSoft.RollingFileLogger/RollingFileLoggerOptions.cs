@@ -42,5 +42,15 @@
         /// </summary>
         public bool NewFileOnStartup { get; set; }
 
+        /// <summary>
+        /// Log events that happen frequently get written/flushed in batches. Indicates size of batches.
+        /// </summary>
+        public int BatchSize { get; set; } = 100;
+
+        /// <summary>
+        /// When events get get written less often, it may take a while to fill a batch.
+        /// This setting indiactes how long to wait in milliseconds before writing/flusing the incomplete batch.
+        /// </summary>
+        public int MaxWriteDelayMSecs { get; set; } = 400;
     }
 }

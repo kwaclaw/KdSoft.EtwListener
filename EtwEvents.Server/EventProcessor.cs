@@ -11,22 +11,22 @@ using tracing = Microsoft.Diagnostics.Tracing;
 
 namespace KdSoft.EtwEvents.Server
 {
-    class EventQueue
+    class EventProcessor
     {
         readonly IServerStreamWriter<EtwEventBatch> _responseStream;
         readonly ServerCallContext _context;
         readonly ObjectPool<EtwEvent> _etwEventPool;
         readonly Channel<EtwEvent> _channel;
-        readonly ILogger<EventQueue> _logger;
+        readonly ILogger<EventProcessor> _logger;
         readonly int _batchSize;
 
         int _lastWrittenMSecs;
         int _maxWriteDelayMSecs;
 
-        public EventQueue(
+        public EventProcessor(
             IServerStreamWriter<EtwEventBatch> responseStream,
             ServerCallContext context,
-            ILogger<EventQueue> logger,
+            ILogger<EventProcessor> logger,
             int batchSize = 100
         ) {
             this._responseStream = responseStream;

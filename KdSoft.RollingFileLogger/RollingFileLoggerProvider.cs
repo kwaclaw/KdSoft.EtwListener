@@ -8,11 +8,13 @@ namespace KdSoft.Logging {
     [ProviderAlias("RollingFile")]  // name for this provider's settings in the Logging section of appsettings.json
     public class RollingFileLoggerProvider: ILoggerProvider, IAsyncDisposable {
         readonly RollingFileFactory _fileFactory;
+        readonly IOptions<RollingFileLoggerOptions> _options;
 
         //TODO Look at https://github.com/adams85/filelogger/blob/master/source/FileLogger/FileLoggerProvider.cs
         //TODO Look at https://github.com/aspnet/Logging/blob/master/src/Microsoft.Extensions.Logging.EventSource/EventSourceLoggerFactoryExtensions.cs
 
         public RollingFileLoggerProvider(IOptions<RollingFileLoggerOptions> options) {
+            this._options = options;
             var opts = options.Value;
 
             Func<DateTimeOffset, string> fileNameSelector = (dto) => string.Format(opts.FileNameFormat, dto);
@@ -31,7 +33,8 @@ namespace KdSoft.Logging {
         }
 
         public ILogger CreateLogger(string categoryName) {
-            return new RollingFileLogger(_fileFactory, categoryName, LogLevel.Trace);
+            var opts = _options.Value;
+            return new RollingFileLogger(_fileFactory, categoryName, LogLevel.Trace, opts.BatchSize, opts.MaxWriteDelayMSecs);
         }
 
         public void Dispose() => _fileFactory?.Dispose();
