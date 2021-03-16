@@ -106,7 +106,7 @@ namespace KdSoft.Logging {
             try {
                 sb.Clear();
                 var timestamp = _fileFactory.UseLocalTime ? DateTimeOffset.Now : DateTimeOffset.UtcNow;
-                sb.BuildEntryText(_category, logLevel, eventId, message, exception, null, timestamp);
+                sb.BuildLogMessage(_category, logLevel, eventId, message, exception, null, timestamp);
                 var written = _channel.Writer.TryWrite(sb.ToString());
 
                 var itemCount = Interlocked.Increment(ref _batchCounter);

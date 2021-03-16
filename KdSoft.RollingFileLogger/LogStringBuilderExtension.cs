@@ -59,7 +59,7 @@ namespace KdSoft.Logging {
             sb.Replace(Environment.NewLine, _newLineWithMessagePadding, length, message.Length);
         }
 
-        public static void BuildEntryText(
+        public static void BuildLogMessage(
             this StringBuilder sb,
             string categoryName,
             LogLevel logLevel,
