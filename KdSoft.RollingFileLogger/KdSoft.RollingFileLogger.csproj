@@ -15,4 +15,8 @@
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="5.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\KdSoft.Utils.Net5\KdSoft.Utils.Net5.csproj" />
+  </ItemGroup>
+
 </Project>
