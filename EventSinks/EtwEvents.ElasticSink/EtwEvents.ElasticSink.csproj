@@ -25,11 +25,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EtwEvents.Client.Shared\EtwEvents.Client.Shared.csproj" />
+    <ProjectReference Include="..\..\EtwEvents.Client.Shared\EtwEvents.Client.Shared.csproj" />
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="SET elasticSinkDir=&quot;../EtwEvents.WebClient/EventSinks/ElasticSink/&quot;&#xD;&#xA;IF NOT EXIST %25elasticSinkDir%25 MKDIR %25elasticSinkDir%25&#xD;&#xA;&#xD;&#xA;COPY /Y $(TargetDir)* %25elasticSinkDir%25&#xD;&#xA;XCOPY /Y /E /I $(ProjectDir)config %25elasticSinkDir%25config" />
+    <Exec Command="SET elasticSinkDir=&quot;$(SolutionDir)/EtwEvents.WebClient/EventSinks/ElasticSink/&quot;&#xD;&#xA;IF NOT EXIST %25elasticSinkDir%25 MKDIR %25elasticSinkDir%25&#xD;&#xA;&#xD;&#xA;COPY /Y $(TargetDir)* %25elasticSinkDir%25&#xD;&#xA;XCOPY /Y /E /I $(ProjectDir)config %25elasticSinkDir%25config&#xD;&#xA;" />
   </Target>
 
 </Project>

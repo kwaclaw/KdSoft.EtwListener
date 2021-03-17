@@ -21,11 +21,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EtwEvents.Client.Shared\EtwEvents.Client.Shared.csproj" />
+    <ProjectReference Include="..\..\EtwEvents.Client.Shared\EtwEvents.Client.Shared.csproj" />
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="SET seqSinkDir=&quot;../EtwEvents.WebClient/EventSinks/SeqSink/&quot;&#xD;&#xA;IF NOT EXIST %25seqSinkDir%25 MKDIR %25seqSinkDir%25&#xD;&#xA;&#xD;&#xA;COPY /Y $(TargetDir)* %25seqSinkDir%25&#xD;&#xA;XCOPY /Y /E /I $(ProjectDir)config %25seqSinkDir%25config" />
+    <Exec Command="SET seqSinkDir=&quot;$(SolutionDir)/EtwEvents.WebClient/EventSinks/SeqSink/&quot;&#xD;&#xA;IF NOT EXIST %25seqSinkDir%25 MKDIR %25seqSinkDir%25&#xD;&#xA;&#xD;&#xA;COPY /Y $(TargetDir)* %25seqSinkDir%25&#xD;&#xA;XCOPY /Y /E /I $(ProjectDir)config %25seqSinkDir%25config" />
   </Target>
 
 </Project>

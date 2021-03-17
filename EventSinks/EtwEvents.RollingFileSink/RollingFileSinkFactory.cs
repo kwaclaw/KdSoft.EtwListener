@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
+using KdSoft.Logging;
 
 namespace KdSoft.EtwEvents.EventSinks {
     [EventSink(nameof(RollingFileSink))]
