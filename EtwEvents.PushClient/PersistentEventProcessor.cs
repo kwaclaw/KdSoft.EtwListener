@@ -21,6 +21,10 @@ namespace KdSoft.EtwEvents.PushClient {
         readonly ILogger _logger;
         readonly int _batchSize;
 
+        // need a non-empty sentinel message, as FasterChannel ignores empty messages;
+        // this messages must also never match a regular message written to the channel
+        static readonly ReadOnlyMemory<byte> _batchSentinel = new byte[4] { 0, 0, 0, 0 };
+
         int _lastWrittenMSecs;
         int _maxWriteDelayMSecs;
         int _batchCounter;
@@ -61,9 +65,10 @@ namespace KdSoft.EtwEvents.PushClient {
                 if (batchCount == _batchSize) {
                     Volatile.Write(ref _batchCounter, 0);
                     Volatile.Write(ref _lastWrittenMSecs, Environment.TickCount);
-                    _channel.TryWrite(_emptyBytes);
+                    // need a non-empty sentinel message, as FasterChannel ignores empty messages
+                    _channel.TryWrite(_batchSentinel);
                     // this makes reader move forward, as the reader is only driven by committed messages
-                    _channel.Commit();
+                    _channel.Commit(true);
                 }
             }
             else {
@@ -71,7 +76,6 @@ namespace KdSoft.EtwEvents.PushClient {
             }
         }
 
-        static readonly ReadOnlyMemory<byte> _emptyBytes = new byte[0];
 
         /// <summary>
         /// Timer callback that triggers periodical write operations even if the event batch is not full
@@ -83,8 +87,9 @@ namespace KdSoft.EtwEvents.PushClient {
             var deltaTicks = Environment.TickCount - lastCheckedTicks;
             if (deltaTicks > _maxWriteDelayMSecs) {
                 Volatile.Write(ref _batchCounter, 0);
-                _channel.TryWrite(_emptyBytes);
-                _channel.Commit();
+                // need a non-empty sentinel message, as FasterChannel ignores empty messages;
+                _channel.TryWrite(_batchSentinel);
+                _channel.Commit(true);
             }
         }
 
@@ -99,16 +104,17 @@ namespace KdSoft.EtwEvents.PushClient {
 
                     await foreach (var (owner, length) in reader.ReadAllAsync(stoppingToken).ConfigureAwait(false)) {
                         using (owner) {
-                            // empty record indicates we should write the batch even if incomplete
-                            if (length == 0) {
+                            var byteSequence = new ReadOnlySequence<byte>(owner.Memory).Slice(0, length);
+                            
+                            // check if this data items indicates the end of a batch
+                            if (length == _batchSentinel.Length && byteSequence.FirstSpan.SequenceEqual(_batchSentinel.Span)) {
                                 if (batch.Events.Count == 0)
                                     continue;
                                 isCompleted = false;
                                 break;
                             }
 
-                            var byteSequence = new ReadOnlySequence<byte>(owner.Memory);
-                            var etwEvent = EtwEvent.Parser.ParseFrom(byteSequence.Slice(0, length));
+                            var etwEvent = EtwEvent.Parser.ParseFrom(byteSequence);
                             batch.Events.Add(etwEvent);
                         }
                     }
