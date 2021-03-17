@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <LangVersion>Latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <AssemblyName>KdSoft.EtwEvents.PushClient</AssemblyName>
+    <RootNamespace>KdSoft.EtwEvents.PushClient</RootNamespace>
+    <UserSecretsId>dotnet-EtwEvents.PushClient-2DA4777E-5631-4E75-9630-82767D1F596C</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" Version="3.15.6" />
+    <PackageReference Include="Grpc.Core.Api" Version="2.36.1" />
+    <PackageReference Include="Grpc.Tools" Version="2.36.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="KdSoft.Lmdb" Version="2.0.1" />
+    <PackageReference Include="LaunchDarkly.EventSource" Version="4.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="5.0.1" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="5.0.4" />
+    <PackageReference Include="Microsoft.FASTER.Core" Version="1.8.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EtwEvents.Client.Shared\EtwEvents.Client.Shared.csproj" />
+    <ProjectReference Include="..\EtwEvents.Server.Shared\EtwEvents.Server.Shared.csproj" />
+    <ProjectReference Include="..\EventSinks\EtwEvents.ElasticSink\EtwEvents.ElasticSink.csproj" />
+    <ProjectReference Include="..\KdSoft.Utils.Net5\KdSoft.Utils.Net5.csproj" />
+  </ItemGroup>
+</Project>

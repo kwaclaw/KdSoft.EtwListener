@@ -22,7 +22,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.Server.Shared", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.Protobuf.Shared", "EtwEvents.Protobuf.Shared\EtwEvents.Protobuf.Shared.csproj", "{026DF73B-5AC0-4C4E-A0E7-6034A987FD20}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.PushClient", "EtwEvents.PushClient\EtwEvents.PushClient.csproj", "{E3949C98-B45B-40F4-9830-2A19C9383CE3}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KdSoft.RollingFileLogger", "KdSoft.RollingFileLogger\KdSoft.RollingFileLogger.csproj", "{CEB03888-075A-4DC3-855A-DB74E60ED13B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.Tests", "EtwEvents.Tests\EtwEvents.Tests.csproj", "{7EDC3F6E-A02F-4219-A376-36D09637CBC5}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "EventSinks", "EventSinks", "{89C33CBB-6F1B-431C-AC75-24C9DBD9A3E5}"
 EndProject
@@ -66,10 +70,18 @@ Global
 		{026DF73B-5AC0-4C4E-A0E7-6034A987FD20}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{026DF73B-5AC0-4C4E-A0E7-6034A987FD20}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{026DF73B-5AC0-4C4E-A0E7-6034A987FD20}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E3949C98-B45B-40F4-9830-2A19C9383CE3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E3949C98-B45B-40F4-9830-2A19C9383CE3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E3949C98-B45B-40F4-9830-2A19C9383CE3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E3949C98-B45B-40F4-9830-2A19C9383CE3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{CEB03888-075A-4DC3-855A-DB74E60ED13B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{CEB03888-075A-4DC3-855A-DB74E60ED13B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CEB03888-075A-4DC3-855A-DB74E60ED13B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CEB03888-075A-4DC3-855A-DB74E60ED13B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7EDC3F6E-A02F-4219-A376-36D09637CBC5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7EDC3F6E-A02F-4219-A376-36D09637CBC5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7EDC3F6E-A02F-4219-A376-36D09637CBC5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7EDC3F6E-A02F-4219-A376-36D09637CBC5}.Release|Any CPU.Build.0 = Release|Any CPU
 		{CD7CBB13-8F2B-4CBC-B2E7-4DBC7F2005AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{CD7CBB13-8F2B-4CBC-B2E7-4DBC7F2005AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CD7CBB13-8F2B-4CBC-B2E7-4DBC7F2005AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
