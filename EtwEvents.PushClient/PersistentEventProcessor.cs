@@ -84,6 +84,7 @@ namespace KdSoft.EtwEvents.PushClient {
             if (deltaTicks > _maxWriteDelayMSecs) {
                 Volatile.Write(ref _batchCounter, 0);
                 _channel.TryWrite(_emptyBytes);
+                _channel.Commit();
             }
         }
 
@@ -129,7 +130,7 @@ namespace KdSoft.EtwEvents.PushClient {
             this._maxWriteDelayMSecs = (int)maxWriteDelay.TotalMilliseconds;
             Task processTask;
             using (var timer = new Timer(TimerCallback)) {
-                processTask = ProcessBatches(stoppingToken);
+                processTask = Task.Run(() => ProcessBatches(stoppingToken));
                 timer.Change(maxWriteDelay, maxWriteDelay);
                 await session.StartEvents(PostEvent, stoppingToken).ConfigureAwait(false);
             }

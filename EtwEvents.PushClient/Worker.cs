@@ -151,7 +151,8 @@ namespace KdSoft.EtwEvents.PushClient {
             await using (var sink = await _sinkFactory.Create(optsJson, credsJson).ConfigureAwait(false)) {
                 var processorLogger = _loggerFactory.CreateLogger<PersistentEventProcessor>();
                 using (var processor = new PersistentEventProcessor(sink, stoppingToken, processorLogger, _sessionOptions.Value.BatchSize)) {
-                    await processor.Process(session, TimeSpan.FromSeconds(_sessionOptions.Value.MaxWriteDelayMSecs), stoppingToken).ConfigureAwait(false);
+                    var maxWriteDelay = TimeSpan.FromMilliseconds(_sessionOptions.Value.MaxWriteDelayMSecs);
+                    await processor.Process(session, maxWriteDelay, stoppingToken).ConfigureAwait(false);
                 }
             }
         }
