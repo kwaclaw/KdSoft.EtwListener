@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Buffers;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Protobuf;
@@ -17,7 +16,6 @@ namespace KdSoft.EtwEvents.PushClient
     public class PersistentEventProcessor: IDisposable
     {
         readonly IEventSink _sink;
-        IOptions<EventQueueOptions> _eventQueueOptions;
         readonly ObjectPool<EtwEvent> _etwEventPool;
         readonly ArrayBufferWriter<byte> _bufferWriter;
         readonly FasterChannel _channel;
@@ -40,7 +38,6 @@ namespace KdSoft.EtwEvents.PushClient
             int batchSize = 100
         ) {
             this._sink = sink;
-            this._eventQueueOptions = eventQueueOptions;
             this._logger = logger;
             this._batchSize = batchSize;
             this._channel = new FasterChannel(eventQueueOptions.Value.LogPath);
@@ -49,7 +46,6 @@ namespace KdSoft.EtwEvents.PushClient
             this._lastWrittenMSecs = Environment.TickCount;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void PostEvent(tracing.TraceEvent evt) {
             var etwEvent = _etwEventPool.Get();
             try {
@@ -81,7 +77,6 @@ namespace KdSoft.EtwEvents.PushClient
             }
         }
 
-
         /// <summary>
         /// Timer callback that triggers periodical write operations even if the event batch is not full
         /// </summary>
@@ -104,13 +99,17 @@ namespace KdSoft.EtwEvents.PushClient
 
             using (var reader = _channel.GetNewReader()) {
                 do {
+                    //await Task.Yield();
+
                     isCompleted = true;
                     var batch = new EtwEventBatch();
 
-                    await foreach (var (owner, length) in reader.ReadAllAsync(stoppingToken).ConfigureAwait(false)) {
+                    //TODO this does not update the _nextAddress field in reader!, but it works without NullReferenceExceptions in TryEnqueue
+                    await foreach (var (owner, length, _, _) in reader.GetAsyncEnumerable(stoppingToken).ConfigureAwait(false)) {
+                    //await foreach (var (owner, length) in reader.ReadAllAsync(stoppingToken).ConfigureAwait(false)) {
                         using (owner) {
                             var byteSequence = new ReadOnlySequence<byte>(owner.Memory).Slice(0, length);
-                            
+
                             // check if this data items indicates the end of a batch
                             if (length == _batchSentinel.Length && byteSequence.FirstSpan.SequenceEqual(_batchSentinel.Span)) {
                                 if (batch.Events.Count == 0)
@@ -129,8 +128,11 @@ namespace KdSoft.EtwEvents.PushClient
                     bool success = await _sink.WriteAsync(batch, sequenceNo).ConfigureAwait(false);
                     if (success) {
                         sequenceNo += batch.Events.Count;
-                        reader.Truncate();
-                        await _channel.CommitAsync().ConfigureAwait(false);
+                        success = await _sink.FlushAsync().ConfigureAwait(false);
+                        if (success) {
+                            reader.Truncate();
+                            await _channel.CommitAsync().ConfigureAwait(false);
+                        }
                     }
 
                 } while (!isCompleted);
@@ -141,11 +143,13 @@ namespace KdSoft.EtwEvents.PushClient
             this._maxWriteDelayMSecs = (int)maxWriteDelay.TotalMilliseconds;
             Task processTask;
             using (var timer = new Timer(TimerCallback)) {
-                processTask = Task.Run(() => ProcessBatches(stoppingToken));
+                var creationOptions = TaskCreationOptions.LongRunning | TaskCreationOptions.RunContinuationsAsynchronously;
+                processTask = Task.Factory.StartNew(() => ProcessBatches(stoppingToken), creationOptions).Unwrap();
+                //processTask = Task.Run(() => ProcessBatches(stoppingToken));
+                //processTask = ProcessBatches(stoppingToken);
                 timer.Change(maxWriteDelay, maxWriteDelay);
                 await session.StartEvents(PostEvent, stoppingToken).ConfigureAwait(false);
             }
-            //await _channel.Reader.Completion.ConfigureAwait(false);
             await processTask.ConfigureAwait(false);
         }
 
