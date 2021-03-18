@@ -9,7 +9,8 @@ using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
 
-namespace KdSoft.EtwEvents.EventSinks {
+namespace KdSoft.EtwEvents.EventSinks
+{
     // There is no .NET Seq-Api needed for sending data, for an examples see
     // - https://github.com/datalust/nlog-targets-seq, look at SeqTarget.cs
     // - https://github.com/serilog/serilog-sinks-seq

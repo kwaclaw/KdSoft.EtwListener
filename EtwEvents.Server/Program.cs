@@ -8,7 +8,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 
-namespace KdSoft.EtwEvents.Server {
+namespace KdSoft.EtwEvents.Server
+{
     public static class Program
     {
         public static void Main(string[] args) {

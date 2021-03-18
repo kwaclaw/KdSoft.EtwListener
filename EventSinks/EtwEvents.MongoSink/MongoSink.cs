@@ -9,7 +9,8 @@ using KdSoft.EtwLogging;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
-namespace KdSoft.EtwEvents.EventSinks {
+namespace KdSoft.EtwEvents.EventSinks
+{
     public class MongoSink: IEventSink
     {
         readonly IMongoCollection<BsonDocument> _coll;

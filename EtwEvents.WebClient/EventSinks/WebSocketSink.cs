@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Buffers;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Net.WebSockets;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -11,7 +10,8 @@ using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
 
-namespace KdSoft.EtwEvents.WebClient.EventSinks {
+namespace KdSoft.EtwEvents.WebClient.EventSinks
+{
     class WebSocketSink: IEventSink
     {
         readonly WebSocket _webSocket;

@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
 
-namespace KdSoft.EtwEvents.WebClient {
+namespace KdSoft.EtwEvents.WebClient
+{
     class EventSinkHolder
     {
         readonly object _eventSinkLock = new object();

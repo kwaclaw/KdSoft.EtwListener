@@ -9,8 +9,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.ObjectPool;
 
-namespace KdSoft.Logging {
-    public class RollingFileLogger: ILogger {
+namespace KdSoft.Logging
+{
+    public class RollingFileLogger: ILogger
+    {
         readonly ObjectPool<StringBuilder> _stringBuilderPool;
         readonly ArrayBufferWriter<byte> _bufferWriter;
         readonly RollingFileFactory _fileFactory;
