@@ -19,7 +19,7 @@ namespace KdSoft.EtwEvents.PushAgent
         readonly IEventSink _sink;
         readonly ObjectPool<EtwEvent> _etwEventPool;
         readonly ArrayBufferWriter<byte> _bufferWriter;
-        readonly FasterChannel _channel;
+        readonly kdSoftUtils.FasterChannel _channel;
         readonly ILogger _logger;
         readonly int _batchSize;
 
@@ -41,7 +41,7 @@ namespace KdSoft.EtwEvents.PushAgent
             this._sink = sink;
             this._logger = logger;
             this._batchSize = batchSize;
-            this._channel = new FasterChannel(eventQueueOptions.Value.LogPath);
+            this._channel = new kdSoftUtils.FasterChannel(eventQueueOptions.Value.LogPath);
             this._etwEventPool = new DefaultObjectPool<EtwEvent>(new DefaultPooledObjectPolicy<EtwEvent>(), batchSize);
             this._bufferWriter = new ArrayBufferWriter<byte>(1024);
             this._lastWrittenMSecs = Environment.TickCount;
@@ -95,19 +95,18 @@ namespace KdSoft.EtwEvents.PushAgent
         }
 
         async Task ProcessBatches(CancellationToken stoppingToken) {
-            bool isCompleted;
             long sequenceNo = 0;
+                    
+            await Task.Yield();
 
             using (var reader = _channel.GetNewReader()) {
                 do {
-                    //await Task.Yield();
 
-                    isCompleted = true;
                     var batch = new EtwEventBatch();
 
                     //TODO this does not update the _nextAddress field in reader!, but it works without NullReferenceExceptions in TryEnqueue
-                    await foreach (var (owner, length, _, _) in reader.GetAsyncEnumerable(stoppingToken).ConfigureAwait(false)) {
-                    //await foreach (var (owner, length) in reader.ReadAllAsync(stoppingToken).ConfigureAwait(false)) {
+                    //await foreach (var (owner, length, _, _) in reader.GetAsyncEnumerable(stoppingToken).ConfigureAwait(false)) {
+                    await foreach (var (owner, length) in reader.ReadAllAsync(stoppingToken).ConfigureAwait(false)) {
                         using (owner) {
                             var byteSequence = new ReadOnlySequence<byte>(owner.Memory).Slice(0, length);
 
@@ -115,7 +114,6 @@ namespace KdSoft.EtwEvents.PushAgent
                             if (length == _batchSentinel.Length && byteSequence.FirstSpan.SequenceEqual(_batchSentinel.Span)) {
                                 if (batch.Events.Count == 0)
                                     continue;
-                                isCompleted = false;
                                 break;
                             }
 
@@ -124,19 +122,22 @@ namespace KdSoft.EtwEvents.PushAgent
                         }
                     }
 
-                    _logger.LogInformation($"Received batch with {batch.Events.Count} events.");
 
-                    bool success = await _sink.WriteAsync(batch, sequenceNo).ConfigureAwait(false);
-                    if (success) {
-                        sequenceNo += batch.Events.Count;
-                        success = await _sink.FlushAsync().ConfigureAwait(false);
+                    if (batch.Events.Count > 0) {
+                        _logger.LogInformation($"Received batch with {batch.Events.Count} events.");
+
+                        bool success = await _sink.WriteAsync(batch, sequenceNo).ConfigureAwait(false);
                         if (success) {
-                            reader.Truncate();
-                            await _channel.CommitAsync().ConfigureAwait(false);
+                            sequenceNo += batch.Events.Count;
+                            success = await _sink.FlushAsync().ConfigureAwait(false);
+                            if (success) {
+                                reader.Truncate();
+                                await _channel.CommitAsync().ConfigureAwait(false);
+                            }
                         }
                     }
 
-                } while (!isCompleted);
+                } while (!stoppingToken.IsCancellationRequested);
             }
         }
 
@@ -144,10 +145,9 @@ namespace KdSoft.EtwEvents.PushAgent
             this._maxWriteDelayMSecs = (int)maxWriteDelay.TotalMilliseconds;
             Task processTask;
             using (var timer = new Timer(TimerCallback)) {
-                var creationOptions = TaskCreationOptions.LongRunning | TaskCreationOptions.RunContinuationsAsynchronously;
-                processTask = Task.Factory.StartNew(() => ProcessBatches(stoppingToken), creationOptions).Unwrap();
-                //processTask = Task.Run(() => ProcessBatches(stoppingToken));
-                //processTask = ProcessBatches(stoppingToken);
+                //var creationOptions = TaskCreationOptions.LongRunning | TaskCreationOptions.RunContinuationsAsynchronously;
+                //processTask = Task.Factory.StartNew(() => ProcessBatches(stoppingToken), creationOptions).Unwrap();
+                processTask = ProcessBatches(stoppingToken);
                 timer.Change(maxWriteDelay, maxWriteDelay);
                 await session.StartEvents(PostEvent, stoppingToken).ConfigureAwait(false);
             }
