@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EtwEvents.PushClient\EtwEvents.PushClient.csproj" />
+    <ProjectReference Include="..\KdSoft.Utils.Net5\KdSoft.Utils.Net5.csproj" />
   </ItemGroup>
 
 </Project>

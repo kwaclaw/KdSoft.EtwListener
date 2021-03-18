@@ -3,24 +3,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using KdSoft.EtwEvents.PushClient;
+using KdSoft.Utils;
 using Xunit;
 
 namespace EtwEvents.Tests
 {
     public class FasterChannelTests
     {
-        static readonly Memory<byte> _batchSentinel = new byte[17];
-        static readonly Memory<byte> _stopSentinel = new byte[19];
+        static readonly Memory<byte> _batchSentinel = new byte[4];
+        static readonly Memory<byte> _stopSentinel = new byte[7];
 
-        async Task<List<List<int>>> ReadChannelAsync(FasterChannel channel, CancellationToken stoppingToken = default) {
+        async Task<List<List<Guid>>> ReadChannelAsync(FasterChannel channel, CancellationToken stoppingToken = default) {
             bool isCompleted;
-            var result = new List<List<int>>();
+            var result = new List<List<Guid>>();
 
             using (var reader = channel.GetNewReader()) {
                 do {
                     isCompleted = true;
-                    var batch = new List<int>();
+                    var batch = new List<Guid>();
 
                     await foreach (var (owner, length) in reader.ReadAllAsync(stoppingToken).ConfigureAwait(false)) {
                         using (owner) {
@@ -36,7 +36,7 @@ namespace EtwEvents.Tests
                                 break;
                             }
 
-                            var item = BitConverter.ToInt32(owner.Memory.Span);
+                            var item = new Guid(owner.Memory.Span.Slice(0, length));
                             batch.Add(item);
                         }
                     }
@@ -55,14 +55,14 @@ namespace EtwEvents.Tests
             return result;
         }
 
-        List<List<int>> ReadChannelSync(FasterChannel channel, CancellationToken stoppingToken = default) {
+        List<List<Guid>> ReadChannelSync(FasterChannel channel, CancellationToken stoppingToken = default) {
             bool isCompleted;
-            var result = new List<List<int>>();
+            var result = new List<List<Guid>>();
 
             using (var reader = channel.GetNewReader()) {
                 do {
                     isCompleted = true;
-                    var batch = new List<int>();
+                    var batch = new List<Guid>();
 
                     while (reader.TryRead(out var owner, out var length)) {
                         using (owner) {
@@ -78,7 +78,7 @@ namespace EtwEvents.Tests
                                 break;
                             }
 
-                            var item = BitConverter.ToInt32(owner.Memory.Span);
+                            var item = new Guid(owner.Memory.Span.Slice(0, length));
                             batch.Add(item);
                         }
                     }
@@ -99,12 +99,12 @@ namespace EtwEvents.Tests
 
         [Fact]
         public async void BasicWriteAndReadLoop() {
-            var inputData = new List<int>();
-            for (int i = 0; i <= 1000; i++) {
-                inputData.Add(i);
+            var inputData = new List<Guid>();
+            for (int i = 0; i <= 10000; i++) {
+                inputData.Add(Guid.NewGuid());
             }
 
-            List<List<int>> outputData;
+            List<List<Guid>> outputData;
             int batchCount = 0;
 
             using (var channel = new FasterChannel(@"C:\Temp\FasterLog\hhlog.log")) {
@@ -117,7 +117,8 @@ namespace EtwEvents.Tests
                 int counter = 0;
                 bool written;
                 foreach (var item in inputData) {
-                    var bytes = BitConverter.GetBytes(item);
+                    //var bytes = BitConverter.GetBytes(item);
+                    var bytes = item.ToByteArray();
                     written = channel.TryWrite(bytes);
                     Assert.True(written);
 
@@ -127,7 +128,9 @@ namespace EtwEvents.Tests
 
                         written = channel.TryWrite(_batchSentinel);
                         Assert.True(written);
-                        await channel.CommitAsync().ConfigureAwait(false);
+                        channel.Commit(true);
+
+                        await Task.Delay(100).ConfigureAwait(false);
 
                         batchCount++;
                     }
@@ -135,19 +138,19 @@ namespace EtwEvents.Tests
                 if (counter > 0) {
                     written = channel.TryWrite(_batchSentinel);
                     Assert.True(written);
-                    await channel.CommitAsync().ConfigureAwait(false);
+                    channel.Commit(true);
                     batchCount++;
                 }
 
                 written = channel.TryWrite(_stopSentinel);
                 Assert.True(written);
-                await channel.CommitAsync().ConfigureAwait(false);
+                channel.Commit(true);
 
                 outputData = await readerTask.ConfigureAwait(false);
             }
 
             Assert.True(batchCount == outputData.Count);
-            Assert.Equal(inputData, outputData.SelectMany<List<int>, int>(od => od));
+            Assert.Equal(inputData, outputData.SelectMany<List<Guid>, Guid>(od => od));
         }
     }
 }
