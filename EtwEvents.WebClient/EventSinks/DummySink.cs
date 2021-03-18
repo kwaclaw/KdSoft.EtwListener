@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
 

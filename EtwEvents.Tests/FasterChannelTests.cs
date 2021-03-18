@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 using KdSoft.EtwEvents.PushClient;
 using Xunit;
 
-namespace EtwEvents.Tests {
-    public class FasterChannelTests {
+namespace EtwEvents.Tests
+{
+    public class FasterChannelTests
+    {
         static readonly Memory<byte> _batchSentinel = new byte[17];
         static readonly Memory<byte> _stopSentinel = new byte[19];
 

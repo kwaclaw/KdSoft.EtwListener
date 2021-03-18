@@ -8,8 +8,10 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using FASTER.core;
 
-namespace KdSoft.EtwEvents.PushClient {
-    public class FasterChannel: IDisposable {
+namespace KdSoft.EtwEvents.PushClient
+{
+    public class FasterChannel: IDisposable
+    {
         readonly FasterLog _log;
         readonly IDevice _device;
         long _logicalAddress;
