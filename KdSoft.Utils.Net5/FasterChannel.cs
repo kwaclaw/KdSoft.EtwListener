@@ -16,8 +16,8 @@ namespace KdSoft.EtwEvents.PushClient
         readonly IDevice _device;
         long _logicalAddress;
 
-        public FasterChannel() {
-            _device = Devices.CreateLogDevice(@"C:\Temp\logs\hlog.log");
+        public FasterChannel(string deviceLogPath) {
+            _device = Devices.CreateLogDevice(deviceLogPath);
             _log = new FasterLog(new FasterLogSettings { LogDevice = _device });
         }
 
@@ -37,11 +37,6 @@ namespace KdSoft.EtwEvents.PushClient
             _log.Commit(spinWait);
         }
 
-        public void Close() {
-            _log.Dispose();
-            _device.Dispose();
-        }
-
         public ValueTask CommitAsync(CancellationToken cancellationToken = default) {
             return _log.CommitAsync(cancellationToken);
         }
@@ -52,7 +47,8 @@ namespace KdSoft.EtwEvents.PushClient
         }
     }
 
-    public class FasterReader: IDisposable {
+    public class FasterReader: IDisposable
+    {
         readonly FasterLog _log;
         readonly FasterLogScanIterator _iter;
         readonly MemoryPool<byte> _pool;
@@ -84,6 +80,7 @@ namespace KdSoft.EtwEvents.PushClient
             }
         }
 
+        // seems this approach does not always progrees, gets stuck after a few initial loops
         public async IAsyncEnumerable<(IMemoryOwner<byte>, int)> ReadAllAsync([EnumeratorCancellation] CancellationToken cancellationToken = default) {
             await foreach ((IMemoryOwner<byte> entry, var entryLength, var currentAddress, var nextAddress) in _iter.GetAsyncEnumerable(_pool, cancellationToken)) {
                 _nextAddress = nextAddress;
@@ -95,6 +92,11 @@ namespace KdSoft.EtwEvents.PushClient
                 if (nextAddress == _log.TailAddress)
                     break;
             }
+        }
+
+        // seems this approach is more reliable, but passes out parameters we want to keep inside
+        public IAsyncEnumerable<(IMemoryOwner<byte> entry, int entryLength, long currentAddress, long nextAddress)> GetAsyncEnumerable(CancellationToken token = default) {
+            return _iter.GetAsyncEnumerable(_pool, token);
         }
 
         public ValueTask<bool> WaitToReadAsync(CancellationToken cancellationToken = default) {

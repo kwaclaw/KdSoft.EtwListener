@@ -107,10 +107,10 @@ namespace EtwEvents.Tests
             List<List<int>> outputData;
             int batchCount = 0;
 
-            using (var channel = new FasterChannel()) {
+            using (var channel = new FasterChannel(@"C:\Temp\FasterLog\hhlog.log")) {
                 // catch up to end of channel
                 var recoveredData = ReadChannelSync(channel);
-                
+
                 // must be started on a new Thread
                 var readerTask = Task.Run(() => ReadChannelAsync(channel));
 
