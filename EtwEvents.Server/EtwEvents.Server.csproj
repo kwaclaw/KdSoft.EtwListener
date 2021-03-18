@@ -41,7 +41,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\EtwEvents.Server.Shared\EtwEvents.Server.Shared.csproj" />
-    <ProjectReference Include="..\KdSoft.RollingFileLogger\KdSoft.RollingFileLogger.csproj" />
+    <ProjectReference Include="..\External\KdSoft.RollingFileLogger\KdSoft.RollingFileLogger.csproj" />
   </ItemGroup>
 
 </Project>

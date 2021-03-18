@@ -8,7 +8,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using FASTER.core;
 
-namespace KdSoft.EtwEvents.PushClient
+namespace KdSoft.Utils
 {
     public class FasterChannel: IDisposable
     {
@@ -80,7 +80,7 @@ namespace KdSoft.EtwEvents.PushClient
             }
         }
 
-        // seems this approach does not always progrees, gets stuck after a few initial loops
+        // this approach completes the iteration wheren there is no more data to read and does not wait for the next commit
         public async IAsyncEnumerable<(IMemoryOwner<byte>, int)> ReadAllAsync([EnumeratorCancellation] CancellationToken cancellationToken = default) {
             await foreach ((IMemoryOwner<byte> entry, var entryLength, var currentAddress, var nextAddress) in _iter.GetAsyncEnumerable(_pool, cancellationToken)) {
                 _nextAddress = nextAddress;
@@ -94,7 +94,7 @@ namespace KdSoft.EtwEvents.PushClient
             }
         }
 
-        // seems this approach is more reliable, but passes out parameters we want to keep inside
+        // this approach will wait for the next commit
         public IAsyncEnumerable<(IMemoryOwner<byte> entry, int entryLength, long currentAddress, long nextAddress)> GetAsyncEnumerable(CancellationToken token = default) {
             return _iter.GetAsyncEnumerable(_pool, token);
         }
