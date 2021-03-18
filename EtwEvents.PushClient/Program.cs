@@ -10,8 +10,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace KdSoft.EtwEvents.PushClient {
-    public class Program {
+namespace KdSoft.EtwEvents.PushClient
+{
+    public class Program
+    {
         public static async Task Main(string[] args) {
             var host = CreateHostBuilder(args).Build();
             var cts = new CancellationTokenSource();

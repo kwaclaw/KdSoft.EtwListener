@@ -4,8 +4,10 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace KdSoft.EtwEvents.PushClient {
-    class HttpClientCertificateHandler: HttpClientHandler {
+namespace KdSoft.EtwEvents.PushClient
+{
+    class HttpClientCertificateHandler: HttpClientHandler
+    {
         readonly string _clientCertCN;
         readonly string _clientCertHeader;
 

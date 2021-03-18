@@ -13,8 +13,10 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace KdSoft.EtwEvents.PushClient {
-    public class Worker: BackgroundService {
+namespace KdSoft.EtwEvents.PushClient
+{
+    public class Worker: BackgroundService
+    {
         const string ClientCertCN = "Elekta-SmartClinic-MQAddin";
         const string ClientCertHeader = "X-ARR-ClientCert";
 

@@ -11,7 +11,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
 using tracing = Microsoft.Diagnostics.Tracing;
 
-namespace KdSoft.EtwEvents.PushClient {
+namespace KdSoft.EtwEvents.PushClient
+{
     public class PersistentEventProcessor: IDisposable
     {
         readonly IEventSink _sink;
