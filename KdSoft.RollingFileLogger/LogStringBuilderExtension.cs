@@ -2,8 +2,10 @@
 using System.Text;
 using Microsoft.Extensions.Logging;
 
-namespace KdSoft.Logging {
-    public static class LogStringBuilderExtension {
+namespace KdSoft.Logging
+{
+    public static class LogStringBuilderExtension
+    {
         static readonly string _messagePadding = new string(' ', MessagePaddingWidth);
         static readonly string _newLineWithMessagePadding = Environment.NewLine + _messagePadding;
 

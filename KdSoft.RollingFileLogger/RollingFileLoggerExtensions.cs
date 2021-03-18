@@ -6,14 +6,17 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Configuration;
 using Microsoft.Extensions.Options;
 
-namespace KdSoft.Logging {
-    internal class RollingFileLoggerOptionsSetup: NamedConfigureFromConfigurationOptions<RollingFileLoggerOptions> {
+namespace KdSoft.Logging
+{
+    internal class RollingFileLoggerOptionsSetup: NamedConfigureFromConfigurationOptions<RollingFileLoggerOptions>
+    {
         public RollingFileLoggerOptionsSetup(string optionsName, ILoggerProviderConfiguration<RollingFileLoggerProvider> providerConfiguration)
             : base(optionsName, providerConfiguration.Configuration) { }
     }
 
     [UnsupportedOSPlatform("browser")]
-    public static class RollingFileLoggerExtensions {
+    public static class RollingFileLoggerExtensions
+    {
         static ILoggingBuilder AddRollingFileSink(this ILoggingBuilder builder, string optionsName, Func<IServiceProvider, RollingFileLoggerProvider> providerFactory) {
             if (builder == null)
                 throw new ArgumentNullException(nameof(builder));

@@ -9,7 +9,8 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using Newtonsoft.Json.Schema.Generation;
 
-namespace KdSoft.EtwEvents.EventSinks {
+namespace KdSoft.EtwEvents.EventSinks
+{
     [EventSink(nameof(MongoSink))]
     public class MongoSinkFactory: IEventSinkFactory
     {

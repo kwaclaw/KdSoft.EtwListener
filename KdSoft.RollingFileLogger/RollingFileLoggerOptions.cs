@@ -1,5 +1,7 @@
-﻿namespace KdSoft.Logging {
-    public class RollingFileLoggerOptions {
+﻿namespace KdSoft.Logging
+{
+    public class RollingFileLoggerOptions
+    {
         public RollingFileLoggerOptions() { }
 
         /// <summary>

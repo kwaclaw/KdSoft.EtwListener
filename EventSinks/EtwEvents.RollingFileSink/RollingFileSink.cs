@@ -9,7 +9,8 @@ using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
 using KdSoft.Logging;
 
-namespace KdSoft.EtwEvents.EventSinks {
+namespace KdSoft.EtwEvents.EventSinks
+{
     public class RollingFileSink: IEventSink
     {
         static readonly EtwEvent _emptyEvent = new EtwEvent();

@@ -5,7 +5,8 @@ using System.Threading;
 using System.Threading.Tasks;
 
 //TODO look for a place to put this shareable class
-namespace KdSoft.Logging {
+namespace KdSoft.Logging
+{
     public class RollingFileFactory: IDisposable, IAsyncDisposable
     {
         readonly DirectoryInfo _dirInfo;

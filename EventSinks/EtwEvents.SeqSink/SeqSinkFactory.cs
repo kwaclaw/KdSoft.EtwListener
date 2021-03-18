@@ -8,7 +8,8 @@ using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
 
-namespace KdSoft.EtwEvents.EventSinks {
+namespace KdSoft.EtwEvents.EventSinks
+{
     [EventSink(nameof(SeqSink))]
     public class SeqSinkFactory: IEventSinkFactory
     {
