@@ -10,7 +10,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace KdSoft.EtwEvents.PushClient
+namespace KdSoft.EtwEvents.PushAgent
 {
     public class Worker: BackgroundService
     {

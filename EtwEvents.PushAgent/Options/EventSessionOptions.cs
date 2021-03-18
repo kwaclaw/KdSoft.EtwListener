@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace KdSoft.EtwEvents.PushClient
+namespace KdSoft.EtwEvents.PushAgent
 {
     public class EventSessionOptions
     {

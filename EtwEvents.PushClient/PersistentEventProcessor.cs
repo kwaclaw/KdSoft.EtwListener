@@ -10,8 +10,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
 using Microsoft.Extensions.Options;
 using tracing = Microsoft.Diagnostics.Tracing;
+using kdSoftUtils = KdSoft.Utils;
 
-namespace KdSoft.EtwEvents.PushClient
+namespace KdSoft.EtwEvents.PushAgent
 {
     public class PersistentEventProcessor: IDisposable
     {

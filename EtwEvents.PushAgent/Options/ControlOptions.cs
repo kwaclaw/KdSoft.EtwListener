@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace KdSoft.EtwEvents.PushClient
+namespace KdSoft.EtwEvents.PushAgent
 {
     public class ControlOptions
     {

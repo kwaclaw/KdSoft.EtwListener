@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.Extensions.Logging;
 
-namespace KdSoft.EtwEvents.PushClient
+namespace KdSoft.EtwEvents.PushAgent
 {
     public static class Utils
     {

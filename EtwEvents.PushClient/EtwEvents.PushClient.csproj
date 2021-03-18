@@ -4,9 +4,9 @@
     <TargetFramework>net5.0</TargetFramework>
     <LangVersion>Latest</LangVersion>
     <Nullable>enable</Nullable>
-    <AssemblyName>KdSoft.EtwEvents.PushClient</AssemblyName>
-    <RootNamespace>KdSoft.EtwEvents.PushClient</RootNamespace>
-    <UserSecretsId>dotnet-EtwEvents.PushClient-2DA4777E-5631-4E75-9630-82767D1F596C</UserSecretsId>
+    <AssemblyName>KdSoft.EtwEvents.PushAgent</AssemblyName>
+    <RootNamespace>KdSoft.EtwEvents.PushAgent</RootNamespace>
+    <UserSecretsId>dotnet-EtwEvents.PushAgent-2DA4777E-5631-4E75-9630-82767D1F596C</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
