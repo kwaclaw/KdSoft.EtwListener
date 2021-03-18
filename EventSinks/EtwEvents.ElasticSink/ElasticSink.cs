@@ -19,6 +19,7 @@ namespace KdSoft.EtwEvents.EventSinks
         readonly TaskCompletionSource<bool> _tcs;
         readonly List<InsertRecord> _evl;
         readonly ElasticLowLevelClient _client;
+        readonly JsonFormatter _jsonFormatter;
 
         int _isDisposed = 0;
 
@@ -50,6 +51,9 @@ namespace KdSoft.EtwEvents.EventSinks
                 //healthReporter.ReportProblem(errStr, EventFlowContextIdentifiers.Configuration);
                 throw;
             }
+
+            var jsonSettings = JsonFormatter.Settings.Default.WithFormatDefaultValues(true).WithFormatEnumsAsIntegers(true);
+            _jsonFormatter = new JsonFormatter(jsonSettings);
         }
 
         public bool IsDisposed {
@@ -112,7 +116,7 @@ namespace KdSoft.EtwEvents.EventSinks
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         InsertRecord FromEvent(EtwEvent evt, long sequenceNo) {
             //TODO should we ignore sequenceNo?
-            var bulkSource = JsonFormatter.Default.Format(evt);
+            var bulkSource = _jsonFormatter.Format(evt);
             return new InsertRecord(_bulkMeta, bulkSource);
         }
 
