@@ -1,14 +1,15 @@
+using System;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwEvents.EventSinks;
 using KdSoft.EtwEvents.Server;
+using KdSoft.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace KdSoft.EtwEvents.PushClient
 {
@@ -33,10 +34,23 @@ namespace KdSoft.EtwEvents.PushClient
                 //.ConfigureAppConfiguration((hostContext, cfgBuilder) => {
                 //    cfgBuilder.AddJsonFile(provider, "appsettings.Local.json", optional: true, reloadOnChange: true);
                 //})
+                .ConfigureLogging((hostContext, loggingBuilder) => {
+                    loggingBuilder.ClearProviders();
+                    loggingBuilder.AddConsole();
+                    loggingBuilder.AddRollingFileSink(opts => {
+                        // make sure opts.Directory is an absolute path
+                        opts.Directory = Path.Combine(hostContext.HostingEnvironment.ContentRootPath, opts.Directory);
+                    });
+                })
                 .UseWindowsService()
                 .ConfigureServices((hostContext, services) => {
                     services.Configure<ControlOptions>(opts => {
                         hostContext.Configuration.GetSection("Control").Bind(opts);
+                    });
+                    services.Configure<EventQueueOptions>(opts => {
+                        hostContext.Configuration.GetSection("EventQueue").Bind(opts);
+                        // make sure opts.LogPath is an absolute path
+                        opts.LogPath = Path.Combine(hostContext.HostingEnvironment.ContentRootPath, opts.LogPath);
                     });
                     services.Configure<EventSessionOptions>(opts => {
                         hostContext.Configuration.GetSection("EventSession").Bind(opts);

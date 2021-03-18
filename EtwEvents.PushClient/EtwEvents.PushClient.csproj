@@ -28,6 +28,7 @@
     <ProjectReference Include="..\EtwEvents.Client.Shared\EtwEvents.Client.Shared.csproj" />
     <ProjectReference Include="..\EtwEvents.Server.Shared\EtwEvents.Server.Shared.csproj" />
     <ProjectReference Include="..\EventSinks\EtwEvents.ElasticSink\EtwEvents.ElasticSink.csproj" />
+    <ProjectReference Include="..\KdSoft.RollingFileLogger\KdSoft.RollingFileLogger.csproj" />
     <ProjectReference Include="..\KdSoft.Utils.Net5\KdSoft.Utils.Net5.csproj" />
   </ItemGroup>
 </Project>

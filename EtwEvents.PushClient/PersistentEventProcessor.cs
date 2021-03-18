@@ -9,6 +9,7 @@ using KdSoft.EtwEvents.Server;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
+using Microsoft.Extensions.Options;
 using tracing = Microsoft.Diagnostics.Tracing;
 
 namespace KdSoft.EtwEvents.PushClient
@@ -16,6 +17,7 @@ namespace KdSoft.EtwEvents.PushClient
     public class PersistentEventProcessor: IDisposable
     {
         readonly IEventSink _sink;
+        IOptions<EventQueueOptions> _eventQueueOptions;
         readonly ObjectPool<EtwEvent> _etwEventPool;
         readonly ArrayBufferWriter<byte> _bufferWriter;
         readonly FasterChannel _channel;
@@ -32,14 +34,16 @@ namespace KdSoft.EtwEvents.PushClient
 
         public PersistentEventProcessor(
             IEventSink sink,
+            IOptions<EventQueueOptions> eventQueueOptions,
             CancellationToken stoppingToken,
             ILogger logger,
             int batchSize = 100
         ) {
             this._sink = sink;
+            this._eventQueueOptions = eventQueueOptions;
             this._logger = logger;
             this._batchSize = batchSize;
-            this._channel = new FasterChannel();
+            this._channel = new FasterChannel(eventQueueOptions.Value.LogPath);
             this._etwEventPool = new DefaultObjectPool<EtwEvent>(new DefaultPooledObjectPolicy<EtwEvent>(), batchSize);
             this._bufferWriter = new ArrayBufferWriter<byte>(1024);
             this._lastWrittenMSecs = Environment.TickCount;

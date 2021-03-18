@@ -1,17 +1,14 @@
-using KdSoft.EtwEvents.Client.Shared;
-using KdSoft.EtwEvents.Server;
-using LaunchDarkly.EventSource;
-using Microsoft.Diagnostics.Tracing;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using KdSoft.EtwEvents.Client.Shared;
+using KdSoft.EtwEvents.Server;
+using LaunchDarkly.EventSource;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace KdSoft.EtwEvents.PushClient
 {
@@ -21,6 +18,7 @@ namespace KdSoft.EtwEvents.PushClient
         const string ClientCertHeader = "X-ARR-ClientCert";
 
         readonly IOptions<ControlOptions> _controlOptions;
+        readonly IOptions<EventQueueOptions> _eventQueueOptions;
         readonly IOptions<EventSessionOptions> _sessionOptions;
         readonly IOptions<EventSinkOptions> _sinkOptions;
         readonly IEventSinkFactory _sinkFactory;
@@ -34,12 +32,14 @@ namespace KdSoft.EtwEvents.PushClient
 
         public Worker(
             IOptions<ControlOptions> controlOptions,
+            IOptions<EventQueueOptions> eventQueueOptions,
             IOptions<EventSessionOptions> sessionOptions,
             IOptions<EventSinkOptions> sinkOptions,
             IEventSinkFactory sinkFactory,
             ILoggerFactory loggerFactory
         ) {
             this._controlOptions = controlOptions;
+            this._eventQueueOptions = eventQueueOptions;
             this._sessionOptions = sessionOptions;
             this._sinkOptions = sinkOptions;
             this._sinkFactory = sinkFactory;
@@ -104,10 +104,6 @@ namespace KdSoft.EtwEvents.PushClient
 
         #region ETW Events
 
-        void ProcessEvent(TraceEvent trev, IEventSink sink) {
-
-        }
-
         #endregion
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -152,7 +148,7 @@ namespace KdSoft.EtwEvents.PushClient
 
             await using (var sink = await _sinkFactory.Create(optsJson, credsJson).ConfigureAwait(false)) {
                 var processorLogger = _loggerFactory.CreateLogger<PersistentEventProcessor>();
-                using (var processor = new PersistentEventProcessor(sink, stoppingToken, processorLogger, _sessionOptions.Value.BatchSize)) {
+                using (var processor = new PersistentEventProcessor(sink, _eventQueueOptions, stoppingToken, processorLogger, _sessionOptions.Value.BatchSize)) {
                     var maxWriteDelay = TimeSpan.FromMilliseconds(_sessionOptions.Value.MaxWriteDelayMSecs);
                     await processor.Process(session, maxWriteDelay, stoppingToken).ConfigureAwait(false);
                 }
