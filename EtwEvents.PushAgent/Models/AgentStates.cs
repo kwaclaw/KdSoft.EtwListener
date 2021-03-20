@@ -1,7 +1,7 @@
 ﻿using System.Collections.Immutable;
 using KdSoft.EtwLogging;
 
-namespace KdSoft.EtwEvents.AgentManager.Models
+namespace KdSoft.EtwEvents.PushAgent.Models
 {
     public class AgentState
     {

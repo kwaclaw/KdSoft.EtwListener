@@ -4,6 +4,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.AgentManager.Services;
+using KdSoft.EtwEvents.PushAgent.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -74,7 +75,7 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
         #region Updates from Agent
 
         [HttpPost]
-        public async Task<IActionResult> UpdateState(Models.AgentState state) {
+        public async Task<IActionResult> UpdateState(AgentState state) {
             var agentId = User.Identity?.Name;
             if (agentId == null)
                 return Unauthorized();

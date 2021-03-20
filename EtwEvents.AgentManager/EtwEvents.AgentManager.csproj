@@ -45,6 +45,7 @@
 
   <ItemGroup>
     <Compile Include="..\EtwEvents.PushAgent\ControlEvent.cs" Link="ControlEvent.cs" />
+    <Compile Include="..\EtwEvents.PushAgent\Models\AgentStates.cs" Link="Models\AgentStates.cs" />
     <Compile Include="..\EtwEvents.WebClient\InfraStructure\AggregatingNotifier.cs" Link="InfraStructure\AggregatingNotifier.cs" />
     <Compile Include="..\EtwEvents.WebClient\InfraStructure\LocalizationFileProvider.cs" Link="InfraStructure\LocalizationFileProvider.cs" />
     <Compile Include="..\EtwEvents.WebClient\InfraStructure\ManualResetValueTaskSource.cs" Link="InfraStructure\ManualResetValueTaskSource.cs" />
@@ -64,6 +65,7 @@
 
   <ItemGroup>
     <Folder Include="InfraStructure\" />
+    <Folder Include="Models\" />
   </ItemGroup>
 
  
