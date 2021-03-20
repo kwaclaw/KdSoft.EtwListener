@@ -1,19 +1,13 @@
 ﻿using System;
 using System.Linq;
 using System.Net;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.AgentManager.Services;
-using KdSoft.EtwEvents.PushAgent;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
-using Newtonsoft.Json;
 
 namespace KdSoft.EtwEvents.AgentManager.Controllers
 {
@@ -58,7 +52,7 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
             var lastEventId = Request.Headers["Last-Event-ID"].ToString();
 
             var acceptHeaders = Request.Headers[HeaderNames.Accept];
-            if (acceptHeaders.Count == 0 || acceptHeaders.Contains(AgentProxy.EventStreamHeaderValue) || acceptHeaders.Contains(Constants.TextWildCardHeaderValue)) {
+            if (acceptHeaders.Count == 0 || acceptHeaders.Contains(AgentProxy.EventStreamHeaderValue)) {
                 if (string.IsNullOrEmpty(lastEventId)) {
                     _logger.LogInformation($"Connected SSE: {agentId}");
                 }
@@ -79,31 +73,16 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
 
         #region Updates from Agent
 
-        public IActionResult PostMessage(string agentId, string eventName, string jsonData) {
-            ProblemDetails pd;
-            if (_agentProxyManager.TryGetProxy(agentId, out var proxy)) {
-                var evt = new ControlEvent {
-                    Id = Interlocked.Increment(ref _eventId).ToString(),
-                    Event = eventName,
-                    Data = jsonData
-                };
+        [HttpPost]
+        public async Task<IActionResult> UpdateState(Models.AgentState state) {
+            var agentId = User.Identity?.Name;
+            if (agentId == null)
+                return Unauthorized();
 
-                if (proxy.Writer.TryWrite(evt)) {
-                    return Ok();
-                }
-                else {
-                    pd = new ProblemDetails {
-                        Status = (int)HttpStatusCode.InternalServerError,
-                        Title = "Could not post message.",
-                    };
-                    return StatusCode(pd.Status.Value, pd);
-                }
-            }
-            pd = new ProblemDetails {
-                Status = (int)HttpStatusCode.NotFound,
-                Title = "Agent does not exist.",
-            };
-            return StatusCode(pd.Status.Value, pd);
+            var agentProxy = _agentProxyManager.ActivateProxy(agentId);
+            agentProxy.SetState(state);
+            await _agentProxyManager.PostSessionStateChange().ConfigureAwait(false);
+            return Ok();
         }
 
         #endregion

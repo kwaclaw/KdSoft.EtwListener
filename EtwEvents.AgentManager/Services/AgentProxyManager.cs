@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
+using System.Threading.Tasks;
 using KdSoft.EtwEvents.PushAgent;
 using Microsoft.Extensions.Logging;
 
@@ -11,6 +14,7 @@ namespace KdSoft.EtwEvents.AgentManager.Services
     {
         readonly int _keepAliveMSecs;
         readonly ConcurrentDictionary<string, AgentProxy> _proxies;
+        readonly AggregatingNotifier<Models.AgentStates> _changeNotifier;
         readonly Timer _lifeCycleTimer;
         readonly ILogger<AgentProxy> _logger;
 
@@ -22,6 +26,7 @@ namespace KdSoft.EtwEvents.AgentManager.Services
             this._logger = logger;
             _proxies = new ConcurrentDictionary<string, AgentProxy>();
             _lifeCycleTimer = new Timer(KeepAlive, this, keepAlivePeriod, keepAlivePeriod);
+            this._changeNotifier = new AggregatingNotifier<Models.AgentStates>(GetAgentStates);
         }
 
         public void Dispose() {
@@ -57,6 +62,25 @@ namespace KdSoft.EtwEvents.AgentManager.Services
                     agentProxy.Writer.TryWrite(KeepAliveMessage);
                 }
             }
+        }
+
+        public Task<Models.AgentStates> GetAgentStates() {
+            var asb = ImmutableArray.CreateBuilder<Models.AgentState>();
+            foreach (var entry in _proxies) {
+                var agentState = entry.Value.GetState();
+                if (agentState != null)
+                    asb.Add(agentState);
+            }
+            var result = new Models.AgentStates { Agents = asb.ToImmutableArray() };
+            return Task.FromResult(result);
+        }
+
+        public IAsyncEnumerable<Models.AgentStates> GetAgentStateChanges() {
+            return _changeNotifier.GetNotifications();
+        }
+
+        public ValueTask PostSessionStateChange() {
+            return _changeNotifier.PostNotification();
         }
     }
 }

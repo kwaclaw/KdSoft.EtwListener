@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using KdSoft.EtwEvents.AgentManager.Models;
 using KdSoft.EtwEvents.PushAgent;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -18,7 +19,9 @@ namespace KdSoft.EtwEvents.AgentManager.Services
 
         readonly Channel<ControlEvent> _channel;
         readonly ILogger _logger;
+
         CancellationTokenSource? _connectionTokenSource;
+        AgentState _state;
 
         public AgentProxy(string agentId, Channel<ControlEvent> channel, ILogger logger) {
             this.AgentId = agentId;
@@ -43,6 +46,14 @@ namespace KdSoft.EtwEvents.AgentManager.Services
         }
 
         public Task Completion => _channel.Reader.Completion;
+
+        public void SetState(AgentState state) {
+            Volatile.Write(ref _state, state);
+        }
+
+        public AgentState GetState() {
+            return Volatile.Read(ref _state);
+        }
 
         public void Used() {
             Interlocked.MemoryBarrier();
