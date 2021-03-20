@@ -1,0 +1,80 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <!--<AspNetCoreHostingModel>OutOfProcess</AspNetCoreHostingModel>-->
+    <LangVersion>Latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <AssemblyName>KdSoft.EtwEvents.AgentManager</AssemblyName>
+    <RootNamespace>KdSoft.EtwEvents.AgentManager</RootNamespace>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+    <UserSecretsId>aca35d68-2f97-4471-bcee-88a607e466f3</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" Version="3.15.6" />
+    <PackageReference Include="Grpc.Core.Api" Version="2.36.1" />
+    <PackageReference Include="Grpc.Tools" Version="2.36.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Grpc.Net.Client" Version="2.36.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="KdSoft.Utils.Portable" Version="3.6.3" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Certificate" Version="5.0.4" />
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="5.0.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="5.0.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="5.0.2" />
+    <PackageReference Include="OrchardCore.Localization.Core" Version="1.0.0-rc2-13450" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FontAwsomeSprites Include="src/css/fontawesome/sprites/**/*" />
+    <FontAwsomeSvgs Include="src/css/fontawesome/svgs/**/*" />
+    <FontAwsomeWebfonts Include="src/css/fontawesome/webfonts/**/*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="src/css/fontawesome/metadata/**/*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\EtwEvents.PushAgent\ControlEvent.cs" Link="ControlEvent.cs" />
+    <Compile Include="..\EtwEvents.WebClient\InfraStructure\AggregatingNotifier.cs" Link="InfraStructure\AggregatingNotifier.cs" />
+    <Compile Include="..\EtwEvents.WebClient\InfraStructure\LocalizationFileProvider.cs" Link="InfraStructure\LocalizationFileProvider.cs" />
+    <Compile Include="..\EtwEvents.WebClient\InfraStructure\ManualResetValueTaskSource.cs" Link="InfraStructure\ManualResetValueTaskSource.cs" />
+    <Compile Include="..\EtwEvents.WebClient\InfraStructure\PendingAsyncEnumerator.cs" Link="InfraStructure\PendingAsyncEnumerator.cs" />
+    <Compile Include="..\EtwEvents.WebClient\InfraStructure\TimeSpanISO8601JsonConverter.cs" Link="InfraStructure\TimeSpanISO8601JsonConverter.cs" />
+    <Compile Include="..\EtwEvents.WebClient\Models\ClientCertOptions.cs" Link="Models\ClientCertOptions.cs" />
+    <Compile Include="..\EtwEvents.WebClient\Models\FilterRequests.cs" Link="Models\FilterRequests.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="EventSinks/**/*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EtwEvents.Client.Shared\EtwEvents.Client.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="InfraStructure\" />
+    <Folder Include="Models\" />
+  </ItemGroup>
+
+ 
+  <Target Name="PostCSS" BeforeTargets="Build">
+    <Exec Command="npm run build"></Exec>
+    <Copy SourceFiles="@(FontAwsomeSprites)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeSprites->'wwwroot/css/fontawesome/sprites/%(RecursiveDir)%(Filename)%(Extension)')" />
+    <Copy SourceFiles="@(FontAwsomeSvgs)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeSvgs->'wwwroot/css/fontawesome/svgs/%(RecursiveDir)%(Filename)%(Extension)')" />
+    <Copy SourceFiles="@(FontAwsomeWebfonts)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeWebfonts->'wwwroot/css/fontawesome/webfonts/%(RecursiveDir)%(Filename)%(Extension)')" />
+  </Target>
+
+</Project>

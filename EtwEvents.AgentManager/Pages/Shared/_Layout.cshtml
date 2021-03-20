@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="My App description">
+
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="ETW App">
+
+    <!-- Add to homescreen for Safari on iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="ETW App">
+
+    <title>@ViewData["Title"]</title>
+
+    <!-- Add any global styles for body, document, etc. -->
+    <style>
+        @@font-face {
+            font-family: 'Pacifico';
+            font-style: normal;
+            font-weight: 400;
+            src: local('Pacifico Regular'), local('Pacifico-Regular'), url(https://fonts.gstatic.com/s/pacifico/v12/Q_Z9mv4hySLTMoMjnk_rCXYhjbSpvc47ee6xR_80Hnw.woff2) format('woff2');
+            /* The browser draws the text immediately in the fallback font if the font
+           isn't loaded, then swaps it with the webfont when it eventually loads
+           See: https://developers.google.com/web/updates/2016/02/font-display
+        */
+            font-display: swap;
+        }
+
+        body {
+            margin: 0;
+            /* This is a font-stack that tries to use the system-default sans-serifs first */
+            font-family: Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+            line-height: 1.5;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
+
+    @RenderSection("Styles")
+
+    @RenderSection("Scripts")
+
+</head>
+<body>
+    @RenderBody()
+    <noscript>
+        Please enable JavaScript to view this website.
+    </noscript>
+</body>
+</html>
