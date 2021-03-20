@@ -11,6 +11,7 @@ using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwEvents.WebClient.EventSinks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
@@ -342,6 +343,10 @@ namespace KdSoft.EtwEvents.WebClient
             resp.Headers[HeaderNames.Pragma] = "no-cache";
             // hopefully prevents buffering
             resp.Headers[HeaderNames.ContentEncoding] = "identity";
+
+            // Make sure we disable all response buffering for SSE
+            var bufferingFeature = resp.HttpContext.Features.Get<IHttpResponseBodyFeature>();
+            bufferingFeature?.DisableBuffering();
 
             var jsonSerializerOptions = _jsonOptions.Value.JsonSerializerOptions;
 
