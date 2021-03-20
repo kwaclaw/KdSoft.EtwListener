@@ -364,7 +364,7 @@ namespace KdSoft.EtwEvents.WebClient
         [HttpGet]
         public async Task<IActionResult> GetSessionStates(CancellationToken cancelToken) {
             var req = Request;
-            if (req.Headers[HeaderNames.Accept].Equals(EventStreamHeaderValue)) {
+            if (req.Headers[HeaderNames.Accept].Contains(EventStreamHeaderValue)) {
                 return await GetSessionStateEventStream(cancelToken).ConfigureAwait(false);
             }
             else {
