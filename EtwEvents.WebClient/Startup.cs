@@ -50,6 +50,7 @@ namespace KdSoft.EtwEvents.WebClient
             //});
 
             services.AddAuthorization();
+
             services.AddAuthentication(CertificateAuthenticationDefaults.AuthenticationScheme).AddCertificate(options => {
                 options.AllowedCertificateTypes = CertificateTypes.Chained;
                 // my custom certificates can't be checked, so they would not be validated
@@ -62,10 +63,10 @@ namespace KdSoft.EtwEvents.WebClient
                     //},
                     OnCertificateValidated = context => {
                         var authService = context.HttpContext.RequestServices.GetService<AuthService>();
-                        if (authService.IsAuthorized(context.Principal))
+                        if (context.Principal != null && authService!.IsAuthorized(context.Principal))
                             context.Success();
                         else
-                            context.Fail("User not authorized.");
+                            context.Fail("Not authorized.");
                         return Task.CompletedTask;
                     }
                 };

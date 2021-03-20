@@ -17,6 +17,8 @@ namespace KdSoft.EtwEvents.WebClient
             foreach (var identity in principal.Identities) {
                 if (!identity.IsAuthenticated)
                     continue;
+                if (identity == null || identity.Name == null)
+                    continue;
                 if (_authorizedNames.Contains(identity.Name))
                     return true;
             }
