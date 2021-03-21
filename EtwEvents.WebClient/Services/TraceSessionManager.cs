@@ -22,7 +22,7 @@ namespace KdSoft.EtwEvents.WebClient
             IConfiguration config,
             ILoggerFactory loggerFactory,
             IStringLocalizer<TraceSession> localizer
-        ) : base(TimeSpan.TryParse(config?["ReapPeriod"], out var reapPeriod) ? reapPeriod : TimeSpan.FromMinutes(5), StringComparer.CurrentCultureIgnoreCase) {
+        ) : base(TimeSpan.TryParse(config?["TraceSession:ReapPeriod"], out var reapPeriod) ? reapPeriod : TimeSpan.FromMinutes(5), StringComparer.CurrentCultureIgnoreCase) {
             this._loggerFactory = loggerFactory;
             this._localizer = localizer;
             this._changeNotifier = new AggregatingNotifier<Models.TraceSessionStates>(GetSessionStates);
