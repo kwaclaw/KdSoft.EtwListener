@@ -82,7 +82,7 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
 
             var agentProxy = _agentProxyManager.ActivateProxy(agentId);
             agentProxy.SetState(state);
-            await _agentProxyManager.PostSessionStateChange().ConfigureAwait(false);
+            await _agentProxyManager.PostAgentStateChange().ConfigureAwait(false);
             return Ok();
         }
 

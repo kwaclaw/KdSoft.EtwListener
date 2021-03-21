@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.PushAgent;
 using KdSoft.EtwEvents.PushAgent.Models;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace KdSoft.EtwEvents.AgentManager.Services
@@ -16,22 +17,20 @@ namespace KdSoft.EtwEvents.AgentManager.Services
         readonly int _keepAliveMSecs;
         readonly ConcurrentDictionary<string, AgentProxy> _proxies;
         readonly AggregatingNotifier<AgentStates> _changeNotifier;
-        readonly Timer _lifeCycleTimer;
         readonly ILogger<AgentProxy> _logger;
 
         public static ControlEvent KeepAliveMessage = new ControlEvent { Event = AgentProxy.KeepAliveEvent };
         public static ControlEvent CloseMessage = new ControlEvent { Event = AgentProxy.CloseEvent };
 
-        public AgentProxyManager(TimeSpan keepAlivePeriod, ILogger<AgentProxy> logger) {
+        public AgentProxyManager(IConfiguration config, ILogger<AgentProxy> logger) {
+            var keepAlivePeriod = TimeSpan.TryParse(config?["ControlChannel:KeepAlivePeriod"], out var reapPeriod) ? reapPeriod : TimeSpan.FromSeconds(20);
             this._keepAliveMSecs = (int)keepAlivePeriod.TotalMilliseconds;
             this._logger = logger;
             _proxies = new ConcurrentDictionary<string, AgentProxy>();
-            _lifeCycleTimer = new Timer(KeepAlive, this, keepAlivePeriod, keepAlivePeriod);
             this._changeNotifier = new AggregatingNotifier<AgentStates>(GetAgentStates);
         }
 
         public void Dispose() {
-            _lifeCycleTimer?.Dispose();
             foreach (var entry in _proxies) {
                 entry.Value.Writer.TryComplete();
             }
@@ -80,7 +79,7 @@ namespace KdSoft.EtwEvents.AgentManager.Services
             return _changeNotifier.GetNotifications();
         }
 
-        public ValueTask PostSessionStateChange() {
+        public ValueTask PostAgentStateChange() {
             return _changeNotifier.PostNotification();
         }
     }

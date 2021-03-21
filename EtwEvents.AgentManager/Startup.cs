@@ -152,7 +152,7 @@ namespace KdSoft.EtwEvents.AgentManager
 
             app.UseRequestLocalization();
 
-            app.UseCookiePolicy();
+            app.UseStaticFiles();
 
             app.UseRouting();
 

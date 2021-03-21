@@ -12,16 +12,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Google.Protobuf" Version="3.15.6" />
-    <PackageReference Include="Grpc.Core.Api" Version="2.36.1" />
-    <PackageReference Include="Grpc.Tools" Version="2.36.1">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Grpc.Net.Client" Version="2.36.0" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="KdSoft.Utils.Portable" Version="3.6.3" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Certificate" Version="5.0.4" />
     <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="5.0.3">
@@ -51,12 +41,6 @@
     <Compile Include="..\EtwEvents.WebClient\InfraStructure\ManualResetValueTaskSource.cs" Link="InfraStructure\ManualResetValueTaskSource.cs" />
     <Compile Include="..\EtwEvents.WebClient\InfraStructure\PendingAsyncEnumerator.cs" Link="InfraStructure\PendingAsyncEnumerator.cs" />
     <Compile Include="..\EtwEvents.WebClient\InfraStructure\TimeSpanISO8601JsonConverter.cs" Link="InfraStructure\TimeSpanISO8601JsonConverter.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="EventSinks/**/*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
   <ItemGroup>
