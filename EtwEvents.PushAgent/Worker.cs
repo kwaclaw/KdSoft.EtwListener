@@ -14,9 +14,6 @@ namespace KdSoft.EtwEvents.PushAgent
 {
     public class Worker: BackgroundService
     {
-        const string ClientCertCN = "Elekta-SmartClinic-MQAddin";
-        const string ClientCertHeader = "X-ARR-ClientCert";
-
         readonly IOptions<ControlOptions> _controlOptions;
         readonly IOptions<EventQueueOptions> _eventQueueOptions;
         readonly IOptions<EventSessionOptions> _sessionOptions;
@@ -45,7 +42,8 @@ namespace KdSoft.EtwEvents.PushAgent
             this._sinkFactory = sinkFactory;
             this._loggerFactory = loggerFactory;
             this._logger = loggerFactory.CreateLogger<Worker>();
-            _httpCertHandler = new HttpClientCertificateHandler(ClientCertCN, ClientCertHeader);
+
+            _httpCertHandler = new HttpClientCertificateHandler(controlOptions.Value.ClientCertificate);
             _http = new HttpClient(_httpCertHandler);
         }
 
@@ -61,6 +59,9 @@ namespace KdSoft.EtwEvents.PushAgent
                     break;
                 case "Stop":
                     //
+                    break;
+                case "GetState":
+                    //TODO call AgentController with AgentStates update
                     break;
                 default:
                     break;
