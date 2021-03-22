@@ -88,8 +88,16 @@ namespace KdSoft.EtwEvents.PushAgent
 
         public EventSource StartSSE() {
             var opts = _controlOptions.Value;
-            var evtUri = opts.Uri;
-            var config = Configuration.Builder(evtUri).HttpMessageHandler(_httpCertHandler).Build();
+            var evtUri = new Uri(opts.Uri, "Agent/GetEvents");
+            var cfgBuilder = Configuration.Builder(evtUri).HttpClient(_http);
+            if (opts.InitialRetryDelay != null)
+                cfgBuilder.InitialRetryDelay(opts.InitialRetryDelay.Value);
+            if (opts.MaxRetryDelay != null)
+                cfgBuilder.MaxRetryDelay(opts.MaxRetryDelay.Value);
+            if (opts.BackoffResetThreshold != null)
+                cfgBuilder.BackoffResetThreshold(opts.BackoffResetThreshold.Value);
+            var config = cfgBuilder.Build();
+
             var evt = new EventSource(config);
             evt.MessageReceived += EventReceived;
             evt.Error += EventError;
@@ -107,7 +115,7 @@ namespace KdSoft.EtwEvents.PushAgent
         #endregion
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
-            //_eventSource = StartSSE();
+            _eventSource = StartSSE();
 
             var sopts = _sessionOptions.Value;
 
