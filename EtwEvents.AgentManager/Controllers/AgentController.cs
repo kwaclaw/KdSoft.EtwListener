@@ -19,11 +19,11 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
     public class AgentController: ControllerBase
     {
         readonly AgentProxyManager _agentProxyManager;
-        readonly ILogger _logger;
+        readonly ILogger<AgentController> _logger;
 
         public AgentController(
             AgentProxyManager agentProxyManager,
-            ILogger logger
+            ILogger<AgentController> logger
         ) {
             this._agentProxyManager = agentProxyManager;
             this._logger = logger;

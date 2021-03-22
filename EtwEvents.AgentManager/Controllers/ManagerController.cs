@@ -21,14 +21,14 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
     public class ManagerController: ControllerBase {
         readonly AgentProxyManager _agentProxyManager;
         readonly IOptions<JsonOptions> _jsonOptions;
-        readonly ILogger _logger;
+        readonly ILogger<ManagerController> _logger;
 
         int _agentEventId;
 
         public ManagerController(
             AgentProxyManager agentProxyManager,
             IOptions<JsonOptions> jsonOptions,
-            ILogger logger
+            ILogger<ManagerController> logger
         ) {
             this._agentProxyManager = agentProxyManager;
             this._jsonOptions = jsonOptions;
