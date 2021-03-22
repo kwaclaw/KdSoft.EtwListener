@@ -6,7 +6,6 @@ import { classMap } from '../lib/lit-html/directives/class-map.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
 import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import './etw-app-side-bar.js';
-import './trace-session-view.js';
 import './filter-form.js';
 import Spinner from '../js/spinner.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
@@ -53,34 +52,6 @@ class EtwApp extends LitMvvmElement {
       }
     });
   }
-
-  //#region trace-session
-
-  _sessionTabClick(e) {
-    const linkElement = e.currentTarget.closest('li');
-    this.model.activateSession(linkElement.dataset.sessionName);
-  }
-
-  _unwatchSessionClick(e, session) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!session) return;
-    this.model.unwatchSession(session);
-  }
-
-  _filterSessionClick(e, session) {
-    if (!session) return;
-    const sidebar = this.renderRoot.getElementById('sidebar');
-    sidebar.showFilterDlg(session);
-  }
-
-  _toggleSessionEvents(e, session) {
-    if (!session) return;
-    const spinner = new Spinner(e.currentTarget);
-    session.toggleEvents(spinner);
-  }
-
-  //#endregion
 
   //#region sidebar
 
@@ -183,7 +154,6 @@ class EtwApp extends LitMvvmElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    this.model.unobserveVisibleSessions();
     this._sidebarObserver.disconnect();
   }
 
@@ -194,7 +164,6 @@ class EtwApp extends LitMvvmElement {
   // called at most once every time after connectedCallback was executed
   firstRendered() {
     this.appTitle = this.getAttribute('appTitle');
-    this.model.observeVisibleSessions();
 
     // listen for changes of the aria-expanded attribute on sidebar,
     // and expand/collapse the first grid column accordingly
@@ -367,41 +336,11 @@ class EtwApp extends LitMvvmElement {
 
         <div id="main">
           <div id="nav-content" class="lg:flex lg:items-center lg:w-auto hidden lg:block pt-6 lg:pt-0 bg-gray-500">
-            <ul class="list-reset lg:flex justify-end flex-1 items-center">
-            ${this.model.visibleSessions.map(ses => {
-              const isActiveTab = this.model.activeSession === ses;
-              const tabClasses = isActiveTab ? classList.tabActive : classList.tabInactive;
-              const eventsClasses = ses.state.isRunning
-                ? classList.stopBtn
-                : ses.state.isStopped ? classList.startBtnInactive : classList.startBtnActive;
-
-              return html`
-                <li class="mr-2 pr-1 ${isActiveTab ? 'bg-gray-700' : ''}"
-                  data-session-name=${ses.name.toLowerCase()}
-                  @click=${this._sessionTabClick}
-                >
-                  <a class=${classMap(tabClasses)} href="#">${ses.name}</a>
-                  <div id="tab-buttons" class=${classMap(isActiveTab ? classList.tabButtonsActive : classList.tabButtonsInActive)}>
-                    <button type="button" @click=${e => this._toggleSessionEvents(e, ses)}>
-                      <i class=${classMap(eventsClasses)}></i>
-                    </button>
-                    <button type="button" @click=${e => this._filterSessionClick(e, ses)}>
-                      <i class="fas fa-filter"></i>
-                    </button>
-                    <button type="button" @click=${e => this._unwatchSessionClick(e, ses)}>
-                      <i class="fas fa-lg fa-times"></i>
-                    </button>
-                  </div>
-                </li>
-                `;
-              }
-            )}
-            </ul>
           </div>
 
           <!-- Main content -->
           <div class="flex-grow relative">
-            <trace-session-view .model=${this.model.activeSession}></trace-session-view>
+            
           </div>
         </div>
 

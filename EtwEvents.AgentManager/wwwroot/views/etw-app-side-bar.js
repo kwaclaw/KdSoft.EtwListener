@@ -8,12 +8,7 @@ import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import dialogPolyfill from '../lib/dialog-polyfill.js';
 import FilterFormModel from './filter-form-model.js';
 import '../components/kdsoft-expander.js';
-import './trace-session-config.js';
 import './filter-form.js';
-import './event-sink-config.js';
-import TraceSessionConfigModel from './trace-session-config-model.js';
-import TraceSessionProfile from '../js/traceSessionProfile.js';
-import EventSinkConfigModel from './event-sink-config-model.js';
 import KdSoftChecklistModel from '../components/kdsoft-checklist-model.js';
 import Spinner from '../js/spinner.js';
 import * as utils from '../js/utils.js';
@@ -57,6 +52,10 @@ function formSaveHandler(e) {
   }
 }
 
+function getAgentIndex(agentList, agentName) {
+  return agentList.findIndex(val => val.name === agentName);
+}
+
 class EtwAppSideBar extends LitMvvmElement {
   constructor() {
     super();
@@ -87,167 +86,6 @@ class EtwAppSideBar extends LitMvvmElement {
     else host.setAttribute('aria-expanded', 'true');
   }
 
-  //#region session profile
-
-  _showSessionProfileDialog(profile) {
-    const configModel = new TraceSessionConfigModel(profile, this.model.eventSinkProfiles);
-
-    const dlg = this.renderRoot.getElementById('dlg-config');
-    const cfg = dlg.getElementsByTagName('trace-session-config')[0];
-    cfg.model = configModel;
-    dlg.showModal();
-  }
-
-  _addSessionProfileClick(e) {
-    this._showSessionProfileDialog(new TraceSessionProfile('<New Session Profile>'));
-  }
-
-  _editSessionProfileClick(e, profile) {
-    this._showSessionProfileDialog(profile);
-  }
-
-  _importSessionProfilesClick() {
-    const fileDlg = this.renderRoot.getElementById('import-session-profiles');
-    fileDlg.click();
-  }
-
-  _importSessionProfilesSelected(e) {
-    this.model.importSessionProfiles(e.currentTarget.files);
-  }
-
-  _deleteSessionProfileClick(e, profileName) {
-    e.stopPropagation();
-    this.model.deleteSessionProfile(profileName.toLowerCase());
-  }
-
-  //#endregion
-
-  //#region event sink profile
-
-  async _showSinkProfileDialog(sinkProfile) {
-    const configModel = await EventSinkConfigModel.create(sinkProfile);
-
-    const dlg = this.renderRoot.getElementById('dlg-event-sink');
-    const cfg = dlg.querySelector('event-sink-config');
-    cfg.model = configModel;
-    dlg.showModal();
-  }
-
-  async _addEventSinkProfileClick(e) {
-    await this._showSinkProfileDialog(null);
-  }
-
-  async _editEventSinkProfileClick(e, sinkProfile) {
-    await this._showSinkProfileDialog(sinkProfile);
-  }
-
-  _importEventSinkProfilesClick() {
-    const fileDlg = this.renderRoot.getElementById('import-sink-profiles');
-    fileDlg.click();
-  }
-
-  _importEventSinkProfilesSelected(e) {
-    this.model.importSinkProfiles(e.currentTarget.files);
-  }
-
-  _deleteEventSinkProfileClick(e, sinkDefinitionName) {
-    e.stopPropagation();
-    this.model.deleteSinkProfile(sinkDefinitionName.toLowerCase());
-  }
-
-  //#endregion
-
-  //#region session
-
-  async _openSessionFromProfileClick(e, profile) {
-    const spinner = new Spinner(e.currentTarget);
-    await this.model.openSessionFromProfile(profile, spinner);
-  }
-
-  async _closeSessionClick(e, session) {
-    if (!session) return;
-
-    const spinner = new Spinner(e.currentTarget);
-    await this.model.closeSession(session, spinner);
-  }
-
-  _watchSessionClick(e, session) {
-    if (!session) return;
-    this.model.watchSession(session);
-  }
-
-  _unwatchSessionClick(e, session) {
-    if (!session) return;
-    this.model.unwatchSession(session);
-  }
-
-  _filterSessionClick(e, session) {
-    if (!session) return;
-    this.showFilterDlg(session);
-  }
-
-  _toggleSessionEvents(e, session) {
-    if (!session) return;
-    const spinner = new Spinner(e.currentTarget);
-    session.toggleEvents(spinner);
-  }
-
-  _observeSessionEvents(e, session) {
-    if (!session) return;
-    session.observeEvents();
-  }
-
-  //#endregion
-
-  //#region event sinks
-
-  _chooseEventSinkClick(e, session) {
-    const checklist = this.renderRoot.getElementById('eventSinkProfileList');
-    const model = new KdSoftChecklistModel(
-      this.model.eventSinkProfiles,
-      [],
-      false,
-      item => `${item.type}:${item.name}`
-    );
-    checklist.model = model;
-
-    const openButton = e.currentTarget;
-    const dlg = this.renderRoot.getElementById('dlg-event-sink-chooser');
-    if (dlg.openedBy === openButton) {
-      // do not re-open from same button if already open
-      dlg.openedBy = null;
-      return;
-    }
-    dlg.openedBy = openButton;
-
-    model.observer = observe(() => {
-      dlg.close();
-      const selectedSinkProfile = model.firstSelectedEntry;
-      if (selectedSinkProfile && session) {
-        const spinner = new Spinner(openButton);
-        session.openEventSinks([selectedSinkProfile], spinner);
-      }
-    });
-
-    // dlg positioned in relation to :host (renderRoot)
-    const containerTop = utils.containerOffsetTop(this.renderRoot.host, e.currentTarget);
-    const containerLeft = utils.containerOffsetLeft(this.renderRoot.host, e.currentTarget);
-    const topEdge = containerTop + e.currentTarget.offsetHeight;
-    const rightEdge = this.renderRoot.host.clientWidth - (containerLeft + e.currentTarget.offsetWidth);
-    dlg.style.top = `${topEdge}px`;
-    dlg.style.right = `${rightEdge}px`;
-    //dlg.addEventListener('click', e => console.log(e.currentTarget));
-    dlg.show();
-  }
-
-  _closeEventSinkClick(e, session, eventSink) {
-    const closeButton = e.currentTarget;
-    const spinner = new Spinner(closeButton);
-    session.closeEventSinks([eventSink.name], spinner);
-  }
-
-  //#endregion
-
   //#region overrides
 
   _addDialogHandlers(dlg) {
@@ -269,7 +107,6 @@ class EtwAppSideBar extends LitMvvmElement {
 
     this._removeDialogHandlers(this.renderRoot.getElementById('dlg-filter'));
     this._removeDialogHandlers(this.renderRoot.getElementById('dlg-config'));
-    this._removeDialogHandlers(this.renderRoot.getElementById('dlg-event-sink'));
   }
 
   shouldRender() {
@@ -279,23 +116,29 @@ class EtwAppSideBar extends LitMvvmElement {
   // called at most once every time after connectedCallback was executed
   beforeFirstRender() {
     this.appTitle = this.getAttribute('appTitle');
-    this.model.observeVisibleSessions();
+    if (!this.agentChecklistModel) {
+      const agentList = Array.from(this.model.agents.values());
+      const agentIndex = getAgentIndex(agentList, this.model.activeAgentName);
+      this.agentChecklistModel = new KdSoftChecklistModel(
+        agentList,
+        agentIndex >= 0 ? [agentIndex] : [],
+        false,
+        item => item.name
+      );
+    }
   }
 
   firstRendered() {
     const filterDlg = this.renderRoot.getElementById('dlg-filter');
     const configDlg = this.renderRoot.getElementById('dlg-config');
-    const eventSinkDlg = this.renderRoot.getElementById('dlg-event-sink');
 
     if (!utils.html5DialogSupported) {
       dialogPolyfill.registerDialog(filterDlg);
       dialogPolyfill.registerDialog(configDlg);
-      dialogPolyfill.registerDialog(eventSinkDlg);
     }
 
     this._addDialogHandlers(filterDlg);
     this._addDialogHandlers(configDlg);
-    this._addDialogHandlers(eventSinkDlg);
   }
 
   static get styles() {
@@ -392,7 +235,6 @@ class EtwAppSideBar extends LitMvvmElement {
   }
 
   render() {
-    const traceSessionList = [...this.model.traceSessions.values()];
     const dialogStyle = utils.html5DialogSupported
       ? nothing
       : html`<link rel="stylesheet" type="text/css" href=${styleLinks.dialog} />`;
@@ -424,153 +266,12 @@ class EtwAppSideBar extends LitMvvmElement {
           <!-- </div> -->
         </div>
 
-        <kdsoft-expander>
-          <div slot="header" class="flex pr-1 text-white bg-gray-500">
-            <label class="pl-3 font-bold text-xl">${i18n.gettext('Session Profiles')}</label>
-            <button type="button" class="px-1 py-1 ml-auto" @click=${e => this._addSessionProfileClick(e)}>
-              <i class="fas fa-lg fa-plus"></i>
-            </button>
-            <input id="import-session-profiles"
-              type="file"
-              @change=${this._importSessionProfilesSelected}
-              multiple
-              class="hidden">
-            </input>
-            <button class="px-1 py-1" @click=${this._importSessionProfilesClick} title="${i18n.gettext('Import Session Profiles')}">
-              <i class="fas fa-lg fa-file-import"></i>
-            </button>
-          </div>
-          <div slot="content">
-            ${this.model.sessionProfiles.map(p => html`
-                <div class="flex flex-wrap">
-                  <label class="pl-3 font-bold text-xl">${p.name}</label>
-                  <div class="ml-auto pr-1">
-                    <button type="button" class="px-1 py-1" @click=${e => this._openSessionFromProfileClick(e, p)}>
-                      <i class="fas fa-lg fa-wifi"></i>
-                    </button>
-                    <button type="button" class="px-1 py-1" @click=${e => this._editSessionProfileClick(e, p)}>
-                      <i class="fas fa-lg fa-edit"></i>
-                    </button>
-                    <button type="button" class="px-1 py-1" @click=${e => this._deleteSessionProfileClick(e, p.name)}>
-                      <i class="far fa-lg fa-trash-alt"></i>
-                    </button>
-                  </div>
-                </div>
-              `)
-            }
-          </div>
-        </kdsoft-expander>
+        <kdsoft-checklist id="agents" class="text-black"
+          .model=${this.agentChecklistModel}
+          .getItemTemplate=${item => html`${item.name}`}
+          show-checkboxes>
+        </kdsoft-checklist>
 
-        <kdsoft-expander>
-          <div slot="header" class="flex pr-1 text-white bg-gray-500">
-            <label class="pl-3 font-bold text-xl">${i18n.gettext('Event Sink Definitions')}</label>
-            <button type="button" class="px-1 py-1 ml-auto" @click=${e => this._addEventSinkProfileClick(e)}>
-              <i class="fas fa-lg fa-plus"></i>
-            </button>
-            <input id="import-sink-profiles"
-              type="file"
-              @change=${this._importEventSinkProfilesSelected}
-              multiple
-              class="hidden">
-            </input>
-            <button class="px-1 py-1" @click=${this._importEventSinkProfilesClick} title="${i18n.gettext('Import Event Sinks')}">
-              <i class="fas fa-lg fa-file-import">
-            </i></button>
-          </div>
-          <div slot="content">
-            ${this.model.eventSinkProfiles.map(p => html`
-                <div class="flex flex-wrap">
-                  <label class="pl-3 font-bold text-xl">${p.name}</label>
-                  <div class="ml-auto pr-1">
-                    <button type="button" class="px-1 py-1" @click=${e => this._editEventSinkProfileClick(e, p)}>
-                      <i class="fas fa-lg fa-edit"></i>
-                    </button>
-                    <button type="button" class="px-1 py-1" @click=${e => this._deleteEventSinkProfileClick(e, p.name)}>
-                      <i class="far fa-lg fa-trash-alt">
-                    </i></button>
-                  </div>
-                </div>
-              `)
-            }
-          </div>
-        </kdsoft-expander>
-        
-        <kdsoft-expander>
-          <div slot="header" class="flex text-white bg-gray-500">
-            <label class="pl-3 font-bold text-xl">${i18n.gettext('Sessions')}</label>
-          </div>
-          <div slot="content">
-            ${traceSessionList.map(ses => {
-              const eventsClasses = ses.state.isRunning
-                ? classList.stopBtn
-                : ses.state.isStopped ? classList.startBtnInactive : classList.startBtnActive;
-              return html`
-                <kdsoft-expander>
-                  <div slot="header" class="flex flex-wrap">
-                    <label class="font-bold text-xl">${ses.name}</label>
-                    <div class="ml-auto">
-                      <button type="button" class="px-1 py-1" @click=${e => this._watchSessionClick(e, ses)}>
-                        <i class="fas fa-lg fa-eye"></i>
-                      </button>
-                      <button type="button"  class="px-1 py-1" @click=${e => this._toggleSessionEvents(e, ses)}>
-                        <i class=${classMap(eventsClasses)}></i>
-                      </button>
-                      <button type="button" class="px-1 py-1" @click=${e => this._filterSessionClick(e, ses)}>
-                        <i class="fas fa-filter"></i>
-                      </button>
-                      <button type="button" class="px-1 py-1" @click=${e => this._closeSessionClick(e, ses)}>
-                        <i class="fas fa-lg fa-times"></i>
-                      </button>
-                    </div>
-                  </div>
-                  <div slot="content">
-                    <div class="flex">
-                      <label class="font-bold">${i18n.gettext('Event Sinks')}</label>
-                      <button class="px-1 py-1 ml-auto" @click=${e => this._chooseEventSinkClick(e, ses)} title="Open Event Sink">
-                        <i class="fas fa-lg fa-plus"></i>
-                      </button>
-                    </div>
-                    ${ses.state.eventSinks.map(evs => {
-                      const evsType = evs.error
-                        ? i18n.gettext('Failed')
-                        : (evs.isLocal ? i18n.gettext('Local') : i18n.gettext('External'));
-                      const evsColor = evs.error ? 'text-red-500' : (evs.isLocal ? 'text-blue-500' : 'inherited');
-                      const evsIcon = evs.isLocal ? 'fa-eye' : 'fa-file-archive ml-1';
-                      return html`
-                        <kdsoft-expander class="session-details">
-                          <div slot="header" class="flex flex-wrap items-center">
-                            <label class="truncate ${evsColor}"><i class="fas fa-lg ${evsIcon}"></i>${evs.name}</label>
-                            <div class="ml-auto">
-                              <button type="button"
-                                class="px-1 py-1 text-gray-500"
-                                @click=${e => this._closeEventSinkClick(e, ses, evs)}>
-                                <i class="fas fa-lg fa-times"></i>
-                              </button>
-                            </div>
-                          </div>
-                          <div slot="content">
-                            <div>Type</div><div class="ml-4 ${evsColor}">${evsType}</div>
-                            ${evs.error ? html`<div>Error</div><div class="ml-4">${evs.error}</div>` : nothing}
-                          </div>
-                        </kdsoft-expander>
-                      `;
-                    })}
-                    <p class="font-bold mt-3">Providers</p>
-                    ${ses.state.enabledProviders.map(ep => html`
-                      <kdsoft-expander class="session-details">
-                        <div slot="header" class="truncate">${ep.name}</div>
-                        <div slot="content">
-                          <div>Level</div><div>${ep.level}</div>
-                          <div>Keywords</div><div>${ep.matchKeywords}</div>
-                        </div>
-                      </kdsoft-expander>
-                    `)}
-                  </div>
-              </kdsoft-expander>
-            `;
-          })}
-        </div>
-        </kdsoft-expander>
       </nav>
 
       <dialog id="dlg-config" class="${dialogClass}">
@@ -578,16 +279,6 @@ class EtwAppSideBar extends LitMvvmElement {
       </dialog>
       <dialog id="dlg-filter" class="${dialogClass}">
         <filter-form></filter-form>
-      </dialog>
-      <dialog id="dlg-event-sink" class="${dialogClass}">
-        <event-sink-config></event-sink-config>
-      </dialog>
-      <dialog id="dlg-event-sink-chooser" class="${dialogClass}" @focusout=${this._dialogFocusOut}>
-        <h3 class="mb-3">Open Event Sink</h3>
-        <kdsoft-checklist
-          id="eventSinkProfileList"
-          .getItemTemplate=${item => html`${item.name} (${item.type})`}>
-        </kdsoft-checklist>
       </dialog>
     `;
   }
