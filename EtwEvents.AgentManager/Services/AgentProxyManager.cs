@@ -17,6 +17,7 @@ namespace KdSoft.EtwEvents.AgentManager.Services
         readonly int _keepAliveMSecs;
         readonly ConcurrentDictionary<string, AgentProxy> _proxies;
         readonly AggregatingNotifier<AgentStates> _changeNotifier;
+        readonly Timer _keepAliveTimer;
         readonly ILogger<AgentProxy> _logger;
 
         public static ControlEvent KeepAliveMessage = new ControlEvent { Event = AgentProxy.KeepAliveEvent };
@@ -25,6 +26,7 @@ namespace KdSoft.EtwEvents.AgentManager.Services
         public AgentProxyManager(IConfiguration config, ILogger<AgentProxy> logger) {
             var keepAlivePeriod = TimeSpan.TryParse(config?["ControlChannel:KeepAlivePeriod"], out var reapPeriod) ? reapPeriod : TimeSpan.FromSeconds(20);
             this._keepAliveMSecs = (int)keepAlivePeriod.TotalMilliseconds;
+            this._keepAliveTimer = new Timer(KeepAlive, this, keepAlivePeriod, keepAlivePeriod);
             this._logger = logger;
             _proxies = new ConcurrentDictionary<string, AgentProxy>();
             this._changeNotifier = new AggregatingNotifier<AgentStates>(GetAgentStates);
