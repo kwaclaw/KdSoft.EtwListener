@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.AgentManager.Controllers;
 using KdSoft.EtwEvents.AgentManager.Services;
@@ -31,6 +32,8 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         public IConfiguration Configuration { get; }
+
+        static Regex _roleRegex = new Regex(@"OID\.2\.5\.4\.72\s*=\s*(?<role>[^,=]*)\s*(,|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         public void ConfigureServices(IServiceCollection services) {
             // for IIS
@@ -61,14 +64,27 @@ namespace KdSoft.EtwEvents.AgentManager
                     OnCertificateValidated = context => {
                         var identity = context.Principal?.Identity as ClaimsIdentity;
                         if (identity != null && identity.Name != null) {
-                            var roleService = context.HttpContext.RequestServices.GetService<RoleService>();
-                            var roles = roleService!.GetRoles(identity.Name);
-                            foreach (var role in roles) {
-                                identity.AddClaim(new Claim(ClaimTypes.Role, role.ToString()));
+                            string? certRole = null;
+                            var match = _roleRegex.Match(context.ClientCertificate.Subject);
+                            if (match.Success) {
+                                certRole = match.Groups["role"].Value;
                             }
-                            if (roles.Count > 0) {
+
+                            if (certRole != null && certRole.Equals("etw-pushagent", System.StringComparison.OrdinalIgnoreCase)) {
+                                identity.AddClaim(new Claim(ClaimTypes.Role, Role.Agent.ToString()));
                                 context.Success();
                                 return Task.CompletedTask;
+                            }
+                            else {
+                                var roleService = context.HttpContext.RequestServices.GetService<RoleService>();
+                                var roles = roleService!.GetRoles(identity.Name);
+                                foreach (var role in roles) {
+                                    identity.AddClaim(new Claim(ClaimTypes.Role, role.ToString()));
+                                }
+                                if (roles.Count > 0) {
+                                    context.Success();
+                                    return Task.CompletedTask;
+                                }
                             }
                         }
                         context.Fail("Not authorized.");
