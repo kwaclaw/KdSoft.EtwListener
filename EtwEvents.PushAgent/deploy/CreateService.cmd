@@ -1,0 +1,14 @@
+@echo off
+
+REM switch to batch file directory (needed when running as administrator)
+pushd "%~dp0"
+
+REM %~1 removes surrounding quotes from first parameter;
+REM use single quotes for PowerShell arguments containing blanks
+if [%1]==[] (set targetDir='C:\EtwEvents.PushAgent') else (set targetDir='%~1')
+
+REM use single quotes for PowerShell arguments containing blanks
+PowerShell -ExecutionPolicy Bypass .\CreateService.ps1 -sourceDir . -targetDir %targetDir% -file 'KdSoft.EtwEvents.PushAgent.exe' -user .\LocalSystem
+
+popd
+pause
