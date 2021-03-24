@@ -22,6 +22,7 @@ namespace KdSoft.EtwEvents.AgentManager.Services
 
         public static ControlEvent KeepAliveMessage = new ControlEvent { Event = AgentProxy.KeepAliveEvent };
         public static ControlEvent CloseMessage = new ControlEvent { Event = AgentProxy.CloseEvent };
+        public static ControlEvent GetStateMessage = new ControlEvent { Event = AgentProxy.GetStateEvent };
 
         public AgentProxyManager(IConfiguration config, ILogger<AgentProxy> logger) {
             var keepAlivePeriod = TimeSpan.TryParse(config?["ControlChannel:KeepAlivePeriod"], out var reapPeriod) ? reapPeriod : TimeSpan.FromSeconds(20);
@@ -40,12 +41,12 @@ namespace KdSoft.EtwEvents.AgentManager.Services
 
         public AgentProxy ActivateProxy(string agentId) {
             var result = _proxies.GetOrAdd(agentId, key => {
-                var queue = new AgentProxy(agentId, _logger);
-                queue.Completion.ContinueWith((tsk) => {
+                var proxy = new AgentProxy(agentId, _logger);
+                proxy.Completion.ContinueWith((tsk) => {
                     _proxies.TryRemove(key, out var _);
                 });
-                queue.Used();
-                return queue;
+                proxy.Used();
+                return proxy;
             });
             return result;
         }
@@ -61,7 +62,9 @@ namespace KdSoft.EtwEvents.AgentManager.Services
                 // Environment.TickCount rolls over from int.Maxvalue to int.MinValue!
                 var deltaMSecs = Environment.TickCount - agentProxy.TimeStamp;
                 if (deltaMSecs >= _keepAliveMSecs) {
-                    agentProxy.Writer.TryWrite(KeepAliveMessage);
+                    //agentProxy.Writer.TryWrite(KeepAliveMessage);
+                    // we can use GetState as keep alive message
+                    agentProxy.Writer.TryWrite(GetStateMessage);
                 }
             }
         }

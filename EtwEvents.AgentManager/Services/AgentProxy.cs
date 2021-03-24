@@ -16,6 +16,7 @@ namespace KdSoft.EtwEvents.AgentManager.Services
         public const string EventStreamHeaderValue = "text/event-stream";
         public const string CloseEvent = "##close";
         public const string KeepAliveEvent = "##keepAlive";
+        public const string GetStateEvent = "GetState";
 
         readonly Channel<ControlEvent> _channel;
         readonly ILogger _logger;
@@ -27,6 +28,7 @@ namespace KdSoft.EtwEvents.AgentManager.Services
             this.AgentId = agentId;
             this._channel = channel;
             this._logger = logger;
+            this._state = new AgentState { Name = Guid.NewGuid().ToString() };
         }
 
         public AgentProxy(string agentId, ILogger logger) : this(agentId, Channel.CreateUnbounded<ControlEvent>(), logger) {
