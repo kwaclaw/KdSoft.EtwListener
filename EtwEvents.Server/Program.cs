@@ -28,6 +28,7 @@ namespace KdSoft.EtwEvents.Server
                 .ConfigureAppConfiguration((hostContext, cfgBuilder) => {
                     var env = hostContext.HostingEnvironment;
                     var provider = new PhysicalFileProvider(Path.Combine(env.ContentRootPath, ".."));
+                    // we are overriding some of the settings that are already loaded
                     cfgBuilder.AddJsonFile(provider, "appsettings.Local.json", optional: true, reloadOnChange: true);
                 })
                 .ConfigureLogging((hostContext, loggingBuilder) => {
