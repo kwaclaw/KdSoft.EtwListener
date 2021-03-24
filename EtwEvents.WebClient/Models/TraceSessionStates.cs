@@ -18,8 +18,9 @@ namespace KdSoft.EtwEvents.WebClient.Models
         /// Would indicate <c>false</c> if session has not started yet.
         /// </summary>
         public bool IsStopped { get; set; }
+
         public IImmutableList<ProviderSetting> EnabledProviders { get; set; } = ImmutableList<ProviderSetting>.Empty;
-        public ImmutableArray<EventSinkState> EventSinks { get; set; }
+        public ImmutableArray<EventSinkState> EventSinks { get; set; } = ImmutableArray<EventSinkState>.Empty;
     }
 
     public class OpenSessionState: TraceSessionState

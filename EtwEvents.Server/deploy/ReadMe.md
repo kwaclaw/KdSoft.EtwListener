@@ -1,6 +1,6 @@
 ## Prepare Install Package
 
-- Open project EtwEvents.server and publish it using either the Platform or the SelfContained profile.
+- Open project EtwEvents.Server and publish it using either the Platform or the SelfContained profile.
 - If using the Platform profile, make sure the target system has the target framework (specified in the profile) installed.
 
 ## Install Package
@@ -15,14 +15,23 @@
 - Check that the target system's firewall has the required inbound port open (for TCP, default is 50052 unless overridden locally).
 - Check that the root certificate for client validation is installed, its thumbprint must match the value configured in "appsettings.Local.json".
 - Check that the server certificate for the application is installed, as configured in the "Endpoints" section of "appsettings.Local.json".
-- Finally, run "CreateService.cmd <target directory>" as administrator:
-    - <target directory> is optional, it defaults to "C:\EtwEvents.Server", on an existing installation
+- Finally, run "CreateService.cmd \<target directory>" as administrator:
+    - \<target directory> is optional, it defaults to "C:\EtwEvents.Server", on an existing installation
       it may optionally match current the install directory from above.
     - This will install the application as a windows service called "Etw Listener".
 
 ### Local Configuration
 
-Override the settings in appsettings.json by providing the file appsettings.Local.json and copy it to the "bin" subdirectory.
+- Override the settings in appsettings.json by editing the file appsettings.Local.json in the deploy folder.
+- The settings in "appsettings.Local.json" can selectively override settings in "appsettings.json" without having to duplicate the entire file.
+- This example will only ovveride the Directory in the RollingFile section:
+```json
+  "Logging": {
+    "RollingFile": {
+      "Directory": "../Logs",
+    }
+  },
+```
 
 ### TLS, Connection Security
 
@@ -65,12 +74,11 @@ We can use a self-signed root certificate , as client authentication certificate
 A useful tool for creating certificates is [XCA](https://www.hohnstaedt.de/xca/).
 
 We specify authorized clients in appsettings.Local.json, in the **ClientValidation** section:
-
 ```json
   "ClientValidation": {
     "RootCertificateThumbprint": "d87dce532fb17cabd3804e77d7f344ec4e49c80f",
     "AuthorizedCommonNames": [
-      "john@example.com"
+      "John Doe"
     ]
   }
 ```
