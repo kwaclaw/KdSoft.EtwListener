@@ -6,6 +6,7 @@ namespace KdSoft.EtwEvents.PushAgent.Models
     public class AgentState
     {
         public string Name { get; set; } = string.Empty;
+        public string Site { get; set; } = string.Empty;
         public string Host { get; set; } = string.Empty;
 
         /// <summary>
@@ -20,7 +21,7 @@ namespace KdSoft.EtwEvents.PushAgent.Models
         public bool IsStopped { get; set; }
 
         public IImmutableList<ProviderSetting> EnabledProviders { get; set; } = ImmutableList<ProviderSetting>.Empty;
-        public ImmutableArray<EventSinkState> EventSinks { get; set; }
+        public ImmutableArray<EventSinkState> EventSinks { get; set; } = ImmutableArray<EventSinkState>.Empty;
     }
 
     public class EventSinkState

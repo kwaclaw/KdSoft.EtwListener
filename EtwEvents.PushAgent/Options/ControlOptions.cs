@@ -3,7 +3,8 @@ using KdSoft.EtwEvents.WebClient.Models;
 
 namespace KdSoft.EtwEvents.PushAgent
 {
-    public class ControlOptions {
+    public class ControlOptions
+    {
         public Uri Uri { get; set; } = new Uri("http://example.com");
         /// <summary>
         /// Sets the initial amount of time to wait before attempting to reconnect to the EventSource API.

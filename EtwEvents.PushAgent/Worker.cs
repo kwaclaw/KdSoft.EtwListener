@@ -1,11 +1,19 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Net.Mime;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwEvents.Server;
 using LaunchDarkly.EventSource;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -14,6 +22,7 @@ namespace KdSoft.EtwEvents.PushAgent
 {
     public class Worker: BackgroundService
     {
+        readonly IConfiguration _configuration;
         readonly IOptions<ControlOptions> _controlOptions;
         readonly IOptions<EventQueueOptions> _eventQueueOptions;
         readonly IOptions<EventSessionOptions> _sessionOptions;
@@ -22,12 +31,14 @@ namespace KdSoft.EtwEvents.PushAgent
         readonly ILoggerFactory _loggerFactory;
         readonly ILogger<Worker> _logger;
         readonly HttpClient _http;
-        readonly HttpClientHandler _httpCertHandler;
+        readonly HttpClientCertificateHandler _httpCertHandler;
+        readonly JsonSerializerOptions _jsonOptions;
 
         EventSource? _eventSource;
         RealTimeTraceSession? _session;
 
         public Worker(
+            IConfiguration configuration,
             IOptions<ControlOptions> controlOptions,
             IOptions<EventQueueOptions> eventQueueOptions,
             IOptions<EventSessionOptions> sessionOptions,
@@ -35,6 +46,7 @@ namespace KdSoft.EtwEvents.PushAgent
             IEventSinkFactory sinkFactory,
             ILoggerFactory loggerFactory
         ) {
+            this._configuration = configuration;
             this._controlOptions = controlOptions;
             this._eventQueueOptions = eventQueueOptions;
             this._sessionOptions = sessionOptions;
@@ -43,6 +55,8 @@ namespace KdSoft.EtwEvents.PushAgent
             this._loggerFactory = loggerFactory;
             this._logger = loggerFactory.CreateLogger<Worker>();
 
+            _jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+
             _httpCertHandler = new HttpClientCertificateHandler(controlOptions.Value.ClientCertificate);
             _http = new HttpClient(_httpCertHandler);
         }
@@ -50,6 +64,7 @@ namespace KdSoft.EtwEvents.PushAgent
         #region Control Channel
 
         async Task ProcessEvent(ControlEvent sse) {
+            var opts = _controlOptions.Value;
             switch (sse.Event) {
                 case "ChangeLogLevel":
                     //
@@ -61,11 +76,40 @@ namespace KdSoft.EtwEvents.PushAgent
                     //
                     break;
                 case "GetState":
-                    //TODO call AgentController with AgentStates update
+                    await SendStateUpdate().ConfigureAwait(false);
+                    break;
+                case "UpdateProviders":
+                    var providerSettings = JsonSerializer.Deserialize<List<EtwLogging.ProviderSetting>>(sse.Data, _jsonOptions);
+                    var ses = _session;
+                    if (providerSettings != null && ses != null) {
+                        foreach (var setting in providerSettings) {
+                            ses.EnableProvider(setting);
+                        }
+                    }
                     break;
                 default:
                     break;
             }
+        }
+
+        Task SendStateUpdate() {
+            var opts = _controlOptions.Value;
+            var postUri = new Uri(opts.Uri, "Agent/UpdateState");
+            var httpMsg = new HttpRequestMessage(HttpMethod.Post, postUri);
+
+            var agentName = _httpCertHandler.ClientCert.GetNameInfo(X509NameType.SimpleName, false);
+            var agentEmail = _httpCertHandler.ClientCert.GetNameInfo(X509NameType.EmailName, false);
+            var state = new Models.AgentState {
+                EnabledProviders = _session?.EnabledProviders.ToImmutableList() ?? ImmutableList<EtwLogging.ProviderSetting>.Empty,
+                Name = string.IsNullOrWhiteSpace(agentEmail) ? agentName : $"{agentName} ({agentEmail})",
+                Host = Dns.GetHostName(),
+                Site = _configuration["Site"]
+            };
+
+            var mediaType = new MediaTypeHeaderValue(MediaTypeNames.Application.Json);
+            httpMsg.Content = JsonContent.Create<Models.AgentState>(state, mediaType, _jsonOptions);
+
+            return _http.SendAsync(httpMsg);
         }
 
         async void EventReceived(object? sender, MessageReceivedEventArgs e) {
@@ -85,7 +129,6 @@ namespace KdSoft.EtwEvents.PushAgent
         void EventSourceStateChanged(object? sender, StateChangedEventArgs e) {
             _logger?.LogInformation($"{nameof(EventSourceStateChanged)}: {e.ReadyState}");
         }
-
 
         public EventSource StartSSE() {
             var opts = _controlOptions.Value;

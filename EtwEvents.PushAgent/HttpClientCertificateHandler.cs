@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Http;
+using System.Security.Cryptography.X509Certificates;
 using KdSoft.EtwEvents.WebClient.Models;
 using shared = KdSoft.EtwEvents.Client.Shared;
 
@@ -14,8 +15,12 @@ namespace KdSoft.EtwEvents.PushAgent
             if (clientCert == null)
                 throw new ArgumentException("Cannot find certificate based on specified options.", nameof(certOptions));
 
+            this.ClientCert = clientCert;
+
             this.ClientCertificateOptions = ClientCertificateOption.Manual;
             this.ClientCertificates.Add(clientCert);
         }
+
+        public X509Certificate2 ClientCert { get; }
     }
 }

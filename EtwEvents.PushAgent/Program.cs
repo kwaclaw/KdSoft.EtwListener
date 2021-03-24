@@ -1,13 +1,15 @@
 using System;
+using System.Diagnostics;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwEvents.EventSinks;
 using KdSoft.EtwEvents.Server;
 using KdSoft.Logging;
+using Microsoft.Diagnostics.Tracing.Session;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -16,24 +18,25 @@ namespace KdSoft.EtwEvents.PushAgent
     public class Program
     {
         public static async Task Main(string[] args) {
-            var host = CreateHostBuilder(args).Build();
-            var cts = new CancellationTokenSource();
-            var runTask = host.RunAsync(cts.Token);
-
-            string? line;
-            while ((line = Console.ReadLine()) != "quit") {
-                Console.WriteLine($">> {line}");
+            // Today you have to be Admin to turn on ETW events (anyone can write ETW events).   
+            if (!(TraceEventSession.IsElevated() ?? false)) {
+                Debug.WriteLine("To turn on ETW events you need to be Administrator, please run from an Admin process.");
+                Debugger.Break();
+                return;
             }
 
-            cts.Cancel();
-            await runTask.ConfigureAwait(false);
+            CreateHostBuilder(args).Build().Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                //.ConfigureAppConfiguration((hostContext, cfgBuilder) => {
-                //    cfgBuilder.AddJsonFile(provider, "appsettings.Local.json", optional: true, reloadOnChange: true);
-                //})
+                .ConfigureAppConfiguration((hostContext, cfgBuilder) => {
+                    var env = hostContext.HostingEnvironment;
+                    var provider = new PhysicalFileProvider(Path.Combine(env.ContentRootPath, ".."));
+                    // we are overriding some of the settings that are already loaded
+                    cfgBuilder.AddJsonFile(provider, "appsettings.Local.json", optional: true, reloadOnChange: true);
+                    cfgBuilder.AddCommandLine(args);
+                })
                 .ConfigureLogging((hostContext, loggingBuilder) => {
                     loggingBuilder.ClearProviders();
                     loggingBuilder.AddConsole();

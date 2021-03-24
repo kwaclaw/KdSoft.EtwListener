@@ -9,8 +9,8 @@ using KdSoft.EtwLogging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
 using Microsoft.Extensions.Options;
-using tracing = Microsoft.Diagnostics.Tracing;
 using kdSoftUtils = KdSoft.Utils;
+using tracing = Microsoft.Diagnostics.Tracing;
 
 namespace KdSoft.EtwEvents.PushAgent
 {
@@ -96,7 +96,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
         async Task ProcessBatches(CancellationToken stoppingToken) {
             long sequenceNo = 0;
-                    
+
             await Task.Yield();
 
             using (var reader = _channel.GetNewReader()) {
