@@ -2,15 +2,15 @@
 
 import { html, nothing } from '../lib/lit-html.js';
 import { classMap } from '../lib/lit-html/directives/class-map.js';
-import { observe } from '../lib/@nx-js/observer-util/dist/es.es6.js';
+import { observe, observable } from '../lib/@nx-js/observer-util/dist/es.es6.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
 import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import dialogPolyfill from '../lib/dialog-polyfill.js';
 import FilterFormModel from './filter-form-model.js';
-import '../components/kdsoft-expander.js';
 import './filter-form.js';
+import '../components/kdsoft-checklist.js';
 import KdSoftChecklistModel from '../components/kdsoft-checklist-model.js';
-import Spinner from '../js/spinner.js';
+import '../components/kdsoft-expander.js';
 import * as utils from '../js/utils.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import { KdSoftGridStyle } from '../styles/kdsoft-grid-style.js';
@@ -103,8 +103,6 @@ class EtwAppSideBar extends LitMvvmElement {
   disconnectedCallback() {
     super.disconnectedCallback();
 
-    this.model.unobserveVisibleSessions();
-
     this._removeDialogHandlers(this.renderRoot.getElementById('dlg-filter'));
     this._removeDialogHandlers(this.renderRoot.getElementById('dlg-config'));
   }
@@ -117,14 +115,15 @@ class EtwAppSideBar extends LitMvvmElement {
   beforeFirstRender() {
     this.appTitle = this.getAttribute('appTitle');
     if (!this.agentChecklistModel) {
-      const agentList = Array.from(this.model.agents.values());
+      const agentList = this.model.agents;
       const agentIndex = getAgentIndex(agentList, this.model.activeAgentName);
-      this.agentChecklistModel = new KdSoftChecklistModel(
-        agentList,
+      const checklistModel = new KdSoftChecklistModel(
+        this.model.agents,
         agentIndex >= 0 ? [agentIndex] : [],
         false,
         item => item.name
       );
+      this.agentChecklistModel = checklistModel;
     }
   }
 
@@ -216,11 +215,8 @@ class EtwAppSideBar extends LitMvvmElement {
           margin: 0;
         }
 
-        #sessionProfiles {
-          width: 275px;
-        }
-
-        kdsoft-expander.session-details [slot="content"] {
+        /* the item template for the checklist contains a part we can select */ 
+        #agents::part(slot) {
           display: grid;
           grid-gap: 0 1em;
           grid-template-columns: max-content auto;
@@ -232,6 +228,23 @@ class EtwAppSideBar extends LitMvvmElement {
         }
       `
     ];
+  }
+
+  getAgentTemplate(agent) {
+    return html`
+      <kdsoft-expander style="width:100%">
+        <div slot="header" class="flex pr-1 text-white bg-gray-500">
+          <label class="pl-1 font-bold text-xl">${agent.name}</label>
+        </div>
+        <!-- using part="slot" we can style this from here even though it will be rendered inside a web component -->
+        <div part="slot" slot="content" class="pl-3">
+          <label class="pl-1 font-bold">Site</label>
+          <div class="pl-1">${agent.site}</div>
+          <label class="pl-1 font-bold">Host</label>
+          <div class="pl-1">${agent.host}</div>
+        </div>
+      </kdsoft-expander>
+    `;
   }
 
   render() {
@@ -253,9 +266,6 @@ class EtwAppSideBar extends LitMvvmElement {
         <!-- <div class="pr-2"> -->
           <button id="nav-toggle" @click=${this._toggleNav} class="px-3 py-3 text-gray-600 border-gray-600 hover:text-gray-800">
             <i class="fas fa-lg fa-bars"></i>
-            <!-- <svg class="fill-current h-3 w-3" viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg"><title>Menu</title><path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"/>
-            </svg> -->
           </button>
         <!-- </div> -->
         <div class="flex pl-8">
@@ -268,9 +278,8 @@ class EtwAppSideBar extends LitMvvmElement {
 
         <kdsoft-checklist id="agents" class="text-black"
           .model=${this.agentChecklistModel}
-          .getItemTemplate=${item => html`${item.name}`}
-          show-checkboxes>
-        </kdsoft-checklist>
+          .getItemTemplate=${item => this.getAgentTemplate(item)}
+        ></kdsoft-checklist>
 
       </nav>
 
