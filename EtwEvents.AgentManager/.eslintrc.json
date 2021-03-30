@@ -16,7 +16,7 @@
     "space-before-function-paren": "off",
     "function-paren-newline": "off",
     "arrow-parens": [ "warn", "as-needed" ],
-    "object-curly-newline": [ "error", { "multiline": true } ],
+    "object-curly-newline": [ "off", { "multiline": true } ],
     "quotes": [
       "error",
       "single",
