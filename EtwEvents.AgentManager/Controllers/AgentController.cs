@@ -34,11 +34,16 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
         async Task<IActionResult> GetMessageEventStream(string agentId, CancellationToken cancelToken) {
             var agentProxy = _agentProxyManager.ActivateProxy(agentId);
 
+            // initial agent state update
+            agentProxy.Writer.TryWrite(AgentProxyManager.GetStateMessage);
+
             var finished = await agentProxy.ProcessMessages(Response, cancelToken).ConfigureAwait(false);
             if (finished)
                 _logger.LogInformation($"Finished SSE connection: {agentId}");
             else
                 _logger.LogInformation($"Cancelled SSE connection: {agentId}");
+
+            await _agentProxyManager.PostAgentStateChange().ConfigureAwait(false);
 
             // OkResult not right here, tries to set status code which is not allowed once the response has started
             return new EmptyResult();

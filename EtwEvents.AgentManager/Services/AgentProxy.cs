@@ -23,6 +23,7 @@ namespace KdSoft.EtwEvents.AgentManager.Services
 
         CancellationTokenSource? _connectionTokenSource;
         AgentState _state;
+        int _connected;
 
         public AgentProxy(string agentId, Channel<ControlEvent> channel, ILogger logger) {
             this.AgentId = agentId;
@@ -55,6 +56,11 @@ namespace KdSoft.EtwEvents.AgentManager.Services
 
         public AgentState GetState() {
             return Volatile.Read(ref _state);
+        }
+
+        public bool IsConnected() {
+            var connected = Volatile.Read(ref _connected);
+            return connected != 0;
         }
 
         public void Used() {
@@ -95,6 +101,7 @@ namespace KdSoft.EtwEvents.AgentManager.Services
 
             bool finished = true;
             try {
+                Volatile.Write(ref _connected, 99);
                 await foreach (var sse in _channel.Reader.ReadAllAsync(linkedToken).ConfigureAwait(false)) {
                     if (sse.Event == CloseEvent) {
                         Writer.TryComplete();
@@ -118,6 +125,9 @@ namespace KdSoft.EtwEvents.AgentManager.Services
             }
             catch (OperationCanceledException) {
                 finished = false;
+            }
+            finally {
+                Volatile.Write(ref _connected, 0);
             }
 
             return finished;

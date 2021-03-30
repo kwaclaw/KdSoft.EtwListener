@@ -63,7 +63,7 @@ namespace KdSoft.EtwEvents.AgentManager.Services
                 var deltaMSecs = Environment.TickCount - agentProxy.TimeStamp;
                 if (deltaMSecs >= _keepAliveMSecs) {
                     //agentProxy.Writer.TryWrite(KeepAliveMessage);
-                    // we can use GetState as keep alive message
+                    // we can use GetState as keep alive message as long as the data size is not too big
                     agentProxy.Writer.TryWrite(GetStateMessage);
                 }
             }
@@ -72,6 +72,8 @@ namespace KdSoft.EtwEvents.AgentManager.Services
         public Task<AgentStates> GetAgentStates() {
             var asb = ImmutableArray.CreateBuilder<AgentState>();
             foreach (var entry in _proxies) {
+                if (!entry.Value.IsConnected())
+                    continue;
                 var agentState = entry.Value.GetState();
                 if (agentState != null)
                     asb.Add(agentState);
