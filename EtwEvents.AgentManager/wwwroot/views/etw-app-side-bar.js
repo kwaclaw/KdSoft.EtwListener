@@ -49,9 +49,8 @@ function formSaveHandler(e) {
     this.model.saveSinkProfile(e.detail.model);
   }
 }
-
-function getAgentIndex(agentList, agentName) {
-  return agentList.findIndex(val => val.name === agentName);
+function getAgentIndex(agentList, agentId) {
+  return agentList.findIndex(val => val.id === agentId);
 }
 
 class EtwAppSideBar extends LitMvvmElement {
@@ -114,19 +113,19 @@ class EtwAppSideBar extends LitMvvmElement {
     this.appTitle = this.getAttribute('appTitle');
     if (!this.agentChecklistModel) {
       const agentList = this.model.agents;
-      const agentIndex = getAgentIndex(agentList, this.model.activeAgentName);
+      const agentIndex = getAgentIndex(agentList, this.model.activeAgentId);
       const checklistModel = new KdSoftChecklistModel(
         agentList,
         agentIndex >= 0 ? [agentIndex] : [],
         false,
-        item => item.name
+        item => item.id
       );
       this.agentChecklistModel = checklistModel;
 
       this._agentListObserver = observe(() => {
         const selEntry = checklistModel.firstSelectedEntry;
         const selAgent = selEntry?.item;
-        this.model.activeAgentName = selAgent?.state.name;
+        this.model.activeAgentId = selAgent?.state.id;
       });
     }
   }
@@ -252,7 +251,7 @@ class EtwAppSideBar extends LitMvvmElement {
     return html`
       <kdsoft-expander class="w-full">
         <div part="header" slot="header" class="flex items-baseline pr-1 text-white bg-gray-500">
-          <label class="pl-1 font-bold text-xl">${entry.state.name}</label>
+          <label class="pl-1 font-bold text-xl">${entry.state.id}</label>
           <span class="ml-auto">
             ${onlyModified ? html`<i class="text-yellow-800 fas fa-pencil-alt"></i>` : nothing}
             ${entry.disconnected ? html`<i class="text-red-800 fas fa-unlink"></i>` : nothing}

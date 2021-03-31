@@ -63,6 +63,7 @@ namespace KdSoft.EtwEvents.AgentManager
                     //},
                     OnCertificateValidated = context => {
                         var identity = context.Principal?.Identity as ClaimsIdentity;
+                        // CalimsIdentity.Name here is the certificate's Subject Common Name (CN)
                         if (identity != null && identity.Name != null) {
                             string? certRole = null;
                             var match = _roleRegex.Match(context.ClientCertificate.Subject);

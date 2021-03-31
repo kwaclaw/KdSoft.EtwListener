@@ -19,7 +19,7 @@ class EtwAppModel {
   constructor() {
     this._agentsMap = new Map();
     this._agents = [];
-    this.activeAgentName = null;
+    this.activeAgentId = null;
 
     this._errorSequenceNo = 0;
     this.fetchErrors = new RingBuffer(50);
@@ -102,8 +102,8 @@ class EtwAppModel {
       this._enhanceProviderState(provider);
     }
 
-    agentState.addProvider = (name, level) => {
-      const newProvider = this._enhanceProviderState({ name, level, matchKeywords: 0 });
+    agentState.addProvider = (id, level) => {
+      const newProvider = this._enhanceProviderState({ id, level, matchKeywords: 0 });
       agentState.enabledProviders.splice(0, 0, newProvider);
       agentState.enabledProviders.forEach(p => {
         p.expanded = false;
@@ -111,8 +111,8 @@ class EtwAppModel {
       newProvider.expanded = true;
     };
 
-    agentState.removeProvider = name => {
-      const index = agentState.enabledProviders.findIndex(p => p.name === name);
+    agentState.removeProvider = id => {
+      const index = agentState.enabledProviders.findIndex(p => p.id === id);
       if (index >= 0) agentState.enabledProviders.splice(index, 1);
     };
 
@@ -121,7 +121,7 @@ class EtwAppModel {
 
   get agents() { return this._agents; }
   get activeAgent() {
-    const entry = this._agentsMap.get(this.activeAgentName);
+    const entry = this._agentsMap.get(this.activeAgentId);
     if (!entry) return null;
     const result = this._enhanceAgentState(entry.state);
     return result;
@@ -139,15 +139,15 @@ class EtwAppModel {
     }
 
     ags.sort((a, b) => {
-      const nameA = a.state.name.toUpperCase(); // ignore upper and lowercase
-      const nameB = b.state.name.toUpperCase(); // ignore upper and lowercase
-      if (nameA < nameB) {
+      const idA = a.state.id.toUpperCase(); // ignore upper and lowercase
+      const idB = b.state.id.toUpperCase(); // ignore upper and lowercase
+      if (idA < idB) {
         return -1;
       }
-      if (nameA > nameB) {
+      if (idA > idB) {
         return 1;
       }
-      // names must be equal
+      // ids must be equal
       return 0;
     });
 
@@ -160,10 +160,10 @@ class EtwAppModel {
   _updateAgentsMap(agentStates) {
     const localAgentKeys = new Set(this._agentsMap.keys());
 
-    // agentStates have unique names (case-insensitive) - //TODO server culture vs local culture?
+    // agentStates have unique ids (case-insensitive) - //TODO server culture vs local culture?
     for (const state of (agentStates || [])) {
-      const agentName = state.name.toLowerCase();
-      let entry = this._agentsMap.get(agentName);
+      const agentId = state.id.toLowerCase();
+      let entry = this._agentsMap.get(agentId);
       if (!entry) {
         const newState = observable(utils.clone(state));
         entry = observable({ state: newState, original: state });
@@ -182,8 +182,8 @@ class EtwAppModel {
       } else {
         entry.original = state;
       }
-      this._agentsMap.set(agentName, observable(entry));
-      localAgentKeys.delete(agentName);
+      this._agentsMap.set(agentId, observable(entry));
+      localAgentKeys.delete(agentId);
     }
 
     // indicate agents that are not connected anymore

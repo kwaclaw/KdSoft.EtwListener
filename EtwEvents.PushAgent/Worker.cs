@@ -139,11 +139,12 @@ namespace KdSoft.EtwEvents.PushAgent
         }
 
         Task SendStateUpdate() {
-            var agentName = _httpCertHandler.ClientCert.GetNameInfo(X509NameType.SimpleName, false);
-            var agentEmail = _httpCertHandler.ClientCert.GetNameInfo(X509NameType.EmailName, false);
+            //var agentName = _httpCertHandler.ClientCert.GetNameInfo(X509NameType.SimpleName, false);
+            //var agentEmail = _httpCertHandler.ClientCert.GetNameInfo(X509NameType.EmailName, false);
             var state = new Models.AgentState {
                 EnabledProviders = _session?.EnabledProviders.ToImmutableList() ?? ImmutableList<EtwLogging.ProviderSetting>.Empty,
-                Name = string.IsNullOrWhiteSpace(agentEmail) ? agentName : $"{agentName} ({agentEmail})",
+                // Id = string.IsNullOrWhiteSpace(agentEmail) ? agentName : $"{agentName} ({agentEmail})",
+                Id = string.Empty,  // will be filled in on server using the client certificate
                 Host = Dns.GetHostName(),
                 Site = _configuration["Site"],
                 FilterBody = _session?.GetCurrentFilterBody()

@@ -15,23 +15,23 @@ namespace KdSoft.EtwEvents.AgentManager.Services
     {
         readonly Channel<ControlEvent> _channel;
         readonly ILogger _logger;
+        readonly object _syncObj = new object();
 
         CancellationTokenSource? _connectionTokenSource;
         AgentState _state;
         int _connected;
 
         public AgentProxy(string agentId, Channel<ControlEvent> channel, ILogger logger) {
-            this.AgentId = agentId;
             this._channel = channel;
             this._logger = logger;
-            this._state = new AgentState { Name = Guid.NewGuid().ToString() };
+            this._state = new AgentState { Id = agentId };
         }
 
         public AgentProxy(string agentId, ILogger logger) : this(agentId, Channel.CreateUnbounded<ControlEvent>(), logger) {
             //
         }
 
-        public string AgentId { get; }
+        public string AgentId { get { return _state.Id; } }
 
         public ChannelWriter<ControlEvent> Writer => _channel.Writer;
 
@@ -46,11 +46,17 @@ namespace KdSoft.EtwEvents.AgentManager.Services
         public Task Completion => _channel.Reader.Completion;
 
         public void SetState(AgentState state) {
-            Volatile.Write(ref _state, state);
+            lock (_syncObj) {
+                if (this._state.Id != state.Id)
+                    throw new ArgumentException("Must not set agent state with different name", nameof(state));
+                this._state = state;
+            }
         }
 
         public AgentState GetState() {
-            return Volatile.Read(ref _state);
+            lock (_syncObj) {
+                return _state;
+            }
         }
 
         public bool IsConnected() {

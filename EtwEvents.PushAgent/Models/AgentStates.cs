@@ -5,7 +5,7 @@ namespace KdSoft.EtwEvents.PushAgent.Models
 {
     public class AgentState
     {
-        public string Name { get; set; } = string.Empty;
+        public string Id { get; set; } = string.Empty;
         public string Site { get; set; } = string.Empty;
         public string Host { get; set; } = string.Empty;
 

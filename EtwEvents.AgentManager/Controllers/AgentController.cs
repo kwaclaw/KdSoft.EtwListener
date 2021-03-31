@@ -86,7 +86,10 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
                 return Unauthorized();
 
             var agentProxy = _agentProxyManager.ActivateProxy(agentId);
+            // AgentState.ID must always match the authenticated identity
+            state.Id = agentId;
             agentProxy.SetState(state);
+
             await _agentProxyManager.PostAgentStateChange().ConfigureAwait(false);
             return Ok();
         }
