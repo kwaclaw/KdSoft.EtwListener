@@ -15,6 +15,11 @@ class KdSoftDropdownConnector {
   disconnectDropdownSlot() {
     //
   }
+
+  reconnectDropdownSlot() {
+    this.disconnectDropdownSlot();
+    this.connectDropdownSlot();
+  }
 }
 
 export default KdSoftDropdownConnector;

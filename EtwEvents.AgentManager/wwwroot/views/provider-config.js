@@ -74,6 +74,8 @@ class ProviderConfig extends LitMvvmElement {
 
   firstRendered() {
     super.firstRendered();
+    // DOM nodes may have changed
+    this.levelChecklistConnector.reconnectDropdownSlot();
   }
 
   beforeFirstRender() {
