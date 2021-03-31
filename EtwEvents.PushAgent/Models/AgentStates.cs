@@ -22,6 +22,7 @@ namespace KdSoft.EtwEvents.PushAgent.Models
 
         public IImmutableList<ProviderSetting> EnabledProviders { get; set; } = ImmutableList<ProviderSetting>.Empty;
         public ImmutableArray<EventSinkState> EventSinks { get; set; } = ImmutableArray<EventSinkState>.Empty;
+        public string? FilterBody { get; set; }
     }
 
     public class EventSinkState

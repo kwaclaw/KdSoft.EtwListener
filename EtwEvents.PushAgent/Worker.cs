@@ -12,7 +12,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwEvents.Server;
+using KdSoft.EtwLogging;
 using LaunchDarkly.EventSource;
+using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -65,6 +67,13 @@ namespace KdSoft.EtwEvents.PushAgent
 
         async Task ProcessEvent(ControlEvent sse) {
             var opts = _controlOptions.Value;
+            var ses = _session;
+            if (ses == null)
+                return;
+
+            ImmutableArray<Diagnostic> diagnostics;
+            BuildFilterResult filterResult;
+
             switch (sse.Event) {
                 case "ChangeLogLevel":
                     //
@@ -86,6 +95,24 @@ namespace KdSoft.EtwEvents.PushAgent
                             ses.EnableProvider(setting);
                         }
                     }
+                    break;
+                case "SetFilter":
+                    var filterRequest = SetFilterRequest.Parser.ParseJson(sse.Data);
+                    //var filterRequest = JsonSerializer.Deserialize<SetFilterRequest>(sse.Data, _jsonOptions);
+                    if (filterRequest == null)
+                        return;
+                    diagnostics = ses.SetFilter(filterRequest.CsharpFilter);
+                    filterResult = new BuildFilterResult().AddDiagnostics(diagnostics);
+                    await PostMessage($"Agent/SetFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
+                    break;
+                case "TestFilter":
+                    var testRequest = TestFilterRequest.Parser.ParseJson(sse.Data);
+                    //var testRequest = JsonSerializer.Deserialize<TestFilterRequest>(sse.Data, _jsonOptions);
+                    if (testRequest == null)
+                        return;
+                    diagnostics = RealTimeTraceSession.TestFilter(testRequest.CsharpFilter);
+                    filterResult = new BuildFilterResult().AddDiagnostics(diagnostics);
+                    await PostMessage($"Agent/TestFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
                     break;
                 default:
                     break;
@@ -182,6 +209,11 @@ namespace KdSoft.EtwEvents.PushAgent
 
 
             session.GetLifeCycle().Used();
+
+            var diagnostics = session.SetFilter(sopts.Filter);
+            if (!diagnostics.IsEmpty) {
+                logger.LogError("Filter compilation failed.");
+            }
 
             // enable the providers
             foreach (var provider in _sessionOptions.Value.Providers) {
