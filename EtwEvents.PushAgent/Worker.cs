@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -89,10 +90,14 @@ namespace KdSoft.EtwEvents.PushAgent
                     break;
                 case "UpdateProviders":
                     var providerSettings = JsonSerializer.Deserialize<List<EtwLogging.ProviderSetting>>(sse.Data, _jsonOptions);
-                    var ses = _session;
                     if (providerSettings != null && ses != null) {
+                        var providersToBeDisabled = ses.EnabledProviders.Select(ep => ep.Name).ToHashSet();
                         foreach (var setting in providerSettings) {
                             ses.EnableProvider(setting);
+                            providersToBeDisabled.Remove(setting.Name);
+                        }
+                        foreach (var providerName in providersToBeDisabled) {
+                            ses.DisableProvider(providerName);
                         }
                     }
                     break;
@@ -114,29 +119,36 @@ namespace KdSoft.EtwEvents.PushAgent
                     filterResult = new BuildFilterResult().AddDiagnostics(diagnostics);
                     await PostMessage($"Agent/TestFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
                     break;
+                case "UpdateEventSink":
+                    //
+                    break;
                 default:
                     break;
             }
         }
 
-        Task SendStateUpdate() {
+        Task PostMessage<T>(string path, T content) {
             var opts = _controlOptions.Value;
-            var postUri = new Uri(opts.Uri, "Agent/UpdateState");
+            var postUri = new Uri(opts.Uri, path);
             var httpMsg = new HttpRequestMessage(HttpMethod.Post, postUri);
 
+            var mediaType = new MediaTypeHeaderValue(MediaTypeNames.Application.Json);
+            httpMsg.Content = JsonContent.Create<T>(content, mediaType, _jsonOptions);
+
+            return _http.SendAsync(httpMsg);
+        }
+
+        Task SendStateUpdate() {
             var agentName = _httpCertHandler.ClientCert.GetNameInfo(X509NameType.SimpleName, false);
             var agentEmail = _httpCertHandler.ClientCert.GetNameInfo(X509NameType.EmailName, false);
             var state = new Models.AgentState {
                 EnabledProviders = _session?.EnabledProviders.ToImmutableList() ?? ImmutableList<EtwLogging.ProviderSetting>.Empty,
                 Name = string.IsNullOrWhiteSpace(agentEmail) ? agentName : $"{agentName} ({agentEmail})",
                 Host = Dns.GetHostName(),
-                Site = _configuration["Site"]
+                Site = _configuration["Site"],
+                FilterBody = _session?.GetCurrentFilterBody()
             };
-
-            var mediaType = new MediaTypeHeaderValue(MediaTypeNames.Application.Json);
-            httpMsg.Content = JsonContent.Create<Models.AgentState>(state, mediaType, _jsonOptions);
-
-            return _http.SendAsync(httpMsg);
+            return PostMessage("Agent/UpdateState", state);
         }
 
         async void EventReceived(object? sender, MessageReceivedEventArgs e) {
