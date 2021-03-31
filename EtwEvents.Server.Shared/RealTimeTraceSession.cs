@@ -214,12 +214,14 @@ namespace KdSoft.EtwEvents.Server
 
         class FilterHolder
         {
-            public FilterHolder(IEventFilter filter, CollectibleAssemblyLoadContext loadContext) {
+            public FilterHolder(IEventFilter filter, CollectibleAssemblyLoadContext loadContext, string filterBody) {
                 this.Filter = filter;
                 this.LoadContext = loadContext;
+                this.FilterBody = filterBody;
             }
             public readonly IEventFilter Filter;
             public readonly CollectibleAssemblyLoadContext LoadContext;
+            public readonly string FilterBody;
         }
 
         FilterHolder? _filterHolder;
@@ -232,6 +234,11 @@ namespace KdSoft.EtwEvents.Server
         public IEventFilter? GetCurrentFilter() {
             var filterHolder = _filterHolder;
             return filterHolder?.Filter;
+        }
+
+        public string? GetCurrentFilterBody() {
+            var filterHolder = _filterHolder;
+            return filterHolder?.FilterBody;
         }
 
         public static ImmutableArray<Diagnostic> GenerateFilter(string filterBody, MemoryStream ms) {
@@ -280,7 +287,7 @@ namespace KdSoft.EtwEvents.Server
             var filterClass = filterAssembly.ExportedTypes.Where(tp => tp.IsClass && filterType.IsAssignableFrom(tp)).First();
             var newFilter = (IEventFilter?)Activator.CreateInstance(filterClass);
 
-            SetFilterHolder(new FilterHolder(newFilter!, newFilterContext));
+            SetFilterHolder(new FilterHolder(newFilter!, newFilterContext, filterBody));
 
             return ImmutableArray<Diagnostic>.Empty;
         }
