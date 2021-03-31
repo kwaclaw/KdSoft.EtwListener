@@ -1,6 +1,6 @@
 /* eslint guard-for-in: "off" */
 
-import { cloneObject, objectToFormData } from './utils.js';
+import { clone, objectToFormData } from './utils.js';
 
 function fetchNormal(url, options) {
   return fetch(url, options).then(
@@ -107,7 +107,7 @@ function buildUrl(route, url, params) {
 }
 
 function buildGetOptions(options, acceptType) {
-  const opts = cloneObject({}, defaultOptions);
+  const opts = clone(defaultOptions);
   if (options) Object.assign(opts, options);
   opts.method = 'GET';
   if (acceptType) Object.assign(opts.headers, { Accept: acceptType });
@@ -115,7 +115,7 @@ function buildGetOptions(options, acceptType) {
 }
 
 function buildPostOptions(options, contentType) {
-  const opts = cloneObject({}, defaultOptions);
+  const opts = clone(defaultOptions);
   if (options) Object.assign(opts, options);
   opts.method = 'POST';
   if (contentType) Object.assign(opts.headers, { 'Content-Type': contentType });

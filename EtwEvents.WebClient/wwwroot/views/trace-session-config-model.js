@@ -19,15 +19,15 @@ class TraceSessionConfigModel extends TraceSessionProfile {
   constructor(profile, eventSinkProfiles) {
     super((profile.name || '').slice(0),
       (profile.host || '').slice(0),
-      utils.cloneObject([], profile.providers || []),
-      utils.cloneObject([], profile.filters || []),
+      utils.clone(profile.providers || []),
+      utils.clone(profile.filters || []),
       profile.activeFilterIndex,
       (profile.lifeTime || '').slice(0),
       (profile.batchSize || 100),
       (profile.maxWriteDelayMS || 300),
-      utils.cloneObject([], profile.standardColumnOrder || []),
+      utils.clone(profile.standardColumnOrder || []),
       (profile.standardColumns || []).slice(0),
-      utils.cloneObject([], profile.payloadColumnList || []),
+      utils.clone(profile.payloadColumnList || []),
       (profile.payloadColumns || []).slice(0),
       (profile.eventSinks || []).slice(0)
     );
