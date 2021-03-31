@@ -83,8 +83,7 @@ class KdSoftChecklistModel {
   get selectedEntries() { return iterateSelectedItems(this.items, this._selectedItems); }
 
   get firstSelectedEntry() {
-    const nextValue = this.selectedEntries[Symbol.iterator]().next().value;
-    return nextValue ? nextValue.item : nextValue;
+    return this.selectedEntries[Symbol.iterator]().next().value;
   }
 
   get selectedIndexes() {
