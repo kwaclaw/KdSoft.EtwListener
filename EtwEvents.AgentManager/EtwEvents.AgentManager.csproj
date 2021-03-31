@@ -47,12 +47,7 @@
     <ProjectReference Include="..\EtwEvents.Client.Shared\EtwEvents.Client.Shared.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="InfraStructure\" />
-    <Folder Include="Models\" />
-  </ItemGroup>
 
- 
   <Target Name="PostCSS" BeforeTargets="Build">
     <Exec Command="npm run build"></Exec>
     <Copy SourceFiles="@(FontAwsomeSprites)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeSprites->'wwwroot/css/fontawesome/sprites/%(RecursiveDir)%(Filename)%(Extension)')" />

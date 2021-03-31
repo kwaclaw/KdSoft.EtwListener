@@ -167,8 +167,6 @@ class EtwAppModel {
       if (!entry) {
         const newState = observable(utils.clone(state));
         entry = observable({ state: newState, original: state });
-        // entry.modified = () => !utils.targetEquals(entry.original, newState);
-        // entry.disconnected = () => entry.original == null;
         Object.defineProperty(entry, 'modified', {
           get() {
             return !utils.targetEquals(entry.original, newState);

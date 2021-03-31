@@ -5,7 +5,6 @@ import { classMap } from '../lib/lit-html/directives/class-map.js';
 import { observe, observable } from '../lib/@nx-js/observer-util/dist/es.es6.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
 import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
-import dialogPolyfill from '../lib/dialog-polyfill.js';
 import '../components/kdsoft-checklist.js';
 import KdSoftChecklistModel from '../components/kdsoft-checklist-model.js';
 import '../components/kdsoft-expander.js';
@@ -23,32 +22,6 @@ const classList = {
   stopBtn: { ...runBtnBase, 'fa-stop': true, 'text-red-500': true },
 };
 
-const dialogClass = utils.html5DialogSupported ? '' : 'fixed';
-
-function formDoneHandler(e) {
-  if (!e.detail.canceled) {
-    if (e.target.localName === 'filter-form') {
-      this.model.saveSessionProfile(e.detail.model.session.profile);
-    } else if (e.target.localName === 'trace-session-config') {
-      this.model.saveSessionProfile(e.detail.model.cloneAsProfile());
-    } else if (e.target.localName === 'event-sink-config') {
-      this.model.saveSinkProfile(e.detail.model);
-    }
-  }
-
-  const dlg = e.currentTarget;
-  dlg.close();
-}
-
-function formSaveHandler(e) {
-  if (e.target.localName === 'filter-form') {
-    this.model.saveSessionProfile(e.detail.model.session.profile);
-  } else if (e.target.localName === 'trace-session-config') {
-    this.model.saveSessionProfile(e.detail.model.cloneAsProfile());
-  } else if (e.target.localName === 'event-sink-config') {
-    this.model.saveSinkProfile(e.detail.model);
-  }
-}
 function getAgentIndex(agentList, agentId) {
   return agentList.findIndex(val => val.id === agentId);
 }
@@ -57,23 +30,6 @@ class EtwAppSideBar extends LitMvvmElement {
   constructor() {
     super();
     this.scheduler = new Queue(priorities.HIGH);
-
-    // this allows us to unregister the event handlers, because we maintain references to their instances
-    this._formDoneHandler = formDoneHandler.bind(this);
-    this._formSaveHandler = formSaveHandler.bind(this);
-    this._dialogFocusOut = {
-      handleEvent(e) {
-        e.target.closest('dialog').close();
-      },
-      capture: true,
-    };
-  }
-
-  showFilterDlg(session) {
-    const dlg = this.renderRoot.getElementById('dlg-filter');
-    const cfg = dlg.getElementsByTagName('filter-form')[0];
-    cfg.model = new FilterFormModel(session);
-    dlg.showModal();
   }
 
   _toggleNav() {
@@ -85,23 +41,10 @@ class EtwAppSideBar extends LitMvvmElement {
 
   //#region overrides
 
-  _addDialogHandlers(dlg) {
-    dlg.addEventListener('kdsoft-done', this._formDoneHandler);
-    dlg.addEventListener('kdsoft-save', this._formSaveHandler);
-  }
-
-  _removeDialogHandlers(dlg) {
-    dlg.removeEventListener('kdsoft-done', this._formDoneHandler);
-    dlg.removeEventListener('kdsoft-save', this._formSaveHandler);
-  }
-
   /* eslint-disable indent, no-else-return */
 
   disconnectedCallback() {
     super.disconnectedCallback();
-
-    this._removeDialogHandlers(this.renderRoot.getElementById('dlg-filter'));
-    this._removeDialogHandlers(this.renderRoot.getElementById('dlg-config'));
   }
 
   shouldRender() {
@@ -131,16 +74,7 @@ class EtwAppSideBar extends LitMvvmElement {
   }
 
   firstRendered() {
-    const filterDlg = this.renderRoot.getElementById('dlg-filter');
-    const configDlg = this.renderRoot.getElementById('dlg-config');
-
-    if (!utils.html5DialogSupported) {
-      dialogPolyfill.registerDialog(filterDlg);
-      dialogPolyfill.registerDialog(configDlg);
-    }
-
-    this._addDialogHandlers(filterDlg);
-    this._addDialogHandlers(configDlg);
+    //
   }
 
   static get styles() {
@@ -303,13 +237,6 @@ class EtwAppSideBar extends LitMvvmElement {
         ></kdsoft-checklist>
 
       </nav>
-
-      <dialog id="dlg-config" class="${dialogClass}">
-        <trace-session-config class="h-full"></trace-session-config>
-      </dialog>
-      <dialog id="dlg-filter" class="${dialogClass}">
-        <filter-form></filter-form>
-      </dialog>
     `;
   }
 
