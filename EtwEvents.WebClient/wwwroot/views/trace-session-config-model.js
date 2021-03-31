@@ -1,6 +1,6 @@
 ﻿/* global i18n */
 
-import { observable, observe } from '../lib/@nx-js/observer-util/dist/es.es6.js';
+import { observable, observe, unobserve } from '../lib/@nx-js/observer-util/dist/es.es6.js';
 import * as utils from '../js/utils.js';
 import TraceSessionProfile from '../js/traceSessionProfile.js';
 import FilterCarouselModel from './filter-carousel-model.js';
@@ -15,19 +15,39 @@ const traceLevelList = () => [
   { name: i18n.__('Verbose'), value: 5 }
 ];
 
+function enhanceProviderState(provider) {
+  if (!(provider.levelChecklistModel instanceof KdSoftChecklistModel)) {
+    provider.levelChecklistModel = new KdSoftChecklistModel(
+      traceLevelList(),
+      [provider.level || 0],
+      false,
+      item => item.value
+    );
+  }
+  if (provider._levelObserver) {
+    unobserve(provider._levelObserver);
+  }
+  provider._levelObserver = observe(() => {
+    provider.level = provider.levelChecklistModel.firstSelectedEntry.item.value;
+  });
+
+  return provider;
+}
+
+
 class TraceSessionConfigModel extends TraceSessionProfile {
   constructor(profile, eventSinkProfiles) {
     super((profile.name || '').slice(0),
       (profile.host || '').slice(0),
-      utils.cloneObject([], profile.providers || []),
-      utils.cloneObject([], profile.filters || []),
+      utils.clone(profile.providers || []),
+      utils.clone(profile.filters || []),
       profile.activeFilterIndex,
       (profile.lifeTime || '').slice(0),
       (profile.batchSize || 100),
       (profile.maxWriteDelayMS || 300),
-      utils.cloneObject([], profile.standardColumnOrder || []),
+      utils.clone(profile.standardColumnOrder || []),
       (profile.standardColumns || []).slice(0),
-      utils.cloneObject([], profile.payloadColumnList || []),
+      utils.clone(profile.payloadColumnList || []),
       (profile.payloadColumns || []).slice(0),
       (profile.eventSinks || []).slice(0)
     );
@@ -63,6 +83,8 @@ class TraceSessionConfigModel extends TraceSessionProfile {
     );
 
     const result = observable(this);
+
+    result.providers.forEach(provider => enhanceProviderState(provider));
 
     // observe checklist model changes
     this._standardColumnsListObserver = observe(() => {
@@ -108,6 +130,20 @@ class TraceSessionConfigModel extends TraceSessionProfile {
     } finally {
       document.body.removeChild(a);
     }
+  }
+
+  addProvider(name, level) {
+    const newProvider = enhanceProviderState({ name, level, matchKeywords: 0, disabled: false });
+    this.providers.splice(0, 0, newProvider);
+    this.providers.forEach(p => {
+      p.expanded = false;
+    });
+    newProvider.expanded = true;
+  }
+
+  removeProvider(name) {
+    const index = this.providers.findIndex(p => p.name === name);
+    if (index >= 0) this.providers.splice(index, 1);
   }
 }
 

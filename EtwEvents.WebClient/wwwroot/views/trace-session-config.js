@@ -6,7 +6,6 @@ import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
 import * as utils from '../js/utils.js';
-import EventProvider from '../js/eventProvider.js';
 import './provider-config.js';
 import './filter-edit.js';
 import TraceSessionProfile from '../js/traceSessionProfile.js';
@@ -78,18 +77,12 @@ class TraceSessionConfig extends LitMvvmElement {
   }
 
   _addProviderClick() {
-    const newProvider = new EventProvider('<New Provider>', 0);
-    this.model.providers.splice(0, 0, newProvider);
-    this.model.providers.forEach(p => {
-      p.expanded = false;
-    });
-    newProvider.expanded = true;
+    this.model.addProvider('<New Provider>', 0);
   }
 
   _providerDelete(e) {
     const provider = e.detail.model;
-    const index = this.model.providers.findIndex(p => p.name === provider.name);
-    if (index >= 0) this.model.providers.splice(index, 1);
+    this.model.removeProvider(provider.name);
   }
 
   _providerBeforeExpand() {

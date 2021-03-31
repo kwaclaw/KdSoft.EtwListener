@@ -1,14 +1,13 @@
 import { html } from '../lib/lit-html.js';
 import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
+import { observable, observe, unobserve, raw } from '../lib/@nx-js/observer-util/dist/es.es6.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import styleLinks from '../styles/kdsoft-style-links.js';
 import '../components/kdsoft-dropdown.js';
 import '../components/kdsoft-checklist.js';
 import * as utils from '../js/utils.js';
-import TraceSessionConfigModel from './trace-session-config-model.js';
 import KdSoftDropdownModel from '../components/kdsoft-dropdown-model.js';
-import KdSoftChecklistModel from '../components/kdsoft-checklist-model.js';
 import KdSoftDropdownChecklistConnector from '../components/kdsoft-dropdown-checklist-connector.js';
 
 class ProviderConfig extends LitMvvmElement {
@@ -67,7 +66,6 @@ class ProviderConfig extends LitMvvmElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    this.levelChecklistModel = null;
   }
 
   shouldRender() {
@@ -76,17 +74,12 @@ class ProviderConfig extends LitMvvmElement {
 
   firstRendered() {
     super.firstRendered();
+    // DOM nodes may have changed
+    this.levelChecklistConnector.reconnectDropdownSlot();
   }
 
   beforeFirstRender() {
-    if (!this.levelChecklistModel) {
-      this.levelChecklistModel = new KdSoftChecklistModel(
-        TraceSessionConfigModel.traceLevelList,
-        [this.model.level || 0],
-        false,
-        item => item.value
-      );
-    }
+    //
   }
 
   static get styles() {
@@ -101,7 +94,7 @@ class ProviderConfig extends LitMvvmElement {
         }
 
         kdsoft-dropdown {
-          width: 200px;
+          width: auto;
         }
 
         kdsoft-checklist {
@@ -110,7 +103,7 @@ class ProviderConfig extends LitMvvmElement {
 
         .provider {
           display: grid;
-          grid-template-columns: 1fr 2fr;
+          grid-template-columns: auto auto;
           align-items: baseline;
           grid-gap: 5px;
         }
@@ -120,7 +113,7 @@ class ProviderConfig extends LitMvvmElement {
           line-height: 1.5;
         }
 
-        #keyWords:invalid {
+        #keywords:invalid {
           border: 2px solid red;
         }
       `,
@@ -132,7 +125,11 @@ class ProviderConfig extends LitMvvmElement {
     const borderColor = expanded ? 'border-indigo-500' : 'border-transparent';
     const htColor = expanded ? 'text-indigo-700' : 'text-gray-700';
     const timesClasses = 'text-gray-600 fas fa-lg fa-times';
-    const chevronClasses = expanded ? 'text-indigo-500 fas fa-lg  fa-chevron-circle-up' : 'text-gray-600 fas fa-lg fa-chevron-circle-down';
+    const chevronClasses = expanded
+      ? 'text-indigo-500 fas fa-lg  fa-chevron-circle-up'
+      : 'text-gray-600 fas fa-lg fa-chevron-circle-down';
+
+    // Note: number inputs can be sized by setting their max value
 
     return html`
       ${sharedStyles}
@@ -145,35 +142,33 @@ class ProviderConfig extends LitMvvmElement {
 
       <article class="bg-gray-100 p-2" @change=${this._fieldChange}>
         <div class="border-l-2 ${borderColor}">
-          <header class="flex items-center justify-start pl-1 cursor-pointer select-none">
-            <input name="name" type="text"
-              class="${htColor} mr-2 w-full" 
-              ?readonly=${!expanded}
-              .value=${this.model.name}
-            />
+          <header class="flex items-center justify-start pl-1 cursor-pointer select-none relative">
+              <input name="name" type="text"
+                class="${htColor} mr-2 w-full" 
+                ?readonly=${!expanded}
+                .value=${this.model.name}
+              />
             <span class="${timesClasses} ml-auto mr-2" @click=${this._deleteClicked}></span>
             <span class="${chevronClasses}" @click=${this._expandClicked}></span>
           </header>
-          <div class="mt-2" ?hidden=${!expanded}>
+          <div class="mt-2 relative" ?hidden=${!expanded}>
             <div class="provider pl-8 pb-1">
               <fieldset>
                 <label class="text-gray-600" for="level">Level</label>
-                <kdsoft-dropdown id="traceLevel" class="py-0" .model=${this.levelDropDownModel} .connector=${this.levelChecklistConnector}>
+                <kdsoft-dropdown id="traceLevel" class="py-0"
+                  .model=${this.levelDropDownModel} .connector=${this.levelChecklistConnector}>
                   <kdsoft-checklist
                     id="traceLevelList"
                     class="text-black"
-                    .model=${this.levelChecklistModel}
+                    .model=${this.model.levelChecklistModel}
                     .getItemTemplate=${item => html`${item.name}`}>
                   </kdsoft-checklist>
                 </kdsoft-dropdown>
               </fieldset>
               <fieldset>
-                <label class="text-gray-600" for="keyWords">MatchKeyWords</label>
-                <input id="keyWords" name="matchKeyWords" type="number" min="0" .value=${this.model.matchKeyWords} />
-              </fieldset>
-              <fieldset>
-                <label class="text-gray-600" for="isDisabled">Disabled</label>
-                <input id="isDisabled" name="disabled" type="checkbox" class="kdsoft-checkbox mt-auto mb-auto" .checked=${!!this.model.disabled} />
+              <label class="text-gray-600" for="keywords">Match Keywords</label>
+                <input id="keywords" name="matchKeywords"
+                  type="number" min="0" max="99999999999999999999" .value=${this.model.matchKeywords} />
               </fieldset>
             </div>
           </div>
