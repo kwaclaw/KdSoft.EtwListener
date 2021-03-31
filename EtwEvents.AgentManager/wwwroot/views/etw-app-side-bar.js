@@ -6,8 +6,6 @@ import { observe, observable } from '../lib/@nx-js/observer-util/dist/es.es6.js'
 import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
 import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import dialogPolyfill from '../lib/dialog-polyfill.js';
-import FilterFormModel from './filter-form-model.js';
-import './filter-form.js';
 import '../components/kdsoft-checklist.js';
 import KdSoftChecklistModel from '../components/kdsoft-checklist-model.js';
 import '../components/kdsoft-expander.js';
@@ -118,12 +116,18 @@ class EtwAppSideBar extends LitMvvmElement {
       const agentList = this.model.agents;
       const agentIndex = getAgentIndex(agentList, this.model.activeAgentName);
       const checklistModel = new KdSoftChecklistModel(
-        this.model.agents,
+        agentList,
         agentIndex >= 0 ? [agentIndex] : [],
         false,
         item => item.name
       );
       this.agentChecklistModel = checklistModel;
+
+      this._agentListObserver = observe(() => {
+        const selEntry = checklistModel.firstSelectedEntry;
+        const selAgent = selEntry?.item;
+        this.model.activeAgentName = selAgent?.state.name;
+      });
     }
   }
 
@@ -216,11 +220,24 @@ class EtwAppSideBar extends LitMvvmElement {
         }
 
         /* the item template for the checklist contains a part we can select */ 
-        #agents::part(slot) {
+        #agents::part(content) {
           display: grid;
           grid-gap: 0 1em;
           grid-template-columns: max-content auto;
           justify-items: start;
+        }
+
+        #agents::part(header) {
+          color: gray;
+          background-color: inherit;
+        }
+
+        #agents::part(header):hover {
+          background-color: inherit;
+        }
+
+        #agents::part(header).item-selected {
+          background-color: inherit;
         }
 
         .fa-lg.fa-eye, .fa-lg.fa-file-archive {
@@ -230,18 +247,23 @@ class EtwAppSideBar extends LitMvvmElement {
     ];
   }
 
-  getAgentTemplate(agent) {
+  getAgentTemplate(entry) {
+    const onlyModified = entry.modified && !entry.disconnected;
     return html`
-      <kdsoft-expander style="width:100%">
-        <div slot="header" class="flex pr-1 text-white bg-gray-500">
-          <label class="pl-1 font-bold text-xl">${agent.name}</label>
+      <kdsoft-expander class="w-full">
+        <div part="header" slot="header" class="flex items-baseline pr-1 text-white bg-gray-500">
+          <label class="pl-1 font-bold text-xl">${entry.state.name}</label>
+          <span class="ml-auto">
+            ${onlyModified ? html`<i class="text-yellow-800 fas fa-pencil-alt"></i>` : nothing}
+            ${entry.disconnected ? html`<i class="text-red-800 fas fa-unlink"></i>` : nothing}
+          </span>
         </div>
         <!-- using part="slot" we can style this from here even though it will be rendered inside a web component -->
-        <div part="slot" slot="content" class="pl-3">
+        <div part="content" slot="content" class="pl-3">
           <label class="pl-1 font-bold">Site</label>
-          <div class="pl-1">${agent.site}</div>
+          <div class="pl-1">${entry.state.site}</div>
           <label class="pl-1 font-bold">Host</label>
-          <div class="pl-1">${agent.host}</div>
+          <div class="pl-1">${entry.state.host}</div>
         </div>
       </kdsoft-expander>
     `;
@@ -278,7 +300,7 @@ class EtwAppSideBar extends LitMvvmElement {
 
         <kdsoft-checklist id="agents" class="text-black"
           .model=${this.agentChecklistModel}
-          .getItemTemplate=${item => this.getAgentTemplate(item)}
+          .getItemTemplate=${entry => this.getAgentTemplate(entry)}
         ></kdsoft-checklist>
 
       </nav>

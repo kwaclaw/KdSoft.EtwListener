@@ -6,7 +6,8 @@ import { classMap } from '../lib/lit-html/directives/class-map.js';
 import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
 import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
 import './etw-app-side-bar.js';
-import './filter-form.js';
+import './provider-config.js';
+import './filter-edit.js';
 import Spinner from '../js/spinner.js';
 import sharedStyles from '../styles/kdsoft-shared-styles.js';
 import { KdSoftGridStyle } from '../styles/kdsoft-grid-style.js';
@@ -24,7 +25,6 @@ const classList = {
   tabButtonsActive: { 'inline-block': true, 'text-gray-500': true },
   tabButtonsInActive: { hidden: true }
 };
-
 
 class EtwApp extends LitMvvmElement {
   constructor() {
@@ -52,6 +52,33 @@ class EtwApp extends LitMvvmElement {
       }
     });
   }
+
+  //#region Providers
+
+  _addProviderClick(e) {
+    const activeAgent = this.model.activeAgent;
+    if (!activeAgent) return;
+    activeAgent.addProvider('<New Provider>', 0);
+  }
+
+  _providerDelete(e) {
+    const activeAgent = this.model.activeAgent;
+    if (!activeAgent) return;
+
+    const provider = e.detail.model;
+    activeAgent.removeProvider(provider.name);
+  }
+
+  _providerBeforeExpand() {
+    const activeAgent = this.model.activeAgent;
+    if (!activeAgent) return;
+
+    activeAgent.enabledProviders.forEach(p => {
+      p.expanded = false;
+    });
+  }
+
+  //#endregion
 
   //#region sidebar
 
@@ -313,11 +340,16 @@ class EtwApp extends LitMvvmElement {
           overflow: scroll;
           white-space: pre;
         }
+
+        form {
+          min-width:400px;
+        }
       `
     ];
   }
 
   render() {
+    const activeAgent = this.model.activeAgent;
     return html`
       ${sharedStyles}
       <link rel="stylesheet" type="text/css" href=${etwAppStyleLinks.etwApp} />
@@ -339,8 +371,34 @@ class EtwApp extends LitMvvmElement {
           </div>
 
           <!-- Main content -->
-          <div class="flex-grow relative">
-            
+          <div class="flex flex-wrap content-start flex-grow relative">
+            ${activeAgent
+              ? html`
+                  <form id="providers" class="p-2 m-1 border">
+                    <div class="flex my-2 pr-2">
+                      <span class="font-semibold">Event Providers</span>
+                      <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
+                        @click=${this._addProviderClick}>
+                      </span>
+                    </div>
+                    ${activeAgent.enabledProviders.map(provider => html`
+                      <provider-config
+                        .model=${provider}
+                        @beforeExpand=${this._providerBeforeExpand}
+                        @delete=${this._providerDelete}>
+                      </provider-config>
+                    `)}
+                  </form>
+
+                  <form id="filter" class="p-2 m-1 border">
+                    <div class="flex my-2 pr-2">
+                      <span class="font-semibold">Filter</span>
+                    </div>
+                    <filter-edit class="p-2 h-full" .model=${activeAgent.filterModel}></filter-edit>
+                  </form>
+                `
+              : nothing
+            }
           </div>
         </div>
 

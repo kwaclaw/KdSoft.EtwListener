@@ -1,7 +1,19 @@
+/* global i18n */
+
 import { observable, observe, unobserve, raw } from '../lib/@nx-js/observer-util/dist/es.es6.js';
 import RingBuffer from '../js/ringBuffer.js';
 import * as utils from '../js/utils.js';
 import FetchHelper from '../js/fetchHelper.js';
+import KdSoftChecklistModel from '../components/kdsoft-checklist-model.js';
+
+const traceLevelList = () => [
+  { name: i18n.__('Always'), value: 0 },
+  { name: i18n.__('Critical'), value: 1 },
+  { name: i18n.__('Error'), value: 2 },
+  { name: i18n.__('Warning'), value: 3 },
+  { name: i18n.__('Informational'), value: 4 },
+  { name: i18n.__('Verbose'), value: 5 }
+];
 
 class EtwAppModel {
   constructor() {
@@ -31,10 +43,15 @@ class EtwAppModel {
       console.error('GetAgentStates event source error.');
     };
 
-    observe(result._updateAgentsList.bind(result));
+    //observe(result._updateAgentsList.bind(result));
+    observe(() => {
+      result._updateAgentsList(result._agentsMap);
+    });
 
     return result;
   }
+
+  static get traceLevelList() { return observable(traceLevelList()); }
 
   handleFetchError(error) {
     this._errorSequenceNo += 1;
@@ -55,23 +72,75 @@ class EtwAppModel {
 
   //#region Agents
 
+  _enhanceProviderState(provider) {
+    if (!provider.levelChecklistModel) {
+      provider.levelChecklistModel = new KdSoftChecklistModel(
+        traceLevelList(),
+        [provider.level || 0],
+        false,
+        item => item.value
+      );
+      provider._levelObserver = observe(() => {
+        provider.level = provider.levelChecklistModel.firstSelectedEntry.item.value;
+      });
+    }
+  }
+
+  // adds view models and view related methods to agent state
+  _enhanceAgentState(agentState) {
+    if (!agentState.filterModel) {
+      agentState.filterModel = {
+        filter: agentState.filterBody,
+        diagnostics: []
+      };
+      agentState._filterObserver = observe(() => {
+        agentState.filterBody = agentState.filterModel.filter;
+      });
+    }
+
+    for (const provider of agentState.enabledProviders) {
+      this._enhanceProviderState(provider);
+    }
+
+    agentState.addProvider = (name, level) => {
+      const newProvider = this._enhanceProviderState({ name, level, matchKeywords: 0 });
+      agentState.enabledProviders.splice(0, 0, newProvider);
+      agentState.enabledProviders.forEach(p => {
+        p.expanded = false;
+      });
+      newProvider.expanded = true;
+    };
+
+    agentState.removeProvider = name => {
+      const index = agentState.enabledProviders.findIndex(p => p.name === name);
+      if (index >= 0) agentState.enabledProviders.splice(index, 1);
+    };
+
+    return agentState;
+  }
+
   get agents() { return this._agents; }
-  get activeAgent() { return this._agentsMap.get(this.activeAgentName); }
+  get activeAgent() {
+    const entry = this._agentsMap.get(this.activeAgentName);
+    if (!entry) return null;
+    const result = this._enhanceAgentState(entry.state);
+    return result;
+  }
 
   // we need to update the array of agents in place, because we have external references (e.g. checklist)
-  _updateAgentsList() {
-    const ags = this._agents;
-    ags.length = 0;
+  _updateAgentsList(agentsMap) {
+    const ags = [];
 
     // Map.values(), Map.entries() or Map.keys() don't trigger reactions when entries are assigned/set!!!
-    // therefore we have to loop over the keys and get the each entry by key!
-    for (const key of this._agentsMap.keys()) {
-      ags.push(this._agentsMap.get(key));
+    // therefore we have to loop over the keys and get each entry by key!
+    for (const key of agentsMap.keys()) {
+      const entry = agentsMap.get(key);
+      ags.push(entry);
     }
 
     ags.sort((a, b) => {
-      const nameA = a.name.toUpperCase(); // ignore upper and lowercase
-      const nameB = b.name.toUpperCase(); // ignore upper and lowercase
+      const nameA = a.state.name.toUpperCase(); // ignore upper and lowercase
+      const nameB = b.state.name.toUpperCase(); // ignore upper and lowercase
       if (nameA < nameB) {
         return -1;
       }
@@ -81,6 +150,11 @@ class EtwAppModel {
       // names must be equal
       return 0;
     });
+
+    this._agents.length = ags.length;
+    for (let indx = 0; indx < ags.length; indx += 1) {
+      this._agents[indx] = ags[indx];
+    }
   }
 
   _updateAgentsMap(agentStates) {
@@ -89,13 +163,33 @@ class EtwAppModel {
     // agentStates have unique names (case-insensitive) - //TODO server culture vs local culture?
     for (const state of (agentStates || [])) {
       const agentName = state.name.toLowerCase();
-      this._agentsMap.set(agentName, state);
+      let entry = this._agentsMap.get(agentName);
+      if (!entry) {
+        const newState = observable(utils.clone(state));
+        entry = observable({ state: newState, original: state });
+        // entry.modified = () => !utils.targetEquals(entry.original, newState);
+        // entry.disconnected = () => entry.original == null;
+        Object.defineProperty(entry, 'modified', {
+          get() {
+            return !utils.targetEquals(entry.original, newState);
+          }
+        });
+        Object.defineProperty(entry, 'disconnected', {
+          get() {
+            return entry.original == null;
+          }
+        });
+      } else {
+        entry.original = state;
+      }
+      this._agentsMap.set(agentName, observable(entry));
       localAgentKeys.delete(agentName);
     }
 
-    // remove sessions not present on the server
+    // indicate agents that are not connected anymore
     for (const agentKey of localAgentKeys) {
-      this._agentsMap.delete(agentKey);
+      const entry = this._agentsMap.get(agentKey);
+      entry.original = null;
     }
   }
 }
