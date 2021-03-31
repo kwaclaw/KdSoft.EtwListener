@@ -238,6 +238,7 @@ class FilterEdit extends LitMvvmElement {
         #code-wrapper {
           color: gray;
           line-height: 1rem;
+          position: relative;
         }
         #code {
           display: inline-block;
@@ -249,8 +250,11 @@ class FilterEdit extends LitMvvmElement {
           font: inherit;
           resize: both;
           white-space: pre;
+          overflow: hidden;
+          text-overflow: ellipsis;
           overflow-wrap: normal;
-          width: 68ch;
+          width: calc(100% - 12ch);
+          max-width: 68ch;
         }
         /* only needed for contenteditable elements */
         #code:empty::after {
