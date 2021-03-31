@@ -13,11 +13,6 @@ namespace KdSoft.EtwEvents.AgentManager.Services
 {
     public class AgentProxy
     {
-        public const string EventStreamHeaderValue = "text/event-stream";
-        public const string CloseEvent = "##close";
-        public const string KeepAliveEvent = "##keepAlive";
-        public const string GetStateEvent = "GetState";
-
         readonly Channel<ControlEvent> _channel;
         readonly ILogger _logger;
 
@@ -70,7 +65,7 @@ namespace KdSoft.EtwEvents.AgentManager.Services
         }
 
         void InitializeResponse(HttpResponse response) {
-            response.ContentType = EventStreamHeaderValue;
+            response.ContentType = Constants.EventStreamHeaderValue;
             response.Headers[HeaderNames.CacheControl] = "no-cache";
             response.Headers[HeaderNames.Pragma] = "no-cache";
             //response.Headers[HeaderNames.Connection] = "keep-alive";
@@ -103,7 +98,7 @@ namespace KdSoft.EtwEvents.AgentManager.Services
             try {
                 Volatile.Write(ref _connected, 99);
                 await foreach (var sse in _channel.Reader.ReadAllAsync(linkedToken).ConfigureAwait(false)) {
-                    if (sse.Event == CloseEvent) {
+                    if (sse.Event == Constants.CloseEvent) {
                         Writer.TryComplete();
                     }
                     else {
@@ -111,7 +106,7 @@ namespace KdSoft.EtwEvents.AgentManager.Services
                         Used();
                     }
 
-                    string msg = sse.Event == KeepAliveEvent ? ":\n\n" : $"event:{sse.Event}\nid:{sse.Id}\ndata:{sse.Data}\n\n";
+                    string msg = sse.Event == Constants.KeepAliveEvent ? ":\n\n" : $"event:{sse.Event}\nid:{sse.Id}\ndata:{sse.Data}\n\n";
                     await response.WriteAsync(msg, linkedToken).ConfigureAwait(false);
                     await response.Body.FlushAsync(linkedToken).ConfigureAwait(false);
 

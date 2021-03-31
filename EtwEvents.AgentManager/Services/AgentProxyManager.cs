@@ -20,9 +20,9 @@ namespace KdSoft.EtwEvents.AgentManager.Services
         readonly Timer _keepAliveTimer;
         readonly ILogger<AgentProxy> _logger;
 
-        public static ControlEvent KeepAliveMessage = new ControlEvent { Event = AgentProxy.KeepAliveEvent };
-        public static ControlEvent CloseMessage = new ControlEvent { Event = AgentProxy.CloseEvent };
-        public static ControlEvent GetStateMessage = new ControlEvent { Event = AgentProxy.GetStateEvent };
+        public static ControlEvent KeepAliveMessage = new ControlEvent { Event = Constants.KeepAliveEvent };
+        public static ControlEvent CloseMessage = new ControlEvent { Event = Constants.CloseEvent };
+        public static ControlEvent GetStateMessage = new ControlEvent { Event = Constants.GetStateEvent };
 
         public AgentProxyManager(IConfiguration config, ILogger<AgentProxy> logger) {
             var keepAlivePeriod = TimeSpan.TryParse(config?["ControlChannel:KeepAlivePeriod"], out var reapPeriod) ? reapPeriod : TimeSpan.FromSeconds(20);

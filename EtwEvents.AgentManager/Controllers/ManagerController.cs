@@ -38,15 +38,13 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
 
         #region Server Events for Manager
 
-        const string EventStreamHeaderValue = "text/event-stream";
-
         //see https://stackoverflow.com/questions/36227565/aspnet-core-server-sent-events-response-flush
         //also, maybe better: https://github.com/tpeczek/Lib.AspNetCore.ServerSentEvents and https://github.com/tpeczek/Demo.AspNetCore.ServerSentEvents
 
         async Task<IActionResult> GetAgentStateEventStream(CancellationToken cancelToken) {
             var resp = Response;
 
-            resp.ContentType = EventStreamHeaderValue;
+            resp.ContentType = Constants.EventStreamHeaderValue;
             resp.Headers[HeaderNames.CacheControl] = "no-cache, no-transform";
             resp.Headers[HeaderNames.Pragma] = "no-cache";
             // hopefully prevents buffering
@@ -72,7 +70,7 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAgentStates(CancellationToken cancelToken) {
             var req = Request;
-            if (req.Headers[HeaderNames.Accept].Contains(EventStreamHeaderValue)) {
+            if (req.Headers[HeaderNames.Accept].Contains(Constants.EventStreamHeaderValue)) {
                 return await GetAgentStateEventStream(cancelToken).ConfigureAwait(false);
             }
             else {

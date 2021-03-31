@@ -58,7 +58,7 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
             var lastEventId = Request.Headers["Last-Event-ID"].ToString();
 
             var acceptHeaders = Request.Headers[HeaderNames.Accept];
-            if (acceptHeaders.Count == 0 || acceptHeaders.Contains(AgentProxy.EventStreamHeaderValue)) {
+            if (acceptHeaders.Count == 0 || acceptHeaders.Contains(Constants.EventStreamHeaderValue)) {
                 if (string.IsNullOrEmpty(lastEventId)) {
                     _logger.LogInformation($"Connected SSE: {agentId}");
                 }
