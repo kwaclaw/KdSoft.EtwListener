@@ -84,6 +84,7 @@ class EtwAppModel {
         provider.level = provider.levelChecklistModel.firstSelectedEntry.item.value;
       });
     }
+    return provider;
   }
 
   // adds view models and view related methods to agent state
@@ -102,8 +103,8 @@ class EtwAppModel {
       this._enhanceProviderState(provider);
     }
 
-    agentState.addProvider = (id, level) => {
-      const newProvider = this._enhanceProviderState({ id, level, matchKeywords: 0 });
+    agentState.addProvider = (name, level) => {
+      const newProvider = this._enhanceProviderState({ name, level, matchKeywords: 0 });
       agentState.enabledProviders.splice(0, 0, newProvider);
       agentState.enabledProviders.forEach(p => {
         p.expanded = false;
@@ -111,8 +112,8 @@ class EtwAppModel {
       newProvider.expanded = true;
     };
 
-    agentState.removeProvider = id => {
-      const index = agentState.enabledProviders.findIndex(p => p.id === id);
+    agentState.removeProvider = name => {
+      const index = agentState.enabledProviders.findIndex(p => p.name === name);
       if (index >= 0) agentState.enabledProviders.splice(index, 1);
     };
 
