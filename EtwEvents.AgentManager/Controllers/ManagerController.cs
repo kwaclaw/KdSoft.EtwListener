@@ -2,6 +2,7 @@
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Google.Protobuf;
 using KdSoft.EtwEvents.AgentManager.Services;
 using KdSoft.EtwEvents.PushAgent;
 using Microsoft.AspNetCore.Authorization;
@@ -22,6 +23,7 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
         readonly AgentProxyManager _agentProxyManager;
         readonly IOptions<JsonOptions> _jsonOptions;
         readonly ILogger<ManagerController> _logger;
+        //readonly JsonFormatter _jsonFormatter;
 
         int _agentEventId;
 
@@ -33,6 +35,8 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
             this._agentProxyManager = agentProxyManager;
             this._jsonOptions = jsonOptions;
             this._logger = logger;
+            //var jsonSettings = JsonFormatter.Settings.Default.WithFormatDefaultValues(true).WithFormatEnumsAsIntegers(true);
+            //_jsonFormatter = new JsonFormatter(jsonSettings);
         }
 
 
@@ -83,7 +87,7 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
 
         #region Messages to Agent
 
-        public IActionResult PostMessage(string agentId, string eventName, string jsonData) {
+        IActionResult PostMessage(string agentId, string eventName, string jsonData) {
             ProblemDetails pd;
             if (_agentProxyManager.TryGetProxy(agentId, out var proxy)) {
                 var evt = new ControlEvent {
@@ -108,6 +112,13 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
                 Title = "Agent does not exist.",
             };
             return StatusCode(pd.Status.Value, pd);
+        }
+
+        [HttpPost]
+        public IActionResult UpdateProviders(string agentId, [FromBody] object enabledProviders) {
+            // we are passing the JSON simply through
+            PostMessage(agentId, "UpdateProviders", enabledProviders?.ToString() ?? "");
+            return Ok();
         }
 
         #endregion

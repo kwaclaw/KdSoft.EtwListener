@@ -388,13 +388,31 @@ class EtwApp extends LitMvvmElement {
                         @delete=${this._providerDelete}>
                       </provider-config>
                     `)}
+                    <hr class="my-3" />
+                    <div id="ok-cancel-buttons" class="flex flex-wrap mt-2 bt-1">
+                      <button type="button" class="py-1 px-2 ml-auto" @click=${e => this.model.applyProviders()} title="Apply">
+                        <i class="fas fa-lg fa-check text-green-500"></i>
+                      </button>
+                      <button type="button" class="py-1 px-2" @click=${e => this.model.cancelProviders()} title="Cancel">
+                        <i class="fas fa-lg fa-times text-red-500"></i>
+                      </button>
+                    </div>
                   </form>
 
                   <form id="filter" class="p-2 m-1 border">
                     <div class="flex my-2 pr-2">
                       <span class="font-semibold">Filter</span>
                     </div>
-                    <filter-edit class="p-2 h-full" .model=${activeAgent.filterModel}></filter-edit>
+                    <filter-edit class="p-2" .model=${activeAgent.filterModel}></filter-edit>
+                    <hr class="my-3" />
+                    <div id="ok-cancel-buttons" class="flex flex-wrap mt-2 bt-1">
+                      <button type="button" class="py-1 px-2 ml-auto" @click=${this.model.applyFilter} title="Apply">
+                        <i class="fas fa-lg fa-check text-green-500"></i>
+                      </button>
+                      <button type="button" class="py-1 px-2" @click=${this.model.cancelFilter} title="Cancel">
+                        <i class="fas fa-lg fa-times text-red-500"></i>
+                      </button>
+                    </div>
                   </form>
                 `
               : nothing

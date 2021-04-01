@@ -191,6 +191,22 @@ class EtwAppModel {
       entry.original = null;
     }
   }
+
+  applyProviders() {
+    const agent = this.activeAgent;
+    if (!agent) return;
+
+    // create "unenhanced" provider settings
+    const enabledProviders = [];
+    for (const enhancedProvider of agent.enabledProviders) {
+      const unenhanced = { name: undefined, level: undefined, matchKeywords: 0 };
+      utils.setTargetProperties(unenhanced, enhancedProvider);
+      enabledProviders.push(unenhanced);
+    }
+
+    this.fetcher.postJson('UpdateProviders', { agentId: agent.id }, { providerSettings: enabledProviders })
+      .catch(error => window.etwApp.defaultHandleError(error));
+  }
 }
 
 export default EtwAppModel;

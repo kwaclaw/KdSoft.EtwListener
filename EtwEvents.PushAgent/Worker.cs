@@ -89,7 +89,9 @@ namespace KdSoft.EtwEvents.PushAgent
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
                 case "UpdateProviders":
-                    var providerSettings = JsonSerializer.Deserialize<List<EtwLogging.ProviderSetting>>(sse.Data, _jsonOptions);
+                    // WithDiscardUnknownFields does currently not work, so we should fix this at source
+                    var providerSettingsList = ProviderSettingsList.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
+                    var providerSettings = providerSettingsList.ProviderSettings;
                     if (providerSettings != null && ses != null) {
                         var providersToBeDisabled = ses.EnabledProviders.Select(ep => ep.Name).ToHashSet();
                         foreach (var setting in providerSettings) {
