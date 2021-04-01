@@ -156,8 +156,10 @@ namespace KdSoft.EtwEvents.PushAgent
 
         async void EventReceived(object? sender, MessageReceivedEventArgs e) {
             try {
-                _logger?.LogInformation($"{nameof(EventReceived)}: {e.EventName}-{e.Message.LastEventId}, {e.Message.Data}");
-                await ProcessEvent(new ControlEvent { Event = e.EventName, Id = e.Message.LastEventId, Data = e.Message.Data }).ConfigureAwait(false);
+                var lastEventIdStr = string.IsNullOrEmpty(e.Message.LastEventId) ? "" : $"-{e.Message.LastEventId}";
+                var messageDataStr = string.IsNullOrEmpty(e.Message.Data) ? "" : $", {e.Message.Data}";
+                _logger?.LogInformation($"{nameof(EventReceived)}: {e.EventName}{lastEventIdStr}{messageDataStr}");
+                await ProcessEvent(new ControlEvent { Event = e.EventName, Id = e.Message.LastEventId ?? "", Data = e.Message.Data ?? "" }).ConfigureAwait(false);
             }
             catch (Exception ex) {
                 _logger?.LogAllErrors(ex, $"Error in {nameof(EventReceived)}:\n");
