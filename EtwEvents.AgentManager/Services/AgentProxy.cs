@@ -33,7 +33,13 @@ namespace KdSoft.EtwEvents.AgentManager.Services
 
         public string AgentId { get { return _state.Id; } }
 
-        public ChannelWriter<ControlEvent> Writer => _channel.Writer;
+        public bool Post(ControlEvent evt) {
+            return _channel.Writer.TryWrite(evt);
+        }
+
+        public bool TryComplete() {
+            return _channel.Writer.TryComplete();
+        }
 
         int _timeStamp;
         public int TimeStamp {
@@ -105,7 +111,7 @@ namespace KdSoft.EtwEvents.AgentManager.Services
                 Volatile.Write(ref _connected, 99);
                 await foreach (var sse in _channel.Reader.ReadAllAsync(linkedToken).ConfigureAwait(false)) {
                     if (sse.Event == Constants.CloseEvent) {
-                        Writer.TryComplete();
+                        _channel.Writer.TryComplete();
                     }
                     else {
                         // updated last used time stamp so we know when to send keep-alive messages

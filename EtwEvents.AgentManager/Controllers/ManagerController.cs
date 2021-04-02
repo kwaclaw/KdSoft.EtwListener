@@ -87,7 +87,7 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
 
         #region Messages to Agent
 
-        IActionResult PostMessage(string agentId, string eventName, string jsonData) {
+        IActionResult PostAgent(string agentId, string eventName, string jsonData) {
             ProblemDetails pd;
             if (_agentProxyManager.TryGetProxy(agentId, out var proxy)) {
                 var evt = new ControlEvent {
@@ -96,7 +96,7 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
                     Data = jsonData
                 };
 
-                if (proxy.Writer.TryWrite(evt)) {
+                if (proxy.Post(evt)) {
                     return Ok();
                 }
                 else {
@@ -116,9 +116,10 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
 
         [HttpPost]
         public IActionResult UpdateProviders(string agentId, [FromBody] object enabledProviders) {
-            // we are passing the JSON simply through
-            PostMessage(agentId, "UpdateProviders", enabledProviders?.ToString() ?? "");
-            return Ok();
+            // we are passing the JSON simply through, enabledProviders should match protobuf message ProviderSettingsList
+            return PostAgent(agentId, "UpdateProviders", enabledProviders?.ToString() ?? "");
+        }
+
         }
 
         #endregion

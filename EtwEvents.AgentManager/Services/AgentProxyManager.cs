@@ -35,7 +35,7 @@ namespace KdSoft.EtwEvents.AgentManager.Services
 
         public void Dispose() {
             foreach (var entry in _proxies) {
-                entry.Value.Writer.TryComplete();
+                entry.Value.TryComplete();
             }
         }
 
@@ -62,9 +62,9 @@ namespace KdSoft.EtwEvents.AgentManager.Services
                 // Environment.TickCount rolls over from int.Maxvalue to int.MinValue!
                 var deltaMSecs = Environment.TickCount - agentProxy.TimeStamp;
                 if (deltaMSecs >= _keepAliveMSecs) {
-                    //agentProxy.Writer.TryWrite(KeepAliveMessage);
+                    //agentProxy.Post(KeepAliveMessage);
                     // we can use GetState as keep alive message as long as the data size is not too big
-                    agentProxy.Writer.TryWrite(GetStateMessage);
+                    agentProxy.Post(GetStateMessage);
                 }
             }
         }

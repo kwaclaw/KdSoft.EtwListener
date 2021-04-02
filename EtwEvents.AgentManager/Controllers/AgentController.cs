@@ -35,7 +35,7 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
             var agentProxy = _agentProxyManager.ActivateProxy(agentId);
 
             // initial agent state update
-            agentProxy.Writer.TryWrite(AgentProxyManager.GetStateMessage);
+            agentProxy.Post(AgentProxyManager.GetStateMessage);
 
             var finished = await agentProxy.ProcessMessages(Response, cancelToken).ConfigureAwait(false);
             if (finished)
