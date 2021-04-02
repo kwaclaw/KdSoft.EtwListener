@@ -182,12 +182,14 @@ namespace KdSoft.EtwEvents.Server
 
         public bool EnableProvider(ProviderSetting setting) {
             var result = Instance.EnableProvider(setting.Name, (tracing.TraceEventLevel)setting.Level, setting.MatchKeywords);
+            _logger.LogInformation($"Enabled provider '{setting.Name}': {result}.");
             _enabledProviders = _enabledProviders.SetItem(setting.Name, setting);
             return result;
         }
 
         public void DisableProvider(string provider) {
             Instance.DisableProvider(provider);
+            _logger.LogInformation($"Disabled provider '{provider}'.");
             _enabledProviders = _enabledProviders.Remove(provider);
         }
 
