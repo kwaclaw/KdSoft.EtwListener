@@ -102,15 +102,18 @@ namespace KdSoft.EtwEvents.PushAgent
                             ses.DisableProvider(providerName);
                         }
                     }
+                    await SendStateUpdate().ConfigureAwait(false);
                     break;
-                case "SetFilter":
+                case "ApplyFilter":
                     var filterRequest = SetFilterRequest.Parser.ParseJson(sse.Data);
                     //var filterRequest = JsonSerializer.Deserialize<SetFilterRequest>(sse.Data, _jsonOptions);
                     if (filterRequest == null)
                         return;
                     diagnostics = ses.SetFilter(filterRequest.CsharpFilter);
                     filterResult = new BuildFilterResult().AddDiagnostics(diagnostics);
-                    await PostMessage($"Agent/SetFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
+                    await PostMessage($"Agent/ApplyFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
+                    if (diagnostics.Length == 0)
+                        await SendStateUpdate().ConfigureAwait(false);
                     break;
                 case "TestFilter":
                     var testRequest = TestFilterRequest.Parser.ParseJson(sse.Data);
