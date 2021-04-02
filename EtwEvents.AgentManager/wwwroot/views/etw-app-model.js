@@ -204,8 +204,51 @@ class EtwAppModel {
       enabledProviders.push(unenhanced);
     }
 
+    // argument must match protobuf message ProviderSettingsList
     this.fetcher.postJson('UpdateProviders', { agentId: agent.id }, { providerSettings: enabledProviders })
       .catch(error => window.etwApp.defaultHandleError(error));
+  }
+
+  resetProviders() {
+    const activeEntry = this._agentsMap.get(this.activeAgentId);
+    if (!activeEntry) return;
+
+    const freshProviders = [];
+    for (const provider of activeEntry.original.enabledProviders) {
+      freshProviders.push(this._enhanceProviderState(provider));
+    }
+    activeEntry.state.enabledProviders = freshProviders;
+  }
+
+  testFilter() {
+    const agent = this.activeAgent;
+    if (!agent) return;
+
+    // argument must match protobuf message TestFilterRequest
+    this.fetcher.postJson('TestFilter', { agentId: agent.id }, { csharpFilter: agent.filterModel.filter })
+      // result matches protobuf message BuildFilterResult
+      .then(result => { agent.filterModel.diagnostics = result.diagnostics; })
+      .catch(error => window.etwApp.defaultHandleError(error));
+  }
+
+  applyFilter() {
+    const agent = this.activeAgent;
+    if (!agent) return;
+
+    // argument must match protobuf message TestFilterRequest
+    this.fetcher.postJson('ApplyFilter', { agentId: agent.id }, { csharpFilter: agent.filterModel.filter })
+      // result matches protobuf message BuildFilterResult
+      .then(result => { agent.filterModel.diagnostics = result.diagnostics; })
+      .catch(error => window.etwApp.defaultHandleError(error));
+  }
+
+  resetFilter() {
+    const activeEntry = this._agentsMap.get(this.activeAgentId);
+    if (!activeEntry) return;
+
+    const filterModel = activeEntry.state.filterModel;;
+    filterModel.filter = activeEntry.original.filterBody;
+    filterModel.diagnostics = [];
   }
 }
 

@@ -55,13 +55,13 @@ class EtwApp extends LitMvvmElement {
 
   //#region Providers
 
-  _addProviderClick(e) {
+  _addProviderClick() {
     const activeAgent = this.model.activeAgent;
     if (!activeAgent) return;
     activeAgent.addProvider('<New Provider>', 0);
   }
 
-  _providerDelete(e) {
+  _deleteProviderClick(e) {
     const activeAgent = this.model.activeAgent;
     if (!activeAgent) return;
 
@@ -76,6 +76,30 @@ class EtwApp extends LitMvvmElement {
     activeAgent.enabledProviders.forEach(p => {
       p.expanded = false;
     });
+  }
+
+  _applyProvidersClick() {
+    this.model.applyProviders();
+  }
+
+  _resetProvidersClick() {
+    this.model.resetProviders();
+  }
+
+  //#endregion
+
+  //#region Filter
+
+  _applyFilterClick() {
+    this.model.applyFilter();
+  }
+
+  _resetFilterClick() {
+    this.model.resetFilter();
+  }
+
+  _testFilterClick() {
+    this.model.testFilter();
   }
 
   //#endregion
@@ -385,15 +409,15 @@ class EtwApp extends LitMvvmElement {
                       <provider-config
                         .model=${provider}
                         @beforeExpand=${this._providerBeforeExpand}
-                        @delete=${this._providerDelete}>
+                        @delete=${this._deleteProviderClick}>
                       </provider-config>
                     `)}
                     <hr class="my-3" />
-                    <div id="ok-cancel-buttons" class="flex flex-wrap mt-2 bt-1">
-                      <button type="button" class="py-1 px-2 ml-auto" @click=${e => this.model.applyProviders()} title="Apply">
+                    <div class="flex flex-wrap mt-2 bt-1">
+                      <button type="button" class="py-1 px-2 ml-auto" @click=${this._applyProvidersClick} title="Apply">
                         <i class="fas fa-lg fa-check text-green-500"></i>
                       </button>
-                      <button type="button" class="py-1 px-2" @click=${e => this.model.cancelProviders()} title="Cancel">
+                      <button type="button" class="py-1 px-2" @click=${this._resetProvidersClick} title="Cancel">
                         <i class="fas fa-lg fa-times text-red-500"></i>
                       </button>
                     </div>
@@ -405,11 +429,14 @@ class EtwApp extends LitMvvmElement {
                     </div>
                     <filter-edit class="p-2" .model=${activeAgent.filterModel}></filter-edit>
                     <hr class="my-3" />
-                    <div id="ok-cancel-buttons" class="flex flex-wrap mt-2 bt-1">
-                      <button type="button" class="py-1 px-2 ml-auto" @click=${this.model.applyFilter} title="Apply">
+                    <div class="flex flex-wrap mt-2 bt-1">
+                      <button type="button" class="py-1 px-2" @click=${this._testFilterClick}>
+                        <i class="fas fa-lg fa-stethoscope" style="color:orange"></i>
+                      </button>
+                      <button type="button" class="py-1 px-2 ml-auto" @click=${this._applyFilterClick} title="Apply">
                         <i class="fas fa-lg fa-check text-green-500"></i>
                       </button>
-                      <button type="button" class="py-1 px-2" @click=${this.model.cancelFilter} title="Cancel">
+                      <button type="button" class="py-1 px-2" @click=${this._resetFilterClick} title="Cancel">
                         <i class="fas fa-lg fa-times text-red-500"></i>
                       </button>
                     </div>
