@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -16,6 +17,7 @@ namespace KdSoft.EtwEvents.AgentManager.Services
         readonly Channel<ControlEvent> _channel;
         readonly ILogger _logger;
         readonly object _syncObj = new object();
+        readonly Dictionary<string, TaskCompletionSource<string>> _pendingResponses;
 
         CancellationTokenSource? _connectionTokenSource;
         AgentState _state;
@@ -25,6 +27,7 @@ namespace KdSoft.EtwEvents.AgentManager.Services
             this._channel = channel;
             this._logger = logger;
             this._state = new AgentState { Id = agentId };
+            this._pendingResponses = new Dictionary<string, TaskCompletionSource<string>>();
         }
 
         public AgentProxy(string agentId, ILogger logger) : this(agentId, Channel.CreateUnbounded<ControlEvent>(), logger) {
@@ -37,8 +40,37 @@ namespace KdSoft.EtwEvents.AgentManager.Services
             return _channel.Writer.TryWrite(evt);
         }
 
+        public Task<string> CallAsync(string eventId, ControlEvent evt, CancellationToken cancelToken) {
+            if (!_channel.Writer.TryWrite(evt))
+                //TODO better Exception type
+                throw new Exception("Could not post event.");
+
+            var tcs = new TaskCompletionSource<string>();
+            cancelToken.Register(() => {
+                lock (_syncObj) {
+                    if (_pendingResponses.Remove(eventId)) {
+                        tcs.TrySetCanceled();
+                    }
+                }
+            });
+
+            lock (_syncObj) {
+                _pendingResponses.Add(eventId, tcs);
+                return tcs.Task;
+            }
+        }
+
         public bool TryComplete() {
             return _channel.Writer.TryComplete();
+        }
+
+        public bool CompleteResponse(string eventId, string responseJson) {
+            TaskCompletionSource<string>? tcs;
+            lock (_syncObj) {
+                if (!_pendingResponses.Remove(eventId, out tcs))
+                    return false;
+                return tcs.TrySetResult(responseJson);
+            }
         }
 
         int _timeStamp;

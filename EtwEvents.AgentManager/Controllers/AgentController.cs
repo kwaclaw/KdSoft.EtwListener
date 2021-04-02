@@ -94,6 +94,32 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
             return Ok();
         }
 
+        IActionResult CompleteResponse(string eventId, string responseJson) {
+            var agentId = User.Identity?.Name;
+            if (agentId == null)
+                return Unauthorized();
+
+            var agentProxy = _agentProxyManager.ActivateProxy(agentId);
+            bool success = agentProxy.CompleteResponse(eventId, responseJson);
+            if (success)
+                return Ok();
+            var pd = new ProblemDetails {
+                Status = (int)HttpStatusCode.InternalServerError,
+                Title = $"Failed to post response for event id: {eventId}.",
+            };
+            return StatusCode(pd.Status.Value, pd);
+        }
+
+        [HttpPost]
+        public IActionResult TestFilterResult(string eventId, [FromBody] object buildFilterResult) {
+            return CompleteResponse(eventId, buildFilterResult?.ToString() ?? "");
+        }
+
+        [HttpPost]
+        public IActionResult ApplyFilterResult(string eventId, [FromBody] object buildFilterResult) {
+            return CompleteResponse(eventId, buildFilterResult?.ToString() ?? "");
+        }
+
         #endregion
     }
 }

@@ -1,8 +1,8 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using Google.Protobuf;
 using KdSoft.EtwEvents.AgentManager.Services;
 using KdSoft.EtwEvents.PushAgent;
 using Microsoft.AspNetCore.Authorization;
@@ -19,7 +19,8 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
     [ApiController]
     [Route("[controller]/[action]")]
     [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
-    public class ManagerController: ControllerBase {
+    public class ManagerController: ControllerBase
+    {
         readonly AgentProxyManager _agentProxyManager;
         readonly IOptions<JsonOptions> _jsonOptions;
         readonly ILogger<ManagerController> _logger;
@@ -114,12 +115,55 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
             return StatusCode(pd.Status.Value, pd);
         }
 
+        async Task<IActionResult> CallAgent(string agentId, string eventName, string jsonData, TimeSpan timeout) {
+            ProblemDetails pd;
+            if (_agentProxyManager.TryGetProxy(agentId, out var proxy)) {
+                var eventId = Interlocked.Increment(ref _agentEventId).ToString();
+                var evt = new ControlEvent {
+                    Id = eventId,
+                    Event = eventName,
+                    Data = jsonData
+                };
+
+                //TODO configure response timeout
+                var cts = new CancellationTokenSource(timeout);
+                try {
+                    var resultJson = await proxy.CallAsync(eventId, evt, cts.Token).ConfigureAwait(false);
+                    return Content(resultJson, new MediaTypeHeaderValue("application/json"));
+                }
+                catch (Exception ex) {
+                    //TODO handle exception types, like cancellation due to timeout
+                    pd = new ProblemDetails {
+                        Status = (int)HttpStatusCode.InternalServerError,
+                        Title = ex.Message,
+                    };
+                    return StatusCode(pd.Status.Value, pd);
+                }
+            }
+            pd = new ProblemDetails {
+                Status = (int)HttpStatusCode.NotFound,
+                Title = "Agent does not exist.",
+            };
+            return StatusCode(pd.Status.Value, pd);
+        }
+
         [HttpPost]
         public IActionResult UpdateProviders(string agentId, [FromBody] object enabledProviders) {
             // we are passing the JSON simply through, enabledProviders should match protobuf message ProviderSettingsList
             return PostAgent(agentId, "UpdateProviders", enabledProviders?.ToString() ?? "");
         }
 
+        [HttpPost]
+        public Task<IActionResult> TestFilter(string agentId, [FromBody] object filterRequest) {
+            // we are passing the JSON simply through, filterRequest should match protobuf message TestFilterRequest
+            //var filterResult = await 
+            return CallAgent(agentId, "TestFilter", filterRequest?.ToString() ?? "", TimeSpan.FromSeconds(15));
+        }
+
+        [HttpPost]
+        public Task<IActionResult> ApplyFilter(string agentId, [FromBody] object filterRequest) {
+            // we are passing the JSON simply through, filterRequest should match protobuf message TestFilterRequest
+            return CallAgent(agentId, "ApplyFilter", filterRequest?.ToString() ?? "", TimeSpan.FromSeconds(15));
         }
 
         #endregion

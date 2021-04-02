@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace KdSoft.EtwEvents.AgentManager
+﻿namespace KdSoft.EtwEvents.AgentManager
 {
     public static class Constants
     {

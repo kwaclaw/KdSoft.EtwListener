@@ -227,7 +227,9 @@ class EtwAppModel {
     // argument must match protobuf message TestFilterRequest
     this.fetcher.postJson('TestFilter', { agentId: agent.id }, { csharpFilter: agent.filterModel.filter })
       // result matches protobuf message BuildFilterResult
-      .then(result => { agent.filterModel.diagnostics = result.diagnostics; })
+      .then(result => {
+        agent.filterModel.diagnostics = result.diagnostics;
+      })
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
@@ -238,7 +240,9 @@ class EtwAppModel {
     // argument must match protobuf message TestFilterRequest
     this.fetcher.postJson('ApplyFilter', { agentId: agent.id }, { csharpFilter: agent.filterModel.filter })
       // result matches protobuf message BuildFilterResult
-      .then(result => { agent.filterModel.diagnostics = result.diagnostics; })
+      .then(result => {
+        agent.filterModel.diagnostics = result.diagnostics;
+      })
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
@@ -246,7 +250,7 @@ class EtwAppModel {
     const activeEntry = this._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return;
 
-    const filterModel = activeEntry.state.filterModel;;
+    const filterModel = activeEntry.state.filterModel;
     filterModel.filter = activeEntry.original.filterBody;
     filterModel.diagnostics = [];
   }
