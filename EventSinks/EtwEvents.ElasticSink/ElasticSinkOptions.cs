@@ -2,15 +2,15 @@
 {
     public class ElasticSinkOptions
     {
-        public ElasticSinkOptions(string[] nodes, string index) : this() {
+        public ElasticSinkOptions(string[] nodes, string indexFormat) : this() {
             this.Nodes = nodes;
-            this.Index = index;
+            this.IndexFormat = indexFormat;
         }
 
         public ElasticSinkOptions() { }
 
         public string[] Nodes { get; set; } = new string[0];
 
-        public string Index { get; set; } = string.Empty;
+        public string IndexFormat { get; set; } = string.Empty;
     }
 }

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Elasticsearch.Net;
@@ -14,10 +13,9 @@ namespace KdSoft.EtwEvents.EventSinks
     public class ElasticSink: IEventSink
     {
         readonly ElasticSinkOptions _sinkInfo;
-        readonly string _bulkMeta;
         readonly IConnectionPool _connectionPool;
         readonly TaskCompletionSource<bool> _tcs;
-        readonly List<InsertRecord> _evl;
+        readonly List<string> _evl;
         readonly ElasticLowLevelClient _client;
         readonly JsonFormatter _jsonFormatter;
 
@@ -29,9 +27,8 @@ namespace KdSoft.EtwEvents.EventSinks
             _tcs = new TaskCompletionSource<bool>();
             RunTask = _tcs.Task;
 
-            _evl = new List<InsertRecord>();
+            _evl = new List<string>();
             _sinkInfo = sinkInfo;
-            _bulkMeta = $@"{{ ""index"": {{ ""_index"" : ""{_sinkInfo.Index}"" }} }}";
 
             try {
                 IConnectionPool connectionPool;
@@ -84,15 +81,16 @@ namespace KdSoft.EtwEvents.EventSinks
             }
         }
 
-        static IEnumerable<string> EnumerateInsertRecords(List<InsertRecord> irList) {
+        static IEnumerable<string> EnumerateInsertRecords(string bulkMeta, List<string> irList) {
             for (int indx = 0; indx < irList.Count; indx++) {
-                yield return irList[indx].Meta;
-                yield return irList[indx].Source;
+                yield return bulkMeta;
+                yield return irList[indx];
             }
         }
 
         async Task<bool> FlushAsyncInternal() {
-            var postItems = EnumerateInsertRecords(_evl);
+            var bulkMeta = $@"{{ ""index"": {{ ""_index"" : ""{string.Format(_sinkInfo.IndexFormat, DateTimeOffset.UtcNow)}"" }} }}";
+            var postItems = EnumerateInsertRecords(bulkMeta, _evl);
             var bulkResponse = await _client.BulkAsync<StringResponse>(PostData.MultiJson(postItems)).ConfigureAwait(false);
 
             _evl.Clear();
@@ -113,36 +111,21 @@ namespace KdSoft.EtwEvents.EventSinks
             return new ValueTask<bool>(FlushAsyncInternal());
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        InsertRecord FromEvent(EtwEvent evt, long sequenceNo) {
-            //TODO should we ignore sequenceNo?
-            var bulkSource = _jsonFormatter.Format(evt);
-            return new InsertRecord(_bulkMeta, bulkSource);
-        }
-
         //TODO maybe use Interlocked and two lists to keep queueing while a bulk write is in process
         public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
             if (IsDisposed)
                 return new ValueTask<bool>(false);
-            _evl.Add(FromEvent(evt, sequenceNo));
+            //TODO should we ignore sequenceNo?
+            _evl.Add(_jsonFormatter.Format(evt));
             return new ValueTask<bool>(true);
         }
 
         public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch, long sequenceNo) {
             if (IsDisposed)
                 return new ValueTask<bool>(false);
-            _evl.AddRange(evtBatch.Events.Select(evt => FromEvent(evt, sequenceNo++)));
+            //TODO should we ignore sequenceNo?
+            _evl.AddRange(evtBatch.Events.Select(evt => _jsonFormatter.Format(evt)));
             return new ValueTask<bool>(true);
-        }
-
-        struct InsertRecord
-        {
-            public InsertRecord(string meta, string source) {
-                this.Meta = meta;
-                this.Source = source;
-            }
-            public readonly string Meta;
-            public readonly string Source;
         }
     }
 }
