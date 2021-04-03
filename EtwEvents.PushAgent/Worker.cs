@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -23,11 +25,9 @@ namespace KdSoft.EtwEvents.PushAgent
 {
     public class Worker: BackgroundService
     {
-        readonly IConfiguration _configuration;
+        readonly HostBuilderContext _context;
         readonly IOptions<ControlOptions> _controlOptions;
         readonly IOptions<EventQueueOptions> _eventQueueOptions;
-        readonly IOptions<EventSessionOptions> _sessionOptions;
-        readonly IOptions<EventSinkOptions> _sinkOptions;
         readonly IEventSinkFactory _sinkFactory;
         readonly ILoggerFactory _loggerFactory;
         readonly ILogger<Worker> _logger;
@@ -39,19 +39,15 @@ namespace KdSoft.EtwEvents.PushAgent
         RealTimeTraceSession? _session;
 
         public Worker(
-            IConfiguration configuration,
+            HostBuilderContext context,
             IOptions<ControlOptions> controlOptions,
             IOptions<EventQueueOptions> eventQueueOptions,
-            IOptions<EventSessionOptions> sessionOptions,
-            IOptions<EventSinkOptions> sinkOptions,
             IEventSinkFactory sinkFactory,
             ILoggerFactory loggerFactory
         ) {
-            this._configuration = configuration;
+            this._context = context;
             this._controlOptions = controlOptions;
             this._eventQueueOptions = eventQueueOptions;
-            this._sessionOptions = sessionOptions;
-            this._sinkOptions = sinkOptions;
             this._sinkFactory = sinkFactory;
             this._loggerFactory = loggerFactory;
             this._logger = loggerFactory.CreateLogger<Worker>();
@@ -60,6 +56,67 @@ namespace KdSoft.EtwEvents.PushAgent
 
             _httpCertHandler = new HttpClientCertificateHandler(controlOptions.Value.ClientCertificate);
             _http = new HttpClient(_httpCertHandler);
+        }
+
+        string EventSessionOptionsPath => Path.Combine(_context.HostingEnvironment.ContentRootPath, "eventSession.json");
+        string EventSinkOptionsPath => Path.Combine(_context.HostingEnvironment.ContentRootPath, "eventSink.json");
+
+        bool LoadSessionOptions(out EventSessionOptions options) {
+            try {
+                var sessionOptionsJson = File.ReadAllText(EventSessionOptionsPath);
+                options = JsonSerializer.Deserialize<EventSessionOptions>(sessionOptionsJson, _jsonOptions) ?? new EventSessionOptions();
+                return true;
+            }
+            catch (Exception ex) {
+                options = new EventSessionOptions();
+                _logger.LogError(ex, "Error loading event session options.");
+                return false;
+            }
+        }
+
+        bool SaveSessionOptions(EventSessionOptions options) {
+            try {
+                var json = JsonSerializer.Serialize(options, _jsonOptions);
+                File.WriteAllText(EventSessionOptionsPath, json);
+                return true;
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error saving event session options.");
+                return false;
+            }
+        }
+
+        bool LoadSinkOptions(out EventSinkOptions options) {
+            try {
+                var sinkOptionsJson = File.ReadAllText(EventSinkOptionsPath);
+                options = JsonSerializer.Deserialize<EventSinkOptions>(sinkOptionsJson, _jsonOptions) ?? new EventSinkOptions();
+                return true;
+            }
+            catch (Exception ex) {
+                options = new EventSinkOptions();
+                _logger.LogError(ex, "Error loading event sink options.");
+                return false;
+            }
+        }
+
+        bool SaveProviderSettings(IEnumerable<ProviderSetting> providers) {
+            if (LoadSessionOptions(out var options)) {
+                options.Providers = providers.Select(p => new ProviderOptions {
+                    Name = p.Name, 
+                    Level = (Microsoft.Diagnostics.Tracing.TraceEventLevel)p.Level,
+                    MatchKeywords = p.MatchKeywords
+                }).ToList();
+                return SaveSessionOptions(options);
+            }
+            return false;
+        }
+
+        bool SaveFilterSettings(string csharpFilter) {
+            if (LoadSessionOptions(out var options)) {
+                options.Filter = csharpFilter;
+                return SaveSessionOptions(options);
+            }
+            return false;
         }
 
         #region Control Channel
@@ -99,6 +156,7 @@ namespace KdSoft.EtwEvents.PushAgent
                         foreach (var providerName in providersToBeDisabled) {
                             ses.DisableProvider(providerName);
                         }
+                        SaveProviderSettings(providerSettings);
                     }
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
@@ -110,8 +168,10 @@ namespace KdSoft.EtwEvents.PushAgent
                     diagnostics = ses.SetFilter(filterRequest.CsharpFilter);
                     filterResult = new BuildFilterResult().AddDiagnostics(diagnostics);
                     await PostMessage($"Agent/ApplyFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
-                    if (diagnostics.Length == 0)
+                    if (diagnostics.Length == 0) {
+                        SaveFilterSettings(filterRequest.CsharpFilter);
                         await SendStateUpdate().ConfigureAwait(false);
+                    }
                     break;
                 case "TestFilter":
                     var testRequest = TestFilterRequest.Parser.ParseJson(sse.Data);
@@ -149,7 +209,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 // Id = string.IsNullOrWhiteSpace(agentEmail) ? agentName : $"{agentName} ({agentEmail})",
                 Id = string.Empty,  // will be filled in on server using the client certificate
                 Host = Dns.GetHostName(),
-                Site = _configuration["Site"],
+                Site = _context.Configuration["Site"],
                 FilterBody = _session?.GetCurrentFilterBody()
             };
             return PostMessage("Agent/UpdateState", state);
@@ -204,56 +264,61 @@ namespace KdSoft.EtwEvents.PushAgent
         #endregion
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
-            _eventSource = StartSSE();
+            try {
+                LoadSessionOptions(out var sessionOptions);
+                LoadSinkOptions(out var sinkOptions);
 
-            var sopts = _sessionOptions.Value;
+                _eventSource = StartSSE();
 
-            var logger = _loggerFactory.CreateLogger<RealTimeTraceSession>();
-            var session = new RealTimeTraceSession("default", TimeSpan.MaxValue, logger, false);
-            this._session = session;
+                var logger = _loggerFactory.CreateLogger<RealTimeTraceSession>();
+                var session = new RealTimeTraceSession("default", TimeSpan.MaxValue, logger, false);
+                this._session = session;
 
-            stoppingToken.Register(() => {
-                var ses = _session;
-                if (ses != null) {
-                    _session = null;
-                    ses.Dispose();
+                stoppingToken.Register(() => {
+                    var ses = _session;
+                    if (ses != null) {
+                        _session = null;
+                        ses.Dispose();
+                    }
+                    var evt = _eventSource;
+                    if (evt != null) {
+                        _eventSource = null;
+                        evt.Close();
+                    }
+                });
+
+
+                session.GetLifeCycle().Used();
+
+                var diagnostics = session.SetFilter(sessionOptions.Filter);
+                if (!diagnostics.IsEmpty) {
+                    logger.LogError("Filter compilation failed.");
                 }
-                var evt = _eventSource;
-                if (evt != null) {
-                    _eventSource = null;
-                    evt.Close();
+
+                // enable the providers
+                foreach (var provider in sessionOptions.Providers) {
+                    var setting = new ProviderSetting();
+                    setting.Name = provider.Name;
+                    setting.Level = (TraceEventLevel)provider.Level;
+                    setting.MatchKeywords = provider.MatchKeywords;
+                    session.EnableProvider(setting);
                 }
-            });
 
+                var serOpts = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
-            session.GetLifeCycle().Used();
+                var optsJson = JsonSerializer.Serialize(sinkOptions.Definition.Options, serOpts);
+                var credsJson = JsonSerializer.Serialize(sinkOptions.Definition.Credentials, serOpts);
 
-            var diagnostics = session.SetFilter(sopts.Filter);
-            if (!diagnostics.IsEmpty) {
-                logger.LogError("Filter compilation failed.");
+                await using (var sink = await _sinkFactory.Create(optsJson, credsJson).ConfigureAwait(false)) {
+                    var processorLogger = _loggerFactory.CreateLogger<PersistentEventProcessor>();
+                    using (var processor = new PersistentEventProcessor(sink, _eventQueueOptions, stoppingToken, processorLogger, sessionOptions.BatchSize)) {
+                        var maxWriteDelay = TimeSpan.FromMilliseconds(sessionOptions.MaxWriteDelayMSecs);
+                        await processor.Process(session, maxWriteDelay, stoppingToken).ConfigureAwait(false);
+                    }
+                }
             }
-
-            // enable the providers
-            foreach (var provider in _sessionOptions.Value.Providers) {
-                var setting = new EtwLogging.ProviderSetting();
-                setting.Name = provider.Name;
-                setting.Level = (EtwLogging.TraceEventLevel)provider.Level;
-                setting.MatchKeywords = provider.MatchKeyWords;
-                session.EnableProvider(setting);
-            }
-
-            var sinkOpts = _sinkOptions.Value;
-            var serOpts = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-
-            var optsJson = JsonSerializer.Serialize(sinkOpts.Definition.Options, serOpts);
-            var credsJson = JsonSerializer.Serialize(sinkOpts.Definition.Credentials, serOpts);
-
-            await using (var sink = await _sinkFactory.Create(optsJson, credsJson).ConfigureAwait(false)) {
-                var processorLogger = _loggerFactory.CreateLogger<PersistentEventProcessor>();
-                using (var processor = new PersistentEventProcessor(sink, _eventQueueOptions, stoppingToken, processorLogger, _sessionOptions.Value.BatchSize)) {
-                    var maxWriteDelay = TimeSpan.FromMilliseconds(_sessionOptions.Value.MaxWriteDelayMSecs);
-                    await processor.Process(session, maxWriteDelay, stoppingToken).ConfigureAwait(false);
-                }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Failure running service.");
             }
         }
 

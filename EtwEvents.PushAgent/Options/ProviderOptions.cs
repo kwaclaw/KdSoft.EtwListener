@@ -6,6 +6,6 @@ namespace KdSoft.EtwEvents.PushAgent
     {
         public string Name { get; set; } = "";
         public TraceEventLevel Level { get; set; }
-        public ulong MatchKeyWords { get; set; }
+        public ulong MatchKeywords { get; set; }
     }
 }
