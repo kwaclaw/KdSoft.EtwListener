@@ -10,10 +10,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="config\rolling-file-sink-config.js~RFf4169c4.TMP" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="config\rolling-file-sink-config-model.js">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
@@ -22,6 +18,10 @@
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="KdSoft.Utils" Version="2.4.0" />
   </ItemGroup>
 
   <ItemGroup>

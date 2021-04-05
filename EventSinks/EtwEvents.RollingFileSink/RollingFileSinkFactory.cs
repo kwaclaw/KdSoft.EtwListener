@@ -4,7 +4,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
-using KdSoft.Logging;
+using KdSoft.Utils;
 
 namespace KdSoft.EtwEvents.EventSinks
 {
