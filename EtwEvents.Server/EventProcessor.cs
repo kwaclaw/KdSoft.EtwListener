@@ -14,7 +14,6 @@ namespace KdSoft.EtwEvents.Server
     class EventProcessor
     {
         readonly IServerStreamWriter<EtwEventBatch> _responseStream;
-        readonly ServerCallContext _context;
         readonly ObjectPool<EtwEvent> _etwEventPool;
         readonly Channel<EtwEvent> _channel;
         readonly ILogger<EventProcessor> _logger;
@@ -25,12 +24,10 @@ namespace KdSoft.EtwEvents.Server
 
         public EventProcessor(
             IServerStreamWriter<EtwEventBatch> responseStream,
-            ServerCallContext context,
             ILogger<EventProcessor> logger,
             int batchSize = 100
         ) {
             this._responseStream = responseStream;
-            this._context = context;
             this._logger = logger;
             this._channel = Channel.CreateUnbounded<EtwEvent>(new UnboundedChannelOptions {
                 AllowSynchronousContinuations = true,
@@ -106,13 +103,13 @@ namespace KdSoft.EtwEvents.Server
             } while (!isCompleted);
         }
 
-        public async Task Process(RealTimeTraceSession session, TimeSpan maxWriteDelay) {
+        public async Task Process(RealTimeTraceSession session, TimeSpan maxWriteDelay, CancellationToken stoppingToken) {
             this._maxWriteDelayMSecs = (int)maxWriteDelay.TotalMilliseconds;
             Task processTask;
             using (var timer = new Timer(TimerCallback)) {
                 processTask = ProcessBatches();
                 timer.Change(maxWriteDelay, maxWriteDelay);
-                await session.StartEvents(PostEvent, _context.CancellationToken).ConfigureAwait(false);
+                await session.StartEvents(PostEvent, stoppingToken).ConfigureAwait(false);
             }
             await _channel.Reader.Completion.ConfigureAwait(false);
             await processTask.ConfigureAwait(false);
