@@ -7,7 +7,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
-using KdSoft.Logging;
+using KdSoft.Utils;
 
 namespace KdSoft.EtwEvents.EventSinks
 {

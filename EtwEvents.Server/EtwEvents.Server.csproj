@@ -28,6 +28,7 @@
     <PackageReference Include="Grpc.Tools" Version="2.36.4" PrivateAssets="All" />
     <PackageReference Include="Grpc.AspNetCore.Server" Version="2.36.0" />
     <PackageReference Include="KdSoft.Data.Models.Shared" Version="1.1.0" />
+    <PackageReference Include="KdSoft.Logging" Version="1.0.0" />
     <PackageReference Include="KdSoft.Utils.Portable" Version="3.6.3" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Certificate" Version="5.0.4" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.9.0" />
@@ -41,7 +42,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\EtwEvents.Server.Shared\EtwEvents.Server.Shared.csproj" />
-    <ProjectReference Include="..\KdSoft.RollingFileLogger\KdSoft.RollingFileLogger.csproj" />
   </ItemGroup>
 
 </Project>

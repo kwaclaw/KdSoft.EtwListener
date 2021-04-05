@@ -4,7 +4,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
-using KdSoft.Logging;
+using KdSoft.Utils;
 
 namespace KdSoft.EtwEvents.EventSinks
 {
@@ -17,7 +17,7 @@ namespace KdSoft.EtwEvents.EventSinks
         static RollingFileSinkFactory() {
             var evtSinkAssembly = Assembly.GetExecutingAssembly();
             _evtSinkDir = Path.GetDirectoryName(evtSinkAssembly.Location)!;
-            AppDomain.CurrentDomain.AssemblyResolve += (sender, args) => Utils.DirectoryResolveAssembly(_evtSinkDir, args);
+            AppDomain.CurrentDomain.AssemblyResolve += (sender, args) => Client.Shared.Utils.DirectoryResolveAssembly(_evtSinkDir, args);
 
             _serializerOptions = new JsonSerializerOptions {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
