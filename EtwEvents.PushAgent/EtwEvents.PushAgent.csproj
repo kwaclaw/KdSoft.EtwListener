@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="KdSoft.Logging" Version="1.0.0" />
     <PackageReference Include="LaunchDarkly.EventSource" Version="4.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
@@ -28,7 +29,6 @@
     <ProjectReference Include="..\EtwEvents.Client.Shared\EtwEvents.Client.Shared.csproj" />
     <ProjectReference Include="..\EtwEvents.Server.Shared\EtwEvents.Server.Shared.csproj" />
     <ProjectReference Include="..\EventSinks\EtwEvents.ElasticSink\EtwEvents.ElasticSink.csproj" />
-    <ProjectReference Include="..\External\KdSoft.RollingFileLogger\KdSoft.RollingFileLogger.csproj" />
     <ProjectReference Include="..\External\KdSoft.Utils.Net5\KdSoft.Utils.Net5.csproj" />
   </ItemGroup>
 </Project>
