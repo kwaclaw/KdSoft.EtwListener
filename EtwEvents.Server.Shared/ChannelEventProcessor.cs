@@ -3,7 +3,6 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using Grpc.Core;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
@@ -11,26 +10,23 @@ using tracing = Microsoft.Diagnostics.Tracing;
 
 namespace KdSoft.EtwEvents.Server
 {
-    class EventProcessor
+    public class ChannelEventProcessor: EventProcessor
     {
-        readonly IServerStreamWriter<EtwEventBatch> _responseStream;
-        readonly ServerCallContext _context;
+        readonly WriteBatchAsync _writeBatchAsync;
         readonly ObjectPool<EtwEvent> _etwEventPool;
         readonly Channel<EtwEvent> _channel;
-        readonly ILogger<EventProcessor> _logger;
+        readonly ILogger<ChannelEventProcessor> _logger;
         readonly int _batchSize;
 
         int _lastWrittenMSecs;
         int _maxWriteDelayMSecs;
 
-        public EventProcessor(
-            IServerStreamWriter<EtwEventBatch> responseStream,
-            ServerCallContext context,
-            ILogger<EventProcessor> logger,
+        public ChannelEventProcessor(
+            WriteBatchAsync writeBatchAsync,
+            ILogger<ChannelEventProcessor> logger,
             int batchSize = 100
         ) {
-            this._responseStream = responseStream;
-            this._context = context;
+            this._writeBatchAsync = writeBatchAsync;
             this._logger = logger;
             this._channel = Channel.CreateUnbounded<EtwEvent>(new UnboundedChannelOptions {
                 AllowSynchronousContinuations = true,
@@ -41,8 +37,6 @@ namespace KdSoft.EtwEvents.Server
             this._etwEventPool = new DefaultObjectPool<EtwEvent>(new DefaultPooledObjectPolicy<EtwEvent>(), batchSize);
             this._lastWrittenMSecs = Environment.TickCount;
         }
-
-        public Task Completion => _channel.Reader.Completion;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void PostEvent(tracing.TraceEvent evt) {
@@ -68,7 +62,6 @@ namespace KdSoft.EtwEvents.Server
         }
 
         async Task ProcessBatches() {
-            var flushWriteOptions = new WriteOptions(WriteFlags.NoCompress);
             bool isCompleted;
 
             do {
@@ -94,8 +87,7 @@ namespace KdSoft.EtwEvents.Server
 
                     Volatile.Write(ref _lastWrittenMSecs, Environment.TickCount);
                     _logger.LogInformation($"Received batch with {batch.Events.Count} events.");
-                    _responseStream.WriteOptions = flushWriteOptions;
-                    await _responseStream.WriteAsync(batch).ConfigureAwait(false);
+                    await _writeBatchAsync(batch).ConfigureAwait(false);
                 }
                 finally {
                     foreach (var evt in batch.Events) {
@@ -106,13 +98,13 @@ namespace KdSoft.EtwEvents.Server
             } while (!isCompleted);
         }
 
-        public async Task Process(RealTimeTraceSession session, TimeSpan maxWriteDelay) {
+        public override async Task Process(RealTimeTraceSession session, TimeSpan maxWriteDelay, CancellationToken stoppingToken) {
             this._maxWriteDelayMSecs = (int)maxWriteDelay.TotalMilliseconds;
             Task processTask;
             using (var timer = new Timer(TimerCallback)) {
                 processTask = ProcessBatches();
                 timer.Change(maxWriteDelay, maxWriteDelay);
-                await session.StartEvents(PostEvent, _context.CancellationToken).ConfigureAwait(false);
+                await session.StartEvents(PostEvent, stoppingToken).ConfigureAwait(false);
             }
             await _channel.Reader.Completion.ConfigureAwait(false);
             await processTask.ConfigureAwait(false);
