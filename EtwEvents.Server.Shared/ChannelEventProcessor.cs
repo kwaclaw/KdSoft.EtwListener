@@ -15,7 +15,7 @@ namespace KdSoft.EtwEvents.Server
         readonly WriteBatchAsync _writeBatchAsync;
         readonly ObjectPool<EtwEvent> _etwEventPool;
         readonly Channel<EtwEvent> _channel;
-        readonly ILogger<ChannelEventProcessor> _logger;
+        readonly ILogger _logger;
         readonly int _batchSize;
 
         int _lastWrittenMSecs;
@@ -23,7 +23,7 @@ namespace KdSoft.EtwEvents.Server
 
         public ChannelEventProcessor(
             WriteBatchAsync writeBatchAsync,
-            ILogger<ChannelEventProcessor> logger,
+            ILogger logger,
             int batchSize = 100
         ) {
             this._writeBatchAsync = writeBatchAsync;

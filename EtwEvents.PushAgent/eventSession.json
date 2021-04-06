@@ -1,0 +1,1 @@
+{"batchSize":127,"maxWriteDelayMSecs":800,"providers":[{"name":"Microsoft-Extensions-Logging","level":2,"matchKeywords":0},{"name":"Microsoft-Windows-Application Server-Applications","level":2,"matchKeywords":2305843009213825024},{"name":"SmartClinic-Services-Mobility","level":4,"matchKeywords":0}],"filter":"return evt.Level != TraceEventLevel.Always;"}

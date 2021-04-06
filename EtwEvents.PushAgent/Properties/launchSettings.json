@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "EtwEvents.PushAgent": {
+      "commandName": "Project",
+      "commandLineArgs": "--Site=Test-Home",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      },
+      "dotnetRunMessages": "true"
+    }
+  }
+}

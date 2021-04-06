@@ -1,0 +1,16 @@
+{
+  "name": "Default",
+  "sinkType": "ElasticSink",
+  "definition": {
+    "options": {
+      "nodes": [
+        "http://10.106.122.211:9200"
+      ],
+      "indexFormat": "smartclinic-logs-test-{0:yyyy-MM-dd}"
+    },
+    "credentials": {
+      "user": "user",
+      "password": "pwd"
+    }
+  }
+}

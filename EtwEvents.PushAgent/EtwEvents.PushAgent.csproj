@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <LangVersion>Latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <AssemblyName>KdSoft.EtwEvents.PushAgent</AssemblyName>
+    <RootNamespace>KdSoft.EtwEvents.PushAgent</RootNamespace>
+    <UserSecretsId>dotnet-EtwEvents.PushAgent-2DA4777E-5631-4E75-9630-82767D1F596C</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Update="deploy/**/*">
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="KdSoft.Logging" Version="1.0.0" />
+    <PackageReference Include="LaunchDarkly.EventSource" Version="4.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="5.0.1" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="5.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EtwEvents.Client.Shared\EtwEvents.Client.Shared.csproj" />
+    <ProjectReference Include="..\EtwEvents.Server.Shared\EtwEvents.Server.Shared.csproj" />
+    <ProjectReference Include="..\EventSinks\EtwEvents.ElasticSink\EtwEvents.ElasticSink.csproj" />
+    <ProjectReference Include="..\External\KdSoft.Utils.Net5\KdSoft.Utils.Net5.csproj" />
+  </ItemGroup>
+</Project>

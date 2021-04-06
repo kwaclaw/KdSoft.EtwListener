@@ -1,0 +1,46 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: 2020-01-25 12:02-0500\n"
+"PO-Revision-Date: 2020-01-25 12:03-0500\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: de_AT\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.2.4\n"
+"X-Poedit-Basepath: ..\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-KeywordsList: ;_.GetString;_.Plural:2,3\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPathExcluded-0: node_modules\n"
+"X-Poedit-SearchPathExcluded-1: wwwroot\n"
+"X-Poedit-SearchPathExcluded-2: src\n"
+"X-Poedit-SearchPathExcluded-3: bin\n"
+"X-Poedit-SearchPathExcluded-4: obj\n"
+"X-Poedit-SearchPathExcluded-5: out\n"
+
+#: Controllers/ErrorController.cs:21
+msgid "Error - NonDevEnvironment"
+msgstr "Fehler - Keine Entwicklerumgebung"
+
+#: Controllers/ErrorController.cs:30 Controllers/ErrorController.cs:45
+msgid "Unexpected Error"
+msgstr "Unerwarteter Fehler"
+
+#: Controllers/EtwController.cs:74 Controllers/EtwController.cs:156
+msgid "Authentication failure"
+msgstr "Authentifizierungsfehler"
+
+#: Controllers/EtwController.cs:76 Controllers/EtwController.cs:158
+msgid "Cannot find matching client certificate"
+msgstr "Passendes Clientzertifikat nicht gefunden"
+
+#: Controllers/EtwController.cs:100 Controllers/EtwController.cs:120
+msgid "Session not found"
+msgstr "Sitzung wurde nicht gefunden"
+
+#: Controllers/EtwController.cs:102 Controllers/EtwController.cs:122
+msgid "Session may have been closed already."
+msgstr "Die Sitzung wurde möglicherweise bereits geschlossen."

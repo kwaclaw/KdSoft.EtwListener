@@ -1,0 +1,14 @@
+{
+  "imports": {
+    "@fortawesome/fontawesome-free": "./@fortawesome/fontawesome-free.js",
+    "@kdsoft/lit-mvvm": "./@kdsoft/lit-mvvm.js",
+    "@nx-js/observer-util/dist/es.es6.js": "./@nx-js/observer-util/dist/es.es6.js",
+    "@nx-js/queue-util/dist/es.es6.js": "./@nx-js/queue-util/dist/es.es6.js",
+    "dialog-polyfill": "./dialog-polyfill.js",
+    "dialog-polyfill/dialog-polyfill.css": "./dialog-polyfill/dialog-polyfill.css",
+    "gettext.js": "./gettextjs.js",
+    "lit-html": "./lit-html.js",
+    "lit-html/directives/class-map.js": "./lit-html/directives/class-map.js",
+    "lit-html/directives/repeat.js": "./lit-html/directives/repeat.js"
+  }
+}

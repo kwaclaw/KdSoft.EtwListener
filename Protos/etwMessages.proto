@@ -30,6 +30,10 @@ message EnableProvidersRequest {
   repeated ProviderSetting provider_settings = 2;
 }
 
+message ProviderSettingsList {
+  repeated ProviderSetting provider_settings = 1;
+}
+
 message ProviderSetting {
     string name = 1;
     TraceEventLevel level = 2;
