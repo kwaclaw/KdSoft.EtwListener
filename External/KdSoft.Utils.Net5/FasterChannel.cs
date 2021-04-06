@@ -26,7 +26,7 @@ namespace KdSoft.Utils
         }
 
         public async ValueTask WriteAsync(ReadOnlyMemory<byte> item, CancellationToken cancellationToken = default) {
-            _logicalAddress = await _log.EnqueueAsync(item, cancellationToken);
+            _logicalAddress = await _log.EnqueueAsync(item, cancellationToken).ConfigureAwait(false);
         }
 
         public FasterReader GetNewReader() {
