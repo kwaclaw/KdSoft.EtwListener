@@ -309,9 +309,20 @@ namespace KdSoft.EtwEvents.PushAgent
                 var optsJson = JsonSerializer.Serialize(sinkOptions.Definition.Options, serOpts);
                 var credsJson = JsonSerializer.Serialize(sinkOptions.Definition.Credentials, serOpts);
 
+
                 await using (var sink = await _sinkFactory.Create(optsJson, credsJson).ConfigureAwait(false)) {
+                    long sequenceNo = 0;
+                    WriteBatchAsync writeBatch = async (batch) => {
+                        bool success = await sink.WriteAsync(batch, sequenceNo).ConfigureAwait(false);
+                        if (success) {
+                            sequenceNo += batch.Events.Count;
+                            success = await sink.FlushAsync().ConfigureAwait(false);
+                        }
+                        return success;
+                    };
+
                     var processorLogger = _loggerFactory.CreateLogger<PersistentEventProcessor>();
-                    using (var processor = new PersistentEventProcessor(sink, _eventQueueOptions, stoppingToken, processorLogger, sessionOptions.BatchSize)) {
+                    using (var processor = new PersistentEventProcessor(writeBatch, _eventQueueOptions.Value.FilePath, processorLogger, sessionOptions.BatchSize)) {
                         var maxWriteDelay = TimeSpan.FromMilliseconds(sessionOptions.MaxWriteDelayMSecs);
                         await processor.Process(session, maxWriteDelay, stoppingToken).ConfigureAwait(false);
                     }
