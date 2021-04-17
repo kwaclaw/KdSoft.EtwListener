@@ -4,9 +4,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Google.Protobuf;
 using KdSoft.EtwLogging;
+using KdSoft.Faster;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
-using kdSoftUtils = KdSoft.Utils;
 using tracing = Microsoft.Diagnostics.Tracing;
 
 namespace KdSoft.EtwEvents.Server
@@ -16,7 +16,7 @@ namespace KdSoft.EtwEvents.Server
         readonly WriteBatchAsync _writeBatchAsync;
         readonly ObjectPool<EtwEvent> _etwEventPool;
         readonly ArrayBufferWriter<byte> _bufferWriter;
-        readonly kdSoftUtils.FasterChannel _channel;
+        readonly FasterChannel _channel;
         readonly ILogger _logger;
         readonly int _batchSize;
 
@@ -37,7 +37,7 @@ namespace KdSoft.EtwEvents.Server
             this._writeBatchAsync = writeBatchAsync;
             this._logger = logger;
             this._batchSize = batchSize;
-            this._channel = new kdSoftUtils.FasterChannel(filePath);
+            this._channel = new FasterChannel(filePath);
             this._etwEventPool = new DefaultObjectPool<EtwEvent>(new DefaultPooledObjectPolicy<EtwEvent>(), batchSize);
             this._bufferWriter = new ArrayBufferWriter<byte>(1024);
             this._lastWrittenMSecs = Environment.TickCount;

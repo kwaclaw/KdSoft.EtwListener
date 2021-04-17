@@ -16,7 +16,6 @@ using KdSoft.EtwEvents.Server;
 using KdSoft.EtwLogging;
 using LaunchDarkly.EventSource;
 using Microsoft.CodeAnalysis;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -106,7 +105,7 @@ namespace KdSoft.EtwEvents.PushAgent
         bool SaveProviderSettings(IEnumerable<ProviderSetting> providers) {
             if (LoadSessionOptions(out var options)) {
                 options.Providers = providers.Select(p => new ProviderOptions {
-                    Name = p.Name, 
+                    Name = p.Name,
                     Level = (Microsoft.Diagnostics.Tracing.TraceEventLevel)p.Level,
                     MatchKeywords = p.MatchKeywords
                 }).ToList();

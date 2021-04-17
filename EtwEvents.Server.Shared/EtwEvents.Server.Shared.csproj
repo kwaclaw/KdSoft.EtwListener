@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="KdSoft.Data.Models.Shared" Version="1.1.0" />
+    <PackageReference Include="KdSoft.Faster" Version="1.0.0" />
     <PackageReference Include="KdSoft.Utils.Portable" Version="3.6.3" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.9.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="5.0.3">
@@ -21,7 +22,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\EtwEvents.Protobuf.Shared\EtwEvents.Protobuf.Shared.csproj" />
-    <ProjectReference Include="..\External\KdSoft.Utils.Net5\KdSoft.Utils.Net5.csproj" />
   </ItemGroup>
 
 </Project>

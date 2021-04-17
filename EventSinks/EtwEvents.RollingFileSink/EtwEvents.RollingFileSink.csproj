@@ -26,7 +26,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\EtwEvents.Client.Shared\EtwEvents.Client.Shared.csproj" />
-    <ProjectReference Include="..\..\External\KdSoft.Utils.Net5\KdSoft.Utils.Net5.csproj" />
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
