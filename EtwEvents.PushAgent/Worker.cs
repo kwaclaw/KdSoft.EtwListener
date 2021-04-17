@@ -52,7 +52,11 @@ namespace KdSoft.EtwEvents.PushAgent
             this._loggerFactory = loggerFactory;
             this._logger = loggerFactory.CreateLogger<Worker>();
 
-            _jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+            _jsonOptions = new JsonSerializerOptions {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                AllowTrailingCommas = true,
+                WriteIndented = true
+            };
 
             _httpCertHandler = new HttpClientCertificateHandler(controlOptions.Value.ClientCertificate);
             _http = new HttpClient(_httpCertHandler);
