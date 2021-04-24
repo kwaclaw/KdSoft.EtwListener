@@ -4,54 +4,61 @@
     "description": "",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "postcss-fontawesome": "postcss node_modules/@fortawesome/fontawesome-free/css/all.css -o wwwroot/css/fontawesome/css/all.css",
         "postcss-src": "postcss src/css/**/*.pcss --dir wwwroot/css --ext css",
-        "postinstall": "snowpack install --dest wwwroot/lib",
+        "postinstall": "snowpack dev --open none",
         "lint": "eslint",
         "po2json": "po2json-gettextjs wwwroot/de_AT.po wwwroot/de_AT.json -p",
-        "build": "npm run postcss-fontawesome && npm run postcss-src && npm run po2json"
+        "wrap-css": "node node_modules/@kdsoft/lit-mvvm-components/wrap-css.js wwwroot/css/**/*.css wwwroot/styles wwwroot/css",
+        "wrap-dialog-css": "node node_modules/@kdsoft/lit-mvvm-components/wrap-css.js node_modules/dialog-polyfill/dialog-polyfill.css wwwroot/styles node_modules/dialog-polyfill",
+        "build": "npm run && npm run postcss-src && npm run po2json && npm run wrap-css && npm run wrap-dialog-css",
+        "start": "snowpack dev"
     },
     "author": "",
     "license": "ISC",
     "dependencies": {
         "@fortawesome/fontawesome-free": "^5.15.3",
-        "@kdsoft/lit-mvvm": "^1.0.0",
+        "@kdsoft/lit-mvvm": "file:D:/Work/Private/KdSoft.lit-mvvm",
+        "@kdsoft/lit-mvvm-components": "file:D:/Work/Private/KdSoft.lit-mvvm/components",
+        "@lit/reactive-element": "^1.0.0-rc.1",
         "@nx-js/observer-util": "^4.2.2",
         "@nx-js/queue-util": "^1.1.1",
         "autoprefixer": "^10.2.5",
         "dialog-polyfill": "^0.5.6",
         "gettext.js": "^1.0.0",
-        "lit-html": "^1.3.0",
-        "tailwindcss": "^2.0.4"
+        "lit": "^2.0.0-rc.1"
     },
     "devDependencies": {
         "@tailwindcss/forms": "^0.2.1",
         "eslint": "^7.22.0",
         "eslint-config-airbnb-base": "^14.2.1",
         "eslint-plugin-import": "^2.22.1",
-        "postcss": "^8.2.8",
+        "postcss": "^8.2.10",
         "postcss-cli": "^8.3.1",
         "postcss-copy": "^7.1.0",
         "postcss-import": "^14.0.0",
         "postcss-modules": "^4.0.0",
-        "snowpack": "^2.18.5"
+        "snowpack": "^3.3.5",
+        "tailwindcss": "^2.1.1"
     },
     "snowpack": {
         "exclude": [
             "**/node_modules/**/*"
         ],
-        "install": [
-            "@fortawesome/fontawesome-free",
-            "@kdsoft/lit-mvvm",
-            "@nx-js/observer-util/dist/es.es6.js",
-            "@nx-js/queue-util/dist/es.es6.js",
-            "lit-html",
-            "lit-html/directives/repeat.js",
-            "lit-html/directives/class-map.js",
-            "gettext.js",
-            "dialog-polyfill",
-            "dialog-polyfill/dialog-polyfill.css"
-        ]
+        "packageOptions": {
+            "knownEntrypoints": [
+                "@fortawesome/fontawesome-free",
+                "@kdsoft/lit-mvvm",
+                "@kdsoft/lit-mvvm-components",
+                "@nx-js/observer-util/dist/es.es6.js",
+                "@nx-js/queue-util/dist/es.es6.js",
+                "lit/directives/repeat.js",
+                "lit/directives/class-map.js",
+                "lit/html.js",
+                "gettext.js",
+                "dialog-polyfill",
+                "dialog-polyfill/dialog-polyfill.css"
+            ]
+        }
     },
     "browserslist": [
         "last 2 chrome versions",

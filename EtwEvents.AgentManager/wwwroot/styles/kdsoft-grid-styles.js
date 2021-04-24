@@ -2,7 +2,7 @@
 import { css } from '../lib/@kdsoft/lit-mvvm.js';
 
 // eslint-disable-next-line import/prefer-default-export
-export const KdSoftGridStyle = css`
+export default css`
 /* CSS Grid KdSoft Style */
 
 .kds-container {

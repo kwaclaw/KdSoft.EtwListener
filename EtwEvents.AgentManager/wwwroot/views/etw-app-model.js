@@ -1,10 +1,10 @@
 /* global i18n */
 
-import { observable, observe, unobserve, raw } from '../lib/@nx-js/observer-util/dist/es.es6.js';
+import { observable, observe } from '@nx-js/observer-util/dist/es.es6.js';
+import KdSoftChecklistModel from '@kdsoft/lit-mvvm-components';
 import RingBuffer from '../js/ringBuffer.js';
 import * as utils from '../js/utils.js';
 import FetchHelper from '../js/fetchHelper.js';
-import KdSoftChecklistModel from '../components/kdsoft-checklist-model.js';
 
 const traceLevelList = () => [
   { name: i18n.__('Always'), value: 0 },

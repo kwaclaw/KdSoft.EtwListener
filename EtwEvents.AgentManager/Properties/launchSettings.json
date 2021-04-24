@@ -18,7 +18,7 @@
     "EtwEvents.AgentManager": {
       "commandName": "Project",
       "launchBrowser": true,
-      "applicationUrl": "https://agent-manager.kd-soft.net:5300",
+      "applicationUrl": "https://agent-manager.kd-soft.net:50300",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

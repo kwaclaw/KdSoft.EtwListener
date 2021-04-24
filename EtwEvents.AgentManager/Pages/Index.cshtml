@@ -6,7 +6,7 @@
 
 @section Styles{
     <!-- Seems that fonts cannot be loaded from within a web component -->
-    <link rel="stylesheet" type="text/css" href="~/css/fontawesome/css/all.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
     <style>
         etw-app {
             height: 100vh;
@@ -16,7 +16,7 @@
 
 @section Scripts {
     <script type="module">
-        import gettext from '/lib/gettextjs.js';
+        import gettext from 'gettext.js';
         import FetchHelper from '/js/fetchHelper.js';
        
         // use "new" so that "this" is defined inside of gettext()

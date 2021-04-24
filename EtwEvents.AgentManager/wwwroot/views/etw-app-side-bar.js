@@ -1,26 +1,21 @@
 /* global i18n */
 
-import { html, nothing } from '../lib/lit-html.js';
-import { classMap } from '../lib/lit-html/directives/class-map.js';
-import { observe, observable } from '../lib/@nx-js/observer-util/dist/es.es6.js';
-import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
-import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
-import '../components/kdsoft-checklist.js';
-import KdSoftChecklistModel from '../components/kdsoft-checklist-model.js';
-import '../components/kdsoft-expander.js';
+import { html, nothing } from 'lit';
+import { observe } from '@nx-js/observer-util/dist/es.es6.js';
+import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
+import { LitMvvmElement, css } from '@kdsoft/lit-mvvm';
+import KdSoftChecklistModel from '@kdsoft/lit-mvvm-components';
+import '@kdsoft/lit-mvvm-components/kdsoft-checklist.js';
+import '@kdsoft/lit-mvvm-components/kdsoft-expander.js';
+import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
+import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
+import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
+import spinnerStyles from '../styles/spinner-styles.js';
+import appStyles from '../styles/etw-app-styles.js';
+import dialogStyles from '../styles/dialog-polyfill-styles.js';
 import * as utils from '../js/utils.js';
-import sharedStyles from '../styles/kdsoft-shared-styles.js';
-import { KdSoftGridStyle } from '../styles/kdsoft-grid-style.js';
-import styleLinks from '../styles/kdsoft-style-links.js';
-import etwAppStyleLinks from '../styles/etw-app-style-links.js';
 
 const runBtnBase = { fas: true };
-
-const classList = {
-  startBtnActive: { ...runBtnBase, 'fa-play': true, 'text-green-500': true },
-  startBtnInactive: { ...runBtnBase, 'fa-play': true },
-  stopBtn: { ...runBtnBase, 'fa-stop': true, 'text-red-500': true },
-};
 
 function getAgentIndex(agentList, agentId) {
   return agentList.findIndex(val => val.id === agentId);
@@ -79,7 +74,12 @@ class EtwAppSideBar extends LitMvvmElement {
 
   static get styles() {
     return [
-      KdSoftGridStyle,
+      tailwindStyles,
+      checkboxStyles,
+      fontAwesomeStyles,
+      appStyles,
+      spinnerStyles,
+      utils.html5DialogSupported ? dialogStyles : css``,
       css`
         :host {
           display: block;
@@ -203,15 +203,7 @@ class EtwAppSideBar extends LitMvvmElement {
   }
 
   render() {
-    const dialogStyle = utils.html5DialogSupported
-      ? nothing
-      : html`<link rel="stylesheet" type="text/css" href=${styleLinks.dialog} />`;
-
     return html`
-      ${sharedStyles}
-      ${dialogStyle}
-      <link rel="stylesheet" type="text/css" href=${etwAppStyleLinks.etwApp} />
-      <link rel="stylesheet" type="text/css" href="css/spinner.css" />
       <style>
         :host {
           position: relative;

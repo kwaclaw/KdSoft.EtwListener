@@ -1,7 +1,8 @@
-﻿import { html } from '../lib/lit-html.js';
-import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
-import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
-import sharedStyles from '../styles/kdsoft-shared-styles.js';
+﻿import { html } from 'lit';
+import { LitMvvmElement, css } from '@kdsoft/lit-mvvm';
+import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
+import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
+import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
 
 function comparePos(pos1, pos2) {
   if (pos1.line < pos2.line) return -1;
@@ -234,6 +235,8 @@ class FilterEdit extends LitMvvmElement {
 
   static get styles() {
     return [
+      tailwindStyles,
+      fontAwesomeStyles,
       css`
         #code-wrapper {
           color: gray;
@@ -276,7 +279,6 @@ class FilterEdit extends LitMvvmElement {
   render() {
     const codeToolTip = getToolTip(this.model.diagnostics);
     const result = html`
-      ${sharedStyles}
       <style>
         :host {
           display: block;

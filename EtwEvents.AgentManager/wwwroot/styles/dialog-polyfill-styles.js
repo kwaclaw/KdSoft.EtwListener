@@ -1,3 +1,7 @@
+import { css } from '@kdsoft/lit-mvvm';
+
+export default css`
+
 dialog {
   position: absolute;
   left: 0; right: 0;
@@ -35,3 +39,4 @@ dialog.fixed {
   top: 50%;
   transform: translate(0, -50%);
 }
+`;

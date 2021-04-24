@@ -1,3 +1,7 @@
+import { css } from '@kdsoft/lit-mvvm';
+
+export default css`
+
 .spinning {
   animation-play-state: running;
   position: relative;
@@ -15,3 +19,5 @@
       color: yellow;
   }
 }
+
+`;

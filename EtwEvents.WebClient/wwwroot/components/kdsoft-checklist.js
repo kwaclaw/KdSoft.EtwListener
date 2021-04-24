@@ -185,7 +185,7 @@ class KdSoftChecklist extends LitMvvmElement {
     const disabledClass = item.disabled ? 'disabled' : '';
 
     const listItemContent = html`
-      <div class="w-full inline-flex items-baseline">
+      <div part="item" class="w-full inline-flex items-baseline">
         ${hasArrows
           ? html`
               <span class="leading-none cursor-pointer my-auto mr-1" @click=${this._upClick}><i class=${classMap(upArrowClasses)}></i></span>

@@ -1,17 +1,18 @@
 /* global i18n */
 
-import { html, nothing } from '../lib/lit-html.js';
-import { repeat } from '../lib/lit-html/directives/repeat.js';
-import { classMap } from '../lib/lit-html/directives/class-map.js';
-import { Queue, priorities } from '../lib/@nx-js/queue-util/dist/es.es6.js';
-import { LitMvvmElement, css } from '../lib/@kdsoft/lit-mvvm.js';
+import { html, nothing } from 'lit';
+import { repeat } from 'lit/directives/repeat.js';
+import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
+import { LitMvvmElement, css } from '@kdsoft/lit-mvvm';
 import './etw-app-side-bar.js';
 import './provider-config.js';
 import './filter-edit.js';
+import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
+import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
+import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
+import gridStyles from '../styles/kdsoft-grid-styles.js';
+import spinnerStyles from '../styles/spinner-styles.js';
 import Spinner from '../js/spinner.js';
-import sharedStyles from '../styles/kdsoft-shared-styles.js';
-import { KdSoftGridStyle } from '../styles/kdsoft-grid-style.js';
-import etwAppStyleLinks from '../styles/etw-app-style-links.js';
 
 const runBtnBase = { fas: true };
 const tabBase = { 'inline-block': true, 'py-2': true, 'no-underline': true };
@@ -255,7 +256,10 @@ class EtwApp extends LitMvvmElement {
 
   static get styles() {
     return [
-      KdSoftGridStyle,
+      tailwindStyles,
+      checkboxStyles,
+      fontAwesomeStyles,
+      gridStyles,
       css`
         :host {
           display: block;
@@ -375,9 +379,6 @@ class EtwApp extends LitMvvmElement {
   render() {
     const activeAgent = this.model.activeAgent;
     return html`
-      ${sharedStyles}
-      <link rel="stylesheet" type="text/css" href=${etwAppStyleLinks.etwApp} />
-      <link rel="stylesheet" type="text/css" href="css/spinner.css" />
       <style>
         :host {
           position: relative;
