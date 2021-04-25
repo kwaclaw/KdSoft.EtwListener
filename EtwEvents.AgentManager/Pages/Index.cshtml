@@ -15,29 +15,7 @@
 }
 
 @section Scripts {
-    <script type="module">
-        import gettext from 'gettext.js';
-        import FetchHelper from '/js/fetchHelper.js';
-       
-        // use "new" so that "this" is defined inside of gettext()
-        window.i18n = new gettext();
-
-        const fetcher = new FetchHelper('');
-        fetcher.getJson('de_AT.json')
-        .then(json => {
-            window.i18n.loadJSON(json, 'messages');
-        })
-        .catch(console.error);
-
-        @* i18n.setLocale('de_AT'); *@
-    </script>
-
-    <script type="module" src="~/views/etw-app.js"></script>
-    <script type="module">
-        import EtwAppModel from '/views/etw-app-model.js';
-        const etwApp = document.querySelector('etw-app');
-        etwApp.model = new EtwAppModel();
-    </script>
+    <script type="module" src="~/index.js"></script>
 }
 
 <etw-app appTitle="ETW Listener"></etw-app>

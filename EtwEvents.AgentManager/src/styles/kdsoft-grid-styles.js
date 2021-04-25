@@ -1,5 +1,5 @@
 
-import { css } from '../lib/@kdsoft/lit-mvvm.js';
+import { css } from '@kdsoft/lit-mvvm';
 
 // eslint-disable-next-line import/prefer-default-export
 export default css`

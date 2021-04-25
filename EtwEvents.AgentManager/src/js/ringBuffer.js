@@ -1,4 +1,4 @@
-﻿import { observable } from '../lib/@nx-js/observer-util/dist/es.es6.js';
+﻿import { observable } from '@nx-js/observer-util/dist/es.es6.js';
 
 // Undefined entries will be skipped on iteration
 class RingBuffer {

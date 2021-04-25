@@ -1,4 +1,4 @@
-﻿import { observable } from '../lib/@nx-js/observer-util/dist/es.es6.js';
+﻿import { observable } from '@nx-js/observer-util/dist/es.es6.js';
 import RingBuffer from './ringBuffer.js';
 
 const SessionNotFoundCode = 4901;

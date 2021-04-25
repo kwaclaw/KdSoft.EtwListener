@@ -4,14 +4,14 @@
     "description": "",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "postcss-src": "postcss src/css/**/*.pcss --dir wwwroot/css --ext css",
-        "postinstall": "snowpack dev --open none",
+        "postcss-src": "postcss src/css/**/*[.pcss,.css] --dir _tmp --ext css",
         "lint": "eslint",
-        "po2json": "po2json-gettextjs wwwroot/de_AT.po wwwroot/de_AT.json -p",
-        "wrap-css": "node node_modules/@kdsoft/lit-mvvm-components/wrap-css.js wwwroot/css/**/*.css wwwroot/styles wwwroot/css",
-        "wrap-dialog-css": "node node_modules/@kdsoft/lit-mvvm-components/wrap-css.js node_modules/dialog-polyfill/dialog-polyfill.css wwwroot/styles node_modules/dialog-polyfill",
+        "po2json": "po2json wwwroot/de_AT.po wwwroot/de_AT.json -p",
+        "wrap-css": "node node_modules/@kdsoft/lit-mvvm-components/scripts/wrap-css.mjs _tmp/**/*.css wwwroot/styles _tmp",
+        "wrap-dialog-css": "node node_modules/@kdsoft/lit-mvvm-components/scripts/wrap-css.mjs node_modules/dialog-polyfill/dialog-polyfill.css wwwroot/styles node_modules/dialog-polyfill",
+        "prebuild": "rimraf _tmp/**/*",
         "build": "npm run && npm run postcss-src && npm run po2json && npm run wrap-css && npm run wrap-dialog-css",
-        "start": "snowpack dev"
+        "start": "snowpack build --watch"
     },
     "author": "",
     "license": "ISC",
@@ -41,9 +41,15 @@
         "tailwindcss": "^2.1.1"
     },
     "snowpack": {
+        "root": "src",
+        "workspaceRoot": "../..",
         "exclude": [
-            "**/node_modules/**/*"
+            "src/css/**/*",
+            "wwwroot/**/*"
         ],
+        "buildOptions": {
+            "out": "wwwroot"
+        },
         "packageOptions": {
             "knownEntrypoints": [
                 "@fortawesome/fontawesome-free",
@@ -51,6 +57,7 @@
                 "@kdsoft/lit-mvvm-components",
                 "@nx-js/observer-util/dist/es.es6.js",
                 "@nx-js/queue-util/dist/es.es6.js",
+                "@lit/reactive-element/css-tag.js",
                 "lit/directives/repeat.js",
                 "lit/directives/class-map.js",
                 "lit/html.js",
