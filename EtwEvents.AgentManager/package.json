@@ -60,14 +60,29 @@
             ]
         }
     },
+    "postcss": {
+        "plugins": {
+            "postcss-import": {},
+            "postcss-copy": {
+                "basePath": [
+                    "node_modules"
+                ],
+                "template": "[path]/[name].[ext][query]",
+                "dest": "src/styles/assets"
+            },
+            "tailwindcss": {
+                "theme": {},
+                "variants": {},
+                "plugins": [
+                    "@tailwindcss/forms"
+                ]
+            },
+            "autoprefixer": {}
+        }
+    },
     "browserslist": [
         "last 2 chrome versions",
         "last 2 firefox versions",
         "last 2 safari versions"
-    ],
-    "-vs-binding": {
-        "ProjectOpened": [
-            "snowpack"
-        ]
-    }
+    ]
 }
