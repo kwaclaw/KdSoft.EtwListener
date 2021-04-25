@@ -38,5 +38,9 @@ wwwroot/lib
 */deploy/publish/
 out/
 dev/
+_tmp/
+_snowpack/
 
 EtwEvents.WebClient/EventSinks/**/
+
+EtwEvents.AgentManager/wwwroot/
