@@ -1,3 +1,5 @@
+/* workaround for snowpack bug not processing first line imports */
+
 import { html } from 'lit/html.js';
 import { LitMvvmElement, css } from '@kdsoft/lit-mvvm';
 import { KdSoftDropdownModel, KdSoftDropdownChecklistConnector } from '@kdsoft/lit-mvvm-components';

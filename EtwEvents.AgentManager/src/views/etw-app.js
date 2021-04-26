@@ -30,6 +30,7 @@ const classList = {
 class EtwApp extends LitMvvmElement {
   constructor() {
     super();
+
     // setting model property here because we cannot reliable set it from a non-lit-html rendered HTML page
     this.scheduler = new Queue(priorities.HIGH);
     // we must assign the model *after* the scheduler, or assign it externally

@@ -1,4 +1,6 @@
-﻿import { observable } from '@nx-js/observer-util/dist/es.es6.js';
+﻿/* workaround for snowpack bug not processing first line imports */
+
+import { observable } from '@nx-js/observer-util/dist/es.es6.js';
 import RingBuffer from './ringBuffer.js';
 
 const SessionNotFoundCode = 4901;

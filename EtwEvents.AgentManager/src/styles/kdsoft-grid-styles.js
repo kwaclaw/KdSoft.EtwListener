@@ -1,4 +1,6 @@
 
+/* workaround for snowpack bug not processing first line imports */
+
 import { css } from '@kdsoft/lit-mvvm';
 
 // eslint-disable-next-line import/prefer-default-export

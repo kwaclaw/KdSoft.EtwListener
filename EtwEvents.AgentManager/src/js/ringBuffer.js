@@ -1,4 +1,6 @@
-﻿import { observable } from '@nx-js/observer-util/dist/es.es6.js';
+﻿/* workaround for snowpack bug not processing first line imports */
+
+import { observable } from '@nx-js/observer-util/dist/es.es6.js';
 
 // Undefined entries will be skipped on iteration
 class RingBuffer {
