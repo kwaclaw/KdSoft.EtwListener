@@ -390,7 +390,7 @@ class EtwApp extends LitMvvmElement {
 
         <etw-app-side-bar id="sidebar" .model=${this.model} aria-expanded="true"></etw-app-side-bar>
 
-        <div id="sidebar-resize" @pointerdown=${this._sidebarSizeDown} @pointerup=${this._sidebarSizeUp}></div>
+        <div id="sidebar-resize" @pointerdown=${e => this._sidebarSizeDown(e)} @pointerup=${e => this._sidebarSizeUp(e)}></div>
 
         <div id="main">
           <div id="nav-content" class="lg:flex lg:items-center lg:w-auto hidden lg:block pt-6 lg:pt-0 bg-gray-500">
@@ -404,22 +404,22 @@ class EtwApp extends LitMvvmElement {
                     <div class="flex my-2 pr-2">
                       <span class="font-semibold">Event Providers</span>
                       <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
-                        @click=${this._addProviderClick}>
+                        @click=${e => this._addProviderClick(e)}>
                       </span>
                     </div>
                     ${activeAgent.enabledProviders.map(provider => html`
                       <provider-config
                         .model=${provider}
-                        @beforeExpand=${this._providerBeforeExpand}
-                        @delete=${this._deleteProviderClick}>
+                        @beforeExpand=${e => this._providerBeforeExpand(e)}
+                        @delete=${e => this._deleteProviderClick(e)}>
                       </provider-config>
                     `)}
                     <hr class="my-3" />
                     <div class="flex flex-wrap mt-2 bt-1">
-                      <button type="button" class="py-1 px-2 ml-auto" @click=${this._applyProvidersClick} title="Apply">
+                      <button type="button" class="py-1 px-2 ml-auto" @click=${e => this._applyProvidersClick(e)} title="Apply">
                         <i class="fas fa-lg fa-check text-green-500"></i>
                       </button>
-                      <button type="button" class="py-1 px-2" @click=${this._resetProvidersClick} title="Cancel">
+                      <button type="button" class="py-1 px-2" @click=${e => this._resetProvidersClick(e)} title="Cancel">
                         <i class="fas fa-lg fa-times text-red-500"></i>
                       </button>
                     </div>
@@ -432,13 +432,13 @@ class EtwApp extends LitMvvmElement {
                     <filter-edit class="p-2" .model=${activeAgent.filterModel}></filter-edit>
                     <hr class="my-3" />
                     <div class="flex flex-wrap mt-2 bt-1">
-                      <button type="button" class="py-1 px-2" @click=${this._testFilterClick}>
+                      <button type="button" class="py-1 px-2" @click=${e => this._testFilterClick(e)}>
                         <i class="fas fa-lg fa-stethoscope" style="color:orange"></i>
                       </button>
-                      <button type="button" class="py-1 px-2 ml-auto" @click=${this._applyFilterClick} title="Apply">
+                      <button type="button" class="py-1 px-2 ml-auto" @click=${e => this._applyFilterClick(e)} title="Apply">
                         <i class="fas fa-lg fa-check text-green-500"></i>
                       </button>
-                      <button type="button" class="py-1 px-2" @click=${this._resetFilterClick} title="Cancel">
+                      <button type="button" class="py-1 px-2" @click=${e => this._resetFilterClick(e)} title="Cancel">
                         <i class="fas fa-lg fa-times text-red-500"></i>
                       </button>
                     </div>
@@ -453,11 +453,11 @@ class EtwApp extends LitMvvmElement {
           ${(!this.model.showLastError && !this.model.showErrors)
             ? nothing
             : html`
-              <div id="error-resize" @pointerdown=${this._errSizeDown} @pointerup=${this._errSizeUp}></div>
+              <div id="error-resize" @pointerdown=${e => this._errSizeDown(e)} @pointerup=${e => this._errSizeUp(e)}></div>
 
               <div id="error-resizable">
-                <div id="error-grid" class="kds-container px-2 pt-0 pb-2" @pointerdown=${this._errorGridDown}>
-                <button id="error-close" class="p-1 text-gray-500" @click=${this._closeError}>
+                <div id="error-grid" class="kds-container px-2 pt-0 pb-2" @pointerdown=${e => this._errorGridDown(e)}>
+                <button id="error-close" class="p-1 text-gray-500" @click=${e => this._closeError(e)}>
                   <span aria-hidden="true" class="fas fa-lg fa-times"></span>
                 </button>
                 ${repeat(
@@ -467,7 +467,7 @@ class EtwApp extends LitMvvmElement {
                       <div class="kds-row">
                       <div>${item.timeStamp}</div>
                       <div>${item.title}</div>
-                      <pre @click=${this._errorDetailClick}>${item.detail}</pre>
+                      <pre @click=${e => this._errorDetailClick(e)}>${item.detail}</pre>
                       </div>
                     `)
                   }
@@ -476,7 +476,7 @@ class EtwApp extends LitMvvmElement {
             `
           }
           <div class="flex p-2 border bg-gray-800 text-white">&copy; Karl Waclawek
-            <button class="ml-auto" @click=${this._showErrors}>
+            <button class="ml-auto" @click=${e => this._showErrors(e)}>
               ${this.model.fetchErrors.count()} ${i18n.__('Errors')}
             </button>
           </div>
