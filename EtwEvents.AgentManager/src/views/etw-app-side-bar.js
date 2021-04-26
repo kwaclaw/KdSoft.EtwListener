@@ -4,7 +4,7 @@ import { html, nothing } from 'lit';
 import { observe } from '@nx-js/observer-util/dist/es.es6.js';
 import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
 import { LitMvvmElement, css } from '@kdsoft/lit-mvvm';
-import KdSoftChecklistModel from '@kdsoft/lit-mvvm-components';
+import { KdSoftChecklistModel } from '@kdsoft/lit-mvvm-components';
 import '@kdsoft/lit-mvvm-components/kdsoft-checklist.js';
 import '@kdsoft/lit-mvvm-components/kdsoft-expander.js';
 import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
