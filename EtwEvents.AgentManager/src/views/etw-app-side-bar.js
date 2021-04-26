@@ -211,7 +211,7 @@ class EtwAppSideBar extends LitMvvmElement {
       </style>
       <nav id="sidebar" class="text-gray-500 bg-gray-800 pt-0 pb-3 h-full z-30">
         <!-- <div class="pr-2"> -->
-          <button id="nav-toggle" @click=${e => this._toggleNav(e)} class="px-3 py-3 text-gray-600 border-gray-600 hover:text-gray-800">
+          <button id="nav-toggle" @click=${this._toggleNav} class="px-3 py-3 text-gray-600 border-gray-600 hover:text-gray-800">
             <i class="fas fa-lg fa-bars"></i>
           </button>
         <!-- </div> -->
