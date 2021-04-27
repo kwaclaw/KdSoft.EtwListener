@@ -8,9 +8,9 @@
         "lint": "eslint",
         "po2json": "po2json wwwroot/de_AT.po wwwroot/de_AT.json -p",
         "wrap-css": "node node_modules/@kdsoft/lit-mvvm-components/scripts/wrap-css.mjs",
-        "wrap-css-tmp": "npm run wrap-css _tmp/**/*.css src/styles _tmp",
-        "wrap-dialog-css": "npm run wrap-css node_modules/dialog-polyfill/dialog-polyfill.css src/styles node_modules/dialog-polyfill",
-        "prebuild": "rimraf _tmp/**/*",
+        "wrap-css-tmp": "npm run wrap-css _tmp/**/*.css src/_generated_styles _tmp",
+        "wrap-dialog-css": "npm run wrap-css node_modules/dialog-polyfill/dialog-polyfill.css src/_generated_styles node_modules/dialog-polyfill",
+        "prebuild": "rimraf _tmp/**/* && rimraf src/_generated_styles/**/*",
         "build": "npm run && npm run postcss-src && npm run po2json && npm run wrap-css-tmp && npm run wrap-dialog-css",
         "start": "snowpack build"
     },
@@ -50,6 +50,18 @@
         ],
         "buildOptions": {
             "out": "wwwroot"
+        },
+        "mount": {
+            "src/_generated_styles": {
+                "url": "/styles",
+                "static": false,
+                "resolve": true
+            },
+            "src": {
+                "url": "/",
+                "static": false,
+                "resolve": true
+            }
         },
         "packageOptions": {
             "source": "local",
