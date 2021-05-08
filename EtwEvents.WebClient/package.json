@@ -19,6 +19,7 @@
   },
   "author": "",
   "license": "ISC",
+  "main": "index.js",
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.15.3",
     "@kdsoft/lit-mvvm": "^2.0.0-beta.1",
@@ -28,6 +29,7 @@
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.3.2",
+    "autoprefixer": "^10.2.5",
     "eslint": "^7.21.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-plugin-import": "^2.22.1",
@@ -35,7 +37,6 @@
     "postcss-cli": "^8.3.1",
     "postcss-copy": "^7.1.0",
     "postcss-import": "^14.0.1",
-    "postcss-modules": "^4.0.0",
     "rimraf": "^3.0.2",
     "tailwindcss": "^2.1.2",
     "vite": "^2.2.3"
