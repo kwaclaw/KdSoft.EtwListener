@@ -1,4 +1,6 @@
-﻿import FetchHelper from './js/fetchHelper.js';
+﻿//
+
+import FetchHelper from './js/fetchHelper.js';
 import EtwAppModel from './views/etw-app-model.js';
 import './views/etw-app.js';
 import GetText from 'gettext.js';
@@ -6,7 +8,7 @@ import GetText from 'gettext.js';
 // use "new" so that "this" is defined inside of GetText()
 window.i18n = new GetText();
 
-const fetcher = new FetchHelper('');
+const fetcher = new FetchHelper('http://localhost:41000');
 fetcher.getJson('de_AT.json')
   .then(json => {
     window.i18n.loadJSON(json, 'messages');

@@ -11,8 +11,6 @@ import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.j
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
 import gridStyles from '../styles/kdsoft-grid-styles.js';
-import spinnerStyles from '../styles/spinner-styles.js';
-import Spinner from '../js/spinner.js';
 
 const runBtnBase = { fas: true };
 const tabBase = { 'inline-block': true, 'py-2': true, 'no-underline': true };

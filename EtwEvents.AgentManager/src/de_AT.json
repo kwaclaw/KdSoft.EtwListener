@@ -1,48 +1,13 @@
 {
-   "": {
-      "project-id-version": "",
-      "pot-creation-date": "2020-01-22 17:04-0500",
-      "po-revision-date": "2020-01-22 17:04-0500",
-      "last-translator": "",
-      "language-team": "",
-      "language": "de_AT",
-      "mime-version": "1.0",
-      "content-type": "text/plain; charset=UTF-8",
-      "content-transfer-encoding": "8bit",
-      "x-generator": "Poedit 2.2.4",
-      "x-poedit-basepath": ".",
-      "plural-forms": "nplurals=2; plural=(n != 1);",
-      "x-poedit-keywordslist": "gettext;__;ngettext:1,2;_n:1,2;pgettext:1c,2;_p:1c,2",
-      "x-poedit-searchpath-0": "js",
-      "x-poedit-searchpath-1": "styles",
-      "x-poedit-searchpath-2": "views"
-   },
-   "Errors": [
-      null,
-      "Fehler"
-   ],
-   "Always": [
-      null,
-      "Immer"
-   ],
-   "Critical": [
-      null,
-      "Kritisch"
-   ],
-   "Error": [
-      null,
-      "Fehler"
-   ],
-   "Warning": [
-      null,
-      "Warnung"
-   ],
-   "Informational": [
-      null,
-      "Informell"
-   ],
-   "Verbose": [
-      null,
-      "Ausführlich"
-   ]
+    "": {
+        "language": "de_AT",
+        "plural-forms": "nplurals=2; plural=(n != 1);"
+    },
+    "Errors": "Fehler",
+    "Always": "Immer",
+    "Critical": "Kritisch",
+    "Error": "Fehler",
+    "Warning": "Warnung",
+    "Informational": "Informell",
+    "Verbose": "Ausführlich"
 }

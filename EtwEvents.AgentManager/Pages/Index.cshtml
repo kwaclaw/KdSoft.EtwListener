@@ -4,6 +4,12 @@
     ViewData["Title"] = "Home page";
 }
 
+@section Vite {
+    <environment names="Development">
+        <script type="module" src="http://localhost:41000/@@vite/client"></script>
+    </environment>
+}
+
 @section Styles{
     <!-- Seems that fonts cannot be loaded from within a web component -->
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
@@ -15,7 +21,13 @@
 }
 
 @section Scripts {
-    <script type="module" src="~/index.js"></script>
+    <environment names="Development">
+        <script type="module" src="http://localhost:41000/index.js"></script>
+    </environment>
+    <environment names="Staging,Production">
+        <link href="manifest.json" rel="manifest" />
+        <script type="module" asp-src-include="~/assets/main.*.js"></script>
+    </environment>
 }
 
 <etw-app appTitle="ETW Listener"></etw-app>

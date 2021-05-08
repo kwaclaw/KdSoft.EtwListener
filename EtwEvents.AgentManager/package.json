@@ -1,80 +1,41 @@
 {
   "name": "etw-events-agentmanager",
   "version": "1.0.0",
-  "description": "",
+  "description": "Connection security and authentication/authorization are both performed using certificates.",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "postcss-src": "postcss src/css/**/*[.pcss,.css] --dir _tmp --ext css",
     "lint": "eslint",
-    "po2json": "po2json src/de_AT.po src/de_AT.json -p",
     "wrap-css": "node node_modules/@kdsoft/lit-mvvm-components/scripts/wrap-css.mjs",
-    "wrap-css-tmp": "npm run wrap-css _tmp/**/*.css src/_generated_styles _tmp",
-    "wrap-dialog-css": "npm run wrap-css node_modules/dialog-polyfill/dialog-polyfill.css src/_generated_styles node_modules/dialog-polyfill",
-    "prebuild": "rimraf _tmp/**/* && rimraf src/_generated_styles/**/*",
-    "build": "npm run && npm run postcss-src && npm run po2json && npm run wrap-css-tmp && npm run wrap-dialog-css",
-    "start": "snowpack build"
+    "postcss-src": "postcss src/css/**/*[.pcss,.css] --dir _tmp --ext css",
+    "po2json": "po2json-gettextjs src/de_AT.po src/de_AT.json -p",
+    "wrap-css-tmp": "npm run wrap-css _tmp/**/*.css src/styles _tmp",
+    "wrap-css-dialog": "npm run wrap-css node_modules/dialog-polyfill/dialog-polyfill.css src/styles node_modules/dialog-polyfill",
+    "import-styles": "shx rm -f _tmp/**/* && npm run postcss-src && npm run wrap-css-tmp && npm run wrap-css-dialog",
+    "prebuild": "npm run po2json",
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
   },
   "author": "",
   "license": "ISC",
+  "main": "index.js",
   "dependencies": {
-    "@fortawesome/fontawesome-free": "^5.15.3",
-    "@kdsoft/lit-mvvm": "file:../../KdSoft.lit-mvvm",
-    "@kdsoft/lit-mvvm-components": "file:../../KdSoft.lit-mvvm/components",
-    "@lit/reactive-element": "^1.0.0-rc.1",
-    "@nx-js/observer-util": "^4.2.2",
-    "@nx-js/queue-util": "^1.1.1",
+    "@kdsoft/lit-mvvm": "^2.0.0-beta.1",
+    "@kdsoft/lit-mvvm-components": "^1.0.0-beta.4",
     "dialog-polyfill": "^0.5.6",
-    "gettext.js": "^1.0.0",
-    "lit": "^2.0.0-rc.1"
+    "gettext.js": "^1.0.0"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.3.2",
-    "autoprefixer": "^10.2.5",
-    "eslint": "^7.25.0",
+    "eslint": "^7.21.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-plugin-import": "^2.22.1",
     "postcss": "^8.2.12",
     "postcss-cli": "^8.3.1",
     "postcss-copy": "^7.1.0",
     "postcss-import": "^14.0.1",
-    "postcss-modules": "^4.0.0",
-    "rimraf": "^3.0.2",
-    "snowpack": "^3.3.5",
-    "tailwindcss": "^2.1.2"
-  },
-  "snowpack": {
-    "root": "src",
-    "workspaceRoot": "../..",
-    "exclude": [
-      "**/src/css/**/*"
-    ],
-    "buildOptions": {
-      "out": "wwwroot"
-    },
-    "mount": {
-      "src/_generated_styles": {
-        "url": "/styles",
-        "static": false,
-        "resolve": true
-      },
-      "src": {
-        "url": "/",
-        "static": false,
-        "resolve": true
-      }
-    },
-    "packageOptions": {
-      "source": "local",
-      "knownEntrypoints": [
-        "@nx-js/observer-util/dist/es.es6.js",
-        "@nx-js/queue-util",
-        "@lit/reactive-element/css-tag.js",
-        "lit-element/lit-element.js",
-        "lit/html.js",
-        "lit/directives/class-map.js",
-        "lit/directives/repeat.js"
-      ]
-    }
+    "shx": "^0.3.3",
+    "tailwindcss": "^2.1.2",
+    "vite": "^2.2.3"
   },
   "postcss": {
     "plugins": {

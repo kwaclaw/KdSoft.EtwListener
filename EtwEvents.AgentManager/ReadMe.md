@@ -1,3 +1,18 @@
+## Import Styles before production build or development run
+
+Any CSS that is not available as CSS-in-JS in the form of lit-element css`...my styles...` must
+be imported/converted to that format. Place your CSS into src/css and then run "npm run import-styles".
+
+## Run in Development mode
+
+Before starting a Visual Studio debug session, run "npm run dev" from a terminal window
+in the project directory. This will start the vite dev server, from which index.js is loaded.
+
+## Build for production (ASPNETCORE_ENVIRONMENT = Production)
+
+Before starting a debug session, run "npm run build" from a terminal window in the project directory.
+This will populate wwwroot with bundled Javascript and CSS assets.
+
 ## Certificates
 
 Connection security and authentication/authorization are both performed using certificates.
