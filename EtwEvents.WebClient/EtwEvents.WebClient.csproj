@@ -40,10 +40,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Remove="src/css/fontawesome/metadata/**/*" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Protobuf Include="..\Protos\etwLogging.proto" Link="etwLogging.proto">
       <GrpcServices>Client</GrpcServices>
       <LinkBase></LinkBase>
@@ -60,9 +56,13 @@
     <ProjectReference Include="..\EtwEvents.Client.Shared\EtwEvents.Client.Shared.csproj" />
   </ItemGroup>
 
- 
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
+
+
   <Target Name="PostCSS" BeforeTargets="Build">
-    <Exec Command="npm run build"></Exec>
+    <!--<Exec Command="start cmd /b npm run dev" />-->
     <Copy SourceFiles="@(FontAwsomeSprites)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeSprites->'wwwroot/css/fontawesome/sprites/%(RecursiveDir)%(Filename)%(Extension)')" />
     <Copy SourceFiles="@(FontAwsomeSvgs)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeSvgs->'wwwroot/css/fontawesome/svgs/%(RecursiveDir)%(Filename)%(Extension)')" />
     <Copy SourceFiles="@(FontAwsomeWebfonts)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeWebfonts->'wwwroot/css/fontawesome/webfonts/%(RecursiveDir)%(Filename)%(Extension)')" />

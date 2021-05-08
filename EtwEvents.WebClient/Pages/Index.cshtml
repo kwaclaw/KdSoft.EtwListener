@@ -4,9 +4,15 @@
     ViewData["Title"] = "Home page";
 }
 
-@section Styles{
+@section Vite {
+    <environment names="Development">
+        <script type="module" src="http://localhost:41000/@@vite/client"></script>
+    </environment>
+}
+
+@section Styles {
     <!-- Seems that fonts cannot be loaded from within a web component -->
-    <link rel="stylesheet" type="text/css" href="~/css/fontawesome/css/all.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
     <style>
         etw-app {
             height: 100vh;
@@ -15,29 +21,13 @@
 }
 
 @section Scripts {
-    <script type="module">
-        import gettext from '/lib/gettextjs.js';
-        import FetchHelper from '/js/fetchHelper.js';
-       
-        // use "new" so that "this" is defined inside of gettext()
-        window.i18n = new gettext();
-
-        const fetcher = new FetchHelper('');
-        fetcher.getJson('de_AT.json')
-        .then(json => {
-            window.i18n.loadJSON(json, 'messages');
-        })
-        .catch(console.error);
-
-        @* i18n.setLocale('de_AT'); *@
-    </script>
-
-    <script type="module" src="~/views/etw-app.js"></script>
-    <script type="module">
-        import EtwAppModel from '/views/etw-app-model.js';
-        const etwApp = document.querySelector('etw-app');
-        etwApp.model = new EtwAppModel();
-    </script>
+    <environment names="Development">
+        <script type="module" src="http://localhost:41000/index.js"></script>
+    </environment>
+    <environment names="Staging,Production">
+        <link href="manifest.json" rel="manifest" />
+        <script type="module" asp-src-include="~/assets/main.*.js"></script>
+    </environment>
 }
 
 <etw-app appTitle="ETW Listener"></etw-app>

@@ -1,5 +1,9 @@
 {
     "eslint.options": {
       
+    },
+    "search.exclude": {
+        "**/bin/debug": true,
+        "**/deploy": true
     }
 }
