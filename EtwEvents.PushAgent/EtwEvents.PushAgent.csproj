@@ -18,11 +18,11 @@
 
   <ItemGroup>
     <PackageReference Include="KdSoft.Logging" Version="1.0.0" />
-    <PackageReference Include="LaunchDarkly.EventSource" Version="4.1.1" />
+    <PackageReference Include="LaunchDarkly.EventSource" Version="4.1.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="5.0.1" />
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="5.0.5" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="5.0.6" />
   </ItemGroup>
 
   <ItemGroup>
