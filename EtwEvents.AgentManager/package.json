@@ -19,23 +19,25 @@
   "license": "ISC",
   "main": "index.js",
   "dependencies": {
-    "@kdsoft/lit-mvvm": "^2.0.0-beta.1",
-    "@kdsoft/lit-mvvm-components": "^1.0.0-beta.4",
+    "@kdsoft/lit-mvvm": "^2.0.0-beta.4",
+    "@kdsoft/lit-mvvm-components": "^1.0.0-beta.8",
+    "@nx-js/observer-util": "^4.2.2",
     "dialog-polyfill": "^0.5.6",
-    "gettext.js": "^1.0.0"
+    "gettext.js": "^1.0.0",
+    "lit": "^2.0.0-rc.4"
   },
   "devDependencies": {
-    "@tailwindcss/forms": "^0.3.2",
-    "eslint": "^7.21.0",
+    "@tailwindcss/forms": "^0.3.3",
+    "eslint": "^7.32.0",
     "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-plugin-import": "^2.22.1",
-    "postcss": "^8.2.12",
+    "eslint-plugin-import": "^2.24.2",
+    "postcss": "^8.3.6",
     "postcss-cli": "^8.3.1",
     "postcss-copy": "^7.1.0",
-    "postcss-import": "^14.0.1",
+    "postcss-import": "^14.0.2",
     "shx": "^0.3.3",
-    "tailwindcss": "^2.1.2",
-    "vite": "^2.2.3"
+    "tailwindcss": "^2.2.15",
+    "vite": "^2.5.6"
   },
   "postcss": {
     "plugins": {

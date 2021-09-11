@@ -166,8 +166,8 @@ class EtwAppModel {
       const agentId = state.id.toLowerCase();
       let entry = this._agentsMap.get(agentId);
       if (!entry) {
-        const newState = observable(utils.clone(state));
-        entry = observable({ state: newState, original: state });
+        const newState = utils.clone(state);
+        entry = { state: newState, original: state };
         Object.defineProperty(entry, 'modified', {
           get() {
             return !utils.targetEquals(entry.original, newState);
@@ -181,7 +181,7 @@ class EtwAppModel {
       } else {
         entry.original = state;
       }
-      this._agentsMap.set(agentId, observable(entry));
+      this._agentsMap.set(agentId, entry);
       localAgentKeys.delete(agentId);
     }
 

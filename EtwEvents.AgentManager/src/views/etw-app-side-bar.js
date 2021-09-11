@@ -1,7 +1,7 @@
 /* global i18n */
 
 import { html, nothing } from 'lit';
-import { observe } from '@nx-js/observer-util/dist/es.es6.js';
+import { observable, observe } from '@nx-js/observer-util/dist/es.es6.js';
 import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
 import { LitMvvmElement, css } from '@kdsoft/lit-mvvm';
 import { KdSoftChecklistModel } from '@kdsoft/lit-mvvm-components';
@@ -58,10 +58,10 @@ class EtwAppSideBar extends LitMvvmElement {
         false,
         item => item.id
       );
-      this.agentChecklistModel = checklistModel;
+      this.agentChecklistModel = observable(checklistModel);
 
       this._agentListObserver = observe(() => {
-        const selEntry = checklistModel.firstSelectedEntry;
+        const selEntry = this.agentChecklistModel.firstSelectedEntry;
         const selAgent = selEntry?.item;
         this.model.activeAgentId = selAgent?.state.id;
       });
