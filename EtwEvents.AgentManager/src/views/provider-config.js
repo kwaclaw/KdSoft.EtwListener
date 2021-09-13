@@ -1,9 +1,10 @@
 /* workaround for snowpack bug not processing first line imports */
 
 import { html } from 'lit/html.js';
+import { observable } from '@nx-js/observer-util/dist/es.es6.js';
+import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
 import { LitMvvmElement, css } from '@kdsoft/lit-mvvm';
 import { KdSoftDropdownModel, KdSoftDropdownChecklistConnector } from '@kdsoft/lit-mvvm-components';
-import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
 import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
@@ -15,7 +16,7 @@ class ProviderConfig extends LitMvvmElement {
   constructor() {
     super();
     this.scheduler = new Queue(priorities.HIGH);
-    this.levelDropDownModel = new KdSoftDropdownModel();
+    this.levelDropDownModel = observable(new KdSoftDropdownModel());
     this.levelChecklistConnector = new KdSoftDropdownChecklistConnector(
       () => this.renderRoot.getElementById('traceLevel'),
       () => this.renderRoot.getElementById('traceLevelList'),
