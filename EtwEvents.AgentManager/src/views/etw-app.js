@@ -296,13 +296,15 @@ class EtwApp extends LitMvvmElement {
         #main {
           grid-column: 3;
           grid-row: 1/2;
-          height: 100%;
+          height: auto;
+          width: 100%;
           position: relative;
-          display: flex;
-          flex-direction: column;
-          flex-wrap: nowrap;
-          justify-content: flex-start;
-          align-items: stretch;
+
+          display: grid;
+          grid-template-columns: auto auto;
+          grid-gap: 1em;
+          justify-items: center;
+          overflow-y: scroll;
         }
 
         footer {
@@ -391,60 +393,54 @@ class EtwApp extends LitMvvmElement {
         <div id="sidebar-resize" @pointerdown=${this._sidebarSizeDown} @pointerup=${this._sidebarSizeUp}></div>
 
         <div id="main">
-          <div id="nav-content" class="lg:flex lg:items-center lg:w-auto hidden lg:block pt-6 lg:pt-0 bg-gray-500">
-          </div>
+          ${activeAgent
+            ? html`
+                <form id="providers" class="max-w-full border">
+                  <div class="flex my-2 pr-2">
+                    <span class="font-semibold">Event Providers</span>
+                    <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
+                      @click=${this._addProviderClick}>
+                    </span>
+                  </div>
+                  ${activeAgent.enabledProviders.map(provider => html`
+                    <provider-config
+                      .model=${provider}
+                      @beforeExpand=${this._providerBeforeExpand}
+                      @delete=${this._deleteProviderClick}>
+                    </provider-config>
+                  `)}
+                  <hr class="my-3" />
+                  <div class="flex flex-wrap mt-2 bt-1">
+                    <button type="button" class="py-1 px-2 ml-auto" @click=${this._applyProvidersClick} title="Apply">
+                      <i class="fas fa-lg fa-check text-green-500"></i>
+                    </button>
+                    <button type="button" class="py-1 px-2" @click=${this._resetProvidersClick} title="Cancel">
+                      <i class="fas fa-lg fa-times text-red-500"></i>
+                    </button>
+                  </div>
+                </form>
 
-          <!-- Main content -->
-          <div class="flex flex-wrap content-start flex-grow relative">
-            ${activeAgent
-              ? html`
-                  <form id="providers" class="p-2 m-1 border">
-                    <div class="flex my-2 pr-2">
-                      <span class="font-semibold">Event Providers</span>
-                      <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
-                        @click=${this._addProviderClick}>
-                      </span>
-                    </div>
-                    ${activeAgent.enabledProviders.map(provider => html`
-                      <provider-config
-                        .model=${provider}
-                        @beforeExpand=${this._providerBeforeExpand}
-                        @delete=${this._deleteProviderClick}>
-                      </provider-config>
-                    `)}
-                    <hr class="my-3" />
-                    <div class="flex flex-wrap mt-2 bt-1">
-                      <button type="button" class="py-1 px-2 ml-auto" @click=${this._applyProvidersClick} title="Apply">
-                        <i class="fas fa-lg fa-check text-green-500"></i>
-                      </button>
-                      <button type="button" class="py-1 px-2" @click=${this._resetProvidersClick} title="Cancel">
-                        <i class="fas fa-lg fa-times text-red-500"></i>
-                      </button>
-                    </div>
-                  </form>
-
-                  <form id="filter" class="p-2 m-1 border">
-                    <div class="flex my-2 pr-2">
-                      <span class="font-semibold">Filter</span>
-                    </div>
-                    <filter-edit class="p-2" .model=${activeAgent.filterModel}></filter-edit>
-                    <hr class="my-3" />
-                    <div class="flex flex-wrap mt-2 bt-1">
-                      <button type="button" class="py-1 px-2" @click=${this._testFilterClick}>
-                        <i class="fas fa-lg fa-stethoscope" style="color:orange"></i>
-                      </button>
-                      <button type="button" class="py-1 px-2 ml-auto" @click=${this._applyFilterClick} title="Apply">
-                        <i class="fas fa-lg fa-check text-green-500"></i>
-                      </button>
-                      <button type="button" class="py-1 px-2" @click=${this._resetFilterClick} title="Cancel">
-                        <i class="fas fa-lg fa-times text-red-500"></i>
-                      </button>
-                    </div>
-                  </form>
-                `
-              : nothing
-            }
-          </div>
+                <form id="filter" class="max-w-full border">
+                  <div class="flex my-2 pr-2">
+                    <span class="font-semibold">Filter</span>
+                  </div>
+                  <filter-edit class="p-2" .model=${activeAgent.filterModel}></filter-edit>
+                  <hr class="my-3" />
+                  <div class="flex flex-wrap mt-2 bt-1">
+                    <button type="button" class="py-1 px-2" @click=${this._testFilterClick}>
+                      <i class="fas fa-lg fa-stethoscope" style="color:orange"></i>
+                    </button>
+                    <button type="button" class="py-1 px-2 ml-auto" @click=${this._applyFilterClick} title="Apply">
+                      <i class="fas fa-lg fa-check text-green-500"></i>
+                    </button>
+                    <button type="button" class="py-1 px-2" @click=${this._resetFilterClick} title="Cancel">
+                      <i class="fas fa-lg fa-times text-red-500"></i>
+                    </button>
+                  </div>
+                </form>
+              `
+            : nothing
+          }
         </div>
 
         <footer>
