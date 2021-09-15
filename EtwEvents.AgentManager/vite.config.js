@@ -5,9 +5,9 @@ export default defineConfig({
   root: 'src',
   server: {
     port: 41000,
-    https: true,
+    https: false,
     hmr: {
-      protocol: 'wss'
+      protocol: 'ws'
     },
     cors: true
   },
