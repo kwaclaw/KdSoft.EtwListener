@@ -63,7 +63,8 @@ namespace KdSoft.EtwEvents.PushAgent
                     });
                     services.AddSingleton(provider => new TraceSessionManager(TimeSpan.FromMinutes(3)));
                     services.AddSingleton<IEventSinkFactory>(provider => new ElasticSinkFactory());
-                    services.AddHostedService<Worker>();
+                    services.AddHostedService<ControlWorker>();
+                    services.AddScoped<SessionWorker>();
                 });
     }
 }
