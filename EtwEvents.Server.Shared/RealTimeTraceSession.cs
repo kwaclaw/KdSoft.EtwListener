@@ -144,25 +144,28 @@ namespace KdSoft.EtwEvents.Server
             }
             Instance.Source.Dynamic.All += handleEvent;
 
+            // save locally, as SessionName might throw an ObjectDisposedException in some handlers later
+            string sessionName = SessionName;
+
             void handleCompleted() {
                 Interlocked.MemoryBarrier();
                 _isStopped = 1;
                 Interlocked.MemoryBarrier();
-                _logger.LogInformation($"{nameof(RealTimeTraceSession)} '{SessionName}' has finished.");
+                _logger.LogInformation($"{nameof(RealTimeTraceSession)} '{sessionName}' has finished.");
             }
             Instance.Source.Completed += handleCompleted;
 
             // this cannot be called multiple times for a given real-time session;
             // once stopped we will need to close and re-open the TraceSession to continue
             var processTask = Task.Run<bool>(Instance.Source.Process);
-            _logger.LogInformation($"{nameof(RealTimeTraceSession)} '{SessionName}' has started.");
+            _logger.LogInformation($"{nameof(RealTimeTraceSession)} '{sessionName}' has started.");
 
             processTask.ContinueWith(t => {
                 Interlocked.MemoryBarrier();
                 _isStopped = 1;
                 Interlocked.MemoryBarrier();
                 if (t.IsFaulted)
-                    _logger.LogError(t.Exception, $"Error in {nameof(RealTimeTraceSession)} '{SessionName}'.");
+                    _logger.LogError(t.Exception, $"Error in {nameof(RealTimeTraceSession)} '{sessionName}'.");
             }, TaskContinuationOptions.ExecuteSynchronously);
 
             return processTask;
