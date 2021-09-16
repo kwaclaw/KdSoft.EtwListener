@@ -1,5 +1,3 @@
-/* workaround for snowpack bug not processing first line imports */
-
 import { html } from 'lit/html.js';
 import { observable } from '@nx-js/observer-util/dist/es.es6.js';
 import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';

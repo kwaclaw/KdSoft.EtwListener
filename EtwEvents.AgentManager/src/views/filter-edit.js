@@ -1,5 +1,3 @@
-﻿/* workaround for snowpack bug not processing first line imports */
-
 import { html } from 'lit';
 import { LitMvvmElement, css } from '@kdsoft/lit-mvvm';
 import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';

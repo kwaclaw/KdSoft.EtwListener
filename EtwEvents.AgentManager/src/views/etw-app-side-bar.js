@@ -15,8 +15,6 @@ import appStyles from '../styles/etw-app-styles.js';
 import dialogStyles from '../styles/dialog-polyfill-styles.js';
 import * as utils from '../js/utils.js';
 
-const runBtnBase = { fas: true };
-
 function getAgentIndex(agentList, agentId) {
   return agentList.findIndex(val => val.id === agentId);
 }
