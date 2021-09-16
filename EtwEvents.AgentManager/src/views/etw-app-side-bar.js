@@ -34,6 +34,16 @@ class EtwAppSideBar extends LitMvvmElement {
     else host.setAttribute('aria-expanded', 'true');
   }
 
+  _startEvents(agentState) {
+    if (!agentState.isRunning)
+      this.model.startEvents();
+  }
+
+  _stopEvents(agentState) {
+    if (agentState.isRunning)
+      this.model.stopEvents();
+  }
+
   //#region overrides
 
   /* eslint-disable indent, no-else-return */
@@ -182,13 +192,17 @@ class EtwAppSideBar extends LitMvvmElement {
 
   getAgentTemplate(entry) {
     const onlyModified = entry.modified && !entry.disconnected;
+    const playClass = entry.state.isRunning ? '' : 'text-green-500';
+    const stopClass = entry.state.isRunning ? 'text-red-500' : '';
     return html`
       <kdsoft-expander class="w-full">
         <div part="header" slot="header" class="flex items-baseline pr-1 text-white bg-gray-500">
           <label class="pl-1 font-bold text-xl">${entry.state.id}</label>
           <span class="ml-auto">
-            ${onlyModified ? html`<i class="text-yellow-800 fas fa-pencil-alt"></i>` : nothing}
-            ${entry.disconnected ? html`<i class="text-red-800 fas fa-unlink"></i>` : nothing}
+            ${onlyModified ? html`<button class="mr-1 text-yellow-800 fas fa-pencil-alt"></button>` : nothing}
+            ${entry.disconnected ? html`<i class="mr-1 text-red-800 fas fa-unlink"></i>` : nothing}
+            <button class="mr-1 ${playClass} fas fa-play" @click=${() => this._startEvents(entry.state)}></button>
+            <button class="mr-1 ${stopClass} fas fa-stop" @click=${() => this._stopEvents(entry.state)}></button>
           </span>
         </div>
         <!-- using part="slot" we can style this from here even though it will be rendered inside a web component -->

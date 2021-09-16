@@ -204,6 +204,20 @@ class EtwAppModel {
     return entry.state;
   }
 
+  startEvents() {
+    const agent = this.activeAgent;
+    if (!agent) return;
+    this.fetcher.postJson('Start', { agentId: agent.id })
+      .catch(error => window.etwApp.defaultHandleError(error));
+  }
+
+  stopEvents() {
+    const agent = this.activeAgent;
+    if (!agent) return;
+    this.fetcher.postJson('Stop', { agentId: agent.id })
+      .catch(error => window.etwApp.defaultHandleError(error));
+  }
+
   applyProviders() {
     const agent = this.activeAgent;
     if (!agent) return;
