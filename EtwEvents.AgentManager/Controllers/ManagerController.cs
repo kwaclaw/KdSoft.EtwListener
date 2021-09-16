@@ -50,7 +50,7 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
             var resp = Response;
 
             resp.ContentType = Constants.EventStreamHeaderValue;
-            resp.Headers[HeaderNames.CacheControl] = "no-cache, no-transform";
+            resp.Headers[HeaderNames.CacheControl] = "no-cache,no-store";
             resp.Headers[HeaderNames.Pragma] = "no-cache";
             // hopefully prevents buffering
             resp.Headers[HeaderNames.ContentEncoding] = "identity";
@@ -156,7 +156,6 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
         [HttpPost]
         public Task<IActionResult> TestFilter(string agentId, [FromBody] object filterRequest) {
             // we are passing the JSON simply through, filterRequest should match protobuf message TestFilterRequest
-            //var filterResult = await 
             return CallAgent(agentId, "TestFilter", filterRequest?.ToString() ?? "", TimeSpan.FromSeconds(15));
         }
 
