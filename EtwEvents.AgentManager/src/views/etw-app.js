@@ -56,24 +56,24 @@ class EtwApp extends LitMvvmElement {
   //#region Providers
 
   _addProviderClick() {
-    const activeAgent = this.model.activeAgent;
-    if (!activeAgent) return;
-    activeAgent.addProvider('<New Provider>', 0);
+    const activeAgentState = this.model.activeAgentState;
+    if (!activeAgentState) return;
+    activeAgentState.addProvider('<New Provider>', 0);
   }
 
   _deleteProviderClick(e) {
-    const activeAgent = this.model.activeAgent;
-    if (!activeAgent) return;
+    const activeAgentState = this.model.activeAgentState;
+    if (!activeAgentState) return;
 
     const provider = e.detail.model;
-    activeAgent.removeProvider(provider.name);
+    activeAgentState.removeProvider(provider.name);
   }
 
   _providerBeforeExpand() {
-    const activeAgent = this.model.activeAgent;
-    if (!activeAgent) return;
+    const activeAgentState = this.model.activeAgentState;
+    if (!activeAgentState) return;
 
-    activeAgent.enabledProviders.forEach(p => {
+    activeAgentState.enabledProviders.forEach(p => {
       p.expanded = false;
     });
   }
@@ -378,7 +378,7 @@ class EtwApp extends LitMvvmElement {
   }
 
   render() {
-    const activeAgent = this.model.activeAgent;
+    const activeAgentState = this.model.activeAgentState;
     return html`
       <style>
         :host {
@@ -393,7 +393,7 @@ class EtwApp extends LitMvvmElement {
         <div id="sidebar-resize" @pointerdown=${this._sidebarSizeDown} @pointerup=${this._sidebarSizeUp}></div>
 
         <div id="main">
-          ${activeAgent
+          ${activeAgentState
             ? html`
                 <form id="providers" class="max-w-full border">
                   <div class="flex my-2 pr-2">
@@ -402,7 +402,7 @@ class EtwApp extends LitMvvmElement {
                       @click=${this._addProviderClick}>
                     </span>
                   </div>
-                  ${activeAgent.enabledProviders.map(provider => html`
+                  ${activeAgentState.enabledProviders.map(provider => html`
                     <provider-config
                       .model=${provider}
                       @beforeExpand=${this._providerBeforeExpand}
@@ -424,7 +424,7 @@ class EtwApp extends LitMvvmElement {
                   <div class="flex my-2 pr-2">
                     <span class="font-semibold">Filter</span>
                   </div>
-                  <filter-edit class="p-2" .model=${activeAgent.filterModel}></filter-edit>
+                  <filter-edit class="p-2" .model=${activeAgentState.filterModel}></filter-edit>
                   <hr class="my-3" />
                   <div class="flex flex-wrap mt-2 bt-1">
                     <button type="button" class="py-1 px-2" @click=${this._testFilterClick}>

@@ -30,10 +30,8 @@ function _enhanceProviderState(provider) {
   return provider;
 }
 
-// adds view models and view related methods to agent state
+// adds view models and view related methods to agent state, agentState must be observable
 function _enhanceAgentState(agentState) {
-  agentState = observable(agentState);
-
   if (!agentState.filterModel) {
     agentState.filterModel = {
       filter: agentState.filterBody,
@@ -119,7 +117,7 @@ function _updateAgentsMap(agentsMap, agentStates) {
       entry.state = newState;
       entry.original = state;
     }
-    agentsMap.set(agentId, entry);
+    agentsMap.set(agentId, observable(entry));
     localAgentKeys.delete(agentId);
   }
 
@@ -193,24 +191,25 @@ class EtwAppModel {
   //#region Agents
 
   get agents() { return this._agents; }
-  get activeAgent() {
+  get activeAgentState() {
     const entry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!entry) return null;
+    
     entry.state = _enhanceAgentState(entry.state);
     return entry.state;
   }
 
   startEvents() {
-    const agent = this.activeAgent;
-    if (!agent) return;
-    this.fetcher.postJson('Start', { agentId: agent.id })
+    const agentState = this.activeAgentState;
+    if (!agentState) return;
+    this.fetcher.postJson('Start', { agentId: agentState.id })
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
   stopEvents() {
-    const agent = this.activeAgent;
-    if (!agent) return;
-    this.fetcher.postJson('Stop', { agentId: agent.id })
+    const agentState = this.activeAgentState;
+    if (!agentState) return;
+    this.fetcher.postJson('Stop', { agentId: agentState.id })
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
@@ -225,19 +224,19 @@ class EtwAppModel {
   }
 
   applyProviders() {
-    const agent = this.activeAgent;
-    if (!agent) return;
+    const agentState = this.activeAgentState;
+    if (!agentState) return;
 
     // create "unenhanced" provider settings
     const enabledProviders = [];
-    for (const enhancedProvider of agent.enabledProviders) {
+    for (const enhancedProvider of agentState.enabledProviders) {
       const unenhanced = { name: undefined, level: undefined, matchKeywords: 0 };
       utils.setTargetProperties(unenhanced, enhancedProvider);
       enabledProviders.push(unenhanced);
     }
 
     // argument must match protobuf message ProviderSettingsList
-    this.fetcher.postJson('UpdateProviders', { agentId: agent.id }, { providerSettings: enabledProviders })
+    this.fetcher.postJson('UpdateProviders', { agentId: agentState.id }, { providerSettings: enabledProviders })
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
@@ -253,27 +252,27 @@ class EtwAppModel {
   }
 
   testFilter() {
-    const agent = this.activeAgent;
-    if (!agent) return;
+    const agentState = this.activeAgentState;
+    if (!agentState) return;
 
     // argument must match protobuf message TestFilterRequest
-    this.fetcher.postJson('TestFilter', { agentId: agent.id }, { csharpFilter: agent.filterModel.filter })
+    this.fetcher.postJson('TestFilter', { agentId: agentState.id }, { csharpFilter: agentState.filterModel.filter })
       // result matches protobuf message BuildFilterResult
       .then(result => {
-        agent.filterModel.diagnostics = result.diagnostics;
+        agentState.filterModel.diagnostics = result.diagnostics;
       })
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
   applyFilter() {
-    const agent = this.activeAgent;
-    if (!agent) return;
+    const agentState = this.activeAgentState;
+    if (!agentState) return;
 
     // argument must match protobuf message TestFilterRequest
-    this.fetcher.postJson('ApplyFilter', { agentId: agent.id }, { csharpFilter: agent.filterModel.filter })
+    this.fetcher.postJson('ApplyFilter', { agentId: agentState.id }, { csharpFilter: agentState.filterModel.filter })
       // result matches protobuf message BuildFilterResult
       .then(result => {
-        agent.filterModel.diagnostics = result.diagnostics;
+        agentState.filterModel.diagnostics = result.diagnostics;
       })
       .catch(error => window.etwApp.defaultHandleError(error));
   }
