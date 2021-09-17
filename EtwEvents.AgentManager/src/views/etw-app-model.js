@@ -102,8 +102,8 @@ function _updateAgentsMap(agentsMap, agentStates) {
   for (const state of (agentStates || [])) {
     const agentId = state.id.toLowerCase();
     let entry = agentsMap.get(agentId);
+    const newState = utils.clone(state);
     if (!entry) {
-      const newState = utils.clone(state);
       entry = { state: newState, original: state };
       Object.defineProperty(entry, 'modified', {
         get() {
@@ -116,6 +116,7 @@ function _updateAgentsMap(agentsMap, agentStates) {
         }
       });
     } else {
+      entry.state = newState;
       entry.original = state;
     }
     agentsMap.set(agentId, entry);
