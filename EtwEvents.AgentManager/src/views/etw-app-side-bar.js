@@ -42,6 +42,10 @@ class EtwAppSideBar extends LitMvvmElement {
       this.model.stopEvents();
   }
 
+  _refreshStates() {
+    this.model.getAgentStates();
+  }
+
   //#region overrides
 
   /* eslint-disable indent, no-else-return */
@@ -227,11 +231,12 @@ class EtwAppSideBar extends LitMvvmElement {
             <i class="fas fa-lg fa-bars"></i>
           </button>
         <!-- </div> -->
-        <div class="flex pl-8">
+        <div class="flex pl-8 pr-2">
           <!-- <div class="flex items-center flex-shrink-0 text-white mr-6"> -->
             <a class="text-white no-underline hover:text-white hover:no-underline" href="#">
               <span class="text-2xl pl-2 brand"><i class="brand"></i>KDS</span>
             </a>
+            <button class="text-blue-500 ml-auto fas fa-redo-alt" @click=${() => this._refreshStates()}></button>
           <!-- </div> -->
         </div>
 

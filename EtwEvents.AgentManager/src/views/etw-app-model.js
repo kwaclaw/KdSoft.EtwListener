@@ -152,12 +152,7 @@ class EtwAppModel {
     observableThis.showErrors = false;
 
     this.fetcher = new FetchHelper('/Manager');
-    this.fetcher.getJson('GetAgentStates')
-      .then(st => {
-        _updateAgentsMap(this._agentsMap, st.agents);
-        _updateAgentsList(observableThis.agents, this._agentsMap);
-      })
-      .catch(error => window.etwApp.defaultHandleError(error));
+    observableThis.getAgentStates();
 
     const es = new EventSource('Manager/GetAgentStates');
     es.onmessage = e => {
@@ -216,6 +211,16 @@ class EtwAppModel {
     const agent = this.activeAgent;
     if (!agent) return;
     this.fetcher.postJson('Stop', { agentId: agent.id })
+      .catch(error => window.etwApp.defaultHandleError(error));
+  }
+
+  getAgentStates() {
+    return this.fetcher.getJson('GetAgentStates')
+      .then(st => {
+        const rawThis = raw(this);
+        _updateAgentsMap(rawThis._agentsMap, st.agents);
+        _updateAgentsList(this.agents, rawThis._agentsMap);
+      })
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
