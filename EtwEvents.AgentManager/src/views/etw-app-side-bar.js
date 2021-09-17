@@ -5,8 +5,6 @@ import { observable, observe } from '@nx-js/observer-util/dist/es.es6.js';
 import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
 import { LitMvvmElement, css } from '@kdsoft/lit-mvvm';
 import { KdSoftChecklistModel } from '@kdsoft/lit-mvvm-components';
-import '@kdsoft/lit-mvvm-components/kdsoft-checklist.js';
-import '@kdsoft/lit-mvvm-components/kdsoft-expander.js';
 import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
@@ -22,7 +20,8 @@ function getAgentIndex(agentList, agentId) {
 class EtwAppSideBar extends LitMvvmElement {
   constructor() {
     super();
-    this.scheduler = new Queue(priorities.HIGH);
+    // seems priorities.HIGH may not allow render() calls in child components in some scenarios
+    this.scheduler = new Queue(priorities.LOW);
   }
 
   _toggleNav() {
@@ -199,7 +198,7 @@ class EtwAppSideBar extends LitMvvmElement {
     const playClass = entry.state.isRunning ? '' : 'text-green-500';
     const stopClass = entry.state.isRunning ? 'text-red-500' : '';
     return html`
-      <kdsoft-expander class="w-full">
+      <kdsoft-expander class="w-full" .scheduler=${this.scheduler}>
         <div part="header" slot="header" class="flex items-baseline pr-1 text-white bg-gray-500">
           <label class="pl-1 font-bold text-xl">${entry.state.id}</label>
           <span class="ml-auto">
@@ -247,6 +246,7 @@ class EtwAppSideBar extends LitMvvmElement {
 
         <kdsoft-checklist id="agents" class="text-black"
           .model=${this.agentChecklistModel}
+          .scheduler=${this.scheduler}
           .getItemTemplate=${entry => this.getAgentTemplate(entry)}
         ></kdsoft-checklist>
 
