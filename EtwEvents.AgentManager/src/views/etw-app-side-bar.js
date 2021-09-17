@@ -119,6 +119,8 @@ class EtwAppSideBar extends LitMvvmElement {
           align-items: center;
           background-color: transparent;
           z-index: 30;
+          height: 2em;
+          width: 2em;
         }
 
         #nav-toggle:focus {
@@ -227,8 +229,11 @@ class EtwAppSideBar extends LitMvvmElement {
       </style>
       <nav id="sidebar" class="text-gray-500 bg-gray-800 pt-0 pb-3 h-full z-30">
         <!-- <div class="pr-2"> -->
-          <button id="nav-toggle" @click=${this._toggleNav} class="px-3 py-3 text-gray-600 border-gray-600 hover:text-gray-800">
-            <i class="fas fa-lg fa-bars"></i>
+          <button id="nav-toggle"
+            @click=${this._toggleNav}
+            class="text-gray-600 border-gray-600 hover:text-gray-800"
+          >
+            <i class="m-auto fas fa-lg fa-bars"></i>
           </button>
         <!-- </div> -->
         <div class="flex pl-8 pr-2">
