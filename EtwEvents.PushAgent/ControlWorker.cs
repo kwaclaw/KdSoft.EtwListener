@@ -60,9 +60,21 @@ namespace KdSoft.EtwEvents.PushAgent
         async Task ProcessEvent(ControlEvent sse) {
             switch (sse.Event) {
                 case "Start":
-                    await StartWorker(default).ConfigureAwait(false);
-                    await SendStateUpdate().ConfigureAwait(false);
+                    if (_workerAvailable != 0) {
+                        _logger?.LogInformation("Session already starting.");
+                        return;
+                    }
+                    var started = await StartWorker(default).ConfigureAwait(false);
+                    if (started) {
+                        await SendStateUpdate().ConfigureAwait(false);
+                    }
                     return;
+                case "Stop":
+                    if (_workerAvailable == 0) {
+                        _logger?.LogInformation("Session already stopping.");
+                        return;
+                    }
+                    break;
                 case "GetState":
                     await SendStateUpdate().ConfigureAwait(false);
                     return;
@@ -85,8 +97,10 @@ namespace KdSoft.EtwEvents.PushAgent
                     //
                     break;
                 case "Stop":
-                    await StopWorker(default).ConfigureAwait(false);
-                    await SendStateUpdate().ConfigureAwait(false);
+                    var stopped = await StopWorker(default).ConfigureAwait(false);
+                    if (stopped) {
+                        await SendStateUpdate().ConfigureAwait(false);
+                    }
                     break;
                 case "UpdateProviders":
                     // WithDiscardUnknownFields does currently not work, so we should fix this at source
