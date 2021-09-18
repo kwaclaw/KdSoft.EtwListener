@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -145,6 +146,10 @@ namespace KdSoft.EtwEvents.AgentManager
             //    result.EnsureProtected();
             //    return result;
             //});
+
+            services.AddSpaStaticFiles(configuration => {
+                configuration.RootPath = ".";
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
@@ -170,6 +175,9 @@ namespace KdSoft.EtwEvents.AgentManager
             app.UseRequestLocalization();
 
             app.UseStaticFiles();
+            if (env.IsDevelopment()) {
+                app.UseSpaStaticFiles();
+            }
 
             app.UseRouting();
 
@@ -181,6 +189,14 @@ namespace KdSoft.EtwEvents.AgentManager
                 endpoints.MapRazorPages();
                 endpoints.MapControllers();
             });
+
+            if (env.IsDevelopment()) {
+                app.UseSpa(spa => {
+                    spa.Options.SourcePath = ".";
+                    spa.Options.DevServerPort = 41000;
+                    spa.UseReactDevelopmentServer(npmScript: "dev");
+                });
+            }
         }
 
         /// <summary>
