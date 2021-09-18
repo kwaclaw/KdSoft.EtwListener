@@ -5,7 +5,7 @@
    "version": "0.2.0",
    "configurations": [
         {
-            "name": ".NET Core Launch (web)",
+            "name": "AgentManager Launch",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
@@ -18,8 +18,8 @@
             "serverReadyAction": {
                 "action": "openExternally",
                 // "pattern": "^\\s*Now listening on:\\s+(https?://\\S+)" ,
-                "pattern": "^\\s*Now listening on:\\s+https?://\\S+:([0-9]+)" ,
-                "uriFormat": "https://localhost:%s"               
+                "pattern": "^\\s*Now listening on:\\s+https://\\S+:([0-9]+)" ,
+                "uriFormat": "https://agent-manager.kd-soft.net:%s"               
             },
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
@@ -29,7 +29,7 @@
             }
         },
         {
-            "name": ".NET Core Attach",
+            "name": "AgentManager Attach",
             "type": "coreclr",
             "request": "attach",
             "processId": "${command:pickProcess}"

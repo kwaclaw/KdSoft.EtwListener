@@ -1,0 +1,34 @@
+{
+  "folders": [
+    {
+      "path": "EtwEvents.AgentManager"
+    },
+    {
+      "path": "EtwEvents.PushAgent"
+    },
+    {
+      "path": "EtwEvents.Client.Shared"
+    },
+    {
+      "path": "EtwEvents.Server.Shared"
+    },
+    {
+      "path": "EventSinks"
+    },
+    {
+      "path": "EtwEvents.Protobuf.Shared"
+    }
+  ],
+  "launch": {
+    "version": "0.2.0",
+    "compounds": [
+      {
+        "name": "PushAgent-Full-Stack",
+        "configurations": [
+          "AgentManager Launch",
+          "PushAgent Launch"
+        ]
+      }
+    ]
+  }
+}
