@@ -140,7 +140,7 @@ namespace KdSoft.EtwEvents.PushAgent
             }
         }
 
-        Task PostMessage<T>(string path, T content) {
+        async Task PostMessage<T>(string path, T content) {
             var opts = _controlOptions.Value;
             var postUri = new Uri(opts.Uri, path);
             var httpMsg = new HttpRequestMessage(HttpMethod.Post, postUri);
@@ -148,7 +148,8 @@ namespace KdSoft.EtwEvents.PushAgent
             var mediaType = new MediaTypeHeaderValue(MediaTypeNames.Application.Json);
             httpMsg.Content = JsonContent.Create<T>(content, mediaType, _jsonOptions);
 
-            return _http.SendAsync(httpMsg);
+            var response = await _http.SendAsync(httpMsg).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
         }
 
         Task SendStateUpdate() {
@@ -189,7 +190,7 @@ namespace KdSoft.EtwEvents.PushAgent
             _logger?.LogInformation($"{nameof(EventSourceStateChanged)}: {e.ReadyState}");
         }
 
-        public EventSource StartSSE() {
+        public Task StartSSE() {
             var opts = _controlOptions.Value;
             var evtUri = new Uri(opts.Uri, "Agent/GetEvents");
             var cfgBuilder = Configuration.Builder(evtUri).HttpClient(_http);
@@ -207,19 +208,15 @@ namespace KdSoft.EtwEvents.PushAgent
             evt.Opened += EventSourceStateChanged;
             evt.Closed += EventSourceStateChanged;
 
-            // this Task will only terminate when the EventSource gets closed/disposed!
-            var sseTask = evt.StartAsync();
+            this._eventSource = evt;
 
-            return evt;
+            // this Task will only terminate when the EventSource gets closed/disposed!
+            return evt.StartAsync();
         }
 
         #endregion
 
         //TODO use async disposable service scope when in .NET 6.0;
-        // maybe we should also use a _workerAvailable flag with Interlocked
-        //    instead of _workerScope, so that we can avoid overlapping worker instances,
-        //    the flag gets cleared once we start stopping the scope,
-        //    and the flag gets set once a new scope + worker has started successfully 
 
         async Task<bool> StartWorker(CancellationToken cancelToken) {
             if (_workerAvailable != 0)
@@ -258,8 +255,9 @@ namespace KdSoft.EtwEvents.PushAgent
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
+            var sseTask = Task.CompletedTask;
             try {
-                _eventSource = StartSSE();
+                sseTask = StartSSE();
 
                 stoppingToken.Register(async () => {
                     await StopWorker(default).ConfigureAwait(false);
@@ -276,6 +274,7 @@ namespace KdSoft.EtwEvents.PushAgent
             catch (Exception ex) {
                 _logger.LogError(ex, "Failure running service.");
             }
+            await sseTask.ConfigureAwait(false);
         }
 
         public override void Dispose() {
