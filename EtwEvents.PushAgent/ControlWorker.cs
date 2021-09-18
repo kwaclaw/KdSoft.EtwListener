@@ -83,11 +83,11 @@ namespace KdSoft.EtwEvents.PushAgent
             }
 
             // for the rest, SessionWorker must be running
-            if (_workerAvailable == 0)
+            SessionWorker? worker;
+            if (_workerAvailable == 0  || (worker = SessionWorker) == null) {
+                _logger?.LogInformation("No session available for request.");
                 return;
-            var worker = SessionWorker;
-            if (worker == null)
-                return;
+            }
 
             string? filter;
             BuildFilterResult filterResult;
