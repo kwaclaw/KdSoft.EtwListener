@@ -1,0 +1,28 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "PushAgent Launch",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            // If you have changed target frameworks, make sure to update the program path.
+            "program": "${workspaceFolder}/bin/Debug/net5.0/KdSoft.EtwEvents.PushAgent.dll",
+            "args": ["--Site=Test-Home"],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "env": {
+                "DOTNET_ENVIRONMENT": "Development"
+            }
+        },
+        {
+            "name": "PushAgent Attach",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:pickProcess}"
+        }
+    ]
+}
