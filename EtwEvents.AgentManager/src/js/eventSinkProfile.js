@@ -1,5 +1,4 @@
-﻿
-class EventSinkProfile {
+﻿class EventSinkProfile {
   constructor(name, type, definition) {
     this.name = name;
     this.type = type;
