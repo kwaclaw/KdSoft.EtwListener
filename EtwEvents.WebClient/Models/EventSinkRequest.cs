@@ -1,4 +1,5 @@
-﻿using KdSoft.EtwEvents.WebClient.EventSinks;
+﻿using KdSoft.EtwEvents.Client.Shared;
+using KdSoft.EtwEvents.WebClient.EventSinks;
 
 namespace KdSoft.EtwEvents.WebClient.Models
 {

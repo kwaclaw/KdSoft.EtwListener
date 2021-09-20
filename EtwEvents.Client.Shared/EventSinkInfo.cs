@@ -1,7 +1,6 @@
 ﻿using System;
-using KdSoft.EtwEvents.WebClient.EventSinks;
 
-namespace KdSoft.EtwEvents.WebClient.Models
+namespace KdSoft.EtwEvents.Client.Shared
 {
     public class EventSinkInfo
     {

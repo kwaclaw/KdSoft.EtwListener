@@ -1,10 +1,9 @@
 using System.Threading.Tasks;
-using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
 
-namespace KdSoft.EtwEvents.WebClient.EventSinks
+namespace KdSoft.EtwEvents.Client.Shared
 {
-    sealed class DummySink: IEventSink
+    public sealed class DummySink: IEventSink
     {
         public Task<bool> RunTask => Task<bool>.FromResult(true);
 
