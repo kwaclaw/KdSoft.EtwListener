@@ -38,7 +38,7 @@
     "postcss-import": "^14.0.2",
     "shx": "^0.3.3",
     "tailwindcss": "^2.2.15",
-    "vite": "^2.5.7"
+    "vite": "^2.5.10"
   },
   "postcss": {
     "plugins": {

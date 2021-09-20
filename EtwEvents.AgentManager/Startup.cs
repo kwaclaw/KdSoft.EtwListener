@@ -193,7 +193,7 @@ namespace KdSoft.EtwEvents.AgentManager
             if (env.IsDevelopment()) {
                 app.UseSpa(spa => {
                     spa.Options.SourcePath = ".";
-                    spa.Options.DevServerPort = 41000;
+                    //spa.Options.DevServerPort = 41000;
                     spa.UseReactDevelopmentServer(npmScript: "dev");
                 });
             }

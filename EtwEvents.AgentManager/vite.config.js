@@ -5,8 +5,8 @@ export default defineConfig({
   root: 'src',
   server: {
     port: 41000,
-    https: false,
     hmr: {
+      host: 'localhost',
       protocol: 'ws'
     },
     cors: true
