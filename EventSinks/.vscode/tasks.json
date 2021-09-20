@@ -1,0 +1,62 @@
+{
+  "version": "2.0.0",
+  "options": {
+    "env": {
+      "SolutionDir": "${workspaceFolder}/../"
+    }
+  },
+  "tasks": [
+    {
+      "label": "build-elastic-sink",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/EtwEvents.ElasticSink/EtwEvents.ElasticSink.csproj",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "build-mongo-sink",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/EtwEvents.MongoSink/EtwEvents.MongoSink.csproj",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "build-seq-sink",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/EtwEvents.SeqSink/EtwEvents.SeqSink.csproj",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "build-rolling-file-sink",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/EtwEvents.RollingFileSink/EtwEvents.RollingFileSink.csproj",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "build-event-sinks",
+      "dependsOn": ["build-elastic-sink", "build-mongo-sink", "build-seq-sink", "build-rolling-file-sink"]
+    }
+  ]
+}
