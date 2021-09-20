@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="SET rollingFileSinkDir=&quot;$(SolutionDir)/EtwEvents.WebClient/EventSinks/RollingFileSink/&quot;&#xD;&#xA;IF NOT EXIST %25rollingFileSinkDir%25 MKDIR %25rollingFileSinkDir%25&#xD;&#xA;&#xD;&#xA;COPY /Y $(TargetDir)* %25rollingFileSinkDir%25&#xD;&#xA;XCOPY /Y /E /I $(ProjectDir)config %25rollingFileSinkDir%25config" />
+    <Exec Command="SET sinkDir=&quot;$(SolutionDir)/EventSinks/Deploy/RollingFileSink/&quot;&#xD;&#xA;CALL ../CopySinkFiles.cmd %25sinkDir%25 &quot;$(TargetDir)&quot; &quot;$(ProjectDir)&quot;&#xD;&#xA;" />
   </Target>
 
 </Project>

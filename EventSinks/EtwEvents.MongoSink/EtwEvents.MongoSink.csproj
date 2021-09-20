@@ -32,7 +32,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="SET mongoSinkDir=&quot;$(SolutionDir)/EtwEvents.WebClient/EventSinks/MongoSink/&quot;&#xD;&#xA;IF NOT EXIST %25mongoSinkDir%25 MKDIR %25mongoSinkDir%25&#xD;&#xA;&#xD;&#xA;COPY /Y $(TargetDir)* %25mongoSinkDir%25&#xD;&#xA;XCOPY /Y /E /I $(ProjectDir)config %25mongoSinkDir%25config" />
+    <Exec Command="SET sinkDir=&quot;$(SolutionDir)/EventSinks/Deploy/MongoSink/&quot;&#xD;&#xA;CALL ../CopySinkFiles.cmd %25sinkDir%25 &quot;$(TargetDir)&quot; &quot;$(ProjectDir)&quot;&#xD;&#xA;" />
   </Target>
 
 </Project>

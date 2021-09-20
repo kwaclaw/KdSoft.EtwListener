@@ -55,4 +55,9 @@
     <Copy SourceFiles="@(FontAwsomeWebfonts)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeWebfonts->'wwwroot/css/fontawesome/webfonts/%(RecursiveDir)%(Filename)%(Extension)')" />
   </Target>
 
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="(ROBOCOPY $(SolutionDir)EventSinks/Deploy $(ProjectDir)EventSinks /S) ^&amp; IF %25ERRORLEVEL%25 LSS 8 SET ERRORLEVEL = 0" />
+  </Target>
+
 </Project>

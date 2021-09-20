@@ -1,2 +1,3 @@
-EventSinks/
 wwwroot/
+EventSinks/*/
+

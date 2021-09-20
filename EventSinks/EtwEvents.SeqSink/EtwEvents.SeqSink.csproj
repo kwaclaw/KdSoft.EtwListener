@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="SET seqSinkDir=&quot;$(SolutionDir)/EtwEvents.WebClient/EventSinks/SeqSink/&quot;&#xD;&#xA;IF NOT EXIST %25seqSinkDir%25 MKDIR %25seqSinkDir%25&#xD;&#xA;&#xD;&#xA;COPY /Y $(TargetDir)* %25seqSinkDir%25&#xD;&#xA;XCOPY /Y /E /I $(ProjectDir)config %25seqSinkDir%25config" />
+    <Exec Command="SET sinkDir=&quot;$(SolutionDir)/EventSinks/Deploy/SeqSink/&quot;&#xD;&#xA;CALL ../CopySinkFiles.cmd %25sinkDir%25 &quot;$(TargetDir)&quot; &quot;$(ProjectDir)&quot;&#xD;&#xA;" />
   </Target>
 
 </Project>
