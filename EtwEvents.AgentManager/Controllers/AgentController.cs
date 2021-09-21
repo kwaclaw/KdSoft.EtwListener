@@ -16,7 +16,7 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
     [ApiController]
     [Route("[controller]/[action]")]
     [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
-    public class AgentController: ControllerBase
+    class AgentController: ControllerBase
     {
         readonly AgentProxyManager _agentProxyManager;
         readonly ILogger<AgentController> _logger;

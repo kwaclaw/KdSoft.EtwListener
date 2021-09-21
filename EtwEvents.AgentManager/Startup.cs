@@ -7,6 +7,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.AgentManager.Controllers;
+using KdSoft.EtwEvents.AgentManager.EventSinks;
 using KdSoft.EtwEvents.AgentManager.Services;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Builder;
@@ -107,6 +108,16 @@ namespace KdSoft.EtwEvents.AgentManager
             });
 
             services.AddSingleton<AgentProxyManager>();
+            services.AddSingleton<EventSinkService>();
+
+            //services.AddSingleton<AppSecretsHolder>(provider => {
+            //    var secretsPath = Path.Combine(_env.ContentRootPath, "appsecrets.json");
+            //    var localizerFactory = provider.GetService<IStringLocalizerFactory>();
+            //    var dataProtectionProvider = provider.GetRequiredService<IDataProtectionProvider>();
+            //    var result = new AppSecretsHolder(secretsPath, "KdSoft-EtwEvents-Secrets", dataProtectionProvider, localizerFactory);
+            //    result.EnsureProtected();
+            //    return result;
+            //});
 
             services.AddPortableObjectLocalization(options => options.ResourcesPath = "Resources");
             services.Replace(ServiceDescriptor.Singleton<ILocalizationFileLocationProvider, LocalizationFileProvider>());
@@ -136,16 +147,6 @@ namespace KdSoft.EtwEvents.AgentManager
                     manager.FeatureProviders.Add(new AgentControllerFeatureProvider());
                     manager.FeatureProviders.Add(new ManagerControllerFeatureProvider());
                 });
-
-
-            //services.AddSingleton<AppSecretsHolder>(provider => {
-            //    var secretsPath = Path.Combine(_env.ContentRootPath, "appsecrets.json");
-            //    var localizerFactory = provider.GetService<IStringLocalizerFactory>();
-            //    var dataProtectionProvider = provider.GetRequiredService<IDataProtectionProvider>();
-            //    var result = new AppSecretsHolder(secretsPath, "KdSoft-EtwEvents-Secrets", dataProtectionProvider, localizerFactory);
-            //    result.EnsureProtected();
-            //    return result;
-            //});
 
             services.AddSpaStaticFiles(configuration => {
                 configuration.RootPath = ".";

@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using KdSoft.EtwEvents.AgentManager.EventSinks;
 using KdSoft.EtwEvents.AgentManager.Services;
 using KdSoft.EtwEvents.PushAgent;
 using Microsoft.AspNetCore.Authorization;
@@ -19,9 +20,10 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
     [ApiController]
     [Route("[controller]/[action]")]
     [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
-    public class ManagerController: ControllerBase
+    class ManagerController: ControllerBase
     {
         readonly AgentProxyManager _agentProxyManager;
+        readonly EventSinkService _evtSinkService;
         readonly IOptions<JsonOptions> _jsonOptions;
         readonly ILogger<ManagerController> _logger;
         //readonly JsonFormatter _jsonFormatter;
@@ -30,16 +32,23 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
 
         public ManagerController(
             AgentProxyManager agentProxyManager,
+            EventSinkService evtSinkService,
             IOptions<JsonOptions> jsonOptions,
             ILogger<ManagerController> logger
         ) {
             this._agentProxyManager = agentProxyManager;
+            this._evtSinkService = evtSinkService;
             this._jsonOptions = jsonOptions;
             this._logger = logger;
             //var jsonSettings = JsonFormatter.Settings.Default.WithFormatDefaultValues(true).WithFormatEnumsAsIntegers(true);
             //_jsonFormatter = new JsonFormatter(jsonSettings);
         }
 
+        [HttpGet]
+        public IActionResult GetEventSinkInfos() {
+            var result = _evtSinkService.GetEventSinkInfos();
+            return Ok(result);
+        }
 
         #region Server Events for Manager
 
