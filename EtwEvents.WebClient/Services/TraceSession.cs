@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Net.Client;
+using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;

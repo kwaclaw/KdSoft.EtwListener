@@ -3,12 +3,11 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading.Tasks;
-using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
 
-namespace KdSoft.EtwEvents.WebClient
+namespace KdSoft.EtwEvents.Client.Shared
 {
-    class EventSinkHolder
+    public class EventSinkHolder
     {
         readonly object _eventSinkLock = new object();
         readonly object _failedEventSinkLock = new object();
