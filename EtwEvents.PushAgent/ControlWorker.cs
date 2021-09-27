@@ -8,6 +8,8 @@ using System.Net.Mime;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using KdSoft.EtwEvents.Client.Shared;
+using KdSoft.EtwEvents.PushAgent.Models;
 using KdSoft.EtwLogging;
 using LaunchDarkly.EventSource;
 using Microsoft.Extensions.DependencyInjection;
@@ -133,7 +135,11 @@ namespace KdSoft.EtwEvents.PushAgent
                     await PostMessage($"Agent/TestFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
                     break;
                 case "UpdateEventSink":
-                    //
+                    var sinkConfig = JsonSerializer.Deserialize<EventSinkConfig>(sse.Data);
+                    if (sinkConfig == null)
+                        return;
+                    await worker.UpdateEventSink(sinkConfig).ConfigureAwait(false);
+                    await SendStateUpdate().ConfigureAwait(false);
                     break;
                 default:
                     break;
@@ -157,6 +163,13 @@ namespace KdSoft.EtwEvents.PushAgent
             //var agentName = _httpCertHandler.ClientCert.GetNameInfo(X509NameType.SimpleName, false);
             //var agentEmail = _httpCertHandler.ClientCert.GetNameInfo(X509NameType.EmailName, false);
             var isRunning = _workerAvailable != 0;
+            var eventSinks = ImmutableArray<EventSinkState>.Empty;
+            if (isRunning && SessionWorker != null) {
+                eventSinks.Add(new EventSinkState {
+                    Config = SessionWorker.EventSinkConfig,
+                    Error = SessionWorker.EventSinkError?.Message
+                });
+            }
             var state = new Models.AgentState {
                 EnabledProviders = ses?.EnabledProviders.ToImmutableList() ?? ImmutableList<EtwLogging.ProviderSetting>.Empty,
                 // Id = string.IsNullOrWhiteSpace(agentEmail) ? agentName : $"{agentName} ({agentEmail})",
@@ -165,7 +178,8 @@ namespace KdSoft.EtwEvents.PushAgent
                 Site = _context.Configuration["Site"],
                 FilterBody = ses?.GetCurrentFilterBody(),
                 IsRunning = isRunning,
-                IsStopped = !isRunning 
+                IsStopped = !isRunning,
+                EventSinks = eventSinks,
             };
             return PostMessage("Agent/UpdateState", state);
         }

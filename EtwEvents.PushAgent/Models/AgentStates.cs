@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
 
 namespace KdSoft.EtwEvents.PushAgent.Models
@@ -27,8 +28,7 @@ namespace KdSoft.EtwEvents.PushAgent.Models
 
     public class EventSinkState
     {
-        public string SinkType { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
+        public EventSinkConfig? Config { get; set; }
         public string? Error { get; set; }
     }
 

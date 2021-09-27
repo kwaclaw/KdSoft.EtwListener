@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -28,6 +29,10 @@ namespace KdSoft.EtwEvents.PushAgent
         RealTimeTraceSession? _session;
         public RealTimeTraceSession? Session => _session;
 
+        EventSinkConfig? _sinkConfig;
+        public EventSinkConfig? EventSinkConfig => _sinkConfig;
+        public Exception? EventSinkError => _sinkHolder.FailedEventSinks.FirstOrDefault().Value.error;
+
         public SessionWorker(
             HostBuilderContext context,
             IOptions<EventQueueOptions> eventQueueOptions,
@@ -39,13 +44,13 @@ namespace KdSoft.EtwEvents.PushAgent
             this._sinkFactory = sinkFactory;
             this._loggerFactory = loggerFactory;
             this._logger = loggerFactory.CreateLogger<SessionWorker>();
-
+            
+            _sinkHolder = new EventSinkHolder();
             _jsonOptions = new JsonSerializerOptions {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                 AllowTrailingCommas = true,
                 WriteIndented = true
             };
-            _sinkHolder = new EventSinkHolder();
         }
 
         string EventSessionOptionsPath => Path.Combine(_context.HostingEnvironment.ContentRootPath, "eventSession.json");
@@ -195,6 +200,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 _sinkHolder.AddEventSink(sinkConfig.Name, sink);
                 var closureTask = ConfigureEventSinkClosure(sinkConfig.Name, sink);
                 SaveSinkOptions(sinkConfig);
+                _sinkConfig = sinkConfig;
             }
             catch (Exception ex) {
                 await sink.DisposeAsync().ConfigureAwait(false);
