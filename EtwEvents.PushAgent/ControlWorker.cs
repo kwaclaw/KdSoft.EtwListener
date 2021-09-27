@@ -240,6 +240,7 @@ namespace KdSoft.EtwEvents.PushAgent
             var oldScope = Interlocked.CompareExchange(ref this._workerScope, scope, null);
             if (oldScope != null) { // should not happen
                 oldScope.Dispose();
+                Interlocked.Exchange(ref this._workerScope, null);
                 return false;
             }
 
