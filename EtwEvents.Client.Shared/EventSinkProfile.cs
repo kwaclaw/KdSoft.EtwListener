@@ -2,7 +2,7 @@
 
 namespace KdSoft.EtwEvents.Client.Shared
 {
-    public class EventSinkConfig
+    public class EventSinkProfile
     {
         public string SinkType { get; set; } = nameof(DummySink);
         public string Name { get; set; } = "Dummy";

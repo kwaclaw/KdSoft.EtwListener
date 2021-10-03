@@ -29,8 +29,8 @@ namespace KdSoft.EtwEvents.PushAgent
         RealTimeTraceSession? _session;
         public RealTimeTraceSession? Session => _session;
 
-        EventSinkConfig? _sinkConfig;
-        public EventSinkConfig? EventSinkConfig => _sinkConfig;
+        EventSinkProfile? _sinkProfile;
+        public EventSinkProfile? EventSinkProfile => _sinkProfile;
         public Exception? EventSinkError => _sinkHolder.FailedEventSinks.FirstOrDefault().Value.error;
 
         public SessionWorker(
@@ -81,22 +81,22 @@ namespace KdSoft.EtwEvents.PushAgent
             }
         }
 
-        bool LoadSinkOptions(out EventSinkConfig options) {
+        bool LoadSinkProfile(out EventSinkProfile profile) {
             try {
                 var sinkOptionsJson = File.ReadAllText(EventSinkOptionsPath);
-                options = JsonSerializer.Deserialize<EventSinkConfig>(sinkOptionsJson, _jsonOptions) ?? new EventSinkConfig();
+                profile = JsonSerializer.Deserialize<EventSinkProfile>(sinkOptionsJson, _jsonOptions) ?? new EventSinkProfile();
                 return true;
             }
             catch (Exception ex) {
-                options = new EventSinkConfig();
+                profile = new EventSinkProfile();
                 _logger.LogError(ex, "Error loading event sink options.");
                 return false;
             }
         }
 
-        bool SaveSinkOptions(EventSinkConfig options) {
+        bool SaveSinkProfile(EventSinkProfile profile) {
             try {
-                var json = JsonSerializer.Serialize(options, _jsonOptions);
+                var json = JsonSerializer.Serialize(profile, _jsonOptions);
                 File.WriteAllText(EventSinkOptionsPath, json);
                 return true;
             }
@@ -158,9 +158,9 @@ namespace KdSoft.EtwEvents.PushAgent
             return new BuildFilterResult().AddDiagnostics(diagnostics);
         }
 
-        Task<IEventSink> CreateEventSink(EventSinkConfig sinkConfig) {
-            var optsJson = JsonSerializer.Serialize(sinkConfig.Options, _jsonOptions);
-            var credsJson = JsonSerializer.Serialize(sinkConfig.Credentials, _jsonOptions);
+        Task<IEventSink> CreateEventSink(EventSinkProfile sinkProfile) {
+            var optsJson = JsonSerializer.Serialize(sinkProfile.Options, _jsonOptions);
+            var credsJson = JsonSerializer.Serialize(sinkProfile.Credentials, _jsonOptions);
             return _sinkFactory.Create(optsJson, credsJson);
         }
 
@@ -191,20 +191,20 @@ namespace KdSoft.EtwEvents.PushAgent
             }
         }
 
-        public async Task UpdateEventSink(EventSinkConfig sinkConfig) {
+        public async Task UpdateEventSink(EventSinkProfile sinkProfile) {
             // since we only have one event sink we can close them all
             await CloseEventSinks().ConfigureAwait(false);
 
-            var sink = await CreateEventSink(sinkConfig).ConfigureAwait(false);
+            var sink = await CreateEventSink(sinkProfile).ConfigureAwait(false);
             try {
-                _sinkHolder.AddEventSink(sinkConfig.Name, sink);
-                var closureTask = ConfigureEventSinkClosure(sinkConfig.Name, sink);
-                SaveSinkOptions(sinkConfig);
-                _sinkConfig = sinkConfig;
+                _sinkHolder.AddEventSink(sinkProfile.Name, sink);
+                var closureTask = ConfigureEventSinkClosure(sinkProfile.Name, sink);
+                SaveSinkProfile(sinkProfile);
+                _sinkProfile = sinkProfile;
             }
             catch (Exception ex) {
                 await sink.DisposeAsync().ConfigureAwait(false);
-                _logger.LogError(ex, $"Error updating event sink '{sinkConfig.Name}'.");
+                _logger.LogError(ex, $"Error updating event sink '{sinkProfile.Name}'.");
                 throw;
             }
         }
@@ -212,7 +212,7 @@ namespace KdSoft.EtwEvents.PushAgent
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
             try {
                 LoadSessionOptions(out var sessionOptions);
-                LoadSinkOptions(out var sinkOptions);
+                LoadSinkProfile(out var sinkOptions);
 
                 var logger = _loggerFactory.CreateLogger<RealTimeTraceSession>();
                 var session = new RealTimeTraceSession("default", TimeSpan.MaxValue, logger, false);

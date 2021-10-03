@@ -185,9 +185,9 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
         }
 
         [HttpPost]
-        public Task<IActionResult> UpdateEventSink(string agentId, [FromBody] object eventSinkConfig) {
+        public Task<IActionResult> UpdateEventSink(string agentId, [FromBody] object eventSinkProfile) {
             // we are passing the JSON simply through
-            return CallAgent(agentId, "UpdateEventSink", eventSinkConfig?.ToString() ?? "", TimeSpan.FromSeconds(15));
+            return CallAgent(agentId, "UpdateEventSink", eventSinkProfile?.ToString() ?? "", TimeSpan.FromSeconds(15));
         }
         
         #endregion

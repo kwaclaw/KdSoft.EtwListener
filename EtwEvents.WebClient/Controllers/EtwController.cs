@@ -101,7 +101,7 @@ namespace KdSoft.EtwEvents.WebClient
             return Ok(result);
         }
 
-        async Task<IEventSink> CreateEventSink(EventSinkConfig request, EventSinkHolder holder) {
+        async Task<IEventSink> CreateEventSink(EventSinkProfile request, EventSinkHolder holder) {
             IEventSink result;
             switch (request.SinkType) {
                 case nameof(DummySink):
@@ -260,7 +260,7 @@ namespace KdSoft.EtwEvents.WebClient
         }
 
         [HttpPost]
-        public async Task<IActionResult> OpenEventSinks(string sessionName, [FromBody] IEnumerable<EventSinkConfig> sinkRequests) {
+        public async Task<IActionResult> OpenEventSinks(string sessionName, [FromBody] IEnumerable<EventSinkProfile> sinkRequests) {
             if (_sessionManager.TryGetValue(sessionName, out var sessionEntry)) {
                 var traceSession = await sessionEntry.ConfigureAwait(false);
                 var sinkRequestTasks = sinkRequests.Select(sr => (sr, CreateEventSink(sr, traceSession.EventSinks)));

@@ -28,7 +28,7 @@ namespace KdSoft.EtwEvents.PushAgent.Models
 
     public class EventSinkState
     {
-        public EventSinkConfig? Config { get; set; }
+        public EventSinkProfile? Profile { get; set; }
         public string? Error { get; set; }
     }
 

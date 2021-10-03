@@ -135,10 +135,10 @@ namespace KdSoft.EtwEvents.PushAgent
                     await PostMessage($"Agent/TestFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
                     break;
                 case "UpdateEventSink":
-                    var sinkConfig = JsonSerializer.Deserialize<EventSinkConfig>(sse.Data);
-                    if (sinkConfig == null)
+                    var sinkProfile = JsonSerializer.Deserialize<EventSinkProfile>(sse.Data);
+                    if (sinkProfile == null)
                         return;
-                    await worker.UpdateEventSink(sinkConfig).ConfigureAwait(false);
+                    await worker.UpdateEventSink(sinkProfile).ConfigureAwait(false);
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
                 default:
@@ -165,8 +165,8 @@ namespace KdSoft.EtwEvents.PushAgent
             var isRunning = _workerAvailable != 0;
             var eventSinks = ImmutableArray<EventSinkState>.Empty;
             if (isRunning && SessionWorker != null) {
-                eventSinks.Add(new EventSinkState {
-                    Config = SessionWorker.EventSinkConfig,
+                eventSinks = eventSinks.Add(new EventSinkState {
+                    Profile = SessionWorker.EventSinkProfile,
                     Error = SessionWorker.EventSinkError?.Message
                 });
             }

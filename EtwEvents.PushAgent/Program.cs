@@ -58,7 +58,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     services.Configure<EventSessionOptions>(opts => {
                         hostContext.Configuration.GetSection("EventSession").Bind(opts);
                     });
-                    services.Configure<EventSinkConfig>(opts => {
+                    services.Configure<EventSinkProfile>(opts => {
                         hostContext.Configuration.GetSection("EventSink").Bind(opts);
                     });
                     services.AddSingleton(provider => new TraceSessionManager(TimeSpan.FromMinutes(3)));
