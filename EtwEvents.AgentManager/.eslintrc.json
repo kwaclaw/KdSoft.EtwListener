@@ -9,14 +9,35 @@
   },
   "globals": {},
   "plugins": [],
-  "extends": [ "airbnb-base" ],
+  "extends": [
+    "airbnb-base"
+  ],
   "rules": {
-    "indent": [ "error", 2, { "SwitchCase": 1 } ],
-    "linebreak-style": [ "warn", "windows" ],
+    "indent": [
+      "error",
+      2,
+      {
+        "SwitchCase": 1
+      }
+    ],
+    "linebreak-style": [
+      "warn",
+      "windows"
+    ],
     "space-before-function-paren": "off",
     "function-paren-newline": "off",
-    "arrow-parens": [ "warn", "as-needed" ],
-    "object-curly-newline": [ "off", { "multiline": true } ],
+    "arrow-parens": [
+      "warn",
+      "as-needed"
+    ],
+    "object-curly-newline": [
+      "error",
+      {
+        "ObjectPattern": {
+          "multiline": true
+        }
+      }
+    ],
     "quotes": [
       "error",
       "single",
@@ -50,7 +71,10 @@
     "no-nested-ternary": "off",
     "class-methods-use-this": "off",
     "lines-between-class-members": "off",
-    "no-restricted-syntax":  "off",
-    "no-unused-vars":  "warn"
+    "no-unused-vars": "warn",
+    "no-restricted-syntax": [
+      "off",
+      "ForOfStatement"
+    ]
   }
 }
