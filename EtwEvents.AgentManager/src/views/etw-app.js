@@ -340,7 +340,7 @@ class EtwApp extends LitMvvmElement {
           right: 0;
           top: 0;
           bottom: 0;
-          grid-template-columns: fit-content(14em) 1fr;
+          grid-template-columns: fit-content(18em) 1fr;
         }
 
         #error-close {
@@ -457,14 +457,27 @@ class EtwApp extends LitMvvmElement {
                 ${repeat(
                   this.model.fetchErrors.reverseItemIterator(),
                   item => item.sequenceNo,
-                  item => html`
-                      <div class="kds-row">
-                      <div>${item.timeStamp}</div>
-                      <div>${item.title}</div>
-                      <pre @click=${this._errorDetailClick}>${item.detail}</pre>
-                      </div>
-                    `)
+                  item => {
+                    if (item instanceof Error) {
+                      return html`
+                        <div class="kds-row">
+                          <div>${item.timeStamp}</div>
+                          <div>${item.name}: ${item.message}</div>
+                          ${item.fileName ? html`<div>${item.fileName} (${item.lineNumber}:${item.columnNumber})</div>` : ''}
+                          ${item.stack ? html`<pre @click=${this._errorDetailClick}>${item.stack}</pre>` : ''}
+                        </div>
+                      `;
+                    } else {
+                      return html`
+                        <div class="kds-row">
+                          <div>${item.timeStamp}</div>
+                          <div>${item.title}</div>
+                          <pre @click=${this._errorDetailClick}>${item.detail}</pre>
+                        </div>
+                      `;
+                    }
                   }
+                )}
                 </div>
               </div>
             `
