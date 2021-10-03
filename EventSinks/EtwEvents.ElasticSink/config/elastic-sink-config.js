@@ -1,5 +1,4 @@
-﻿import { html, nothing } from '../../../lib/lit-html.js';
-import { LitMvvmElement, css } from '../../../lib/@kdsoft/lit-mvvm.js';
+﻿import { LitMvvmElement, html, css } from '../../../lib/@kdsoft/lit-mvvm.js';
 import { Queue, priorities } from '../../../lib/@nx-js/queue-util/dist/es.es6.js';
 import sharedStyles from '../../../styles/kdsoft-shared-styles.js';
 import styleLinks from '../../../styles/kdsoft-style-links.js';
@@ -18,7 +17,7 @@ class ElasticSinkConfig extends LitMvvmElement {
   _optionsChange(e) {
     e.stopPropagation();
     console.log(`${e.target.name}=${e.target.value}`);
-    this.model.definition.options[e.target.name] = utils.getFieldValue(e.target);
+    this.model.options[e.target.name] = utils.getFieldValue(e.target);
   }
 
   _fieldListChange(e) {
@@ -26,13 +25,13 @@ class ElasticSinkConfig extends LitMvvmElement {
     console.log(`${e.target.name}=${e.target.value}`);
     // regular expression for splitting, removes whitespace around comma
     const sepRegex = /\s*(?:,|$)\s*/;
-    this.model.definition.options[e.target.name] = (e.target.value || '').split(sepRegex);
+    this.model.options[e.target.name] = (e.target.value || '').split(sepRegex);
   }
 
   _credentialsChange(e) {
     e.stopPropagation();
     console.log(`${e.target.name}=${e.target.value}`);
-    this.model.definition.credentials[e.target.name] = utils.getFieldValue(e.target);
+    this.model.credentials[e.target.name] = utils.getFieldValue(e.target);
   }
 
   _validateNodeUrls(nodesElement) {
@@ -63,13 +62,13 @@ class ElasticSinkConfig extends LitMvvmElement {
   _nodesChanged(e) {
     e.stopPropagation();
     const nodes = this._validateNodeUrls(e.target);
-    this.model.definition.options.nodes = nodes;
+    this.model.options.nodes = nodes;
     e.target.reportValidity();
   }
 
   _nodeDeleted(e, index) {
     e.stopPropagation();
-    this.model.definition.options.nodes.splice(index, 1);
+    this.model.options.nodes.splice(index, 1);
   }
 
 
@@ -126,8 +125,8 @@ class ElasticSinkConfig extends LitMvvmElement {
   }
 
   render() {
-    const opts = this.model.definition.options;
-    const creds = this.model.definition.credentials;
+    const opts = this.model.options;
+    const creds = this.model.credentials;
     const nodesList = opts.nodes.join(';');
 
     const result = html`

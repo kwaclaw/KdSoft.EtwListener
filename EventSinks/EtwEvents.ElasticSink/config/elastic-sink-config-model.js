@@ -1,24 +1,17 @@
 ﻿/* global i18n */
 
-import { observable, observe } from '../../../lib/@nx-js/observer-util/dist/es.es6.js';
-
 class ElasticSinkConfigModel {
-  constructor(name, type) {
+  constructor(name, sinkType) {
     this.name = name;
-    this.type = type;
-    this.definition = {
-      options: observable({
-        nodes: [],
-        index: '',
-      }),
-      credentials: observable({
-        user: '',
-        password: ''
-      })
+    this.sinkType = sinkType;
+    this.options = {
+      nodes: [],
+      index: '',
     };
-    
-    const result = observable(this);
-    return result;
+    this.credentials = {
+      user: '',
+      password: ''
+    };
   }
 
   export() {

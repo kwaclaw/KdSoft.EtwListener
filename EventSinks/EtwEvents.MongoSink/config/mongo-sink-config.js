@@ -1,6 +1,6 @@
-﻿import { html, nothing } from '../../../lib/lit-html.js';
-import { LitMvvmElement, css } from '../../../lib/@kdsoft/lit-mvvm.js';
+﻿import { LitMvvmElement, html, css } from '../../../lib/@kdsoft/lit-mvvm.js';
 import { Queue, priorities } from '../../../lib/@nx-js/queue-util/dist/es.es6.js';
+import { observable, observe } from '../../../lib/@nx-js/observer-util/dist/es.es6.js';
 import sharedStyles from '../../../styles/kdsoft-shared-styles.js';
 import styleLinks from '../../../styles/kdsoft-style-links.js';
 import * as utils from '../../../js/utils.js';
@@ -15,7 +15,7 @@ class MongoSinkConfig extends LitMvvmElement {
   constructor() {
     super();
     this.scheduler = new Queue(priorities.HIGH);
-    this.evtFieldsDropDownModel = new KdSoftDropdownModel();
+    this.evtFieldsDropDownModel = observable(new KdSoftDropdownModel());
   }
 
   isValid() {
@@ -25,7 +25,7 @@ class MongoSinkConfig extends LitMvvmElement {
   _optionsChange(e) {
     e.stopPropagation();
     console.log(`${e.target.name}=${e.target.value}`);
-    this.model.definition.options[e.target.name] = utils.getFieldValue(e.target);
+    this.model.options[e.target.name] = utils.getFieldValue(e.target);
   }
 
   _fieldListChange(e) {
@@ -33,7 +33,7 @@ class MongoSinkConfig extends LitMvvmElement {
     console.log(`${e.target.name}=${e.target.value}`);
     // regular expression for splitting, removes whitespace around comma
     const sepRegex = /\s*(?:,|$)\s*/;
-    this.model.definition.options[e.target.name] = (e.target.value || '').split(sepRegex);
+    this.model.options[e.target.name] = (e.target.value || '').split(sepRegex);
   }
 
   _validateCredentials() {
@@ -63,21 +63,21 @@ class MongoSinkConfig extends LitMvvmElement {
   _credentialsChange(e) {
     e.stopPropagation();
     console.log(`${e.target.name}=${e.target.value}`);
-    this.model.definition.credentials[e.target.name] = utils.getFieldValue(e.target);
+    this.model.credentials[e.target.name] = utils.getFieldValue(e.target);
     this._validateCredentials();
   }
 
   // first event when model is available
   beforeFirstRender() {
     if (!this.evtFieldChecklistModel) {
-      this.evtFieldChecklistModel = new KdSoftChecklistModel(
+      this.evtFieldChecklistModel = observable(new KdSoftChecklistModel(
         MongoSinkConfigModel.eventFields,
         [],
         true,
         item => item.id
-      );
+      ));
       // we select by item ids as we have these readily available
-      this.evtFieldChecklistModel.selectIds(this.model.definition.options.eventFilterFields || [], true);
+      this.evtFieldChecklistModel.selectIds(this.model.options.eventFilterFields || [], true);
     }
 
     this.evtFieldsChecklistConnector = new KdSoftDropdownChecklistConnector(
@@ -86,7 +86,7 @@ class MongoSinkConfig extends LitMvvmElement {
       (chkListModel) => {
         const selectedIds = Array.from(chkListModel.selectedEntries).map(entry => entry.item.id);
         // since we are already reacting to the selection change, let's update the underlying model
-        this.model.definition.options.eventFilterFields = selectedIds;
+        this.model.options.eventFilterFields = selectedIds;
         return selectedIds.join(', ');
       }
     );
@@ -140,8 +140,8 @@ class MongoSinkConfig extends LitMvvmElement {
   }
 
   render() {
-    const opts = this.model.definition.options;
-    const creds = this.model.definition.credentials;
+    const opts = this.model.options;
+    const creds = this.model.credentials;
     const payloadFieldsList = opts.payloadFilterFields.join(', ');
 
     const result = html`

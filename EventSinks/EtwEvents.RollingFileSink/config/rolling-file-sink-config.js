@@ -1,5 +1,4 @@
-﻿import { html, nothing } from '../../../lib/lit-html.js';
-import { LitMvvmElement, css } from '../../../lib/@kdsoft/lit-mvvm.js';
+﻿import { LitMvvmElement, html, css } from '../../../lib/@kdsoft/lit-mvvm.js';
 import { Queue, priorities } from '../../../lib/@nx-js/queue-util/dist/es.es6.js';
 import sharedStyles from '../../../styles/kdsoft-shared-styles.js';
 import styleLinks from '../../../styles/kdsoft-style-links.js';
@@ -18,7 +17,7 @@ class RollingFileSinkConfig extends LitMvvmElement {
   _optionsChange(e) {
     e.stopPropagation();
     console.log(`${e.target.name}=${e.target.value}`);
-    this.model.definition.options[e.target.name] = utils.getFieldValue(e.target);
+    this.model.options[e.target.name] = utils.getFieldValue(e.target);
   }
 
   // first event when model is available
@@ -74,8 +73,8 @@ class RollingFileSinkConfig extends LitMvvmElement {
   }
 
   render() {
-    const opts = this.model.definition.options;
-    //const creds = this.model.definition.credentials;
+    const opts = this.model.options;
+    //const creds = this.model.credentials;
 
     const result = html`
       ${sharedStyles}

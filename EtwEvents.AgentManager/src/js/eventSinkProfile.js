@@ -1,8 +1,9 @@
 ﻿class EventSinkProfile {
-  constructor(name, type, definition) {
+  constructor(name, sinkType, options, credentials) {
     this.name = name;
-    this.type = type;
-    this.definition = definition || {};
+    this.sinkType = sinkType;
+    this.options = options || {};
+    this.credentials = credentials || {};
   }
 }
 

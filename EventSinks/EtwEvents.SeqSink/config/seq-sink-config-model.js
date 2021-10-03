@@ -1,23 +1,16 @@
 ﻿/* global i18n */
 
-import { observable, observe } from '../../../lib/@nx-js/observer-util/dist/es.es6.js';
-
 class SeqSinkConfigModel {
-  constructor(name, type) {
+  constructor(name, sinkType) {
     this.name = name;
-    this.type = type;
-    this.definition = {
-      options: observable({
-        serverUrl: '',
-        proxyAddress: '',
-      }),
-      credentials: observable({
-        apiKey: '',
-      })
+    this.sinkType = sinkType;
+    this.options = {
+      serverUrl: '',
+      proxyAddress: '',
     };
-    
-    const result = observable(this);
-    return result;
+    this.credentials = {
+      apiKey: '',
+    };
   }
 
   export() {
