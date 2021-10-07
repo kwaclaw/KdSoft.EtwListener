@@ -60,7 +60,6 @@
     <Folder Include="wwwroot\" />
   </ItemGroup>
 
-
   <Target Name="PostCSS" BeforeTargets="Build">
     <!--<Exec Command="start cmd /b npm run dev" />-->
     <Copy SourceFiles="@(FontAwsomeSprites)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeSprites->'wwwroot/css/fontawesome/sprites/%(RecursiveDir)%(Filename)%(Extension)')" />
@@ -68,9 +67,13 @@
     <Copy SourceFiles="@(FontAwsomeWebfonts)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeWebfonts->'wwwroot/css/fontawesome/webfonts/%(RecursiveDir)%(Filename)%(Extension)')" />
   </Target>
 
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="(ROBOCOPY $(SolutionDir)EventSinks/Deploy $(ProjectDir)EventSinks /S) ^&amp; IF %25ERRORLEVEL%25 LSS 8 SET ERRORLEVEL = 0" />
+  <Target Name="CopyEventSinks" AfterTargets="PostBuildEvent">
+    <ItemGroup>
+      <SinkFiles Include="$(SolutionDir)EventSinks/Deploy/**/*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(SinkFiles)"
+          DestinationFiles="@(SinkFiles->'$(ProjectDir)EventSinks/%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

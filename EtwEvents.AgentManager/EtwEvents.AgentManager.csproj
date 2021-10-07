@@ -55,9 +55,16 @@
     <Copy SourceFiles="@(FontAwsomeWebfonts)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeWebfonts->'wwwroot/css/fontawesome/webfonts/%(RecursiveDir)%(Filename)%(Extension)')" />
   </Target>
 
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="(ROBOCOPY $(SolutionDir)EventSinks/Deploy $(ProjectDir)EventSinks /S) ^&amp; IF %25ERRORLEVEL%25 LSS 8 SET ERRORLEVEL = 0" />
+  <Target Name="CopyEventSinks" AfterTargets="PostBuildEvent">
+    <ItemGroup>
+      <BinFiles Include="$(SolutionDir)EventSinks/Deploy/**/*.*" Exclude="$(SolutionDir)EventSinks/Deploy/*/config/**/*.*" />
+      <JsFiles Include="$(SolutionDir)EventSinks/Deploy/*/config/**/*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinFiles)"
+          DestinationFiles="@(BinFiles->'$(ProjectDir)EventSinks/%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(JsFiles)" 
+          DestinationFiles="@(JsFiles->'$(ProjectDir)src/eventSinks/%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
   </Target>
-
 </Project>
