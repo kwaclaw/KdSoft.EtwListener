@@ -57,14 +57,8 @@
 
   <Target Name="CopyEventSinks" AfterTargets="PostBuildEvent">
     <ItemGroup>
-      <BinFiles Include="$(SolutionDir)EventSinks/Deploy/**/*.*" Exclude="$(SolutionDir)EventSinks/Deploy/*/config/**/*.*" />
-      <JsFiles Include="$(SolutionDir)EventSinks/Deploy/*/config/**/*.*" />
+      <BinFiles Include="$(SolutionDir)EventSinks/Deploy/**/*.*" />
     </ItemGroup>
-    <Copy SourceFiles="@(BinFiles)"
-          DestinationFiles="@(BinFiles->'$(ProjectDir)EventSinks/%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true" />
-    <Copy SourceFiles="@(JsFiles)" 
-          DestinationFiles="@(JsFiles->'$(ProjectDir)src/eventSinks/%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinFiles)" DestinationFiles="@(BinFiles->'$(ProjectDir)EventSinks/%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
   </Target>
 </Project>

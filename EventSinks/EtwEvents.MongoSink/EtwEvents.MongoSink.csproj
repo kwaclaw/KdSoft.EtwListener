@@ -10,17 +10,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="config\mongo-sink-config-model.js">
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
-    <Content Include="config\mongo-sink-config.js">
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="MongoDB.Driver" Version="2.13.1" />
     <PackageReference Include="Newtonsoft.Json.Schema" Version="3.0.14" />
     <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
@@ -37,14 +26,8 @@
     </PropertyGroup>
     <ItemGroup>
       <BinFiles Include="$(TargetDir)**/*.*" />
-      <JsFiles Include="$(ProjectDir)config/**/*.*" />
     </ItemGroup>
-    <Copy SourceFiles="@(BinFiles)"
-          DestinationFiles="@(BinFiles->'$(DeployDirectory)/%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true" />
-    <Copy SourceFiles="@(JsFiles)"
-          DestinationFiles="@(JsFiles->'$(DeployDirectory)/config/%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinFiles)" DestinationFiles="@(BinFiles->'$(DeployDirectory)/%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

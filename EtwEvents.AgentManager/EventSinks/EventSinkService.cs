@@ -58,10 +58,9 @@ namespace KdSoft.EtwEvents.AgentManager.EventSinks
                         var evtSinkType = metaLoadContext.GetEventSinkTypes(evtSinkFile.FullName).FirstOrDefault();
                         if (evtSinkType != null) {
                             var sinkRelativeDir = Path.GetRelativePath(eventSinksDir, evtSinkDir.FullName);
-                            var sinkConfigDir = Path.Combine(sinkRelativeDir, "config");
-                            var configView = eventSinksConfigDirInfo.GetFiles(@$"{sinkConfigDir}/*-config.js").First();
+                            var configView = eventSinksConfigDirInfo.GetFiles(@$"{sinkRelativeDir}/*-config.js").First();
                             var configViewUri = new Uri($"file:///{configView.FullName}");
-                            var configModel = eventSinksConfigDirInfo.GetFiles(@$"{sinkConfigDir}/*-config-model.js").First();
+                            var configModel = eventSinksConfigDirInfo.GetFiles(@$"{sinkRelativeDir}/*-config-model.js").First();
                             var configModelUri = new Uri($"file:///{configModel.FullName}");
                             yield return new EventSinkInfo {
                                 SinkType = evtSinkType,

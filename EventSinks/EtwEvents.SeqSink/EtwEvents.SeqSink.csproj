@@ -10,17 +10,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="config\seq-sink-config-model.js">
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
-    <Content Include="config\seq-sink-config.js">
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\EtwEvents.Client.Shared\EtwEvents.Client.Shared.csproj" />
   </ItemGroup>
 
@@ -30,14 +19,8 @@
     </PropertyGroup>
     <ItemGroup>
       <BinFiles Include="$(TargetDir)**/*.*" />
-      <JsFiles Include="$(ProjectDir)config/**/*.*" />
     </ItemGroup>
-    <Copy SourceFiles="@(BinFiles)"
-          DestinationFiles="@(BinFiles->'$(DeployDirectory)/%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true" />
-    <Copy SourceFiles="@(JsFiles)"
-          DestinationFiles="@(JsFiles->'$(DeployDirectory)/config/%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BinFiles)" DestinationFiles="@(BinFiles->'$(DeployDirectory)/%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>
