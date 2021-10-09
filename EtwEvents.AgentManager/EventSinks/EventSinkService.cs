@@ -30,7 +30,11 @@ namespace KdSoft.EtwEvents.AgentManager.EventSinks
         /// <returns></returns>
         public IEnumerable<EventSinkInfo> GetEventSinkInfos() {
             var eventSinksDir = Path.Combine(_env.ContentRootPath, "EventSinks");
+            var eventSinksConfigDir = Path.Combine(_env.ContentRootPath, "src", "eventSinks");
+
             var eventSinksDirInfo = new DirectoryInfo(eventSinksDir);
+            var eventSinksConfigDirInfo = new DirectoryInfo(eventSinksConfigDir);
+
             // trailing '/' is important for building relative Uris
             var eventSinksDirUri = new Uri($"file:///{eventSinksDirInfo.FullName}/");
             var evtSinkDirectories = eventSinksDirInfo.EnumerateDirectories();
@@ -52,9 +56,11 @@ namespace KdSoft.EtwEvents.AgentManager.EventSinks
                     if (evtSinkFile != null) {
                         var evtSinkType = metaLoadContext.GetEventSinkTypes(evtSinkFile.FullName).FirstOrDefault();
                         if (evtSinkType != null) {
-                            var configView = evtSinkDir.GetFiles(@"config/*-config.js").First();
+                            var sinkRelativeDir = Path.GetRelativePath(eventSinksDir, evtSinkDir.FullName);
+                            var sinkConfigDir = Path.Combine(sinkRelativeDir, "config");
+                            var configView = eventSinksConfigDirInfo.GetFiles(@$"{sinkConfigDir}/*-config.js").First();
                             var configViewUri = new Uri($"file:///{configView.FullName}");
-                            var configModel = evtSinkDir.GetFiles(@"config/*-config-model.js").First();
+                            var configModel = eventSinksConfigDirInfo.GetFiles(@$"{sinkConfigDir}/*-config-model.js").First();
                             var configModelUri = new Uri($"file:///{configModel.FullName}");
                             yield return new EventSinkInfo {
                                 SinkType = evtSinkType,
@@ -67,41 +73,6 @@ namespace KdSoft.EtwEvents.AgentManager.EventSinks
                     }
                 }
             }
-        }
-
-        public IEventSinkFactory? LoadEventSinkFactory(string sinkType) {
-            var eventSinksDir = Path.Combine(_env.ContentRootPath, "EventSinks");
-            var dirInfo = new DirectoryInfo(eventSinksDir);
-            var evtSinkDirectories = dirInfo.EnumerateDirectories();
-
-            var assemblyPaths = new List<string>(_runtimeAssemblyPaths);
-            assemblyPaths.Add(typeof(IEventSinkFactory).Assembly.Location);
-            foreach (var evtSinkDir in evtSinkDirectories) {
-                var evtSinkFile = evtSinkDir.GetFiles(SinkAssemblyFilter).FirstOrDefault();
-                if (evtSinkFile != null) {
-                    assemblyPaths.Add(evtSinkFile.FullName);
-                }
-            }
-
-            // Create PathAssemblyResolver that can resolve assemblies using the created list.
-            var resolver = new PathAssemblyResolver(assemblyPaths);
-            using (var metaLoadContext = new MetadataLoadContext(resolver)) {
-                foreach (var evtSinkDir in evtSinkDirectories) {
-                    var evtSinkFile = evtSinkDir.GetFiles(SinkAssemblyFilter).FirstOrDefault();
-                    if (evtSinkFile != null) {
-                        var factoryTypes = metaLoadContext.GetEventSinkFactoriesBySinkType(evtSinkFile.FullName, sinkType);
-                        foreach (var factoryType in factoryTypes) {
-                            var factoryTypeName = factoryType.FullName;
-                            // only interested in first one
-                            if (factoryTypeName != null) {
-                                var factoryAssembly = Assembly.LoadFrom(evtSinkFile.FullName);
-                                return (IEventSinkFactory?)factoryAssembly.CreateInstance(factoryTypeName);
-                            }
-                        }
-                    }
-                }
-            }
-            return null;
         }
     }
 }
