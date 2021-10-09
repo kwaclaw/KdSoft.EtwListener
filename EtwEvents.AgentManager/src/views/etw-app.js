@@ -263,6 +263,7 @@ class EtwApp extends LitMvvmElement {
       css`
         :host {
           display: block;
+          position: relative;
         }
         
         #container {
@@ -374,6 +375,10 @@ class EtwApp extends LitMvvmElement {
         form {
           min-width:400px;
         }
+
+        event-sink-config {
+          margin: 10px;
+        }
       `
     ];
   }
@@ -381,12 +386,6 @@ class EtwApp extends LitMvvmElement {
   render() {
     const activeAgentState = this.model.activeAgentState;
     return html`
-      <style>
-        :host {
-          position: relative;
-        }
-      </style>
-
       <div id="container" class="sidebar-expanded">
 
         <etw-app-side-bar id="sidebar" .model=${this.model} aria-expanded="true"></etw-app-side-bar>

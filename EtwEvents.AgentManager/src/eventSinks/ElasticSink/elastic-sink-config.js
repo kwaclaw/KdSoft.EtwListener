@@ -3,7 +3,7 @@ import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
 import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
-import * as utils from '../../../js/utils.js';
+import * as utils from '../../js/utils.js';
 
 class ElasticSinkConfig extends LitMvvmElement {
   constructor() {
@@ -140,7 +140,6 @@ class ElasticSinkConfig extends LitMvvmElement {
     const result = html`
       <form>
         <input type="url" id="check-url" style="display:none" />
-        <h3>Elastic Sink "${this.model.name}"</h3>
         <section id="options" class="center mb-5" @change=${this._optionsChange}>
           <fieldset>
             <legend>Options</legend>

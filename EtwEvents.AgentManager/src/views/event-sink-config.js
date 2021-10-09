@@ -162,9 +162,9 @@ class EventSinkConfig extends LitMvvmElement {
           display: grid;
           grid-template-columns: auto auto;
           background: rgba(255,255,255,0.3);
-          margin: 10px;
           row-gap: 5px;
           column-gap: 10px;
+          margin-bottom: 15px;
         }
 
         #form-content {
