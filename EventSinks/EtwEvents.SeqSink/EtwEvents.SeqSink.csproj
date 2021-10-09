@@ -24,8 +24,20 @@
     <ProjectReference Include="..\..\EtwEvents.Client.Shared\EtwEvents.Client.Shared.csproj" />
   </ItemGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="SET sinkDir=&quot;$(SolutionDir)/EventSinks/Deploy/SeqSink/&quot;&#xD;&#xA;CALL ../CopySinkFiles.cmd %25sinkDir%25 &quot;$(TargetDir)&quot; &quot;$(ProjectDir)&quot;&#xD;&#xA;" />
+  <Target Name="CopyToDeploy" AfterTargets="PostBuildEvent">
+    <PropertyGroup>
+      <DeployDirectory>$(SolutionDir)/EventSinks/Deploy/SeqSink</DeployDirectory>
+    </PropertyGroup>
+    <ItemGroup>
+      <BinFiles Include="$(TargetDir)**/*.*" />
+      <JsFiles Include="$(ProjectDir)config/**/*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BinFiles)"
+          DestinationFiles="@(BinFiles->'$(DeployDirectory)/%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(JsFiles)"
+          DestinationFiles="@(JsFiles->'$(DeployDirectory)/config/%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
   </Target>
 
 </Project>
