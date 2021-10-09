@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Runtime.Loader;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,15 +17,16 @@ using Microsoft.Extensions.Options;
 
 namespace KdSoft.EtwEvents.PushAgent
 {
-    public class SessionWorker: BackgroundService
+    class SessionWorker: BackgroundService
     {
         readonly HostBuilderContext _context;
+        readonly HttpClient _http;
         readonly IOptions<EventQueueOptions> _eventQueueOptions;
-        readonly IEventSinkFactory _sinkFactory;
+        readonly EventSinkService _sinkService;
+        readonly EventSinkHolder _sinkHolder;
         readonly ILoggerFactory _loggerFactory;
         readonly ILogger<SessionWorker> _logger;
         readonly JsonSerializerOptions _jsonOptions;
-        readonly EventSinkHolder _sinkHolder;
 
         RealTimeTraceSession? _session;
         public RealTimeTraceSession? Session => _session;
@@ -35,16 +37,18 @@ namespace KdSoft.EtwEvents.PushAgent
 
         public SessionWorker(
             HostBuilderContext context,
+            HttpClient http,
             IOptions<EventQueueOptions> eventQueueOptions,
-            IEventSinkFactory sinkFactory,
+            EventSinkService sinkService,
             ILoggerFactory loggerFactory
         ) {
             this._context = context;
+            this._http = http;
             this._eventQueueOptions = eventQueueOptions;
-            this._sinkFactory = sinkFactory;
+            this._sinkService = sinkService;
             this._loggerFactory = loggerFactory;
             this._logger = loggerFactory.CreateLogger<SessionWorker>();
-            
+
             _sinkHolder = new EventSinkHolder();
             _jsonOptions = new JsonSerializerOptions {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -158,29 +162,54 @@ namespace KdSoft.EtwEvents.PushAgent
             return new BuildFilterResult().AddDiagnostics(diagnostics);
         }
 
-        Task<IEventSink> CreateEventSink(EventSinkProfile sinkProfile) {
+        async Task<IEventSinkFactory> LoadSinkFactory(string sinkType, string version) {
+            var loadContext = new CollectibleAssemblyLoadContext();
+            return _sinkService.LoadEventSinkFactory(sinkType, loadContext);
+            //TODO check version against locally available version
+            //     if necessary, fetch zip from AgentManager, unzip and save locally
+            //     then dynamically load sink factory - see EventSinkService.cs
+        }
+
+        async Task<IEventSink> CreateEventSink(EventSinkProfile sinkProfile) {
             var optsJson = JsonSerializer.Serialize(sinkProfile.Options, _jsonOptions);
             var credsJson = JsonSerializer.Serialize(sinkProfile.Credentials, _jsonOptions);
-            return _sinkFactory.Create(optsJson, credsJson);
+            var sinkFactory = await LoadSinkFactory(sinkProfile.SinkType, sinkProfile.Version).ConfigureAwait(false);
+            return await sinkFactory.Create(optsJson, credsJson).ConfigureAwait(false);
+        }
+
+        // this can be called from two locations: ConfigureEventSinkClosure() and ExecuteAsync()->CloseEventSinks()
+        void UnloadEventSink(string name, IEventSink eventSink) {
+            // unload only once! otherwise we get a System.ExecutionEngineException
+            if (_sinkHolder.DeleteEventSink(name)) {
+                var sinkAssembly = eventSink.GetType().Assembly;
+                if (sinkAssembly != null) {
+                    var loadContext = AssemblyLoadContext.GetLoadContext(sinkAssembly);
+                    (loadContext as CollectibleAssemblyLoadContext)?.Unload();
+                }
+            }
+        }
+
+        async Task CloseEventSink(string name, IEventSink sink, bool alreadyDisposed) {
+            try {
+                if (!alreadyDisposed) { // was not disposed
+                    await sink.DisposeAsync().ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, $"Error closing event sink '{name}'.");
+            }
+            finally {
+                UnloadEventSink(name, sink);
+            }
         }
 
         Task ConfigureEventSinkClosure(string name, IEventSink sink) {
-            return sink.RunTask.ContinueWith(async rt => {
-                try {
-                    if (!rt.Result) { // was not disposed
-                        await sink.DisposeAsync().ConfigureAwait(false);
-                    }
-                    _sinkHolder.DeleteEventSink(name);
-                }
-                catch (Exception ex) {
-                    _logger.LogError(ex, $"Error closing event sink '{name}'.");
-                }
-            }, TaskScheduler.Default);
+            return sink.RunTask.ContinueWith(rt => CloseEventSink(name, sink, !rt.Result), TaskScheduler.Default);
         }
 
         async Task CloseEventSinks() {
             var (activeSinks, failedSinks) = _sinkHolder.ClearEventSinks();
-            var disposeEntries = activeSinks.Select(sink => (sink.Key, sink.Value.DisposeAsync())).ToArray();
+            var disposeEntries = activeSinks.Select(sink => (sink.Key, CloseEventSink(sink.Key, sink.Value, false))).ToArray();
             foreach (var disposeEntry in disposeEntries) {
                 try {
                     await disposeEntry.Item2.ConfigureAwait(false);
