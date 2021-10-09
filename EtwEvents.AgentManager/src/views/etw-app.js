@@ -7,6 +7,7 @@ import { LitMvvmElement, css } from '@kdsoft/lit-mvvm';
 import './etw-app-side-bar.js';
 import './provider-config.js';
 import './filter-edit.js';
+import './event-sink-config.js';
 import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
@@ -437,6 +438,13 @@ class EtwApp extends LitMvvmElement {
                       <i class="fas fa-lg fa-times text-red-500"></i>
                     </button>
                   </div>
+                </form> 
+
+                <form id="event-sink" class="max-w-full border">
+                  <div class="flex my-2 pr-2">
+                    <span class="font-semibold">Event Sink</span>
+                  </div>
+                  <event-sink-config .model=${activeAgentState.sinkConfigModel}></event-sink-config>
                 </form>
               `
             : nothing

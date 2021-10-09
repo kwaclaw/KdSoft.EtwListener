@@ -2,6 +2,8 @@
 
 import { observable, observe, raw } from '@nx-js/observer-util/dist/es.es6.js';
 import { KdSoftChecklistModel } from '@kdsoft/lit-mvvm-components';
+import EventSinkProfile from '../js/eventSinkProfile.js';
+import EventSinkConfigModel from './event-sink-config-model.js';
 import RingBuffer from '../js/ringBuffer.js';
 import * as utils from '../js/utils.js';
 import FetchHelper from '../js/fetchHelper.js';
@@ -31,7 +33,7 @@ function _enhanceProviderState(provider) {
 }
 
 // adds view models and view related methods to agent state, agentState must be observable
-function _enhanceAgentState(agentState) {
+function _enhanceAgentState(agentState, eventSinkInfos) {
   if (!agentState.filterModel) {
     agentState.filterModel = {
       filter: agentState.filterBody,
@@ -59,6 +61,23 @@ function _enhanceAgentState(agentState) {
     const index = agentState.enabledProviders.findIndex(p => p.name === name);
     if (index >= 0) agentState.enabledProviders.splice(index, 1);
   };
+
+  const sinkState = agentState.EventSinks && agentState.EventSinks.length ? agentState.EventSinks[0] : null;
+  let sinkProfile;
+  let sinkError = null;
+  if (sinkState) {
+    sinkProfile = sinkState.profile;
+    sinkError = sinkState.error;
+  } else {
+    sinkProfile = new EventSinkProfile();
+  }
+
+  if (!agentState.sinkConfigModel) {
+    agentState.sinkConfigModel = new EventSinkConfigModel(eventSinkInfos, sinkProfile, sinkError);
+  } else {
+    agentState.sinkConfigModel.sinkProfile = sinkProfile;
+    agentState.sinkConfigModel.sinkError = sinkError;
+  }
 
   return agentState;
 }
@@ -100,8 +119,8 @@ function _updateAgentsMap(agentsMap, agentStates) {
   for (const state of (agentStates || [])) {
     const agentId = state.id.toLowerCase();
     let entry = agentsMap.get(agentId);
-    const newState = utils.clone(state);
     if (!entry) {
+      const newState = utils.clone(state);
       entry = { state: newState, original: state };
       Object.defineProperty(entry, 'modified', {
         get() {
@@ -114,8 +133,8 @@ function _updateAgentsMap(agentsMap, agentStates) {
         }
       });
     } else {
-      entry.state = newState;
-      entry.original = state;
+      // update but do not replace existing state, as it may have been enhanced already
+      utils.setTargetProperties(entry.state, state);
     }
     agentsMap.set(agentId, observable(entry));
     localAgentKeys.delete(agentId);
@@ -127,7 +146,6 @@ function _updateAgentsMap(agentsMap, agentStates) {
     entry.original = null;
   }
 }
-
 
 class EtwAppModel {
   // WE ARE CONSIDERING THIS:
@@ -149,8 +167,26 @@ class EtwAppModel {
     observableThis.showLastError = false;
     observableThis.showErrors = false;
 
-    this.fetcher = new FetchHelper('/Manager');
-    observableThis.getAgentStates();
+    const fetcher = new FetchHelper('/Manager');
+    this.fetcher = fetcher;
+
+    console.log(`etw-app-model: fetcher route: ${fetcher.route}.`);
+
+    //TODO when running in dev mode with vite, we can only serve files under the root, i.e. 'src'
+    //     so maybe we need to copy the event sink config files to a directory under src on AgentManager build
+
+    observableThis.eventSinkInfos = [];
+    fetcher.getJson('GetEventSinkInfos')
+      .then(sinkInfos => {
+        const mappedSinkInfos = sinkInfos.map(si => ({
+          sinkType: si.sinkType,
+          configViewUrl: `../eventSinks/${si.configViewUrl}`,
+          configModelUrl: `../eventSinks/${si.configModelUrl}`
+        }));
+        observableThis.eventSinkInfos = mappedSinkInfos;
+        return observableThis.getAgentStates();
+      })
+      .catch(error => window.etwApp.defaultHandleError(error));
 
     const es = new EventSource('Manager/GetAgentStates');
     es.onmessage = e => {
@@ -194,8 +230,8 @@ class EtwAppModel {
   get activeAgentState() {
     const entry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!entry) return null;
-    
-    entry.state = _enhanceAgentState(entry.state);
+
+    entry.state = _enhanceAgentState(entry.state, this.eventSinkInfos);
     return entry.state;
   }
 
