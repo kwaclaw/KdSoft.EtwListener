@@ -19,14 +19,13 @@ using Microsoft.Extensions.Options;
 
 namespace KdSoft.EtwEvents.PushAgent
 {
-    public class ControlWorker: BackgroundService
+    class ControlWorker: BackgroundService
     {
         readonly HostBuilderContext _context;
         readonly IServiceProvider _services;
         readonly IOptions<ControlOptions> _controlOptions;
         readonly ILogger<ControlWorker> _logger;
         readonly HttpClient _http;
-        readonly HttpClientCertificateHandler _httpCertHandler;
         readonly JsonSerializerOptions _jsonOptions;
 
         EventSource? _eventSource;
@@ -39,11 +38,13 @@ namespace KdSoft.EtwEvents.PushAgent
         public ControlWorker(
             HostBuilderContext context,
             IServiceProvider services,
+            HttpClient http,
             IOptions<ControlOptions> controlOptions,
             ILogger<ControlWorker> logger
         ) {
             this._context = context;
             this._services = services;
+            this._http = http;
             this._controlOptions = controlOptions;
             this._logger = logger;
 
@@ -53,8 +54,6 @@ namespace KdSoft.EtwEvents.PushAgent
                 WriteIndented = true
             };
 
-            _httpCertHandler = new HttpClientCertificateHandler(controlOptions.Value.ClientCertificate);
-            _http = new HttpClient(_httpCertHandler);
         }
 
         #region Control Channel

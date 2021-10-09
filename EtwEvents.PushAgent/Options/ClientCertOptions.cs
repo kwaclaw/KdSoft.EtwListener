@@ -1,6 +1,6 @@
 ﻿using System.Security.Cryptography.X509Certificates;
 
-namespace KdSoft.EtwEvents.WebClient.Models
+namespace KdSoft.EtwEvents.PushAgent
 {
     public class ClientCertOptions
     {

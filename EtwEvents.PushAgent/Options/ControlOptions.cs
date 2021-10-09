@@ -1,5 +1,4 @@
 ﻿using System;
-using KdSoft.EtwEvents.WebClient.Models;
 
 namespace KdSoft.EtwEvents.PushAgent
 {

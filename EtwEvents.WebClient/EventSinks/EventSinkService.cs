@@ -92,7 +92,7 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
                 foreach (var evtSinkDir in evtSinkDirectories) {
                     var evtSinkFile = evtSinkDir.GetFiles(SinkAssemblyFilter).FirstOrDefault();
                     if (evtSinkFile != null) {
-                        var factoryTypes = metaLoadContext.GetEventSinkFactoriesBySinkType(evtSinkFile.FullName, sinkType);
+                        var factoryTypes = metaLoadContext.GetEventSinkFactoriesBySinkType(evtSinkFile.FullName, sinkType, out var _);
                         foreach (var factoryType in factoryTypes) {
                             var factoryTypeName = factoryType.FullName;
                             // only interested in first one

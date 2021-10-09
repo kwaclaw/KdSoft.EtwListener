@@ -1,9 +1,8 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Http;
 using System.Threading.Tasks;
-using KdSoft.EtwEvents.Client.Shared;
-using KdSoft.EtwEvents.EventSinks;
 using KdSoft.EtwEvents.Server;
 using KdSoft.Logging;
 using Microsoft.Diagnostics.Tracing.Session;
@@ -12,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace KdSoft.EtwEvents.PushAgent
 {
@@ -55,14 +55,15 @@ namespace KdSoft.EtwEvents.PushAgent
                         // make sure opts.LogPath is an absolute path
                         opts.FilePath = Path.Combine(hostContext.HostingEnvironment.ContentRootPath, opts.FilePath);
                     });
-                    services.Configure<EventSessionOptions>(opts => {
-                        hostContext.Configuration.GetSection("EventSession").Bind(opts);
-                    });
-                    services.Configure<EventSinkProfile>(opts => {
-                        hostContext.Configuration.GetSection("EventSink").Bind(opts);
+                    services.AddSingleton(provider => {
+                        var options = provider.GetService<IOptions<ControlOptions>>();
+                        if (options == null)
+                            throw new Exception("Missing ControlOptions.");
+                        var httpCertHandler = new HttpClientCertificateHandler(options.Value.ClientCertificate);
+                        return new HttpClient(httpCertHandler);
                     });
                     services.AddSingleton(provider => new TraceSessionManager(TimeSpan.FromMinutes(3)));
-                    services.AddSingleton<IEventSinkFactory>(provider => new ElasticSinkFactory());
+                    services.AddSingleton<EventSinkService>();
                     services.AddHostedService<ControlWorker>();
                     services.AddScoped<SessionWorker>();
                 });

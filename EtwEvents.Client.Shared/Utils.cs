@@ -39,7 +39,7 @@ namespace KdSoft.EtwEvents.Client.Shared
         }
 
         // both types must have been loaded in the same load context
-        static string? GetEventSinkType(this Type type, Type? sinkAttributeType) {
+        public static string? GetEventSinkType(this Type type, Type? sinkAttributeType) {
             var atts = CustomAttributeData.GetCustomAttributes(type);
             for (int indx = 0; indx < atts.Count; indx++) {
                 var att = atts[indx];
@@ -49,7 +49,18 @@ namespace KdSoft.EtwEvents.Client.Shared
             return null;
         }
 
-        static bool IsEventSinkType(this Type type, Type? sinkAttributeType) {
+        public static string? GetEventSinkType(this Type type, Assembly? factoryAssembly) {
+            var sinkAttributeType = factoryAssembly?.GetType(typeof(EventSinkAttribute).FullName ?? "");
+            var atts = CustomAttributeData.GetCustomAttributes(type);
+            for (int indx = 0; indx < atts.Count; indx++) {
+                var att = atts[indx];
+                if (att.AttributeType == sinkAttributeType)
+                    return att.ConstructorArguments[0].Value as string;
+            }
+            return null;
+        }
+
+        public static bool IsEventSinkType(this Type type, Type? sinkAttributeType) {
             var atts = CustomAttributeData.GetCustomAttributes(type);
             for (int indx = 0; indx < atts.Count; indx++) {
                 var att = atts[indx];
@@ -59,7 +70,18 @@ namespace KdSoft.EtwEvents.Client.Shared
             return false;
         }
 
-        static IEnumerable<Type> GetEventSinkFactoryTypes(this MetadataLoadContext loadContext, string assemblyPath, out Assembly? factorySharedAssembly) {
+        public static bool IsEventSinkType(this Type type, Assembly? factoryAssembly) {
+            var sinkAttributeType = factoryAssembly?.GetType(typeof(EventSinkAttribute).FullName ?? "");
+            var atts = CustomAttributeData.GetCustomAttributes(type);
+            for (int indx = 0; indx < atts.Count; indx++) {
+                var att = atts[indx];
+                if (att.AttributeType == sinkAttributeType)
+                    return true;
+            }
+            return false;
+        }
+
+        public static IEnumerable<Type> GetEventSinkFactoryTypes(this MetadataLoadContext loadContext, string assemblyPath, out Assembly? factorySharedAssembly) {
             factorySharedAssembly = loadContext.LoadFromAssemblyPath(typeof(IEventSinkFactory).Assembly.Location);
             var factoryInterfaceType = factorySharedAssembly?.GetType(typeof(IEventSinkFactory).FullName ?? "");
             var factoryAssembly = loadContext.LoadFromAssemblyPath(assemblyPath);
@@ -70,14 +92,14 @@ namespace KdSoft.EtwEvents.Client.Shared
             return factoryTypes;
         }
 
-        public static IEnumerable<Type> GetEventSinkFactoriesBySinkType(this MetadataLoadContext loadContext, string assemblyPath, string sinkType) {
-            var factoryTypes = GetEventSinkFactoryTypes(loadContext, assemblyPath, out var factorySharedAssembly);
+        public static IEnumerable<Type> GetEventSinkFactoriesBySinkType(this MetadataLoadContext loadContext, string assemblyPath, string sinkType, out Assembly? factorySharedAssembly) {
+            var factoryTypes = GetEventSinkFactoryTypes(loadContext, assemblyPath, out factorySharedAssembly);
             var sinkAttributeType = factorySharedAssembly?.GetType(typeof(EventSinkAttribute).FullName ?? "");
             return factoryTypes.Where(f => GetEventSinkType(f, sinkAttributeType) == sinkType);
         }
 
-        public static IEnumerable<Type> GetEventSinkFactories(this MetadataLoadContext loadContext, string assemblyPath) {
-            var factoryTypes = GetEventSinkFactoryTypes(loadContext, assemblyPath, out var factorySharedAssembly);
+        public static IEnumerable<Type> GetEventSinkFactories(this MetadataLoadContext loadContext, string assemblyPath, out Assembly? factorySharedAssembly) {
+            var factoryTypes = GetEventSinkFactoryTypes(loadContext, assemblyPath, out factorySharedAssembly);
             var sinkAttributeType = factorySharedAssembly?.GetType(typeof(EventSinkAttribute).FullName ?? "");
             return factoryTypes.Where(ft => IsEventSinkType(ft, sinkAttributeType));
         }
