@@ -2,19 +2,6 @@
   "name": "etw-events-agentmanager",
   "version": "1.0.0",
   "description": "Connection security and authentication/authorization are both performed using certificates.",
-  "scripts": {
-    "lint": "eslint",
-    "wrap-css": "node node_modules/@kdsoft/lit-mvvm-components/scripts/wrap-css.mjs",
-    "postcss-src": "postcss src/css/**/*[.pcss,.css] --dir _tmp --ext css",
-    "po2json": "po2json-gettextjs src/de_AT.po src/de_AT.json -p",
-    "wrap-css-tmp": "npm run wrap-css _tmp/**/*.css src/styles _tmp",
-    "wrap-css-dialog": "npm run wrap-css node_modules/dialog-polyfill/dialog-polyfill.css src/styles node_modules/dialog-polyfill",
-    "import-styles": "shx rm -f _tmp/**/* && npm run postcss-src && npm run wrap-css-tmp && npm run wrap-css-dialog",
-    "prebuild": "npm run po2json",
-    "dev": "vite",
-    "build": "vite build",
-    "serve": "vite preview"
-  },
   "author": "",
   "license": "ISC",
   "main": "index.js",
@@ -40,6 +27,19 @@
     "shx": "^0.3.3",
     "tailwindcss": "^2.2.16",
     "vite": "^2.6.2"
+  },
+  "scripts": {
+    "wrap-css": "node node_modules/@kdsoft/lit-mvvm-components/scripts/wrap-css.mjs",
+    "po2json": "po2json-gettextjs src/de_AT.po src/de_AT.json -p",
+    "postcss-css": "postcss src/css/**/*[.pcss,.css] --dir src/_tmp --ext css",
+    "wrap-css-tmp": "npm run wrap-css _tmp/**/*.css src/styles _tmp",
+    "wrap-css-dialog": "npm run wrap-css node_modules/dialog-polyfill/dialog-polyfill.css src/styles node_modules/dialog-polyfill",
+    "prebuild": "rimraf _tmp/**/*  && npm run po2json",
+    "build-styles": "npm run postcss-css && npm run wrap-css-tmp && npm run wrap-css-dialog",
+    "prepare": "npm run prebuild && npm run build-styles",
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
   },
   "postcss": {
     "plugins": {

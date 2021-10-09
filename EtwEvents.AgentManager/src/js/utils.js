@@ -1,5 +1,4 @@
-﻿
-export function* emptyIterator() {
+﻿export function* emptyIterator() {
   //
 }
 

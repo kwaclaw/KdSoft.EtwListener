@@ -33,11 +33,12 @@ namespace KdSoft.EtwEvents.AgentManager.EventSinks
             var eventSinksConfigDir = Path.Combine(_env.ContentRootPath, "src", "eventSinks");
 
             var eventSinksDirInfo = new DirectoryInfo(eventSinksDir);
-            var eventSinksConfigDirInfo = new DirectoryInfo(eventSinksConfigDir);
-
-            // trailing '/' is important for building relative Uris
-            var eventSinksDirUri = new Uri($"file:///{eventSinksDirInfo.FullName}/");
             var evtSinkDirectories = eventSinksDirInfo.EnumerateDirectories();
+            
+            var eventSinksConfigDirInfo = new DirectoryInfo(eventSinksConfigDir);
+            // trailing '/' is important for building relative Uris
+            var eventSinksConfigDirUri = new Uri($"file:///{eventSinksConfigDirInfo.FullName}/");
+
 
             var assemblyPaths = new List<string>(_runtimeAssemblyPaths);
             assemblyPaths.Add(typeof(IEventSinkFactory).Assembly.Location);
@@ -65,8 +66,8 @@ namespace KdSoft.EtwEvents.AgentManager.EventSinks
                             yield return new EventSinkInfo {
                                 SinkType = evtSinkType,
                                 // relative Uri does not include "EventSinks" path component (has a trailing '/')
-                                ConfigViewUrl = eventSinksDirUri.MakeRelativeUri(configViewUri),
-                                ConfigModelUrl = eventSinksDirUri.MakeRelativeUri(configModelUri),
+                                ConfigViewUrl = eventSinksConfigDirUri.MakeRelativeUri(configViewUri),
+                                ConfigModelUrl = eventSinksConfigDirUri.MakeRelativeUri(configModelUri),
                             };
                         }
                     }
