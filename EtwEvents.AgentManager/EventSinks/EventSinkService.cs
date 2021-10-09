@@ -64,7 +64,6 @@ namespace KdSoft.EtwEvents.AgentManager.EventSinks
                             var configModelUri = new Uri($"file:///{configModel.FullName}");
                             yield return new EventSinkInfo {
                                 SinkType = evtSinkType,
-                                Description = _.GetString(evtSinkType),
                                 // relative Uri does not include "EventSinks" path component (has a trailing '/')
                                 ConfigViewUrl = eventSinksDirUri.MakeRelativeUri(configViewUri),
                                 ConfigModelUrl = eventSinksDirUri.MakeRelativeUri(configModelUri),
