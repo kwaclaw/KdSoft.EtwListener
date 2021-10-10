@@ -1,9 +1,10 @@
 ﻿/* global i18n */
 
 class MongoSinkConfigModel {
-  constructor(name, sinkType) {
+  constructor(name, sinkType, version) {
     this.name = name;
     this.sinkType = sinkType;
+    this.version = version;
     this.options = {
       origin: 'mongodb://',
       replicaset: '',

@@ -40,8 +40,6 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
             this._evtSinkService = evtSinkService;
             this._jsonOptions = jsonOptions;
             this._logger = logger;
-            //var jsonSettings = JsonFormatter.Settings.Default.WithFormatDefaultValues(true).WithFormatEnumsAsIntegers(true);
-            //_jsonFormatter = new JsonFormatter(jsonSettings);
         }
 
         [HttpGet]

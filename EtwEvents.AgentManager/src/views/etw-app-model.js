@@ -180,6 +180,7 @@ class EtwAppModel {
       .then(sinkInfos => {
         const mappedSinkInfos = sinkInfos.map(si => ({
           sinkType: si.sinkType,
+          version: si.version,
           configViewUrl: `../eventSinks/${si.configViewUrl}`,
           configModelUrl: `../eventSinks/${si.configModelUrl}`
         }));

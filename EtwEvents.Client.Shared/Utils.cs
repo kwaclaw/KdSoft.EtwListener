@@ -104,8 +104,8 @@ namespace KdSoft.EtwEvents.Client.Shared
             return factoryTypes.Where(ft => IsEventSinkType(ft, sinkAttributeType));
         }
 
-        public static IEnumerable<string> GetEventSinkTypes(this MetadataLoadContext loadContext, string assemblyPath) {
-            var factoryTypes = GetEventSinkFactoryTypes(loadContext, assemblyPath, out var factorySharedAssembly);
+        public static IEnumerable<string> GetEventSinkTypes(this MetadataLoadContext loadContext, string assemblyPath, out Assembly? factorySharedAssembly) {
+            var factoryTypes = GetEventSinkFactoryTypes(loadContext, assemblyPath, out factorySharedAssembly);
             var sinkAttributeType = factorySharedAssembly?.GetType(typeof(EventSinkAttribute).FullName ?? "");
 #nullable disable
             return factoryTypes

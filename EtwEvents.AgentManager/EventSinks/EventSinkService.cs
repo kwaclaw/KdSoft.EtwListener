@@ -25,9 +25,8 @@ namespace KdSoft.EtwEvents.AgentManager.EventSinks
 
         /// <summary>
         /// Returns event sink types in configured container directory.
-        /// The subdirectory name defines the event sink type.
+        /// The subdirectory name must match the event sink type.
         /// </summary>
-        /// <returns></returns>
         public IEnumerable<EventSinkInfo> GetEventSinkInfos() {
             var eventSinksDir = Path.Combine(_env.ContentRootPath, "EventSinks");
             var eventSinksConfigDir = Path.Combine(_env.ContentRootPath, "src", "eventSinks");
@@ -55,8 +54,9 @@ namespace KdSoft.EtwEvents.AgentManager.EventSinks
                 foreach (var evtSinkDir in evtSinkDirectories) {
                     var evtSinkFile = evtSinkDir.GetFiles(SinkAssemblyFilter).FirstOrDefault();
                     if (evtSinkFile != null) {
-                        var evtSinkType = metaLoadContext.GetEventSinkTypes(evtSinkFile.FullName).FirstOrDefault();
+                        var evtSinkType = metaLoadContext.GetEventSinkTypes(evtSinkFile.FullName, out var eventSinkAssembly).FirstOrDefault();
                         if (evtSinkType != null) {
+                            var version = eventSinkAssembly?.GetName().Version?.ToString() ?? "0.0";
                             var sinkRelativeDir = Path.GetRelativePath(eventSinksDir, evtSinkDir.FullName);
                             var configView = eventSinksConfigDirInfo.GetFiles(@$"{sinkRelativeDir}/*-config.js").First();
                             var configViewUri = new Uri($"file:///{configView.FullName}");
@@ -64,6 +64,7 @@ namespace KdSoft.EtwEvents.AgentManager.EventSinks
                             var configModelUri = new Uri($"file:///{configModel.FullName}");
                             yield return new EventSinkInfo {
                                 SinkType = evtSinkType,
+                                Version = version,
                                 // relative Uri does not include "EventSinks" path component (has a trailing '/')
                                 ConfigViewUrl = eventSinksConfigDirUri.MakeRelativeUri(configViewUri),
                                 ConfigModelUrl = eventSinksConfigDirUri.MakeRelativeUri(configModelUri),

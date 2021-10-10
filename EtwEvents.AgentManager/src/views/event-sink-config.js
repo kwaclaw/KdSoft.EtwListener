@@ -41,7 +41,12 @@ class EventSinkConfig extends LitMvvmElement {
     this.dropDownModel = observable(new KdSoftDropdownModel());
     this.checklistConnector = new KdSoftDropdownChecklistConnector(
       () => this.renderRoot.getElementById('sinktype-ddown'),
-      () => this.renderRoot.getElementById('sinktype-list')
+      () => this.renderRoot.getElementById('sinktype-list'),
+      model => {
+        const item = model.firstSelectedEntry?.item;
+        if (item) return `${item.sinkType} (${item.version})`;
+        return '';
+      }
     );
   }
 
@@ -107,7 +112,7 @@ class EventSinkConfig extends LitMvvmElement {
 
     const sinkConfigModel = container.children[0].model;
 
-    const profileToExport = new EventSinkProfile(sinkConfigModel.name, sinkConfigModel.sinkType);
+    const profileToExport = new EventSinkProfile(sinkConfigModel.name, sinkConfigModel.sinkType, sinkConfigModel.version);
     profileToExport.options = sinkConfigModel.options;
     profileToExport.credentials = sinkConfigModel.credentials;
     const profileString = JSON.stringify(profileToExport, null, 2);
