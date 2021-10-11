@@ -21,14 +21,6 @@ class ElasticSinkConfig extends LitMvvmElement {
     this.model.options[e.target.name] = utils.getFieldValue(e.target);
   }
 
-  _fieldListChange(e) {
-    e.stopPropagation();
-    console.log(`${e.target.name}=${e.target.value}`);
-    // regular expression for splitting, removes whitespace around comma
-    const sepRegex = /\s*(?:,|$)\s*/;
-    this.model.options[e.target.name] = (e.target.value || '').split(sepRegex);
-  }
-
   _credentialsChange(e) {
     e.stopPropagation();
     console.log(`${e.target.name}=${e.target.value}`);
@@ -37,10 +29,9 @@ class ElasticSinkConfig extends LitMvvmElement {
 
   _validateNodeUrls(nodesElement) {
     const nodesStr = (nodesElement.value || '').trim();
-    if (!nodesStr)
-      return [];
+    if (!nodesStr) return [];
 
-    const nodes = nodesStr.split(';');
+    const nodes = nodesStr.split('\n');
     const checkUrl = this.renderRoot.getElementById('check-url');
 
     const invalidUrls = [];
@@ -52,7 +43,7 @@ class ElasticSinkConfig extends LitMvvmElement {
     }
 
     if (invalidUrls.length > 0) {
-      nodesElement.setCustomValidity(`Invalid URL(s): ${invalidUrls.join(';')}`);
+      nodesElement.setCustomValidity(`Invalid URL(s):\n- ${invalidUrls.join('\n- ')}`);
     } else {
       nodesElement.setCustomValidity('');
     }
@@ -72,12 +63,10 @@ class ElasticSinkConfig extends LitMvvmElement {
     this.model.options.nodes.splice(index, 1);
   }
 
-
   // first event when model is available
   beforeFirstRender() {
     //
   }
-
 
   static get styles() {
     return [
@@ -94,13 +83,7 @@ class ElasticSinkConfig extends LitMvvmElement {
           height: 100%;
           display: flex;
           flex-direction: column;
-          align-items: center;
-        }
-
-        .center {
-          display: flex;
-          justify-content: center;
-          align-items: center;
+          align-items: flex-start;
         }
 
         label {
@@ -125,8 +108,12 @@ class ElasticSinkConfig extends LitMvvmElement {
           column-gap: 10px;
         }
 
-        input:invalid {
+        input:invalid, textarea:invalid {
           border: 2px solid red;
+        }
+
+        #nodes {
+          resize: vertical;
         }
         `,
     ];
@@ -135,7 +122,7 @@ class ElasticSinkConfig extends LitMvvmElement {
   render() {
     const opts = this.model.options;
     const creds = this.model.credentials;
-    const nodesList = opts.nodes.join(';');
+    const nodesList = opts.nodes.join('\n');
 
     const result = html`
       <form>
@@ -145,13 +132,17 @@ class ElasticSinkConfig extends LitMvvmElement {
             <legend>Options</legend>
             <div>
               <label for="nodes">Hosts</label>
-              <input type="text" id="nodes" name="nodes" size="50" @change=${this._nodesChanged} value=${nodesList} required></input>
+              <textarea id="nodes" name="nodes"
+                type="text" cols="50" rows="3" wrap="hard"
+                @change=${this._nodesChanged}
+                placeholder="Enter one or more URLs, each on its own line"
+                value=${nodesList} required></textarea>
               <label for="index">Index</label>
-              <input type="text" id="index" name="index" value=${opts.index}></input>
+              <input type="text" id="index" name="index" value=${opts.index} />
             </div>
           </fieldset>
         </section>
-        <section id="credentials" class="center" @change=${this._credentialsChange}>
+        <section id="credentials" @change=${this._credentialsChange}>
           <fieldset>
             <legend>Credentials</legend>
             <div>
@@ -170,6 +161,6 @@ class ElasticSinkConfig extends LitMvvmElement {
 
 window.customElements.define('elastic-sink-config', ElasticSinkConfig);
 
-const tag = (model) => html`<elastic-sink-config .model=${model}></elastic-sink-config>`;
+const tag = model => html`<elastic-sink-config .model=${model}></elastic-sink-config>`;
 
 export default tag;
