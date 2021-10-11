@@ -322,6 +322,14 @@ class EtwAppModel {
     filterModel.filter = activeEntry.original.filterBody;
     filterModel.diagnostics = [];
   }
+
+  updateEventSink(sinkProfile) {
+    const agentState = this.activeAgentState;
+    if (!agentState) return;
+
+    this.fetcher.postJson('UpdateEventSink', { agentId: agentState.id }, sinkProfile)
+      .catch(error => window.etwApp.defaultHandleError(error));
+  }
 }
 
 export default EtwAppModel;

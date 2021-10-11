@@ -52,10 +52,11 @@ class EventSinkConfig extends LitMvvmElement {
 
   _cancel() {
     const container = this.renderRoot.getElementById('form-content');
-    const model = container.children.length ? container.children[0].model : null;
+    const configElement = container.children[0];
+
     const evt = new CustomEvent('kdsoft-done', {
       // composed allows bubbling beyond shadow root
-      bubbles: true, composed: true, cancelable: true, detail: { model, canceled: true }
+      bubbles: true, composed: true, cancelable: true, detail: { model: configElement?.model, canceled: true }
     });
     this.dispatchEvent(evt);
   }
@@ -65,9 +66,15 @@ class EventSinkConfig extends LitMvvmElement {
     const configElement = container.children[0];
     if (!configElement || !configElement.isValid()) return;
 
+    const nameField = this.renderRoot.getElementById('sinkProfileName');
+    const selectedSinkInfoEntry = this.model.sinkInfoCheckListModel.firstSelectedEntry;
+    const selectedSinkInfo = selectedSinkInfoEntry?.item;
+    const sinkProfile = new EventSinkProfile(nameField.value, selectedSinkInfo.sinkType, selectedSinkInfo.version);
+    Object.assign(sinkProfile, configElement.model);
+
     const evt = new CustomEvent('kdsoft-done', {
       // composed allows bubbling beyond shadow root
-      bubbles: true, composed: true, cancelable: true, detail: { model: configElement.model, canceled: false }
+      bubbles: true, composed: true, cancelable: true, detail: { model: sinkProfile, canceled: false }
     });
     this.dispatchEvent(evt);
   }
@@ -85,10 +92,6 @@ class EventSinkConfig extends LitMvvmElement {
         const sinkProfile = this.model.sinkProfile;
         if (sinkProfile) {
           utils.setTargetProperties(configModel, sinkProfile);
-        } else {
-          const nameInput = this.renderRoot.getElementById('sinkProfileName');
-          configModel.name = nameInput.value;
-          configModel.sinkType = sinkInfo.value;
         }
 
         this.sinkTypeTemplateHolder.tag = configFormTemplate(configModel);
