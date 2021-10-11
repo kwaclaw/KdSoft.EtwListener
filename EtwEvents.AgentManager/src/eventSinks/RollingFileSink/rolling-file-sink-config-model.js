@@ -1,10 +1,7 @@
 ﻿/* global i18n */
 
 class RollingFileSinkConfigModel {
-  constructor(name, sinkType, version) {
-    this.name = name;
-    this.sinkType = sinkType;
-    this.version = version;
+  constructor() {
     this.options = {
       directory: 'logs',
       fileNameFormat: 'app-{0:yyyy-MM-dd}',
