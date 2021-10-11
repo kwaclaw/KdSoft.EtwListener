@@ -53,7 +53,7 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
                 foreach (var evtSinkDir in evtSinkDirectories) {
                     var evtSinkFile = evtSinkDir.GetFiles(SinkAssemblyFilter).FirstOrDefault();
                     if (evtSinkFile != null) {
-                        var evtSinkType = metaLoadContext.GetEventSinkTypes(evtSinkFile.FullName, out var _).FirstOrDefault();
+                        var (evtSinkType, evtSinkVersion) = metaLoadContext.GetEventSinkTypes(evtSinkFile.FullName).FirstOrDefault();
                         if (evtSinkType != null) {
                             var configView = evtSinkDir.GetFiles(@"config/*-config.js").First();
                             var configViewUri = new Uri($"file:///{configView.FullName}");
@@ -91,7 +91,7 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
                 foreach (var evtSinkDir in evtSinkDirectories) {
                     var evtSinkFile = evtSinkDir.GetFiles(SinkAssemblyFilter).FirstOrDefault();
                     if (evtSinkFile != null) {
-                        var factoryTypes = metaLoadContext.GetEventSinkFactoriesBySinkType(evtSinkFile.FullName, sinkType, out var _);
+                        var factoryTypes = metaLoadContext.GetEventSinkFactoriesBySinkType(evtSinkFile.FullName, sinkType);
                         foreach (var factoryType in factoryTypes) {
                             var factoryTypeName = factoryType.FullName;
                             // only interested in first one

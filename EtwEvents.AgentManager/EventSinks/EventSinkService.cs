@@ -54,9 +54,9 @@ namespace KdSoft.EtwEvents.AgentManager.EventSinks
                 foreach (var evtSinkDir in evtSinkDirectories) {
                     var evtSinkFile = evtSinkDir.GetFiles(SinkAssemblyFilter).FirstOrDefault();
                     if (evtSinkFile != null) {
-                        var evtSinkType = metaLoadContext.GetEventSinkTypes(evtSinkFile.FullName, out var eventSinkAssembly).FirstOrDefault();
+                        var (evtSinkType, evtSinkVersion) = metaLoadContext.GetEventSinkTypes(evtSinkFile.FullName).FirstOrDefault();
                         if (evtSinkType != null) {
-                            var version = eventSinkAssembly?.GetName().Version?.ToString() ?? "0.0";
+                            var version = evtSinkVersion ?? "0.0";
                             var sinkRelativeDir = Path.GetRelativePath(eventSinksDir, evtSinkDir.FullName);
                             var configView = eventSinksConfigDirInfo.GetFiles(@$"{sinkRelativeDir}/*-config.js").First();
                             var configViewUri = new Uri($"file:///{configView.FullName}");

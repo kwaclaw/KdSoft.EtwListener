@@ -92,25 +92,25 @@ namespace KdSoft.EtwEvents.Client.Shared
             return factoryTypes;
         }
 
-        public static IEnumerable<Type> GetEventSinkFactoriesBySinkType(this MetadataLoadContext loadContext, string assemblyPath, string sinkType, out Assembly? factorySharedAssembly) {
-            var factoryTypes = GetEventSinkFactoryTypes(loadContext, assemblyPath, out factorySharedAssembly);
+        public static IEnumerable<Type> GetEventSinkFactoriesBySinkType(this MetadataLoadContext loadContext, string assemblyPath, string sinkType) {
+            var factoryTypes = GetEventSinkFactoryTypes(loadContext, assemblyPath, out var factorySharedAssembly);
             var sinkAttributeType = factorySharedAssembly?.GetType(typeof(EventSinkAttribute).FullName ?? "");
             return factoryTypes.Where(f => GetEventSinkType(f, sinkAttributeType) == sinkType);
         }
 
-        public static IEnumerable<Type> GetEventSinkFactories(this MetadataLoadContext loadContext, string assemblyPath, out Assembly? factorySharedAssembly) {
-            var factoryTypes = GetEventSinkFactoryTypes(loadContext, assemblyPath, out factorySharedAssembly);
+        public static IEnumerable<Type> GetEventSinkFactories(this MetadataLoadContext loadContext, string assemblyPath) {
+            var factoryTypes = GetEventSinkFactoryTypes(loadContext, assemblyPath, out var factorySharedAssembly);
             var sinkAttributeType = factorySharedAssembly?.GetType(typeof(EventSinkAttribute).FullName ?? "");
             return factoryTypes.Where(ft => IsEventSinkType(ft, sinkAttributeType));
         }
 
-        public static IEnumerable<string> GetEventSinkTypes(this MetadataLoadContext loadContext, string assemblyPath, out Assembly? factorySharedAssembly) {
-            var factoryTypes = GetEventSinkFactoryTypes(loadContext, assemblyPath, out factorySharedAssembly);
+        public static IEnumerable<(string sinkType, string? version)> GetEventSinkTypes(this MetadataLoadContext loadContext, string assemblyPath) {
+            var factoryTypes = GetEventSinkFactoryTypes(loadContext, assemblyPath, out var factorySharedAssembly);
             var sinkAttributeType = factorySharedAssembly?.GetType(typeof(EventSinkAttribute).FullName ?? "");
 #nullable disable
             return factoryTypes
-                .Select(ft => GetEventSinkType(ft, sinkAttributeType))
-                .Where(est => est != null);
+                .Select(ft => (sinkType: GetEventSinkType(ft, sinkAttributeType), version: ft.Assembly.GetName().Version?.ToString()))
+                .Where(est => est.sinkType != null);
 #nullable enable
         }
 
