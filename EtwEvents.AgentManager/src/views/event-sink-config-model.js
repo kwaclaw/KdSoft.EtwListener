@@ -6,7 +6,7 @@ class EventSinkConfigModel {
   constructor(sinkInfos, sinkProfile, sinkError) {
     this.sinkInfos = sinkInfos;
     this.sinkProfile = sinkProfile;
-    this.sinkProfile = sinkError;
+    this.sinkError = sinkError;
 
     const selectedSinkInfoIndex = sinkProfile ? sinkInfos.findIndex(item => item.sinkType == sinkProfile.sinkType) : -1;
     this.sinkInfoCheckListModel = new KdSoftChecklistModel(

@@ -1,4 +1,4 @@
-﻿import { observable, observe, raw } from '@nx-js/observer-util/dist/es.es6.js';
+﻿import { observable, observe, unobserve, raw } from '@nx-js/observer-util/dist/es.es6.js';
 import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
 import { LitMvvmElement, html, nothing, css } from '@kdsoft/lit-mvvm';
 import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
@@ -72,6 +72,8 @@ class EventSinkConfig extends LitMvvmElement {
     const sinkProfile = new EventSinkProfile(nameField.value, selectedSinkInfo.sinkType, selectedSinkInfo.version);
     Object.assign(sinkProfile, configElement.model);
 
+    this.model.sinkProfile = sinkProfile;
+
     const evt = new CustomEvent('kdsoft-done', {
       // composed allows bubbling beyond shadow root
       bubbles: true, composed: true, cancelable: true, detail: { model: sinkProfile, canceled: false }
@@ -105,27 +107,17 @@ class EventSinkConfig extends LitMvvmElement {
     }
   }
 
-  // async _continue() {
-  //   if (this._isValid()) await this._loadConfigComponent();
-  // }
-
   _export() {
-    const container = this.renderRoot.getElementById('form-content');
-    if (!container.children.length) return;
+    if (!this.model.sinkProfile) return;
 
-    const sinkConfigModel = container.children[0].model;
-
-    const profileToExport = new EventSinkProfile(sinkConfigModel.name, sinkConfigModel.sinkType, sinkConfigModel.version);
-    profileToExport.options = sinkConfigModel.options;
-    profileToExport.credentials = sinkConfigModel.credentials;
-    const profileString = JSON.stringify(profileToExport, null, 2);
+    const profileString = JSON.stringify(this.model.sinkProfile, null, 2);
     const profileURL = `data:text/plain,${profileString}`;
 
     const a = document.createElement('a');
     try {
       a.style.display = 'none';
       a.href = profileURL;
-      a.download = `${profileToExport.name}.json`;
+      a.download = `${this.model.sinkProfile.name}.json`;
       document.body.appendChild(a);
       a.click();
     } finally {
@@ -139,9 +131,11 @@ class EventSinkConfig extends LitMvvmElement {
     return !!this.model;
   }
 
-  beforeFirstRender() {
-    // model is defined, because of our shouldRender() override
-    observe(async () => {
+  rendered() {
+    if (this._eventSinkObserver) {
+      unobserve(this._eventSinkObserver);
+    }
+    this._eventSinkObserver = observe(async () => {
       const selectedSinkInfoEntry = this.model.sinkInfoCheckListModel.firstSelectedEntry;
       await this._loadConfigComponent(selectedSinkInfoEntry?.item);
     });
