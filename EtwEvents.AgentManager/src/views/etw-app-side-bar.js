@@ -32,13 +32,11 @@ class EtwAppSideBar extends LitMvvmElement {
   }
 
   _startEvents(agentState) {
-    if (!agentState.isRunning)
-      this.model.startEvents();
+    if (!agentState.isRunning) this.model.startEvents();
   }
 
   _stopEvents(agentState) {
-    if (agentState.isRunning)
-      this.model.stopEvents();
+    if (agentState.isRunning) this.model.stopEvents();
   }
 
   _refreshStates() {
