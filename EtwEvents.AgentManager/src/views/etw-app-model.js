@@ -62,7 +62,7 @@ function _enhanceAgentState(agentState, eventSinkInfos) {
     if (index >= 0) agentState.enabledProviders.splice(index, 1);
   };
 
-  const sinkState = agentState.EventSinks && agentState.EventSinks.length ? agentState.EventSinks[0] : null;
+  const sinkState = agentState.eventSinks && agentState.eventSinks.length ? agentState.eventSinks[0] : null;
   let sinkProfile;
   let sinkError = null;
   if (sinkState) {
