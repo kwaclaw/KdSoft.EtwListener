@@ -131,7 +131,7 @@ class EventSinkConfig extends LitMvvmElement {
     return !!this.model;
   }
 
-  rendered() {
+  firstRendered() {
     if (this._eventSinkObserver) {
       unobserve(this._eventSinkObserver);
     }
@@ -201,7 +201,7 @@ class EventSinkConfig extends LitMvvmElement {
               id="sinktype-list" 
               class="text-black" 
               .model=${this.model.sinkInfoCheckListModel}
-              .getItemTemplate=${item => html`${item.sinkType}`}
+              .getItemTemplate=${item => html`${item.sinkType} (${item.version})`}
               required>
             </kdsoft-checklist>
           </kdsoft-dropdown>
