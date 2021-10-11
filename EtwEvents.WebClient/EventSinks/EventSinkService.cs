@@ -53,7 +53,7 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
                 foreach (var evtSinkDir in evtSinkDirectories) {
                     var evtSinkFile = evtSinkDir.GetFiles(SinkAssemblyFilter).FirstOrDefault();
                     if (evtSinkFile != null) {
-                        var evtSinkType = metaLoadContext.GetEventSinkTypes(evtSinkFile.FullName).FirstOrDefault();
+                        var evtSinkType = metaLoadContext.GetEventSinkTypes(evtSinkFile.FullName, out var _).FirstOrDefault();
                         if (evtSinkType != null) {
                             var configView = evtSinkDir.GetFiles(@"config/*-config.js").First();
                             var configViewUri = new Uri($"file:///{configView.FullName}");
