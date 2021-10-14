@@ -174,6 +174,7 @@ namespace KdSoft.EtwEvents.PushAgent
             var optsJson = JsonSerializer.Serialize(sinkProfile.Options, _jsonOptions);
             var credsJson = JsonSerializer.Serialize(sinkProfile.Credentials, _jsonOptions);
             var sinkFactory = await LoadSinkFactory(sinkProfile.SinkType, sinkProfile.Version).ConfigureAwait(false);
+            //TODO handle null sinkFactory
             return await sinkFactory.Create(optsJson, credsJson).ConfigureAwait(false);
         }
 
@@ -240,8 +241,12 @@ namespace KdSoft.EtwEvents.PushAgent
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
             try {
-                LoadSessionOptions(out var sessionOptions);
-                LoadSinkProfile(out var sinkOptions);
+                var sessionOptionsAvailable = LoadSessionOptions(out var sessionOptions);
+                if (!sessionOptionsAvailable) {
+                    _logger.LogInformation("Starting session without configured options.");
+                }
+
+                var sinkProfileAvailable = LoadSinkProfile(out var sinkOptions);
 
                 var logger = _loggerFactory.CreateLogger<RealTimeTraceSession>();
                 var session = new RealTimeTraceSession("default", TimeSpan.MaxValue, logger, false);
@@ -271,7 +276,9 @@ namespace KdSoft.EtwEvents.PushAgent
                     session.EnableProvider(setting);
                 }
 
-                await UpdateEventSink(sinkOptions).ConfigureAwait(false);
+                if (sinkProfileAvailable) {
+                    await UpdateEventSink(sinkOptions).ConfigureAwait(false);
+                }
                 try {
                     long sequenceNo = 0;
                     WriteBatchAsync writeBatch = async (batch) => {
@@ -294,7 +301,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     await CloseEventSinks().ConfigureAwait(false);
                 }
             }
-            catch (OperationCanceledException cex) {
+            catch (OperationCanceledException) {
                 _logger.LogInformation("SessionWorker stopped.");
             }
             catch (Exception ex) {
