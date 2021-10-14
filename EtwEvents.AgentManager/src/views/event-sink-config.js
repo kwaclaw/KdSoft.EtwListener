@@ -1,4 +1,6 @@
-﻿import { observable, observe, unobserve, raw } from '@nx-js/observer-util/dist/es.es6.js';
+﻿/* @vite-ignore */
+
+import { observable, observe, unobserve, raw } from '@nx-js/observer-util/dist/es.es6.js';
 import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
 import { LitMvvmElement, html, nothing, css } from '@kdsoft/lit-mvvm';
 import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';

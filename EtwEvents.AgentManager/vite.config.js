@@ -1,3 +1,5 @@
+/*eslint-disable */
+
 import { defineConfig } from 'vite';
 
 // https://vitejs.dev/config/
