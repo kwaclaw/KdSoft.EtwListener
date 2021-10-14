@@ -85,7 +85,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
             // for the rest, SessionWorker must be running
             SessionWorker? worker;
-            if (_workerAvailable == 0  || (worker = SessionWorker) == null) {
+            if (_workerAvailable == 0 || (worker = SessionWorker) == null) {
                 _logger?.LogInformation("No session available for request.");
                 return;
             }
@@ -162,9 +162,9 @@ namespace KdSoft.EtwEvents.PushAgent
             //var agentName = _httpCertHandler.ClientCert.GetNameInfo(X509NameType.SimpleName, false);
             //var agentEmail = _httpCertHandler.ClientCert.GetNameInfo(X509NameType.EmailName, false);
             var isRunning = _workerAvailable != 0;
-            var eventSinks = ImmutableArray<EventSinkState>.Empty;
+            var eventSinkStates = ImmutableArray<EventSinkState>.Empty;
             if (isRunning && SessionWorker != null) {
-                eventSinks = eventSinks.Add(new EventSinkState {
+                eventSinkStates = eventSinkStates.Add(new EventSinkState {
                     Profile = SessionWorker.EventSinkProfile,
                     Error = SessionWorker.EventSinkError?.Message
                 });
@@ -178,7 +178,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 FilterBody = ses?.GetCurrentFilterBody(),
                 IsRunning = isRunning,
                 IsStopped = !isRunning,
-                EventSinks = eventSinks,
+                EventSinks = eventSinkStates,
             };
             return PostMessage("Agent/UpdateState", state);
         }
@@ -236,19 +236,43 @@ namespace KdSoft.EtwEvents.PushAgent
                 return false;
 
             var scope = _services.CreateScope();
-            var oldScope = Interlocked.CompareExchange(ref this._workerScope, scope, null);
-            if (oldScope != null) { // should not happen
-                oldScope.Dispose();
-                Interlocked.Exchange(ref this._workerScope, null);
-                return false;
+            try {
+                var oldScope = Interlocked.CompareExchange(ref this._workerScope, scope, null);
+                if (oldScope != null) { // should not happen
+                    oldScope.Dispose();
+                    Interlocked.Exchange<IServiceScope?>(ref this._workerScope, null);
+                    return false;
+                }
+
+                var sessionWorker = scope.ServiceProvider.GetRequiredService<SessionWorker>();
+                var workerStartTask = sessionWorker.StartAsync(cancelToken);
+
+                // if the new background service has already stopped, clean up and exit
+                if (object.ReferenceEquals(workerStartTask, sessionWorker.ExecuteTask)) {
+                    scope.Dispose();
+                    return false;
+                }
+
+                // if we executing worker Task ends on its own (error?), clean up and update state
+                _ = sessionWorker.ExecuteTask
+                    .ContinueWith(swt => {
+                        Interlocked.Exchange(ref _workerAvailable, 0);
+                        var oldScope = Interlocked.CompareExchange<IServiceScope?>(ref this._workerScope, null, scope);
+                        oldScope?.Dispose();
+                        Interlocked.CompareExchange(ref this._sessionWorker, null, sessionWorker);
+                    }, TaskContinuationOptions.ExecuteSynchronously)
+                    .ContinueWith(t => SendStateUpdate());
+
+                await workerStartTask.ConfigureAwait(false);
+
+                this._sessionWorker = sessionWorker;
+                Interlocked.Exchange(ref _workerAvailable, 99);
+                return true;
             }
-
-            var sessionWorker = scope.ServiceProvider.GetRequiredService<SessionWorker>();
-            await sessionWorker.StartAsync(cancelToken).ConfigureAwait(false);
-            this._sessionWorker = sessionWorker;
-
-            Interlocked.Exchange(ref _workerAvailable, 99);
-            return true;
+            catch {
+                scope.Dispose();
+                throw;
+            }
         }
 
         async Task<bool> StopWorker(CancellationToken cancelToken) {
@@ -261,10 +285,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 return false;
             await oldWorker.StopAsync(cancelToken).ConfigureAwait(false);
 
-            var oldScope = Interlocked.Exchange(ref this._workerScope, null);
-            if (oldScope == null)  // should not happen
-                return false;
-            oldScope.Dispose();
+            // the continuation of oldWorker.ExecuteTask with clean up the scope
             return true;
         }
 
