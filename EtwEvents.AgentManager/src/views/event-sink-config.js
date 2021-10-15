@@ -1,6 +1,4 @@
-﻿/* @vite-ignore */
-
-import { observable, observe, unobserve, raw } from '@nx-js/observer-util/dist/es.es6.js';
+﻿import { observable, observe, unobserve, raw } from '@nx-js/observer-util/dist/es.es6.js';
 import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
 import { LitMvvmElement, html, nothing, css } from '@kdsoft/lit-mvvm';
 import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
@@ -23,13 +21,13 @@ import * as utils from '../js/utils.js';
 */
 
 async function loadSinkDefinitionTemplate(sinkInfo) {
-  const elementModule = await import(sinkInfo.configViewUrl);
+  const elementModule = await import(/* @vite-ignore */sinkInfo.configViewUrl);
   const configElement = elementModule.default;
   return configElement;
 }
 
 async function loadSinkDefinitionModel(sinkInfo) {
-  const modelModule = await import(sinkInfo.configModelUrl);
+  const modelModule = await import(/* @vite-ignore */sinkInfo.configModelUrl);
   const ModelClass = modelModule.default;
   return new ModelClass();
 }
