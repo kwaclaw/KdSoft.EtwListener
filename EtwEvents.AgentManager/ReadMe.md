@@ -1,3 +1,5 @@
+# Build
+
 ## Import Styles before production build or development run
 
 Any CSS that is not available as CSS-in-JS in the form of lit-element css`...my styles...` must
@@ -81,4 +83,24 @@ We specify the certificate we use to authorize this web application as the clien
     "Thumbprint": "558efcc579f8b7be36f02d709cf58ea29020644e"
   }
 ```
+
+# Event Sinks
+
+## Location of Binaries
+
+Each event sink implementation must be located in a unique folder under the EventSinks directory.
+
+**Note:** If there are two versions of the same event sink type, they still must be copied to two different directories.
+
+## Location of web interface components
+
+- These components provide a configuration UI for a specific event sink and version.
+
+- They must be located under the src/eventSinks directory and reflect the same directory structure as the binaries so they can be mapped.
+
+- The file names must match the patterns `*-config.js` and `*-config-model.js`.
+
+**Note:** If web components are used they must have unique names, even between event sinks of the same type.
+
+
 
