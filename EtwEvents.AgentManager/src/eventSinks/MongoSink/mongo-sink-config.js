@@ -1,15 +1,16 @@
-﻿import { LitMvvmElement, html, css } from '../../../lib/@kdsoft/lit-mvvm.js';
-import { Queue, priorities } from '../../../lib/@nx-js/queue-util/dist/es.es6.js';
-import { observable, observe } from '../../../lib/@nx-js/observer-util/dist/es.es6.js';
-import sharedStyles from '../../../styles/kdsoft-shared-styles.js';
-import styleLinks from '../../../styles/kdsoft-style-links.js';
-import * as utils from '../../../js/utils.js';
-import '../../../components/kdsoft-dropdown.js';
-import '../../../components/kdsoft-checklist.js';
-import KdSoftDropdownModel from '../../../components/kdsoft-dropdown-model.js';
-import KdSoftChecklistModel from '../../../components/kdsoft-checklist-model.js';
-import KdSoftDropdownChecklistConnector from '../../../components/kdsoft-dropdown-checklist-connector.js';
+﻿import { observable, observe, unobserve, raw } from '@nx-js/observer-util/dist/es.es6.js';
+import { LitMvvmElement, html, css } from '@kdsoft/lit-mvvm';
+import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
+import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
+import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
+import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
+import {
+  KdSoftDropdownModel,
+  KdSoftChecklistModel,
+  KdSoftDropdownChecklistConnector,
+} from '@kdsoft/lit-mvvm-components';
 import MongoSinkConfigModel from './mongo-sink-config-model.js';
+import * as utils from '../../js/utils.js';
 
 class MongoSinkConfig extends LitMvvmElement {
   constructor() {
@@ -24,13 +25,11 @@ class MongoSinkConfig extends LitMvvmElement {
 
   _optionsChange(e) {
     e.stopPropagation();
-    console.log(`${e.target.name}=${e.target.value}`);
     this.model.options[e.target.name] = utils.getFieldValue(e.target);
   }
 
   _fieldListChange(e) {
     e.stopPropagation();
-    console.log(`${e.target.name}=${e.target.value}`);
     // regular expression for splitting, removes whitespace around comma
     const sepRegex = /\s*(?:,|$)\s*/;
     this.model.options[e.target.name] = (e.target.value || '').split(sepRegex);
@@ -40,29 +39,27 @@ class MongoSinkConfig extends LitMvvmElement {
     const certCN = this.renderRoot.getElementById('certCN');
     const user = this.renderRoot.getElementById('user');
     const pwd = this.renderRoot.getElementById('password');
-    if (certCN.value || user.value && pwd.value) {
+    if (certCN.value || (user.value && pwd.value)) {
       certCN.setCustomValidity('');
       user.setCustomValidity('');
       pwd.setCustomValidity('');
       return true;
-    } else {
-      // change validity on first empty control, we can't really use a hidden/invisible/zero-size control
-      // as the browser will not show the message on a hidden or invisible or zero-size control
-      const msg = 'At least one of certificate or user/password information must be filled in.';
-      if (!certCN.value && !!user.value && !pwd.value) {
-        certCN.setCustomValidity(msg);
-      } else if (!user.value) {
-        user.setCustomValidity(msg);
-      } else if (!pwd.value) {
-        pwd.setCustomValidity(msg);
-      }
-      return false;
     }
+    // change validity on first empty control, we can't really use a hidden/invisible/zero-size control
+    // as the browser will not show the message on a hidden or invisible or zero-size control
+    const msg = 'At least one of certificate or user/password information must be filled in.';
+    if (!certCN.value && !!user.value && !pwd.value) {
+      certCN.setCustomValidity(msg);
+    } else if (!user.value) {
+      user.setCustomValidity(msg);
+    } else if (!pwd.value) {
+      pwd.setCustomValidity(msg);
+    }
+    return false;
   }
 
   _credentialsChange(e) {
     e.stopPropagation();
-    console.log(`${e.target.name}=${e.target.value}`);
     this.model.credentials[e.target.name] = utils.getFieldValue(e.target);
     this._validateCredentials();
   }
@@ -83,7 +80,7 @@ class MongoSinkConfig extends LitMvvmElement {
     this.evtFieldsChecklistConnector = new KdSoftDropdownChecklistConnector(
       () => this.renderRoot.getElementById('evtFields'),
       () => this.renderRoot.getElementById('evtFieldList'),
-      (chkListModel) => {
+      chkListModel => {
         const selectedIds = Array.from(chkListModel.selectedEntries).map(entry => entry.item.id);
         // since we are already reacting to the selection change, let's update the underlying model
         this.model.options.eventFilterFields = selectedIds;
@@ -92,22 +89,22 @@ class MongoSinkConfig extends LitMvvmElement {
     );
   }
 
-
   static get styles() {
     return [
+      tailwindStyles,
+      fontAwesomeStyles,
+      checkboxStyles,
       css`
+        :host {
+          display: block;
+        }
+
         form {
           position: relative;
           height: 100%;
           display: flex;
           flex-direction: column;
-          align-items: center;
-        }
-
-        .center {
-          display: flex;
-          justify-content: center;
-          align-items: center;
+          align-items: flex-start;
         }
 
         label {
@@ -142,19 +139,11 @@ class MongoSinkConfig extends LitMvvmElement {
   render() {
     const opts = this.model.options;
     const creds = this.model.credentials;
-    const payloadFieldsList = opts.payloadFilterFields.join(', ');
+    const payloadFieldsList = opts.payloadFilterFields?.join(', ') || [];
 
     const result = html`
-      ${sharedStyles}
-      <link rel="stylesheet" type="text/css" href=${styleLinks.checkbox} />
-      <style>
-        :host {
-          display: block;
-        }
-      </style>
       <form>
-        <h3>Mongo Sink "${this.model.name}"</h3>
-        <section id="options" class="center mb-5" @change=${this._optionsChange}>
+        <section id="options" class="mb-5" @change=${this._optionsChange}>
           <fieldset>
             <legend>Options</legend>
             <div>
@@ -181,7 +170,7 @@ class MongoSinkConfig extends LitMvvmElement {
             </div>
           </fieldset>
         </section>
-        <section id="credentials" class="center" @change=${this._credentialsChange}>
+        <section id="credentials" @change=${this._credentialsChange}>
           <fieldset>
             <legend>Credentials</legend>
             <div>
@@ -204,6 +193,6 @@ class MongoSinkConfig extends LitMvvmElement {
 
 window.customElements.define('mongo-sink-config', MongoSinkConfig);
 
-const tag = (model) => html`<mongo-sink-config .model=${model}></mongo-sink-config>`;
+const tag = model => html`<mongo-sink-config .model=${model}></mongo-sink-config>`;
 
 export default tag;

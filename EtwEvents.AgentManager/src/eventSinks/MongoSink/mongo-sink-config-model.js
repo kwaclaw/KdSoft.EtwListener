@@ -20,8 +20,9 @@ class MongoSinkConfigModel {
 
   static get eventFields() {
     // if intended to be the source for a KdSoftChecklistModel, then the entries must be objects
-    return [{ id: 'Timestamp' }, { id: 'ProviderName' }, { id: 'Channel' }, { id: 'Id' }, { id: 'Level' }, { id: 'Keywords' },
-    { id: 'Opcode' }, { id: 'OpcodeName' }, { id: 'TaskName' }, { id: 'Version' }
+    return [
+      { id: 'Timestamp' }, { id: 'ProviderName' }, { id: 'Channel' }, { id: 'Id' }, { id: 'Level' },
+      { id: 'Keywords' }, { id: 'Opcode' }, { id: 'OpcodeName' }, { id: 'TaskName' }, { id: 'Version' }
     ];
   }
 
