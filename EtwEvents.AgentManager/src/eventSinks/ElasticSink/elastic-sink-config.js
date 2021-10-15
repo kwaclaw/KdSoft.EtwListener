@@ -122,7 +122,7 @@ class ElasticSinkConfig extends LitMvvmElement {
   render() {
     const opts = this.model.options;
     const creds = this.model.credentials;
-    const nodesList = opts.nodes.join('\n');
+    const nodesList = opts.nodes?.join('\n') || [];
 
     const result = html`
       <form>
