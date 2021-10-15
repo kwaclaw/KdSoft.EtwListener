@@ -1,6 +1,6 @@
 {
   "sinkType": "ElasticSink",
-  "name": "",
+  "name": "Default",
   "version": "1.0.0.0",
   "options": {
     "nodes": [
