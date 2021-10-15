@@ -20,6 +20,7 @@
     <ItemGroup>
       <BinFiles Include="$(TargetDir)**/*.*" />
     </ItemGroup>
+    <RemoveDir Directories="$(DeployDirectory)" />
     <Copy SourceFiles="@(BinFiles)" DestinationFiles="@(BinFiles->'$(DeployDirectory)/%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
   </Target>
 
