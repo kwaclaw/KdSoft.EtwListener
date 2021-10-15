@@ -22,6 +22,7 @@ namespace KdSoft.EtwEvents.AgentManager.Services
         CancellationTokenSource? _connectionTokenSource;
         AgentState _state;
         int _connected;
+        int _eventId;
 
         public AgentProxy(string agentId, Channel<ControlEvent> channel, ILogger logger) {
             this._channel = channel;
@@ -35,6 +36,10 @@ namespace KdSoft.EtwEvents.AgentManager.Services
         }
 
         public string AgentId { get { return _state.Id; } }
+
+        public int GetNextEventId() {
+            return Interlocked.Increment(ref _eventId);
+        }
 
         public bool Post(ControlEvent evt) {
             return _channel.Writer.TryWrite(evt);

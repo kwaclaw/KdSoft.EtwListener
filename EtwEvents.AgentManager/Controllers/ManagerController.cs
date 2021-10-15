@@ -28,8 +28,6 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
         readonly ILogger<ManagerController> _logger;
         //readonly JsonFormatter _jsonFormatter;
 
-        int _agentEventId;
-
         public ManagerController(
             AgentProxyManager agentProxyManager,
             EventSinkService evtSinkService,
@@ -99,7 +97,7 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
             ProblemDetails pd;
             if (_agentProxyManager.TryGetProxy(agentId, out var proxy)) {
                 var evt = new ControlEvent {
-                    Id = Interlocked.Increment(ref _agentEventId).ToString(),
+                    Id = proxy.GetNextEventId().ToString(),
                     Event = eventName,
                     Data = jsonData
                 };
@@ -125,14 +123,15 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
         async Task<IActionResult> CallAgent(string agentId, string eventName, string jsonData, TimeSpan timeout) {
             ProblemDetails pd;
             if (_agentProxyManager.TryGetProxy(agentId, out var proxy)) {
-                var eventId = Interlocked.Increment(ref _agentEventId).ToString();
+                var eventId = proxy.GetNextEventId().ToString();
                 var evt = new ControlEvent {
                     Id = eventId,
                     Event = eventName,
                     Data = jsonData
                 };
 
-                //TODO configure response timeout
+                //TODO configure response timeout externally
+
                 var cts = new CancellationTokenSource(timeout);
                 try {
                     var resultJson = await proxy.CallAsync(eventId, evt, cts.Token).ConfigureAwait(false);
@@ -183,9 +182,9 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
         }
 
         [HttpPost]
-        public Task<IActionResult> UpdateEventSink(string agentId, [FromBody] object eventSinkProfile) {
+        public IActionResult UpdateEventSink(string agentId, [FromBody] object eventSinkProfile) {
             // we are passing the JSON simply through
-            return CallAgent(agentId, "UpdateEventSink", eventSinkProfile?.ToString() ?? "", TimeSpan.FromSeconds(15));
+            return PostAgent(agentId, "UpdateEventSink", eventSinkProfile?.ToString() ?? "");
         }
         
         #endregion
