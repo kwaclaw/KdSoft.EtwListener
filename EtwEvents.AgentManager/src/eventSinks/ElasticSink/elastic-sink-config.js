@@ -127,7 +127,7 @@ class ElasticSinkConfig extends LitMvvmElement {
     const result = html`
       <form>
         <input type="url" id="check-url" style="display:none" />
-        <section id="options" class="center mb-5" @change=${this._optionsChange}>
+        <section id="options" class="mb-5" @change=${this._optionsChange}>
           <fieldset>
             <legend>Options</legend>
             <div>
