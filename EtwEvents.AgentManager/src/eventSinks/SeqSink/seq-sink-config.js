@@ -1,8 +1,9 @@
-﻿import { LitMvvmElement, html, css } from '../../../lib/@kdsoft/lit-mvvm.js';
-import { Queue, priorities } from '../../../lib/@nx-js/queue-util/dist/es.es6.js';
-import sharedStyles from '../../../styles/kdsoft-shared-styles.js';
-import styleLinks from '../../../styles/kdsoft-style-links.js';
-import * as utils from '../../../js/utils.js';
+﻿import { LitMvvmElement, html, css } from '@kdsoft/lit-mvvm';
+import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
+import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
+import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
+import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
+import * as utils from '../../js/utils.js';
 
 class SeqSinkConfig extends LitMvvmElement {
   constructor() {
@@ -16,13 +17,11 @@ class SeqSinkConfig extends LitMvvmElement {
 
   _optionsChange(e) {
     e.stopPropagation();
-    console.log(`${e.target.name}=${e.target.value}`);
     this.model.options[e.target.name] = utils.getFieldValue(e.target);
   }
 
   _credentialsChange(e) {
     e.stopPropagation();
-    console.log(`${e.target.name}=${e.target.value}`);
     this.model.credentials[e.target.name] = utils.getFieldValue(e.target);
   }
 
@@ -33,19 +32,20 @@ class SeqSinkConfig extends LitMvvmElement {
 
   static get styles() {
     return [
+      tailwindStyles,
+      fontAwesomeStyles,
+      checkboxStyles,
       css`
+        :host {
+          display: block;
+        }
+
         form {
           position: relative;
           height: 100%;
           display: flex;
           flex-direction: column;
-          align-items: center;
-        }
-
-        .center {
-          display: flex;
-          justify-content: center;
-          align-items: center;
+          align-items: flex-start;
         }
 
         label {
@@ -82,16 +82,8 @@ class SeqSinkConfig extends LitMvvmElement {
     const creds = this.model.credentials;
 
     const result = html`
-      ${sharedStyles}
-      <link rel="stylesheet" type="text/css" href=${styleLinks.checkbox} />
-      <style>
-        :host {
-          display: block;
-        }
-      </style>
       <form>
-        <h3>Seq Sink "${this.model.name}"</h3>
-        <section id="options" class="center mb-5" @change=${this._optionsChange}>
+        <section id="options" class="mb-5" @change=${this._optionsChange}>
           <fieldset>
             <legend>Options</legend>
             <div>
@@ -102,7 +94,7 @@ class SeqSinkConfig extends LitMvvmElement {
             </div>
           </fieldset>
         </section>
-        <section id="credentials" class="center" @change=${this._credentialsChange}>
+        <section id="credentials" @change=${this._credentialsChange}>
           <fieldset>
             <legend>Credentials</legend>
             <div>
@@ -119,6 +111,6 @@ class SeqSinkConfig extends LitMvvmElement {
 
 window.customElements.define('seq-sink-config', SeqSinkConfig);
 
-const tag = (model) => html`<seq-sink-config .model=${model}></seq-sink-config>`;
+const tag = model => html`<seq-sink-config .model=${model}></seq-sink-config>`;
 
 export default tag;

@@ -17,13 +17,11 @@ class ElasticSinkConfig extends LitMvvmElement {
 
   _optionsChange(e) {
     e.stopPropagation();
-    console.log(`${e.target.name}=${e.target.value}`);
     this.model.options[e.target.name] = utils.getFieldValue(e.target);
   }
 
   _credentialsChange(e) {
     e.stopPropagation();
-    console.log(`${e.target.name}=${e.target.value}`);
     this.model.credentials[e.target.name] = utils.getFieldValue(e.target);
   }
 
