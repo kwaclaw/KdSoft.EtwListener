@@ -136,7 +136,7 @@ class ElasticSinkConfig extends LitMvvmElement {
                 placeholder="Enter one or more URLs, each on its own line"
                 .value=${nodesList} required></textarea>
               <label for="index">Index</label>
-              <input type="text" id="index" name="index" value=${opts.index} />
+              <input type="text" id="index" name="index" .value=${opts.index} />
             </div>
           </fieldset>
         </section>
@@ -145,9 +145,9 @@ class ElasticSinkConfig extends LitMvvmElement {
             <legend>Credentials</legend>
             <div>
               <label for="user">User</label>
-              <input type="text" id="user" name="user" value=${creds.user} required></input>
+              <input type="text" id="user" name="user" .value=${creds.user} required></input>
               <label for="password">Password</label>
-              <input type="password" id="password" name="password" value=${creds.password} required></input>
+              <input type="password" id="password" name="password" .value=${creds.password} required></input>
             </div>
           </fieldset>
         </section>

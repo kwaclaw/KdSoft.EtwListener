@@ -3,7 +3,7 @@
 class SeqSinkConfigModel {
   constructor() {
     this.options = {
-      serverUrl: '',
+      serverUrl: 'https://demo-seq.test.com',
       proxyAddress: '',
     };
     this.credentials = {

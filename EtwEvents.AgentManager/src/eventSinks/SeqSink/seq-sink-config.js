@@ -88,9 +88,9 @@ class SeqSinkConfig extends LitMvvmElement {
             <legend>Options</legend>
             <div>
               <label for="serverUrl">Server Url</label>
-              <input type="url" id="serverUrl" name="serverUrl" size="50" value=${opts.serverUrl} required></input>
+              <input type="url" id="serverUrl" name="serverUrl" size="50" .value=${opts.serverUrl} required></input>
               <label for="proxyAddress">Proxy Address</label>
-              <input type="url" id="proxyAddress" name="proxyAddress" value=${opts.proxyAddress}></input>
+              <input type="url" id="proxyAddress" name="proxyAddress" .value=${opts.proxyAddress}></input>
             </div>
           </fieldset>
         </section>
@@ -99,7 +99,7 @@ class SeqSinkConfig extends LitMvvmElement {
             <legend>Credentials</legend>
             <div>
               <label for="apiKey">Api Key</label>
-              <input type="text" id="apiKey" name="apiKey" value=${creds.apiKey}></input>
+              <input type="text" id="apiKey" name="apiKey" .value=${creds.apiKey}></input>
             </div>
           </fieldset>
         </section>

@@ -83,17 +83,17 @@ class RollingFileSinkConfig extends LitMvvmElement {
             <legend>Options</legend>
             <div>
               <label for="directory">Directory</label>
-              <input type="text" id="directory" name="directory" value=${opts.directory} required></input>
+              <input type="text" id="directory" name="directory" .value=${opts.directory} required></input>
               <label for="fileNameFormat">Filename Template</label>
-              <input type="text" id="fileNameFormat" name="fileNameFormat" size="32" value=${opts.fileNameFormat}></input>
+              <input type="text" id="fileNameFormat" name="fileNameFormat" size="32" .value=${opts.fileNameFormat}></input>
               <label for="fileExtension">File Extension</label>
-              <input type="text" id="fileExtension" name="fileExtension" value=${opts.fileExtension}></input>
+              <input type="text" id="fileExtension" name="fileExtension" .value=${opts.fileExtension}></input>
               <label for="useLocalTime">Use Local Time</label>
               <input type="checkbox" id="useLocalTime" name="useLocalTime" .checked=${opts.useLocalTime}></input>
               <label for="fileSizeLimitKB">File-size Limit (KB)</label>
-              <input type="number" id="fileSizeLimitKB" name="fileSizeLimitKB" value=${opts.fileSizeLimitKB}></input>
+              <input type="number" id="fileSizeLimitKB" name="fileSizeLimitKB" .value=${opts.fileSizeLimitKB}></input>
               <label for="maxFileCount">Max File Count</label>
-              <input type="number" id="maxFileCount" name="maxFileCount" value=${opts.maxFileCount}></input>
+              <input type="number" id="maxFileCount" name="maxFileCount" .value=${opts.maxFileCount}></input>
               <label for="newFileOnStartup">New File on Startup</label>
               <input type="checkbox" id="newFileOnStartup" name="newFileOnStartup" .checked=${opts.newFileOnStartup}></input>
             </div>

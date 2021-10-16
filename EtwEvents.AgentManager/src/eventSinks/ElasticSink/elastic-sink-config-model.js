@@ -3,12 +3,12 @@
 class ElasticSinkConfigModel {
   constructor() {
     this.options = {
-      nodes: [],
-      index: '',
+      nodes: ['https://elastic-demo.test.com'],
+      index: 'demo-logs-test-{0:yyyy-MM-dd}',
     };
     this.credentials = {
-      user: '',
-      password: ''
+      user: 'user',
+      password: 'pwd'
     };
   }
 

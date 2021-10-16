@@ -148,13 +148,13 @@ class MongoSinkConfig extends LitMvvmElement {
             <legend>Options</legend>
             <div>
               <label for="origin">Origin</label>
-              <input type="url" id="origin" name="origin" size="50" value=${opts.origin} required></input>
+              <input type="url" id="origin" name="origin" size="50" .value=${opts.origin} required></input>
               <label for="replicaset">Replica Set</label>
-              <input type="text" id="replicaset" name="replicaset" value=${opts.replicaset}></input>
+              <input type="text" id="replicaset" name="replicaset" .value=${opts.replicaset}></input>
               <label for="database">Database</label>
-              <input type="text" id="database" name="database" value=${opts.database} required></input>
+              <input type="text" id="database" name="database" .value=${opts.database} required></input>
               <label for="collection">Collection</label>
-              <input type="text" id="collection" name="collection" value=${opts.collection} required></input>
+              <input type="text" id="collection" name="collection" .value=${opts.collection} required></input>
               <label for="eventFilterFields">Event Filter Fields</label>
               <kdsoft-dropdown id="evtFields" class="py-0" .model=${this.evtFieldsDropDownModel} .connector=${this.evtFieldsChecklistConnector}>
                 <kdsoft-checklist
@@ -166,7 +166,7 @@ class MongoSinkConfig extends LitMvvmElement {
                 </kdsoft-checklist>
               </kdsoft-dropdown>
               <label for="payloadFilterFields">Payload Filter Fields</label>
-              <input type="text" id="payloadFilterFields" name="payloadFilterFields" value=${payloadFieldsList} @change=${this._fieldListChange}></input>
+              <input type="text" id="payloadFilterFields" name="payloadFilterFields" .value=${payloadFieldsList} @change=${this._fieldListChange}></input>
             </div>
           </fieldset>
         </section>
@@ -175,13 +175,13 @@ class MongoSinkConfig extends LitMvvmElement {
             <legend>Credentials</legend>
             <div>
               <label for="cred-database">Database</label>
-              <input type="text" id="cred-database" name="database" value=${creds.database} required></input>
+              <input type="text" id="cred-database" name="database" .value=${creds.database} required></input>
               <label for="certCN">Certificate Common Name</label>
-              <input type="text" id="certCN" name="certificateCommonName" value=${creds.certificateCommonName}></input>
+              <input type="text" id="certCN" name="certificateCommonName" .value=${creds.certificateCommonName}></input>
               <label for="user">User</label>
-              <input type="text" id="user" name="user" value=${creds.user}></input>
+              <input type="text" id="user" name="user" .value=${creds.user}></input>
               <label for="password">Password</label>
-              <input type="password" id="password" name="password" value=${creds.password}></input>
+              <input type="password" id="password" name="password" .value=${creds.password}></input>
             </div>
           </fieldset>
         </section>
