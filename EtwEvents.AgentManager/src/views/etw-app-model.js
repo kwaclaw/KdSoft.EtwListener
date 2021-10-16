@@ -2,7 +2,6 @@
 
 import { observable, observe, raw } from '@nx-js/observer-util/dist/es.es6.js';
 import { KdSoftChecklistModel } from '@kdsoft/lit-mvvm-components';
-import EventSinkProfile from '../js/eventSinkProfile.js';
 import EventSinkConfigModel from './event-sink-config-model.js';
 import RingBuffer from '../js/ringBuffer.js';
 import * as utils from '../js/utils.js';
@@ -62,21 +61,8 @@ function _enhanceAgentState(agentState, eventSinkInfos) {
     if (index >= 0) agentState.enabledProviders.splice(index, 1);
   };
 
-  const sinkState = agentState.eventSinks && agentState.eventSinks.length ? agentState.eventSinks[0] : null;
-  let sinkProfile;
-  let sinkError = null;
-  if (sinkState) {
-    sinkProfile = sinkState.profile;
-    sinkError = sinkState.error;
-  } else {
-    sinkProfile = new EventSinkProfile();
-  }
-
   if (!agentState.sinkConfigModel) {
-    agentState.sinkConfigModel = new EventSinkConfigModel(eventSinkInfos, sinkProfile, sinkError);
-  } else {
-    agentState.sinkConfigModel.sinkProfile = sinkProfile;
-    agentState.sinkConfigModel.sinkError = sinkError;
+    agentState.sinkConfigModel = new EventSinkConfigModel(eventSinkInfos, agentState);
   }
 
   return agentState;
@@ -134,7 +120,7 @@ function _updateAgentsMap(agentsMap, agentStates) {
       });
     } else {
       // update but do not replace existing state, as it may have been enhanced already
-      utils.setTargetProperties(entry.state, state);
+      entry.original = state;
     }
     agentsMap.set(agentId, observable(entry));
     localAgentKeys.delete(agentId);
@@ -323,12 +309,27 @@ class EtwAppModel {
     filterModel.diagnostics = [];
   }
 
-  updateEventSink(sinkProfile) {
+  updateEventSink() {
     const agentState = this.activeAgentState;
     if (!agentState) return;
 
-    this.fetcher.postJson('UpdateEventSink', { agentId: agentState.id }, sinkProfile)
+    const sinkConfigModel = agentState.sinkConfigModel;
+    this.fetcher.postJson('UpdateEventSink', { agentId: agentState.id }, sinkConfigModel.sinkProfile)
       .catch(error => window.etwApp.defaultHandleError(error));
+  }
+
+  resetEventSink() {
+    const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
+    if (!activeEntry) return;
+
+    const originalState = activeEntry.original;
+    activeEntry.state.eventSink = utils.clone(originalState.eventSink);
+  }
+
+  get eventSinkModified() {
+    const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
+    if (!activeEntry) return false;
+    return !utils.targetEquals(activeEntry.original.eventSink, activeEntry.state.eventSink);
   }
 }
 

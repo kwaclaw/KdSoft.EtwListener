@@ -76,7 +76,7 @@ class EventSinkConfig extends LitMvvmElement {
 
     const evt = new CustomEvent('kdsoft-done', {
       // composed allows bubbling beyond shadow root
-      bubbles: true, composed: true, cancelable: true, detail: { model: sinkProfile, canceled: false }
+      bubbles: true, composed: true, cancelable: true, detail: { model: this.model, canceled: false }
     });
     this.dispatchEvent(evt);
   }
@@ -91,9 +91,13 @@ class EventSinkConfig extends LitMvvmElement {
         const configFormTemplate = await loadSinkDefinitionTemplate(sinkInfo);
         const configModel = await loadSinkDefinitionModel(sinkInfo);
 
-        const sinkProfile = this.model.sinkProfile;
-        if (sinkProfile) {
+        let sinkProfile = this.model.sinkProfile;
+        if (sinkProfile && sinkProfile.sinkType === sinkInfo.sinkType && sinkProfile.version === sinkInfo.version) {
           utils.setTargetProperties(configModel, sinkProfile);
+        } else {
+          sinkProfile = new EventSinkProfile('Default', sinkInfo.sinkType, sinkInfo.version);
+          utils.setTargetProperties(sinkProfile, configModel);
+          this.model.sinkProfile = sinkProfile;
         }
 
         this.sinkTypeTemplateHolder.tag = configFormTemplate(configModel);

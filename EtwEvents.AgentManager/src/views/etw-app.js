@@ -11,18 +11,6 @@ import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-s
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
 import gridStyles from '../styles/kdsoft-grid-styles.js';
 
-function formDoneHandler(e) {
-  if (!e.detail.canceled) {
-    if (e.target.localName === 'filter-form') {
-      this.model.saveSessionProfile(e.detail.model.session.profile);
-    } else if (e.target.localName === 'trace-session-config') {
-      this.model.saveSessionProfile(e.detail.model.cloneAsProfile());
-    } else if (e.target.localName === 'event-sink-config') {
-      this.model.saveSinkProfile(e.detail.model);
-    }
-  }
-}
-
 class EtwApp extends LitMvvmElement {
   constructor() {
     super();
@@ -31,8 +19,6 @@ class EtwApp extends LitMvvmElement {
     this.scheduler = new Queue(priorities.HIGH);
     // we must assign the model *after* the scheduler, or assign it externally
     // this.model = new EtwAppModel(); --
-
-    this._formDoneHandler = formDoneHandler.bind(this);
 
     window.etwApp = this;
   }

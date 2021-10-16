@@ -13,9 +13,11 @@ import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/cs
 import gridStyles from '../styles/kdsoft-grid-styles.js';
 
 function formDoneHandler(e) {
-  if (!e.detail.canceled) {
-    if (e.target.localName === 'event-sink-config') {
-      this.model.updateEventSink(e.detail.model);
+  if (e.target.localName === 'event-sink-config') {
+    if (e.detail.canceled) {
+      this.model.resetEventSink();
+    } else {
+      this.model.updateEventSink();
     }
   }
 }
@@ -203,6 +205,7 @@ class EtwAgent extends LitMvvmElement {
               <form id="event-sink" class="max-w-full border">
                 <div class="flex my-2 pr-2">
                   <span class="font-semibold">Event Sink</span>
+                  <span class="ml-auto italic text-red-500" ?hidden=${!this.model.eventSinkModified}>Modified</span>
                 </div>
                 <event-sink-config .model=${activeAgentState.sinkConfigModel}></event-sink-config>
               </form>
