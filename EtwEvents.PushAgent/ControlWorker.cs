@@ -162,12 +162,10 @@ namespace KdSoft.EtwEvents.PushAgent
             //var agentName = _httpCertHandler.ClientCert.GetNameInfo(X509NameType.SimpleName, false);
             //var agentEmail = _httpCertHandler.ClientCert.GetNameInfo(X509NameType.EmailName, false);
             var isRunning = _workerAvailable != 0;
-            var eventSinkStates = ImmutableArray<EventSinkState>.Empty;
+            var eventSinkState = new EventSinkState();
             if (isRunning && SessionWorker != null) {
-                eventSinkStates = eventSinkStates.Add(new EventSinkState {
-                    Profile = SessionWorker.EventSinkProfile,
-                    Error = SessionWorker.EventSinkError?.Message
-                });
+                eventSinkState.Profile = SessionWorker.EventSinkProfile;
+                eventSinkState.Error = SessionWorker.EventSinkError?.Message;
             }
             var state = new Models.AgentState {
                 EnabledProviders = ses?.EnabledProviders.ToImmutableList() ?? ImmutableList<EtwLogging.ProviderSetting>.Empty,
@@ -178,7 +176,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 FilterBody = ses?.GetCurrentFilterBody(),
                 IsRunning = isRunning,
                 IsStopped = !isRunning,
-                EventSinks = eventSinkStates,
+                EventSink = eventSinkState,
             };
             return PostMessage("Agent/UpdateState", state);
         }
