@@ -1,14 +1,15 @@
 ﻿/* global i18n */
 
+import { observable, observe, unobserve, raw } from '@nx-js/observer-util/dist/es.es6.js';
 import { KdSoftChecklistModel } from '@kdsoft/lit-mvvm-components';
 
 class EventSinkConfigModel {
-  constructor(sinkInfos, sinkProfile, sinkError) {
+  constructor(sinkInfos, agentState) {
     this.sinkInfos = sinkInfos;
-    this.sinkProfile = sinkProfile;
-    this.sinkError = sinkError;
+    this._agentState = agentState;
 
-    const selectedSinkInfoIndex = sinkProfile ? sinkInfos.findIndex(item => item.sinkType == sinkProfile.sinkType) : -1;
+    const sinkProfile = agentState.eventSink.profile;
+    const selectedSinkInfoIndex = sinkProfile ? sinkInfos.findIndex(item => item.sinkType === sinkProfile.sinkType) : -1;
     this.sinkInfoCheckListModel = new KdSoftChecklistModel(
       sinkInfos,
       selectedSinkInfoIndex < 0 ? [] : [selectedSinkInfoIndex],
@@ -17,13 +18,19 @@ class EventSinkConfigModel {
     );
   }
 
-  //get selectedSinkType() { return this.selectedSinkTypeIndex >= 0 ? this.sinkTypes[this.selectedSinkTypeIndex] : null; }
-  get selectedSinkInfo() {
-    const selIndexes = this.sinkInfoCheckListModel.selectedIndexes;
-    // use result to trigger observers
-    const selectedSinkInfoIndex = selIndexes.length === 0 ? -1 : selIndexes[0];
-    return selectedSinkInfoIndex >= 0 ? this.sinkInfos[selectedSinkInfoIndex] : null;
+  get sinkProfile() {
+    // need to set this up here, because we need "this" to be an observable, and it will
+    // be one once this instance is accessed through a proxy (obervable) wrapper
+    if (!this._profileObserver) {
+      this._profileObserver = observe(() => {
+        const profile = this._agentState.eventSink.profile;
+        const sinkInfoIndex = profile ? this.sinkInfos.findIndex(item => item.sinkType === profile.sinkType) : -1;
+        this.sinkInfoCheckListModel.selectIndex(sinkInfoIndex, true);
+      });
+    }
+    return this._agentState.eventSink.profile;
   }
+  set sinkProfile(value) { this._agentState.eventSink.profile = value; }
 }
 
 export default EventSinkConfigModel;

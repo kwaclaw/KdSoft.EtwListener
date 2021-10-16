@@ -22,7 +22,7 @@ namespace KdSoft.EtwEvents.PushAgent.Models
         public bool IsStopped { get; set; }
 
         public IImmutableList<ProviderSetting> EnabledProviders { get; set; } = ImmutableList<ProviderSetting>.Empty;
-        public ImmutableArray<EventSinkState> EventSinks { get; set; } = ImmutableArray<EventSinkState>.Empty;
+        public EventSinkState EventSink { get; set; } = new EventSinkState();
         public string? FilterBody { get; set; }
     }
 
