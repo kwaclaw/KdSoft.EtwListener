@@ -153,13 +153,16 @@ export function targetEquals(target, source) {
     return false;
   }
   if (target instanceof Object) {
-    // eslint-disable-next-line guard-for-in
-    for (const key in target) {
-      if (!targetEquals(target[key], source[key])) {
-        return false;
+    if (source instanceof Object) {
+      // eslint-disable-next-line guard-for-in
+      for (const key in target) {
+        if (!targetEquals(target[key], source[key])) {
+          return false;
+        }
       }
+      return true;
     }
-    return true;
+    return false;
   }
   // compare as primitive types
   return target === source;
