@@ -25,7 +25,8 @@ class EventSinkConfigModel {
       this._profileObserver = observe(() => {
         const profile = this._agentState.eventSink.profile;
         const sinkInfoIndex = profile ? this.sinkInfos.findIndex(item => item.sinkType === profile.sinkType) : -1;
-        this.sinkInfoCheckListModel.selectIndex(sinkInfoIndex, true);
+        if (sinkInfoIndex < 0) this.sinkInfoCheckListModel.selectAll(false);
+        else this.sinkInfoCheckListModel.selectIndex(sinkInfoIndex, true);
       });
     }
     return this._agentState.eventSink.profile;
