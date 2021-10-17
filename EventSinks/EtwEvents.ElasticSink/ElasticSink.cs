@@ -12,7 +12,7 @@ namespace KdSoft.EtwEvents.EventSinks
 {
     public class ElasticSink: IEventSink
     {
-        readonly ElasticSinkOptions _sinkInfo;
+        readonly ElasticSinkOptions _options;
         readonly IConnectionPool _connectionPool;
         readonly TaskCompletionSource<bool> _tcs;
         readonly List<string> _evl;
@@ -23,21 +23,21 @@ namespace KdSoft.EtwEvents.EventSinks
 
         public Task<bool> RunTask { get; }
 
-        public ElasticSink(ElasticSinkOptions sinkInfo, string dbUser, string dbPwd) {
+        public ElasticSink(ElasticSinkOptions options, string dbUser, string dbPwd) {
             _tcs = new TaskCompletionSource<bool>();
             RunTask = _tcs.Task;
 
             _evl = new List<string>();
-            _sinkInfo = sinkInfo;
+            _options = options;
 
             try {
                 IConnectionPool connectionPool;
-                if (sinkInfo.Nodes.Length == 1)
-                    connectionPool = new SingleNodeConnectionPool(new Uri(sinkInfo.Nodes[0]));
-                else if (sinkInfo.Nodes.Length > 1)
-                    connectionPool = new SniffingConnectionPool(sinkInfo.Nodes.Select(node => new Uri(node)));
+                if (options.Nodes.Length == 1)
+                    connectionPool = new SingleNodeConnectionPool(new Uri(options.Nodes[0]));
+                else if (options.Nodes.Length > 1)
+                    connectionPool = new SniffingConnectionPool(options.Nodes.Select(node => new Uri(node)));
                 else
-                    throw new ArgumentException("Must provide at least one ElasticSearch node Uri", nameof(sinkInfo));
+                    throw new ArgumentException("Must provide at least one ElasticSearch node Uri", nameof(options));
                 this._connectionPool = connectionPool;
 
                 var config = new ConnectionConfiguration(connectionPool);
@@ -89,7 +89,7 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         async Task<bool> FlushAsyncInternal() {
-            var bulkMeta = $@"{{ ""index"": {{ ""_index"" : ""{string.Format(_sinkInfo.IndexFormat, DateTimeOffset.UtcNow)}"" }} }}";
+            var bulkMeta = $@"{{ ""index"": {{ ""_index"" : ""{string.Format(_options.IndexFormat, DateTimeOffset.UtcNow)}"" }} }}";
             var postItems = EnumerateInsertRecords(bulkMeta, _evl);
             var bulkResponse = await _client.BulkAsync<StringResponse>(PostData.MultiJson(postItems)).ConfigureAwait(false);
 
