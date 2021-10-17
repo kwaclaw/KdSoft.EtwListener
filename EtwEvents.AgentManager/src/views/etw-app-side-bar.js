@@ -193,8 +193,8 @@ class EtwAppSideBar extends LitMvvmElement {
 
   getAgentTemplate(entry) {
     const onlyModified = entry.modified && !entry.disconnected;
-    const playClass = entry.state.isRunning ? '' : 'text-green-500';
-    const stopClass = entry.state.isRunning ? 'text-red-500' : '';
+    const playClass = entry.current.isRunning ? '' : 'text-green-500';
+    const stopClass = entry.current.isRunning ? 'text-red-500' : '';
     return html`
       <kdsoft-expander class="w-full" .scheduler=${this.scheduler}>
         <div part="header" slot="header" class="flex items-baseline pr-1 text-white bg-gray-500">
@@ -202,8 +202,8 @@ class EtwAppSideBar extends LitMvvmElement {
           <span class="ml-auto">
             ${onlyModified ? html`<button class="mr-1 text-yellow-800 fas fa-pencil-alt"></button>` : nothing}
             ${entry.disconnected ? html`<i class="mr-1 text-red-800 fas fa-unlink"></i>` : nothing}
-            <button class="mr-1 ${playClass} fas fa-play" @click=${() => this._startEvents(entry.state)}></button>
-            <button class="mr-1 ${stopClass} fas fa-stop" @click=${() => this._stopEvents(entry.state)}></button>
+            <button class="mr-1 ${playClass} fas fa-play" @click=${() => this._startEvents(entry.current)}></button>
+            <button class="mr-1 ${stopClass} fas fa-stop" @click=${() => this._stopEvents(entry.current)}></button>
           </span>
         </div>
         <!-- using part="slot" we can style this from here even though it will be rendered inside a web component -->

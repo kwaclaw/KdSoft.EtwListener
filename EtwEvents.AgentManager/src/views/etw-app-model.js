@@ -107,20 +107,20 @@ function _updateAgentsMap(agentsMap, agentStates) {
     let entry = agentsMap.get(agentId);
     if (!entry) {
       const newState = utils.clone(state);
-      entry = { state: newState, original: state };
+      entry = { state: newState, current: state };
       Object.defineProperty(entry, 'modified', {
         get() {
-          return !utils.targetEquals(entry.original, newState);
+          return !utils.targetEquals(entry.current, newState);
         }
       });
       Object.defineProperty(entry, 'disconnected', {
         get() {
-          return entry.original == null;
+          return entry.current == null;
         }
       });
     } else {
       // update but do not replace existing state, as it may have been enhanced already
-      entry.original = state;
+      entry.current = state;
     }
     agentsMap.set(agentId, observable(entry));
     localAgentKeys.delete(agentId);
@@ -129,7 +129,7 @@ function _updateAgentsMap(agentsMap, agentStates) {
   // indicate agents that are not connected anymore
   for (const agentKey of localAgentKeys) {
     const entry = this._agentsMap.get(agentKey);
-    entry.original = null;
+    entry.current = null;
   }
 }
 
@@ -268,7 +268,7 @@ class EtwAppModel {
     if (!activeEntry) return;
 
     const freshProviders = [];
-    for (const provider of activeEntry.original.enabledProviders) {
+    for (const provider of activeEntry.current.enabledProviders) {
       freshProviders.push(_enhanceProviderState(provider));
     }
     activeEntry.state.enabledProviders = freshProviders;
@@ -305,7 +305,7 @@ class EtwAppModel {
     if (!activeEntry) return;
 
     const filterModel = activeEntry.state.filterModel;
-    filterModel.filter = activeEntry.original.filterBody;
+    filterModel.filter = activeEntry.current.filterBody;
     filterModel.diagnostics = [];
   }
 
@@ -322,14 +322,14 @@ class EtwAppModel {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return;
 
-    const originalState = activeEntry.original;
-    activeEntry.state.eventSink = utils.clone(originalState.eventSink);
+    const currentState = activeEntry.current;
+    activeEntry.state.eventSink = utils.clone(currentState.eventSink);
   }
 
   get eventSinkModified() {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return false;
-    return !utils.targetEquals(activeEntry.original.eventSink, activeEntry.state.eventSink);
+    return !utils.targetEquals(activeEntry.current.eventSink, activeEntry.state.eventSink);
   }
 }
 
