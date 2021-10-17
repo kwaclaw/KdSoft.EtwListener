@@ -27,7 +27,7 @@ namespace KdSoft.EtwEvents.AgentManager
 {
     public class Startup
     {
-        IWebHostEnvironment _env;
+        IWebHostEnvironment? _env;
 
         public Startup(IConfiguration configuration) {
             Configuration = configuration;
