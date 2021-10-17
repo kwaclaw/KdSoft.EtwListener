@@ -110,7 +110,7 @@ function _updateAgentsMap(agentsMap, agentStates) {
       entry = { state: newState, current: state };
       Object.defineProperty(entry, 'modified', {
         get() {
-          return !utils.targetEquals(entry.current, newState);
+          return !utils.targetEquals(entry.current, entry.state);
         }
       });
       Object.defineProperty(entry, 'disconnected', {
@@ -131,6 +131,25 @@ function _updateAgentsMap(agentsMap, agentStates) {
     const entry = this._agentsMap.get(agentKey);
     entry.current = null;
   }
+}
+
+function _resetProviders(agentEntry) {
+  const freshProviders = [];
+  for (const provider of agentEntry.current.enabledProviders) {
+    freshProviders.push(_enhanceProviderState(provider));
+  }
+  agentEntry.state.enabledProviders = freshProviders;
+}
+
+function _resetFilter(agentEntry) {
+  const filterModel = agentEntry.state.filterModel;
+  filterModel.filter = agentEntry.current.filterBody;
+  filterModel.diagnostics = [];
+}
+
+function _resetEventSink(agentEntry) {
+  const currentState = agentEntry.current;
+  agentEntry.state.eventSink = utils.clone(currentState.eventSink);
 }
 
 class EtwAppModel {
@@ -236,12 +255,15 @@ class EtwAppModel {
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
-  getAgentStates() {
+  getAgentStates(reset) {
     return this.fetcher.getJson('GetAgentStates')
       .then(st => {
         const rawThis = raw(this);
         _updateAgentsMap(rawThis._agentsMap, st.agents);
         _updateAgentsList(this.agents, rawThis._agentsMap);
+        if (reset) {
+          this.resetAll();
+        }
       })
       .catch(error => window.etwApp.defaultHandleError(error));
   }
@@ -268,12 +290,7 @@ class EtwAppModel {
   resetProviders() {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return;
-
-    const freshProviders = [];
-    for (const provider of activeEntry.current.enabledProviders) {
-      freshProviders.push(_enhanceProviderState(provider));
-    }
-    activeEntry.state.enabledProviders = freshProviders;
+    _resetProviders(activeEntry);
   }
 
   get providersModified() {
@@ -315,10 +332,7 @@ class EtwAppModel {
   resetFilter() {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return;
-
-    const filterModel = activeEntry.state.filterModel;
-    filterModel.filter = activeEntry.current.filterBody;
-    filterModel.diagnostics = [];
+    _resetFilter(activeEntry);
   }
 
   get filterModified() {
@@ -343,9 +357,7 @@ class EtwAppModel {
   resetEventSink() {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return;
-
-    const currentState = activeEntry.current;
-    activeEntry.state.eventSink = utils.clone(currentState.eventSink);
+    _resetEventSink(activeEntry);
   }
 
   get eventSinkModified() {
@@ -355,6 +367,12 @@ class EtwAppModel {
   }
 
   //#endregion
+
+  resetAll() {
+    const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
+    if (!activeEntry) return;
+    activeEntry.state = utils.clone(activeEntry.current);
+  }
 }
 
 export default EtwAppModel;

@@ -40,7 +40,7 @@ class EtwAppSideBar extends LitMvvmElement {
   }
 
   _refreshStates() {
-    this.model.getAgentStates();
+    this.model.getAgentStates(true);
   }
 
   //#region overrides
