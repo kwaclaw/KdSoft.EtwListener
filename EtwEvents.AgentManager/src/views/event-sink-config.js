@@ -222,10 +222,10 @@ class EventSinkConfig extends LitMvvmElement {
           <button type="button" class="py-1 px-2" @click=${this._export} title="Export">
             <i class="fas fa-lg fa-file-export text-gray-600"></i>
           </button>
-          <button type="button" class="py-1 px-2 ml-auto" @click=${this._apply} title="Save">
+          <button type="button" class="py-1 px-2 ml-auto" @click=${this._apply} title="Apply">
             <i class="fas fa-lg fa-check text-green-500"></i>
           </button>
-          <button type="button" class="py-1 px-2" @click=${this._cancel} title="Cancel" autofocus>
+          <button type="button" class="py-1 px-2" @click=${this._cancel} title="Reset to Current" autofocus>
             <i class="fas fa-lg fa-times text-red-500"></i>
           </button>
         </div>

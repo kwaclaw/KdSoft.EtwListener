@@ -246,6 +246,8 @@ class EtwAppModel {
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
+  //#region Providers
+
   applyProviders() {
     const agentState = this.activeAgentState;
     if (!agentState) return;
@@ -273,6 +275,16 @@ class EtwAppModel {
     }
     activeEntry.state.enabledProviders = freshProviders;
   }
+
+  get providersModified() {
+    const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
+    if (!activeEntry) return false;
+    return !utils.targetEquals(activeEntry.current.enabledProviders, activeEntry.state.enabledProviders);
+  }
+
+  //#endregion
+
+  //#region Filter
 
   testFilter() {
     const agentState = this.activeAgentState;
@@ -309,6 +321,16 @@ class EtwAppModel {
     filterModel.diagnostics = [];
   }
 
+  get filterModified() {
+    const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
+    if (!activeEntry) return false;
+    return !utils.targetEquals(activeEntry.current.filterBody, activeEntry.state.filterBody);
+  }
+
+  //#endregion
+
+  //#region EventSink
+
   updateEventSink() {
     const agentState = this.activeAgentState;
     if (!agentState) return;
@@ -331,6 +353,8 @@ class EtwAppModel {
     if (!activeEntry) return false;
     return !utils.targetEquals(activeEntry.current.eventSink, activeEntry.state.eventSink);
   }
+
+  //#endregion
 }
 
 export default EtwAppModel;

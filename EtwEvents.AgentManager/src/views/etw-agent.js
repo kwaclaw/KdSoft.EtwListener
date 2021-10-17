@@ -160,7 +160,7 @@ class EtwAgent extends LitMvvmElement {
           ? html`
               <form id="providers" class="max-w-full border">
                 <div class="flex my-2 pr-2">
-                  <span class="font-semibold">Event Providers</span>
+                  <span class="font-semibold ${this.model.providersModified ? 'italic text-red-500' : ''}">Event Providers</span>
                   <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
                     @click=${this._addProviderClick}>
                   </span>
@@ -177,7 +177,7 @@ class EtwAgent extends LitMvvmElement {
                   <button type="button" class="py-1 px-2 ml-auto" @click=${this._applyProvidersClick} title="Apply">
                     <i class="fas fa-lg fa-check text-green-500"></i>
                   </button>
-                  <button type="button" class="py-1 px-2" @click=${this._resetProvidersClick} title="Cancel">
+                  <button type="button" class="py-1 px-2" @click=${this._resetProvidersClick} title="Reset to Current">
                     <i class="fas fa-lg fa-times text-red-500"></i>
                   </button>
                 </div>
@@ -185,7 +185,7 @@ class EtwAgent extends LitMvvmElement {
 
               <form id="filter" class="max-w-full border">
                 <div class="flex my-2 pr-2">
-                  <span class="font-semibold">Filter</span>
+                  <span class="font-semibold ${this.model.filterModified ? 'italic text-red-500' : ''}">Filter</span>
                 </div>
                 <filter-edit class="p-2" .model=${activeAgentState.filterModel}></filter-edit>
                 <hr class="my-3" />
@@ -196,7 +196,7 @@ class EtwAgent extends LitMvvmElement {
                   <button type="button" class="py-1 px-2 ml-auto" @click=${this._applyFilterClick} title="Apply">
                     <i class="fas fa-lg fa-check text-green-500"></i>
                   </button>
-                  <button type="button" class="py-1 px-2" @click=${this._resetFilterClick} title="Cancel">
+                  <button type="button" class="py-1 px-2" @click=${this._resetFilterClick} title="Reset to Current">
                     <i class="fas fa-lg fa-times text-red-500"></i>
                   </button>
                 </div>
@@ -204,8 +204,7 @@ class EtwAgent extends LitMvvmElement {
 
               <form id="event-sink" class="max-w-full border">
                 <div class="flex my-2 pr-2">
-                  <span class="font-semibold">Event Sink</span>
-                  <span class="ml-auto italic text-red-500" ?hidden=${!this.model.eventSinkModified}>Modified</span>
+                  <span class="font-semibold ${this.model.eventSinkModified ? 'italic text-red-500' : ''}">Event Sink</span>
                 </div>
                 <event-sink-config .model=${activeAgentState.sinkConfigModel}></event-sink-config>
               </form>
