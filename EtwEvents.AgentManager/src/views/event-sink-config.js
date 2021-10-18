@@ -42,8 +42,8 @@ class EventSinkConfig extends LitMvvmElement {
     this.checklistConnector = new KdSoftDropdownChecklistConnector(
       () => this.renderRoot.getElementById('sinktype-ddown'),
       () => this.renderRoot.getElementById('sinktype-list'),
-      model => {
-        const item = model.firstSelectedEntry?.item;
+      listModel => {
+        const item = listModel.firstSelectedEntry?.item;
         if (item) return `${item.sinkType} (${item.version})`;
         return '';
       }
@@ -232,6 +232,10 @@ class EventSinkConfig extends LitMvvmElement {
       </form>
     `;
     return result;
+  }
+
+  rendered() {
+    this.checklistConnector.reconnectDropdownSlot();
   }
 }
 
