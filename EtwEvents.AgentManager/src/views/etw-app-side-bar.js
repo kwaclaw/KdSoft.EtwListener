@@ -12,6 +12,7 @@ import spinnerStyles from '../styles/spinner-styles.js';
 import appStyles from '../styles/etw-app-styles.js';
 import dialogStyles from '../styles/dialog-polyfill-styles.js';
 import * as utils from '../js/utils.js';
+import AgentConfig from '../js/agentConfig.js';
 
 function getAgentIndex(agentList, agentId) {
   return agentList.findIndex(val => val.id === agentId);
@@ -38,6 +39,31 @@ class EtwAppSideBar extends LitMvvmElement {
   _stopEvents(agentState) {
     if (agentState.isRunning) this.model.stopEvents();
   }
+
+  _export(agentState) {
+    if (!agentState) return;
+
+    const exportObject = new AgentConfig();
+    utils.setTargetProperties(exportObject, agentState);
+    const exportString = JSON.stringify(exportObject, null, 2);
+    const exportURL = `data:text/plain,${exportString}`;
+
+    const a = document.createElement('a');
+    try {
+      a.style.display = 'none';
+      a.href = exportURL;
+      a.download = `${exportObject.id}.json`;
+      document.body.appendChild(a);
+      a.click();
+    } finally {
+      document.body.removeChild(a);
+    }
+  }
+
+  _import(agentState) {
+    //
+  }
+
 
   _refreshStates() {
     this.model.getAgentStates(true);
@@ -200,10 +226,21 @@ class EtwAppSideBar extends LitMvvmElement {
         <div part="header" slot="header" class="flex items-baseline pr-1 text-white bg-gray-500">
           <label class="pl-1 font-bold text-xl">${entry.state.id}</label>
           <span class="ml-auto">
+            <button class="mr-1 text-gray-600" @click=${() => this._import(entry.state)} title="Import Configuration">
+              <i class="fas fa-file-import"></i>
+            </button>
+            <button class="mr-6 text-gray-600" @click=${() => this._export(entry.state)} title="Export Configuration">
+              <i class="fas fa-file-export"></i>
+            </button>
+
             ${onlyModified ? html`<button class="mr-1 text-yellow-800 fas fa-pencil-alt"></button>` : nothing}
             ${entry.disconnected ? html`<i class="mr-1 text-red-800 fas fa-unlink"></i>` : nothing}
-            <button class="mr-1 ${playClass} fas fa-play" @click=${() => this._startEvents(entry.current)}></button>
-            <button class="mr-1 ${stopClass} fas fa-stop" @click=${() => this._stopEvents(entry.current)}></button>
+            <button class="mr-1 ${playClass}" @click=${() => this._startEvents(entry.current)} title="Start Session">
+              <i class="fas fa-play"></i>
+            </button>
+            <button class="mr-1 ${stopClass}" @click=${() => this._stopEvents(entry.current)} title="Stop Session">
+              <i class="fas fa-stop"></i>
+            </button>
           </span>
         </div>
         <!-- using part="slot" we can style this from here even though it will be rendered inside a web component -->
