@@ -17,7 +17,7 @@ const traceLevelList = () => [
 ];
 
 function _enhanceProviderState(provider) {
-  if (!provider.levelChecklistModel) {
+  if (!(raw(provider.levelChecklistModel) instanceof KdSoftChecklistModel)) {
     provider.levelChecklistModel = observable(new KdSoftChecklistModel(
       traceLevelList(),
       [provider.level || 0],
@@ -25,15 +25,16 @@ function _enhanceProviderState(provider) {
       item => item.value
     ));
     provider._levelObserver = observe(() => {
-      provider.level = provider.levelChecklistModel.firstSelectedEntry.item.value;
+      provider.level = provider.levelChecklistModel.firstSelectedEntry?.item.value || 0;
     });
   }
+  provider.levelChecklistModel.selectIndex(provider.level, true);
   return provider;
 }
 
 // adds view models and view related methods to agent state, agentState must be observable
 function _enhanceAgentState(agentState, eventSinkInfos) {
-  if (!agentState.filterModel) {
+  if (!(raw(agentState.filterModel) instanceof Object)) {
     agentState.filterModel = {
       filter: agentState.filterBody,
       diagnostics: []
@@ -42,6 +43,7 @@ function _enhanceAgentState(agentState, eventSinkInfos) {
       agentState.filterBody = agentState.filterModel.filter;
     });
   }
+  agentState.filterModel.filter = agentState.filterBody;
 
   for (const provider of agentState.enabledProviders) {
     _enhanceProviderState(provider);
@@ -61,7 +63,7 @@ function _enhanceAgentState(agentState, eventSinkInfos) {
     if (index >= 0) agentState.enabledProviders.splice(index, 1);
   };
 
-  if (!agentState.sinkConfigModel) {
+  if (!(raw(agentState.sinkConfigModel) instanceof EventSinkConfigModel)) {
     agentState.sinkConfigModel = new EventSinkConfigModel(eventSinkInfos, agentState);
   }
 
