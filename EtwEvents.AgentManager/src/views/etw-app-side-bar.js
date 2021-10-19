@@ -40,7 +40,7 @@ class EtwAppSideBar extends LitMvvmElement {
     if (agentState.isRunning) this.model.stopEvents();
   }
 
-  _export(agentState) {
+  _exportAgentConfig(agentState) {
     if (!agentState) return;
 
     const exportObject = new AgentConfig();
@@ -60,10 +60,22 @@ class EtwAppSideBar extends LitMvvmElement {
     }
   }
 
-  _import(agentState) {
-    //
+  _importDialog() {
+    const fileDlg = this.renderRoot.getElementById('import-agent-config');
+    // reset value so that @change event fires reliably
+    fileDlg.value = null;
+    fileDlg.click();
   }
 
+  _importAgentConfig(e, agentState) {
+    const selectedFile = e.currentTarget.files[0];
+    if (!selectedFile) return;
+
+    selectedFile.text().then(txt => {
+      const importObject = JSON.parse(txt);
+      this.model.updateAgentState(importObject);
+    });
+  }
 
   _refreshStates() {
     this.model.getAgentStates(true);
@@ -226,10 +238,14 @@ class EtwAppSideBar extends LitMvvmElement {
         <div part="header" slot="header" class="flex items-baseline pr-1 text-white bg-gray-500">
           <label class="pl-1 font-bold text-xl">${entry.state.id}</label>
           <span class="ml-auto">
-            <button class="mr-1 text-gray-600" @click=${() => this._import(entry.state)} title="Import Configuration">
+            <input id="import-agent-config"
+              type="file"
+              @change=${e => this._importAgentConfig(e, entry.state)}
+              hidden />
+            <button class="mr-1 text-gray-600" @click=${this._importDialog} title="Import Configuration">
               <i class="fas fa-file-import"></i>
             </button>
-            <button class="mr-6 text-gray-600" @click=${() => this._export(entry.state)} title="Export Configuration">
+            <button class="mr-6 text-gray-600" @click=${() => this._exportAgentConfig(entry.state)} title="Export Configuration">
               <i class="fas fa-file-export"></i>
             </button>
 

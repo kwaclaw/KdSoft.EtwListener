@@ -243,6 +243,13 @@ class EtwAppModel {
     return entry.state;
   }
 
+  updateAgentState(updateObject) {
+    const entry = this._agentsMap.get(this.activeAgentId);
+    if (!entry) return;
+
+    utils.setTargetProperties(entry.state, updateObject);
+  }
+
   startEvents() {
     const agentState = this.activeAgentState;
     if (!agentState) return;

@@ -4,7 +4,6 @@ import { LitMvvmElement, html, nothing, css } from '@kdsoft/lit-mvvm';
 import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
-//import appStyles from '../styles/etw-app-styles.js';
 import {
   KdSoftDropdownModel,
   KdSoftDropdownChecklistConnector,
