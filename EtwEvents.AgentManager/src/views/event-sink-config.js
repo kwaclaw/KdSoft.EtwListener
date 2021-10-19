@@ -84,13 +84,12 @@ class EventSinkConfig extends LitMvvmElement {
     return this.renderRoot.querySelector('#form-content form').reportValidity();
   }
 
-  async _loadConfigComponent(sinkInfo) {
+  async _loadConfigComponent(sinkInfo, sinkProfile) {
     if (sinkInfo) {
       try {
         const configFormTemplate = await loadSinkDefinitionTemplate(sinkInfo);
         const configModel = await loadSinkDefinitionModel(sinkInfo);
 
-        let sinkProfile = this.model.sinkProfile;
         if (sinkProfile && sinkProfile.sinkType === sinkInfo.sinkType && sinkProfile.version === sinkInfo.version) {
           utils.setTargetProperties(configModel, sinkProfile);
         } else {
@@ -138,9 +137,11 @@ class EventSinkConfig extends LitMvvmElement {
     if (this._eventSinkObserver) {
       unobserve(this._eventSinkObserver);
     }
-    this._eventSinkObserver = observe(async () => {
+    this._eventSinkObserver = observe(() => {
+      // need to read observed properties synchronously!
       const selectedSinkInfoEntry = this.model.sinkInfoCheckListModel.firstSelectedEntry;
-      await this._loadConfigComponent(selectedSinkInfoEntry?.item);
+      const sinkProfile = this.model.sinkProfile;
+      this._loadConfigComponent(selectedSinkInfoEntry?.item, sinkProfile);
     });
   }
 

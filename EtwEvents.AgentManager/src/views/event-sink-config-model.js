@@ -1,6 +1,6 @@
 ﻿/* global i18n */
 
-import { observable, observe, unobserve, raw } from '@nx-js/observer-util/dist/es.es6.js';
+import { observe } from '@nx-js/observer-util/dist/es.es6.js';
 import { KdSoftChecklistModel } from '@kdsoft/lit-mvvm-components';
 
 class EventSinkConfigModel {

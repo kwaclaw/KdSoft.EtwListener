@@ -6,6 +6,7 @@ import EventSinkConfigModel from './event-sink-config-model.js';
 import RingBuffer from '../js/ringBuffer.js';
 import * as utils from '../js/utils.js';
 import FetchHelper from '../js/fetchHelper.js';
+import AgentConfig from '../js/agentConfig.js';
 
 const traceLevelList = () => [
   { name: i18n.__('Always'), value: 0 },
@@ -177,8 +178,6 @@ class EtwAppModel {
     const fetcher = new FetchHelper('/Manager');
     this.fetcher = fetcher;
 
-    console.log(`etw-app-model: fetcher route: ${fetcher.route}.`);
-
     //TODO when running in dev mode with vite, we can only serve files under the root, i.e. 'src'
     //     so maybe we need to copy the event sink config files to a directory under src on AgentManager build
 
@@ -236,18 +235,21 @@ class EtwAppModel {
 
   get agents() { return this._agents; }
   get activeAgentState() {
-    const entry = raw(this)._agentsMap.get(this.activeAgentId);
-    if (!entry) return null;
+    const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
+    if (!activeEntry) return null;
 
-    entry.state = _enhanceAgentState(entry.state, this.eventSinkInfos);
-    return entry.state;
+    activeEntry.state = _enhanceAgentState(activeEntry.state, this.eventSinkInfos);
+    return activeEntry.state;
   }
 
   updateAgentState(updateObject) {
-    const entry = this._agentsMap.get(this.activeAgentId);
-    if (!entry) return;
+    const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
+    if (!activeEntry) return;
 
-    utils.setTargetProperties(entry.state, updateObject);
+    // it seems utils.setTargetProperties(entry.state, updateObject); does not work for event-sink-config
+    const newState = new AgentConfig();
+    utils.setTargetProperties(newState, updateObject);
+    activeEntry.state = newState;
   }
 
   startEvents() {
