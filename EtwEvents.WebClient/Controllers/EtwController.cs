@@ -8,7 +8,6 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
-using KdSoft.EtwEvents.WebClient.EventSinks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -26,7 +25,7 @@ namespace KdSoft.EtwEvents.WebClient
     class EtwController: ControllerBase
     {
         readonly TraceSessionManager _sessionManager;
-        readonly EventSinkService _evtSinkService;
+        readonly EventSinks.EventSinkService _evtSinkService;
         readonly IOptionsMonitor<Models.EventSessionOptions> _optionsMonitor;
         readonly IOptions<Models.ClientCertOptions> _clientCertOptions;
         readonly IOptions<JsonOptions> _jsonOptions;
@@ -34,7 +33,7 @@ namespace KdSoft.EtwEvents.WebClient
 
         public EtwController(
             TraceSessionManager sessionManager,
-            EventSinkService evtSinkService,
+            EventSinks.EventSinkService evtSinkService,
             IOptionsMonitor<Models.EventSessionOptions> optionsMonitor,
             IOptions<Models.ClientCertOptions> clientCertOptions,
             IOptions<JsonOptions> jsonOptions,
