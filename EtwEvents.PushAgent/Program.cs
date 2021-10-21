@@ -63,7 +63,10 @@ namespace KdSoft.EtwEvents.PushAgent
                         return new HttpClient(httpCertHandler);
                     });
                     services.AddSingleton(provider => new TraceSessionManager(TimeSpan.FromMinutes(3)));
-                    services.AddSingleton<EventSinkService>();
+                    services.AddSingleton(provider => new EventSinkService(
+                        hostContext.HostingEnvironment.ContentRootPath,
+                        "EventSinks"
+                    ));
                     services.AddHostedService<ControlWorker>();
                     services.AddScoped<SessionWorker>();
                 });

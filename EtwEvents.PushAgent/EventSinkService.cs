@@ -5,18 +5,19 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 using KdSoft.EtwEvents.Client.Shared;
-using Microsoft.Extensions.Hosting;
 
 namespace KdSoft.EtwEvents.PushAgent
 {
     class EventSinkService
     {
-        readonly IHostEnvironment _env;
+        readonly string _eventSinksDir;
+        readonly string _rootPath;
         readonly string[] _runtimeAssemblyPaths;
         const string SinkAssemblyFilter = "*Sink.dll";
 
-        public EventSinkService(IHostEnvironment env) {
-            this._env = env;
+        public EventSinkService(string rootPath, string eventSinksDir) {
+            this._rootPath = rootPath;
+            this._eventSinksDir = eventSinksDir;
             this._runtimeAssemblyPaths = Directory.GetFiles(RuntimeEnvironment.GetRuntimeDirectory(), "*.dll");
         }
 
@@ -25,7 +26,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 loadContext = AssemblyLoadContext.Default;
             }
 
-            var eventSinksDir = Path.Combine(_env.ContentRootPath, "EventSinks");
+            var eventSinksDir = Path.Combine(_rootPath, _eventSinksDir);
             var dirInfo = new DirectoryInfo(eventSinksDir);
             var evtSinkDirectories = dirInfo.EnumerateDirectories();
 
