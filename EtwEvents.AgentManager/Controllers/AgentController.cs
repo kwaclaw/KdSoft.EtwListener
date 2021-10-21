@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading;
@@ -19,13 +20,16 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
     class AgentController: ControllerBase
     {
         readonly AgentProxyManager _agentProxyManager;
+        readonly EventSinkService _evtSinkService;
         readonly ILogger<AgentController> _logger;
 
         public AgentController(
             AgentProxyManager agentProxyManager,
+            EventSinkService evtSinkService,
             ILogger<AgentController> logger
         ) {
             this._agentProxyManager = agentProxyManager;
+            this._evtSinkService = evtSinkService;
             this._logger = logger;
         }
 
@@ -77,22 +81,7 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
 
         #endregion
 
-        #region Updates from Agent
-
-        [HttpPost]
-        public async Task<IActionResult> UpdateState(AgentState state) {
-            var agentId = User.Identity?.Name;
-            if (agentId == null)
-                return Unauthorized();
-
-            var agentProxy = _agentProxyManager.ActivateProxy(agentId);
-            // AgentState.ID must always match the authenticated identity
-            state.Id = agentId;
-            agentProxy.SetState(state);
-
-            await _agentProxyManager.PostAgentStateChange().ConfigureAwait(false);
-            return Ok();
-        }
+        #region Responses from Agent
 
         IActionResult CompleteResponse(string eventId, string responseJson) {
             var agentId = User.Identity?.Name;
@@ -118,6 +107,34 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
         [HttpPost]
         public IActionResult ApplyFilterResult(string eventId, [FromBody] object buildFilterResult) {
             return CompleteResponse(eventId, buildFilterResult?.ToString() ?? "");
+        }
+
+        #endregion
+
+        #region Requests from Agent
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateState(AgentState state) {
+            var agentId = User.Identity?.Name;
+            if (agentId == null)
+                return Unauthorized();
+
+            var agentProxy = _agentProxyManager.ActivateProxy(agentId);
+            // AgentState.ID must always match the authenticated identity
+            state.Id = agentId;
+            agentProxy.SetState(state);
+
+            await _agentProxyManager.PostAgentStateChange().ConfigureAwait(false);
+            return Ok();
+        }
+
+
+        [HttpGet]
+        public IActionResult GetEventSinkModule(string sinkType, string version) {
+            var zipFile = _evtSinkService.GetEventSinkZipFile(sinkType, version, true);
+            if (zipFile == null)
+                return NotFound();
+            return PhysicalFile(zipFile, "application/zip", Path.GetFileName(zipFile));
         }
 
         #endregion

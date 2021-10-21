@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using KdSoft.EtwEvents.AgentManager.EventSinks;
 using KdSoft.EtwEvents.AgentManager.Services;
+using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwEvents.PushAgent;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -26,7 +27,6 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
         readonly EventSinkService _evtSinkService;
         readonly IOptions<JsonOptions> _jsonOptions;
         readonly ILogger<ManagerController> _logger;
-        //readonly JsonFormatter _jsonFormatter;
 
         public ManagerController(
             AgentProxyManager agentProxyManager,
@@ -42,7 +42,7 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
 
         [HttpGet]
         public IActionResult GetEventSinkInfos() {
-            var result = _evtSinkService.GetEventSinkInfos();
+            var result = _evtSinkService.GetEventSinkInfos().Cast<IEnumerable<EventSinkInfo>>();
             return Ok(result);
         }
 
@@ -186,7 +186,7 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
             // we are passing the JSON simply through
             return PostAgent(agentId, "UpdateEventSink", eventSinkProfile?.ToString() ?? "");
         }
-        
+
         #endregion
     }
 }

@@ -1,13 +1,13 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Globalization;
+using System.IO;
 using System.Reflection;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.AgentManager.Controllers;
-using KdSoft.EtwEvents.AgentManager.EventSinks;
 using KdSoft.EtwEvents.AgentManager.Services;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Builder;
@@ -21,21 +21,20 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using OrchardCore.Localization;
 
-#pragma warning disable CA1822 // Mark members as static
-
 namespace KdSoft.EtwEvents.AgentManager
 {
     public class Startup
     {
-        IWebHostEnvironment? _env;
+        readonly IWebHostEnvironment _env;
 
-        public Startup(IConfiguration configuration) {
+        public Startup(IConfiguration configuration, IWebHostEnvironment env) {
             Configuration = configuration;
+            this._env = env;
         }
 
         public IConfiguration Configuration { get; }
 
-        static Regex _roleRegex = new Regex(@"OID\.2\.5\.4\.72\s*=\s*(?<role>[^,=]*)\s*(,|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        static Regex s_roleRegex = new Regex(@"OID\.2\.5\.4\.72\s*=\s*(?<role>[^,=]*)\s*(,|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         public void ConfigureServices(IServiceCollection services) {
             // for IIS
@@ -68,7 +67,7 @@ namespace KdSoft.EtwEvents.AgentManager
                         // CalimsIdentity.Name here is the certificate's Subject Common Name (CN)
                         if (identity != null && identity.Name != null) {
                             string? certRole = null;
-                            var match = _roleRegex.Match(context.ClientCertificate.Subject);
+                            var match = s_roleRegex.Match(context.ClientCertificate.Subject);
                             if (match.Success) {
                                 certRole = match.Groups["role"].Value;
                             }
@@ -108,7 +107,12 @@ namespace KdSoft.EtwEvents.AgentManager
             });
 
             services.AddSingleton<AgentProxyManager>();
-            services.AddSingleton<EventSinkService>();
+            services.AddSingleton(provider => new EventSinkService(
+                _env.ContentRootPath,
+                "EventSinks",
+                "EventSinksCache",
+                Path.Combine("src", "eventSinks")
+            ));
 
             //services.AddSingleton<AppSecretsHolder>(provider => {
             //    var secretsPath = Path.Combine(_env.ContentRootPath, "appsecrets.json");
@@ -156,8 +160,6 @@ namespace KdSoft.EtwEvents.AgentManager
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
             Contract.Assert(app != null);
             Contract.Assert(env != null);
-
-            this._env = env;
 
             if (env.IsDevelopment()) {
                 app.UseExceptionHandler("/error-local-development");
