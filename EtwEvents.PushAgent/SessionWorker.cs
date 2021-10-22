@@ -20,7 +20,6 @@ namespace KdSoft.EtwEvents.PushAgent
     class SessionWorker: BackgroundService
     {
         readonly HostBuilderContext _context;
-        readonly HttpClient _http;
         readonly IOptions<EventQueueOptions> _eventQueueOptions;
         readonly EventSinkService _sinkService;
         readonly EventSinkHolder _sinkHolder;
@@ -43,7 +42,6 @@ namespace KdSoft.EtwEvents.PushAgent
             ILoggerFactory loggerFactory
         ) {
             this._context = context;
-            this._http = http;
             this._eventQueueOptions = eventQueueOptions;
             this._sinkService = sinkService;
             this._loggerFactory = loggerFactory;
@@ -162,19 +160,22 @@ namespace KdSoft.EtwEvents.PushAgent
             return new BuildFilterResult().AddDiagnostics(diagnostics);
         }
 
-        async Task<IEventSinkFactory> LoadSinkFactory(string sinkType, string version) {
+        async Task<IEventSinkFactory?> LoadSinkFactory(string sinkType, string version) {
             var loadContext = new CollectibleAssemblyLoadContext();
-            return _sinkService.LoadEventSinkFactory(sinkType, loadContext);
-            //TODO check version against locally available version
-            //     if necessary, fetch zip from AgentManager, unzip and save locally
-            //     then dynamically load sink factory - see EventSinkService.cs
+            var sinkFactory = _sinkService.LoadEventSinkFactory(sinkType, version, loadContext);
+            if (sinkFactory == null) {
+                await _sinkService.DownloadEventSink(sinkType, version);
+            }
+            sinkFactory = _sinkService.LoadEventSinkFactory(sinkType, version, loadContext);
+            return sinkFactory;
         }
 
         async Task<IEventSink> CreateEventSink(EventSinkProfile sinkProfile) {
             var optsJson = JsonSerializer.Serialize(sinkProfile.Options, _jsonOptions);
             var credsJson = JsonSerializer.Serialize(sinkProfile.Credentials, _jsonOptions);
             var sinkFactory = await LoadSinkFactory(sinkProfile.SinkType, sinkProfile.Version).ConfigureAwait(false);
-            //TODO handle null sinkFactory
+            if (sinkFactory == null)
+                throw new InvalidOperationException("Missing event sink factory.");
             return await sinkFactory.Create(optsJson, credsJson).ConfigureAwait(false);
         }
 
