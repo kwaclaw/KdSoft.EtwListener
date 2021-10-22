@@ -84,7 +84,9 @@ namespace KdSoft.EtwEvents.AgentManager.Services
 
         string GetFullEventSinkZipFileName(string sinkType, string version) {
             var zipFileName = GetEventSinkZipFileName(sinkType, version);
-            return Path.Combine(_rootPath, _eventSinksCacheDirName, zipFileName);
+            // create cache directory if it does not exist
+            var cacheDir = Directory.CreateDirectory(Path.Combine(_rootPath, _eventSinksCacheDirName));
+            return Path.Combine(cacheDir.FullName, zipFileName);
         }
 
         bool CreateEventSinkZipFile(string sinkType, string version, string zipFileName) {
@@ -114,8 +116,8 @@ namespace KdSoft.EtwEvents.AgentManager.Services
             try {
                 if (!CreateEventSinkZipFile(sinkType, version, zipTempFilename))
                     return null;
-                // this operation is atomic, it should also work when zipFileName is open with FileShare.Delete
-                File.Replace(zipTempFilename, zipFileName, null);
+                // this operation is usually atomic when on the same drive
+                File.Move(zipTempFilename, zipFileName, true);
                 return zipFileName;
             }
             finally {
