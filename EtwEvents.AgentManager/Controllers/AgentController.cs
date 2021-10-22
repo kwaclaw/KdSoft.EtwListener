@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -128,10 +129,17 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
             return Ok();
         }
 
+        public class ModuleRequest
+        {
+            [Required(AllowEmptyStrings = false)]
+            public string SinkType { get; set; } = "";
+            [Required(AllowEmptyStrings = false)]
+            public string Version { get; set; } = "";
+        }
 
-        [HttpGet]
-        public IActionResult GetEventSinkModule(string sinkType, string version) {
-            var zipFile = _evtSinkService.GetEventSinkZipFile(sinkType, version, true);
+        [HttpPost]
+        public IActionResult GetEventSinkModule(ModuleRequest request) {
+            var zipFile = _evtSinkService.GetEventSinkZipFile(request.SinkType, request.Version, true);
             if (zipFile == null)
                 return NotFound();
             return PhysicalFile(zipFile, "application/zip", Path.GetFileName(zipFile));
