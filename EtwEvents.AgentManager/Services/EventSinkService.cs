@@ -26,16 +26,11 @@ namespace KdSoft.EtwEvents.AgentManager.Services
             this._runtimeAssemblyPaths = Directory.GetFiles(RuntimeEnvironment.GetRuntimeDirectory(), "*.dll");
         }
 
-        public class EventSinkInfoEx: EventSinkInfo
-        {
-            public DirectoryInfo? Directory { get; set; }
-        }
-
         /// <summary>
         /// Returns event sink types in configured container directory.
         /// The subdirectory name must match the event sink type.
         /// </summary>
-        public IEnumerable<EventSinkInfoEx> GetEventSinkInfos() {
+        public IEnumerable<(EventSinkInfo, DirectoryInfo?)> GetEventSinkInfos() {
             var eventSinksDir = Path.Combine(_rootPath, _eventSinksDirName);
             var eventSinksConfigDir = Path.Combine(_rootPath, _eventSinksConfigDirName);
 
@@ -69,20 +64,18 @@ namespace KdSoft.EtwEvents.AgentManager.Services
                             var configViewUri = new Uri($"file:///{configView.FullName}");
                             var configModel = eventSinksConfigDirInfo.GetFiles(@$"{sinkRelativeDir}/*-config-model.js").First();
                             var configModelUri = new Uri($"file:///{configModel.FullName}");
-                            yield return new EventSinkInfoEx {
+                            var sinkInfo = new EventSinkInfo {
                                 SinkType = evtSinkType,
                                 Version = version,
                                 // relative Uri does not include "EventSinks" path component (has a trailing '/')
                                 ConfigViewUrl = eventSinksConfigDirUri.MakeRelativeUri(configViewUri),
                                 ConfigModelUrl = eventSinksConfigDirUri.MakeRelativeUri(configModelUri),
-                                Directory = evtSinkDir,
                             };
+                            yield return (sinkInfo, evtSinkDir);
                         }
                     }
                 }
             }
-
-
         }
 
         string GetEventSinkZipFileName(string sinkType, string version) {
@@ -97,10 +90,10 @@ namespace KdSoft.EtwEvents.AgentManager.Services
         bool CreateEventSinkZipFile(string sinkType, string version, string zipFileName) {
             var sinkInfos = GetEventSinkInfos();
             var matching = sinkInfos.Where(si =>
-                string.Equals(si.SinkType, sinkType, StringComparison.CurrentCultureIgnoreCase) && si.Version == version);
+                string.Equals(si.Item1.SinkType, sinkType, StringComparison.CurrentCultureIgnoreCase) && si.Item1.Version == version);
             if (!matching.Any())
                 return false;
-            var sinkDir = matching.First().Directory;
+            var sinkDir = matching.First().Item2;
             if (sinkDir == null)
                 return false;
 

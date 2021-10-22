@@ -42,7 +42,7 @@ namespace KdSoft.EtwEvents.AgentManager.Controllers
 
         [HttpGet]
         public IActionResult GetEventSinkInfos() {
-            var result = _evtSinkService.GetEventSinkInfos().Cast<IEnumerable<EventSinkInfo>>();
+            var result = _evtSinkService.GetEventSinkInfos().Select(si => si.Item1);
             return Ok(result);
         }
 
