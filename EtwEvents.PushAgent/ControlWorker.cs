@@ -23,9 +23,9 @@ namespace KdSoft.EtwEvents.PushAgent
     {
         readonly HostBuilderContext _context;
         readonly IServiceProvider _services;
+        readonly HttpClient _http;
         readonly IOptions<ControlOptions> _controlOptions;
         readonly ILogger<ControlWorker> _logger;
-        readonly HttpClient _http;
         readonly JsonSerializerOptions _jsonOptions;
 
         EventSource? _eventSource;
@@ -312,7 +312,6 @@ namespace KdSoft.EtwEvents.PushAgent
 
         public override void Dispose() {
             base.Dispose();
-            _http?.Dispose();
             _eventSource?.Dispose();
             _workerScope?.Dispose();
         }

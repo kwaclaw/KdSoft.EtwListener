@@ -14,6 +14,10 @@
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>
+    <Content Update="EventSinks/**">
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
@@ -29,4 +33,9 @@
     <ProjectReference Include="..\EtwEvents.Client.Shared\EtwEvents.Client.Shared.csproj" />
     <ProjectReference Include="..\EtwEvents.Server.Shared\EtwEvents.Server.Shared.csproj" />
   </ItemGroup>
+
+  <Target Name="CreateEventSinkFolders" AfterTargets="Publish">
+    <MakeDir Directories="$(PublishDir)EventSinks" Condition="!Exists('$(PublishDir)EventSinks')" />
+    <MakeDir Directories="$(PublishDir)EventQueue" Condition="!Exists('$(PublishDir)EventQueue')" />
+  </Target>
 </Project>
