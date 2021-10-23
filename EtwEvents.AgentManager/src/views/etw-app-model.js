@@ -131,28 +131,34 @@ function _updateAgentsMap(agentsMap, agentStates) {
 
   // indicate agents that are not connected anymore
   for (const agentKey of localAgentKeys) {
-    const entry = this._agentsMap.get(agentKey);
+    const entry = agentsMap.get(agentKey);
     entry.current = null;
   }
 }
 
 function _resetProviders(agentEntry) {
   const freshProviders = [];
-  for (const provider of agentEntry.current.enabledProviders) {
-    freshProviders.push(_enhanceProviderState(provider));
+  if (agentEntry.current) {
+    for (const provider of agentEntry.current.enabledProviders || []) {
+      freshProviders.push(_enhanceProviderState(provider));
+    }
   }
   agentEntry.state.enabledProviders = freshProviders;
 }
 
 function _resetFilter(agentEntry) {
   const filterModel = agentEntry.state.filterModel;
-  filterModel.filter = agentEntry.current.filterBody;
+  filterModel.filter = agentEntry.current?.filterBody;
   filterModel.diagnostics = [];
 }
 
 function _resetEventSink(agentEntry) {
   const currentState = agentEntry.current;
-  agentEntry.state.eventSink = utils.clone(currentState.eventSink);
+  if (currentState) {
+    agentEntry.state.eventSink = utils.clone(currentState.eventSink);
+  } else {
+    agentEntry.state.eventSink = {};
+  }
 }
 
 class EtwAppModel {
@@ -307,7 +313,7 @@ class EtwAppModel {
   get providersModified() {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return false;
-    return !utils.targetEquals(activeEntry.current.enabledProviders, activeEntry.state.enabledProviders);
+    return !utils.targetEquals(activeEntry.current?.enabledProviders, activeEntry.state.enabledProviders);
   }
 
   //#endregion
@@ -349,7 +355,7 @@ class EtwAppModel {
   get filterModified() {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return false;
-    return !utils.targetEquals(activeEntry.current.filterBody, activeEntry.state.filterBody);
+    return !utils.targetEquals(activeEntry.current?.filterBody, activeEntry.state.filterBody);
   }
 
   //#endregion
@@ -374,7 +380,7 @@ class EtwAppModel {
   get eventSinkModified() {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return false;
-    return !utils.targetEquals(activeEntry.current.eventSink, activeEntry.state.eventSink);
+    return !utils.targetEquals(activeEntry.current?.eventSink, activeEntry.state.eventSink);
   }
 
   //#endregion
@@ -382,7 +388,7 @@ class EtwAppModel {
   resetAll() {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return;
-    activeEntry.state = utils.clone(activeEntry.current);
+    activeEntry.state = utils.clone(activeEntry.current || {});
   }
 }
 

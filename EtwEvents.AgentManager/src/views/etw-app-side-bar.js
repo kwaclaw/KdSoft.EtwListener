@@ -33,11 +33,11 @@ class EtwAppSideBar extends LitMvvmElement {
   }
 
   _startEvents(agentState) {
-    if (!agentState.isRunning) this.model.startEvents();
+    if (agentState && !agentState?.isRunning) this.model.startEvents();
   }
 
   _stopEvents(agentState) {
-    if (agentState.isRunning) this.model.stopEvents();
+    if (agentState && agentState.isRunning) this.model.stopEvents();
   }
 
   _exportAgentConfig(agentState) {
@@ -231,8 +231,8 @@ class EtwAppSideBar extends LitMvvmElement {
 
   getAgentTemplate(entry) {
     const onlyModified = entry.modified && !entry.disconnected;
-    const playClass = entry.current.isRunning ? '' : 'text-green-500';
-    const stopClass = entry.current.isRunning ? 'text-red-500' : '';
+    const playClass = entry.current?.isRunning ? '' : 'text-green-500';
+    const stopClass = entry.current?.isRunning ? 'text-red-500' : '';
     return html`
       <kdsoft-expander class="w-full" .scheduler=${this.scheduler}>
         <div part="header" slot="header" class="flex items-baseline pr-1 text-white bg-gray-500">
