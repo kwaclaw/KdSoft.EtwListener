@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Google.Protobuf" Version="3.18.1" />
+    <PackageReference Include="Google.Protobuf" Version="3.19.0" />
     <PackageReference Include="Grpc.Tools" Version="2.41.0" PrivateAssets="All" />
     <PackageReference Include="Grpc.AspNetCore.Server" Version="2.40.0" />
     <PackageReference Include="KdSoft.Data.Models.Shared" Version="1.1.0" />
@@ -36,7 +36,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="5.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="6.0.0-rc.2.21480.5" />
   </ItemGroup>
 
   <ItemGroup>
