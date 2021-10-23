@@ -111,24 +111,39 @@ namespace KdSoft.EtwEvents.EventSinks
                 return new ValueTask<bool>(false);
             if (_evl.Count == 0)
                 return new ValueTask<bool>(true);
-            return new ValueTask<bool>(FlushAsyncInternal());
+            try {
+                return new ValueTask<bool>(FlushAsyncInternal());
+            }
+            catch (Exception ex) {
+                return ValueTask.FromException<bool>(ex);
+            }
         }
 
         //TODO maybe use Interlocked and two lists to keep queueing while a bulk write is in process
         public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
             if (IsDisposed)
                 return new ValueTask<bool>(false);
-            //TODO should we ignore sequenceNo?
-            _evl.Add(_jsonFormatter.Format(evt));
-            return new ValueTask<bool>(true);
+            try {
+                //TODO should we ignore sequenceNo?
+                _evl.Add(_jsonFormatter.Format(evt));
+                return new ValueTask<bool>(true);
+            }
+            catch (Exception ex) {
+                return ValueTask.FromException<bool>(ex);
+            }
         }
 
         public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch, long sequenceNo) {
             if (IsDisposed)
                 return new ValueTask<bool>(false);
-            //TODO should we ignore sequenceNo?
-            _evl.AddRange(evtBatch.Events.Select(evt => _jsonFormatter.Format(evt)));
-            return new ValueTask<bool>(true);
+            try {
+                //TODO should we ignore sequenceNo?
+                _evl.AddRange(evtBatch.Events.Select(evt => _jsonFormatter.Format(evt)));
+                return new ValueTask<bool>(true);
+            }
+            catch (Exception ex) {
+                return ValueTask.FromException<bool>(ex);
+            }
         }
     }
 }

@@ -120,27 +120,42 @@ namespace KdSoft.EtwEvents.EventSinks
         public ValueTask<bool> FlushAsync() {
             if (IsDisposed)
                 return new ValueTask<bool>(false);
-            var posted = _channel.Writer.TryWrite((_emptyEvent, 0));
-            return new ValueTask<bool>(posted);
+            try {
+                var posted = _channel.Writer.TryWrite((_emptyEvent, 0));
+                return new ValueTask<bool>(posted);
+            }
+            catch (Exception ex) {
+                return ValueTask.FromException<bool>(ex);
+            }
         }
 
         public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
             if (IsDisposed)
                 return new ValueTask<bool>(false);
-            var posted = _channel.Writer.TryWrite((evt, sequenceNo));
-            return new ValueTask<bool>(posted);
+            try {
+                var posted = _channel.Writer.TryWrite((evt, sequenceNo));
+                return new ValueTask<bool>(posted);
+            }
+            catch (Exception ex) {
+                return ValueTask.FromException<bool>(ex);
+            }
         }
 
         public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch, long sequenceNo) {
             if (IsDisposed)
                 return new ValueTask<bool>(false);
-            bool posted = true;
-            foreach (var evt in evtBatch.Events) {
-                posted = _channel.Writer.TryWrite((evt, sequenceNo++));
-                if (!posted)
-                    break;
+            try {
+                bool posted = true;
+                foreach (var evt in evtBatch.Events) {
+                    posted = _channel.Writer.TryWrite((evt, sequenceNo++));
+                    if (!posted)
+                        break;
+                }
+                return new ValueTask<bool>(posted);
             }
-            return new ValueTask<bool>(posted);
+            catch (Exception ex) {
+                return ValueTask.FromException<bool>(ex);
+            }
         }
 
         // returns true if reading is complete

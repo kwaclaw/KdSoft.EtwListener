@@ -159,23 +159,38 @@ namespace KdSoft.EtwEvents.EventSinks
             var eventBatch = _bufferWriter.WrittenMemory;
             if (eventBatch.IsEmpty)
                 return new ValueTask<bool>(true);
-            return new ValueTask<bool>(FlushAsyncInternal(eventBatch));
+            try {
+                return new ValueTask<bool>(FlushAsyncInternal(eventBatch));
+            }
+            catch (Exception ex) {
+                return ValueTask.FromException<bool>(ex);
+            }
         }
 
         public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
             if (IsDisposed)
                 return new ValueTask<bool>(false);
-            WriteEventJson(evt, sequenceNo);
-            return new ValueTask<bool>(true);
+            try {
+                WriteEventJson(evt, sequenceNo);
+                return new ValueTask<bool>(true);
+            }
+            catch (Exception ex) {
+                return ValueTask.FromException<bool>(ex);
+            }
         }
 
         public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch, long sequenceNo) {
             if (IsDisposed)
                 return new ValueTask<bool>(false);
-            foreach (var evt in evtBatch.Events) {
-                WriteEventJson(evt, sequenceNo++);
+            try {
+                foreach (var evt in evtBatch.Events) {
+                    WriteEventJson(evt, sequenceNo++);
+                }
+                return new ValueTask<bool>(true);
             }
-            return new ValueTask<bool>(true);
+            catch (Exception ex) {
+                return ValueTask.FromException<bool>(ex);
+            }
         }
 
         // Ordered opposite to SeqLogLevel, except for Always
