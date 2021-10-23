@@ -7,7 +7,6 @@ using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using KdSoft.EtwEvents.AgentManager.Controllers;
 using KdSoft.EtwEvents.AgentManager.Services;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Builder;

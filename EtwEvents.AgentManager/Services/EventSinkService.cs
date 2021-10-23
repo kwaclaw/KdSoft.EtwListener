@@ -5,7 +5,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using KdSoft.EtwEvents.Client.Shared;
+using KdSoft.EtwEvents.Client;
 
 namespace KdSoft.EtwEvents.AgentManager.Services
 {

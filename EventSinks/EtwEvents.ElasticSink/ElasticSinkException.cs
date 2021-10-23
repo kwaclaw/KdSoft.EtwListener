@@ -1,6 +1,6 @@
 ﻿using System;
 using Elasticsearch.Net;
-using KdSoft.EtwEvents.Client.Shared;
+using KdSoft.EtwEvents.Client;
 
 namespace KdSoft.EtwEvents.EventSinks
 {

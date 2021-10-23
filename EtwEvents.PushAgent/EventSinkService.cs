@@ -9,7 +9,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 using System.Threading.Tasks;
-using KdSoft.EtwEvents.Client.Shared;
+using KdSoft.EtwEvents.Client;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 

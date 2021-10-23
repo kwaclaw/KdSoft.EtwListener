@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 
-namespace KdSoft.EtwEvents.Client.Shared
+namespace KdSoft.EtwEvents.Client
 {
     public static class Utils
     {

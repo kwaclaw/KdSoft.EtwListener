@@ -2,20 +2,20 @@
 using System.Threading.Tasks;
 using KdSoft.EtwLogging;
 
-namespace KdSoft.EtwEvents.Client.Shared
+namespace KdSoft.EtwEvents
 {
     /// <summary>
     /// An event sink consumes ETW events.
     /// An event sink does not swallow exceptions, it is the application's responsibility to react to an error.
-    /// To close/stop an event sink means to dispose it.
+    /// To close/stop an event sink means to dispose it. Multiple Dispose() calls must not throw an exception.
     /// </summary>
     public interface IEventSink: IAsyncDisposable  //, IEquatable<IEventSink>
     {
         /// <summary>
-        /// Task that completes when <see cref="IEventSink"/> is finished/closed.
+        /// Task that completes when <see cref="IEventSink"/> is finished/closed or has failed.
         /// </summary>
         /// <returns><c>true</c> when already disposed, <c>false</c> otherwise.</returns>
-        Task<bool> RunTask { get; }
+        Task RunTask { get; }
 
         /// <summary>
         /// Writes event asynchronously. This may queue event for batched writing and may return synchronously.

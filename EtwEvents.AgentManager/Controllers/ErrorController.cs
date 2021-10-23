@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 
-namespace KdSoft.EtwEvents.WebClient
+namespace KdSoft.EtwEvents.AgentManager
 {
     public class ErrorController: Controller
     {

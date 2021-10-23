@@ -4,7 +4,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
-using KdSoft.EtwEvents.Client.Shared;
+using KdSoft.EtwEvents.Client;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Options;
 

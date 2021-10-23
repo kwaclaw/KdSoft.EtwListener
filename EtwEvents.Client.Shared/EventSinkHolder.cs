@@ -2,10 +2,11 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Runtime.Loader;
 using System.Threading.Tasks;
 using KdSoft.EtwLogging;
 
-namespace KdSoft.EtwEvents.Client.Shared
+namespace KdSoft.EtwEvents.Client
 {
     public class EventSinkHolder
     {
@@ -154,35 +155,58 @@ namespace KdSoft.EtwEvents.Client.Shared
             }
         }
 
-        // Note: Disposes of failed IEventSink instance
-        async Task HandleFailedEventSink(KeyValuePair<string, IEventSink> failedSinkEntry, Exception ex) {
-            var failedName = failedSinkEntry.Key;
-            var failedType = failedSinkEntry.Value.GetType().Name;
-
-            bool removed = DeleteEventSink(failedName);
-            try { await failedSinkEntry.Value.DisposeAsync().ConfigureAwait(false); }
-            catch { }
-
-            if (removed) {
-                lock (_failedEventSinkLock) {
-                    this._failedEventSinks = this._failedEventSinks.SetItem(failedName, (failedType, ex));
-                }
+        // unload only once! otherwise we get a System.ExecutionEngineException
+        void UnloadEventSink(string name, IEventSink eventSink) {
+            var sinkAssembly = eventSink.GetType().Assembly;
+            if (sinkAssembly != null) {
+                var loadContext = AssemblyLoadContext.GetLoadContext(sinkAssembly);
+                if (loadContext != null && loadContext.IsCollectible)
+                    loadContext.Unload();
             }
         }
 
-        async Task<bool> CheckEventSinkTasks((KeyValuePair<string, IEventSink> sinkEntry, ValueTask<bool> task)[] taskList, int taskCount) {
+        public async Task CloseEventSink(string name, IEventSink sink) {
+            bool removed = DeleteEventSink(name);
+            try {
+                await sink.DisposeAsync().ConfigureAwait(false);
+            }
+            finally {
+                if (removed)
+                    UnloadEventSink(name, sink);
+            }
+        }
+
+        // Note: Disposes of failed IEventSink instance
+        public async Task HandleFailedEventSink(string name, IEventSink sink, Exception ex) {
+            bool removed = DeleteEventSink(name);
+            try {
+                await sink.DisposeAsync().ConfigureAwait(false);
+                if (removed) {
+                    var failedType = sink.GetType().Name;
+                    lock (_failedEventSinkLock) {
+                        this._failedEventSinks = this._failedEventSinks.SetItem(name, (failedType, ex));
+                    }
+                }
+            }
+            finally {
+                if (removed)
+                    UnloadEventSink(name, sink);
+            }
+        }
+
+        async Task<bool> CheckEventSinkWriteTasks((KeyValuePair<string, IEventSink> sinkEntry, ValueTask<bool> task)[] taskList, int taskCount) {
             var result = true;
             for (int indx = 0; indx < taskCount; indx++) {
                 var (sinkEntry, task) = taskList[indx];
                 try {
                     var success = await task.ConfigureAwait(false);
+                    // we assume that the IEventSink.RunTask is now complete and the event sink will be closed
                     if (!success) {
-                        RemoveEventSink(sinkEntry.Key);
                         result = false;
                     }
                 }
                 catch (Exception ex) {
-                    await HandleFailedEventSink(sinkEntry, ex).ConfigureAwait(false);
+                    await HandleFailedEventSink(sinkEntry.Key, sinkEntry.Value, ex).ConfigureAwait(false);
                     result = false;
                 }
             }
@@ -207,7 +231,7 @@ namespace KdSoft.EtwEvents.Client.Shared
                 foreach (var entry in eventSinks) {
                     taskList[indx++] = (entry, entry.Value.WriteAsync(evtBatch, sequenceNo));
                 }
-                result = await CheckEventSinkTasks(taskList, eventSinks.Count).ConfigureAwait(false);
+                result = await CheckEventSinkWriteTasks(taskList, eventSinks.Count).ConfigureAwait(false);
                 if (!result)
                     return result;
 
@@ -216,7 +240,7 @@ namespace KdSoft.EtwEvents.Client.Shared
                 foreach (var entry in eventSinks) {
                     taskList[indx++] = (entry, entry.Value.FlushAsync());
                 }
-                result = await CheckEventSinkTasks(taskList, eventSinks.Count).ConfigureAwait(false);
+                result = await CheckEventSinkWriteTasks(taskList, eventSinks.Count).ConfigureAwait(false);
             }
             finally {
                 this._eventSinkTaskPool.Return(taskList);

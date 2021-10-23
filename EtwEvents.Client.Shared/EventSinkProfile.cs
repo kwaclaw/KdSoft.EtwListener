@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace KdSoft.EtwEvents.Client.Shared
+namespace KdSoft.EtwEvents.Client
 {
     public class EventSinkProfile
     {

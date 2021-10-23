@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using KdSoft.EtwEvents.Client.Shared;
+using KdSoft.EtwEvents.Client;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -16,7 +16,7 @@ using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
-using shared = KdSoft.EtwEvents.Client.Shared;
+using shared = KdSoft.EtwEvents.Client;
 
 namespace KdSoft.EtwEvents.WebClient
 {

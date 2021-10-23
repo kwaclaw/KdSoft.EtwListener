@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace KdSoft.EtwEvents.Client.Shared
+namespace KdSoft.EtwEvents.Client
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
     public class EventSinkAttribute: Attribute

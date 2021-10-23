@@ -5,7 +5,7 @@ using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
-using KdSoft.EtwEvents.Client.Shared;
+using KdSoft.EtwEvents.Client;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Logging;
 

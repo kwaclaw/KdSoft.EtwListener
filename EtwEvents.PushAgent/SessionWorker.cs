@@ -8,7 +8,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Protobuf.Collections;
-using KdSoft.EtwEvents.Client.Shared;
+using KdSoft.EtwEvents.Client;
 using KdSoft.EtwEvents.Server;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Hosting;

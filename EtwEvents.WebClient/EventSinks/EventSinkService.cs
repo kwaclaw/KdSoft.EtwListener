@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using KdSoft.EtwEvents.Client.Shared;
+using KdSoft.EtwEvents.Client;
 using KdSoft.EtwEvents.WebClient.Models;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Localization;

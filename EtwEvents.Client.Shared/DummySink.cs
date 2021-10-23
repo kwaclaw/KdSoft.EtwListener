@@ -1,11 +1,11 @@
 using System.Threading.Tasks;
 using KdSoft.EtwLogging;
 
-namespace KdSoft.EtwEvents.Client.Shared
+namespace KdSoft.EtwEvents.Client
 {
     public sealed class DummySink: IEventSink
     {
-        public Task<bool> RunTask => Task<bool>.FromResult(true);
+        public Task RunTask => Task.CompletedTask;
 
         public void Dispose() {
             //

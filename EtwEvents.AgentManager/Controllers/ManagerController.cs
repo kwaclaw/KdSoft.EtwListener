@@ -5,7 +5,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.AgentManager.Services;
-using KdSoft.EtwEvents.Client.Shared;
+using KdSoft.EtwEvents.Client;
 using KdSoft.EtwEvents.PushAgent;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -15,7 +15,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 
-namespace KdSoft.EtwEvents.AgentManager.Controllers
+namespace KdSoft.EtwEvents.AgentManager
 {
     [Authorize(Roles = "Manager")]
     [ApiController]

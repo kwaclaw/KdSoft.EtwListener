@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 
-namespace KdSoft.EtwEvents.AgentManager.Controllers
+namespace KdSoft.EtwEvents.AgentManager
 {
     [Authorize(Roles = "Agent")]
     [ApiController]

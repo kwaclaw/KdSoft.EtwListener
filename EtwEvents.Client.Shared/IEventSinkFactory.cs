@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
-namespace KdSoft.EtwEvents.Client.Shared
+namespace KdSoft.EtwEvents
 {
     public interface IEventSinkFactory
     {

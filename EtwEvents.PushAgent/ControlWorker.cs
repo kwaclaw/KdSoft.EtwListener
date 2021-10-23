@@ -8,7 +8,7 @@ using System.Net.Mime;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using KdSoft.EtwEvents.Client.Shared;
+using KdSoft.EtwEvents.Client;
 using KdSoft.EtwEvents.PushAgent.Models;
 using KdSoft.EtwLogging;
 using LaunchDarkly.EventSource;

@@ -1,5 +1,5 @@
 ﻿using System.Collections.Immutable;
-using KdSoft.EtwEvents.Client.Shared;
+using KdSoft.EtwEvents.Client;
 using KdSoft.EtwLogging;
 
 namespace KdSoft.EtwEvents.PushAgent.Models

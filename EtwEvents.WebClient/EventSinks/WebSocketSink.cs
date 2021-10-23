@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using KdSoft.EtwEvents.Client.Shared;
+using KdSoft.EtwEvents.Client;
 using KdSoft.EtwLogging;
 
 namespace KdSoft.EtwEvents.WebClient.EventSinks
@@ -23,7 +23,7 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
         CancellationToken _cancelToken;
 
         Task<bool> _receiveTask = Task.FromResult(false);
-        public Task<bool> RunTask => _receiveTask;
+        public Task RunTask => _receiveTask;
 
         public WebSocketSink(WebSocket webSocket) {
             this._webSocket = webSocket;

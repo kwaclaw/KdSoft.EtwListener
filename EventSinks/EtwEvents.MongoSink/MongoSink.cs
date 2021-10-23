@@ -4,7 +4,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using KdSoft.EtwEvents.Client.Shared;
+using KdSoft.EtwEvents.Client;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;

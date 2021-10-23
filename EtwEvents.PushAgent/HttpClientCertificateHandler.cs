@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
-using shared = KdSoft.EtwEvents.Client.Shared;
+using shared = KdSoft.EtwEvents.Client;
 
 namespace KdSoft.EtwEvents.PushAgent
 {
