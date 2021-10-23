@@ -24,7 +24,7 @@ namespace KdSoft.EtwEvents.EventSinks
 
         int _isDisposed = 0;
 
-        public Task<bool> RunTask { get; }
+        public Task RunTask { get; }
 
         public MongoSink(
             IMongoCollection<BsonDocument> coll,
@@ -125,7 +125,7 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         public ValueTask<bool> FlushAsync() {
-            if (IsDisposed)
+            if (IsDisposed || RunTask.IsCompleted)
                 return new ValueTask<bool>(false);
             if (_evl.Count == 0)
                 return new ValueTask<bool>(true);
@@ -133,13 +133,14 @@ namespace KdSoft.EtwEvents.EventSinks
                 return new ValueTask<bool>(FlushAsyncInternal());
             }
             catch (Exception ex) {
-                return ValueTask.FromException<bool>(ex);
+                _tcs.TrySetException(ex);
+                return new ValueTask<bool>(false);
             }
         }
 
         //TODO maybe use Interlocked and two lists to keep queueing while a bulk write is in process
         public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
-            if (IsDisposed)
+            if (IsDisposed || RunTask.IsCompleted)
                 return new ValueTask<bool>(false);
             try {
                 var writeModel = FromEvent(evt, sequenceNo);
@@ -152,7 +153,7 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch, long sequenceNo) {
-            if (IsDisposed)
+            if (IsDisposed || RunTask.IsCompleted)
                 return new ValueTask<bool>(false);
             try {
                 _evl.AddRange(evtBatch.Events.Select(evt => FromEvent(evt, sequenceNo++)));

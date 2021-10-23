@@ -165,6 +165,7 @@ namespace KdSoft.EtwEvents.Client
             }
         }
 
+        // Note: Disposes of IEventSink instance
         public async Task CloseEventSink(string name, IEventSink sink) {
             bool removed = DeleteEventSink(name);
             try {

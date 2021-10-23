@@ -26,7 +26,7 @@ namespace KdSoft.EtwEvents.EventSinks
 
         int _isDisposed = 0;
 
-        public Task<bool> RunTask { get; }
+        public Task RunTask { get; }
 
         public RollingFileSink(RollingFileFactory fileFactory, ILogger logger) {
             this._fileFactory = fileFactory;
@@ -60,6 +60,7 @@ namespace KdSoft.EtwEvents.EventSinks
         bool InternalDispose() {
             var oldDisposed = Interlocked.CompareExchange(ref _isDisposed, 99, 0);
             if (oldDisposed == 0) {
+                // we assume this does not throw
                 _channel.Writer.TryComplete();
                 return true;
             }
@@ -68,18 +69,28 @@ namespace KdSoft.EtwEvents.EventSinks
 
         public void Dispose() {
             if (InternalDispose()) {
-                _channel.Reader.Completion.Wait();
-                _jsonWriter.Dispose();
-                _fileFactory.Dispose();
+                try {
+                    _channel.Reader.Completion.Wait();
+                    _jsonWriter.Dispose();
+                    _fileFactory.Dispose();
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, $"Error closing event sink '{nameof(RollingFileSink)}'.");
+                }
             }
         }
 
         // Warning: ValueTasks should not be awaited multiple times
         public async ValueTask DisposeAsync() {
             if (InternalDispose()) {
-                await _channel.Reader.Completion.ConfigureAwait(false);
-                await _jsonWriter.DisposeAsync().ConfigureAwait(false);
-                await _fileFactory.DisposeAsync().ConfigureAwait(false);
+                try {
+                    await _channel.Reader.Completion.ConfigureAwait(false);
+                    await _jsonWriter.DisposeAsync().ConfigureAwait(false);
+                    await _fileFactory.DisposeAsync().ConfigureAwait(false);
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, $"Error closing event sink '{nameof(RollingFileSink)}'.");
+                }
             }
         }
 
@@ -118,7 +129,7 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         public ValueTask<bool> FlushAsync() {
-            if (IsDisposed)
+            if (IsDisposed || RunTask.IsCompleted)
                 return new ValueTask<bool>(false);
             try {
                 var posted = _channel.Writer.TryWrite((_emptyEvent, 0));
@@ -130,7 +141,7 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
-            if (IsDisposed)
+            if (IsDisposed || RunTask.IsCompleted)
                 return new ValueTask<bool>(false);
             try {
                 var posted = _channel.Writer.TryWrite((evt, sequenceNo));
@@ -142,7 +153,7 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch, long sequenceNo) {
-            if (IsDisposed)
+            if (IsDisposed || RunTask.IsCompleted)
                 return new ValueTask<bool>(false);
             try {
                 bool posted = true;

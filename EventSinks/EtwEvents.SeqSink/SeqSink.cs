@@ -37,7 +37,7 @@ namespace KdSoft.EtwEvents.EventSinks
         TraceEventLevel? _maxTraceEventLevel;
         int _isDisposed = 0;
 
-        public Task<bool> RunTask { get; }
+        public Task RunTask { get; }
 
         public SeqSink(HttpClient http, Uri requestUri, TraceEventLevel? maxLevel, ILogger logger) {
             this._http = http;
@@ -68,8 +68,13 @@ namespace KdSoft.EtwEvents.EventSinks
         public void Dispose() {
             var oldDisposed = Interlocked.CompareExchange(ref _isDisposed, 99, 0);
             if (oldDisposed == 0) {
-                _http.Dispose();
-                _jsonWriter?.Dispose();
+                try {
+                    _http.Dispose();
+                    _jsonWriter?.Dispose();
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, $"Error closing event sink '{nameof(SeqSink)}'.");
+                }
                 _tcs.TrySetResult(true);
             }
         }
@@ -80,7 +85,7 @@ namespace KdSoft.EtwEvents.EventSinks
             return ValueTask.CompletedTask;
         }
 
-        public static async Task<SeqLogLevel?> PostAsync(HttpClient http, Uri requestUri, ReadOnlyMemory<byte> eventBatch) {
+        internal static async Task<SeqLogLevel?> PostAsync(HttpClient http, Uri requestUri, ReadOnlyMemory<byte> eventBatch) {
             var response = await http.PostAsync(requestUri, new ReadOnlyMemoryContent(eventBatch)).ConfigureAwait(false);
             if (response.IsSuccessStatusCode) {
                 // parse server's mimimum accepted level and use it for future requests
@@ -154,7 +159,7 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         public ValueTask<bool> FlushAsync() {
-            if (IsDisposed)
+            if (IsDisposed || RunTask.IsCompleted)
                 return new ValueTask<bool>(false);
             var eventBatch = _bufferWriter.WrittenMemory;
             if (eventBatch.IsEmpty)
@@ -163,12 +168,13 @@ namespace KdSoft.EtwEvents.EventSinks
                 return new ValueTask<bool>(FlushAsyncInternal(eventBatch));
             }
             catch (Exception ex) {
-                return ValueTask.FromException<bool>(ex);
+                _tcs.TrySetException(ex);
+                return new ValueTask<bool>(false);
             }
         }
 
         public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
-            if (IsDisposed)
+            if (IsDisposed || RunTask.IsCompleted)
                 return new ValueTask<bool>(false);
             try {
                 WriteEventJson(evt, sequenceNo);
@@ -180,7 +186,7 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch, long sequenceNo) {
-            if (IsDisposed)
+            if (IsDisposed || RunTask.IsCompleted)
                 return new ValueTask<bool>(false);
             try {
                 foreach (var evt in evtBatch.Events) {

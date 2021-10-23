@@ -23,7 +23,7 @@ namespace KdSoft.EtwEvents.EventSinks
 
         int _isDisposed = 0;
 
-        public Task<bool> RunTask { get; }
+        public Task RunTask { get; }
 
         public ElasticSink(ElasticSinkOptions options, string dbUser, string dbPwd, ILogger logger) {
             this._options = options;
@@ -68,20 +68,20 @@ namespace KdSoft.EtwEvents.EventSinks
         public void Dispose() {
             var oldDisposed = Interlocked.CompareExchange(ref _isDisposed, 99, 0);
             if (oldDisposed == 0) {
-                _connectionPool.Dispose();
+                try {
+                    _connectionPool.Dispose();
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, $"Error closing event sink '{nameof(ElasticSink)}'.");
+                }
                 _tcs.TrySetResult(true);
             }
         }
 
         // Warning: ValueTasks should not be awaited multiple times
         public ValueTask DisposeAsync() {
-            try {
-                Dispose();
-                return default;
-            }
-            catch (Exception ex) {
-                return ValueTask.FromException(ex);
-            }
+            Dispose();
+            return default;
         }
 
         static IEnumerable<string> EnumerateInsertRecords(string bulkMeta, List<string> irList) {
@@ -103,11 +103,13 @@ namespace KdSoft.EtwEvents.EventSinks
             if (bulkResponse.TryGetServerError(out var error)) {
                 throw new ElasticSinkException($"Error sending bulk response in {nameof(ElasticSink)}.", error);
             }
-            return false;
+            else {
+                throw new EventSinkException(bulkResponse.DebugInformation, bulkResponse.OriginalException);
+            }
         }
 
         public ValueTask<bool> FlushAsync() {
-            if (IsDisposed)
+            if (IsDisposed || RunTask.IsCompleted)
                 return new ValueTask<bool>(false);
             if (_evl.Count == 0)
                 return new ValueTask<bool>(true);
@@ -115,13 +117,14 @@ namespace KdSoft.EtwEvents.EventSinks
                 return new ValueTask<bool>(FlushAsyncInternal());
             }
             catch (Exception ex) {
-                return ValueTask.FromException<bool>(ex);
+                _tcs.TrySetException(ex);
+                return new ValueTask<bool>(false);
             }
         }
 
         //TODO maybe use Interlocked and two lists to keep queueing while a bulk write is in process
         public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
-            if (IsDisposed)
+            if (IsDisposed || RunTask.IsCompleted)
                 return new ValueTask<bool>(false);
             try {
                 //TODO should we ignore sequenceNo?
@@ -134,7 +137,7 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch, long sequenceNo) {
-            if (IsDisposed)
+            if (IsDisposed || RunTask.IsCompleted)
                 return new ValueTask<bool>(false);
             try {
                 //TODO should we ignore sequenceNo?

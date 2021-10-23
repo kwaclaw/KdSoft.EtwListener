@@ -181,39 +181,20 @@ namespace KdSoft.EtwEvents.PushAgent
             return await sinkFactory.Create(optsJson, credsJson, logger).ConfigureAwait(false);
         }
 
-        // this can be called from two locations: ConfigureEventSinkClosure() and ExecuteAsync()->CloseEventSinks()
-        void UnloadEventSink(string name, IEventSink eventSink) {
-            // unload only once! otherwise we get a System.ExecutionEngineException
-            if (_sinkHolder.DeleteEventSink(name)) {
-                var sinkAssembly = eventSink.GetType().Assembly;
-                if (sinkAssembly != null) {
-                    var loadContext = AssemblyLoadContext.GetLoadContext(sinkAssembly);
-                    (loadContext as CollectibleAssemblyLoadContext)?.Unload();
-                }
-            }
-        }
-
-        async Task CloseEventSink(string name, IEventSink sink, bool alreadyDisposed) {
-            try {
-                if (!alreadyDisposed) { // was not disposed
-                    await sink.DisposeAsync().ConfigureAwait(false);
-                }
-            }
-            catch (Exception ex) {
-                _logger.LogError(ex, $"Error closing event sink '{name}'.");
-            }
-            finally {
-                UnloadEventSink(name, sink);
-            }
-        }
-
         Task ConfigureEventSinkClosure(string name, IEventSink sink) {
-            return sink.RunTask.ContinueWith(rt => CloseEventSink(name, sink, !rt.Result), TaskScheduler.Default);
+            return sink.RunTask.ContinueWith(async rt => {
+                if (rt.Exception != null) {
+                    await _sinkHolder.HandleFailedEventSink(name, sink, rt.Exception).ConfigureAwait(false);
+                }
+                else {
+                    await _sinkHolder.CloseEventSink(name, sink).ConfigureAwait(false);
+                }
+            }, TaskScheduler.Default);
         }
 
         async Task CloseEventSinks() {
             var (activeSinks, failedSinks) = _sinkHolder.ClearEventSinks();
-            var disposeEntries = activeSinks.Select(sink => (sink.Key, CloseEventSink(sink.Key, sink.Value, false))).ToArray();
+            var disposeEntries = activeSinks.Select(sink => (sink.Key, _sinkHolder.CloseEventSink(sink.Key, sink.Value))).ToArray();
             foreach (var disposeEntry in disposeEntries) {
                 try {
                     await disposeEntry.Item2.ConfigureAwait(false);
