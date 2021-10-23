@@ -101,7 +101,7 @@ namespace KdSoft.EtwEvents.EventSinks
                 return true;
 
             if (bulkResponse.TryGetServerError(out var error)) {
-                //TODO log error
+                throw new ElasticSinkException($"Error sending bulk response in {nameof(ElasticSink)}.", error);
             }
             return false;
         }
