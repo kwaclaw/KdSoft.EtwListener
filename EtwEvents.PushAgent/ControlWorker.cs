@@ -32,8 +32,8 @@ namespace KdSoft.EtwEvents.PushAgent
         IServiceScope? _workerScope;
 
         SessionWorker? _sessionWorker;  // only valid when _workerAvailable != 0
-        int _workerAvailable = 0;
-        SessionWorker? SessionWorker => _workerAvailable == 0 ? null : _sessionWorker!;
+        int _sessionWorkerAvailable = 0;
+        SessionWorker? SessionWorker => _sessionWorkerAvailable == 0 ? null : _sessionWorker!;
 
         public ControlWorker(
             HostBuilderContext context,
@@ -61,7 +61,7 @@ namespace KdSoft.EtwEvents.PushAgent
         async Task ProcessEvent(ControlEvent sse) {
             switch (sse.Event) {
                 case "Start":
-                    if (_workerAvailable != 0) {
+                    if (_sessionWorkerAvailable != 0) {
                         _logger?.LogInformation("Session already starting.");
                         return;
                     }
@@ -71,7 +71,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     }
                     return;
                 case "Stop":
-                    if (_workerAvailable == 0) {
+                    if (_sessionWorkerAvailable == 0) {
                         _logger?.LogInformation("Session already stopping.");
                         return;
                     }
@@ -85,7 +85,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
             // for the rest, SessionWorker must be running
             SessionWorker? worker;
-            if (_workerAvailable == 0 || (worker = SessionWorker) == null) {
+            if (_sessionWorkerAvailable == 0 || (worker = SessionWorker) == null) {
                 _logger?.LogInformation("No session available for request.");
                 return;
             }
@@ -161,7 +161,7 @@ namespace KdSoft.EtwEvents.PushAgent
             var ses = SessionWorker?.Session;
             //var agentName = _httpCertHandler.ClientCert.GetNameInfo(X509NameType.SimpleName, false);
             //var agentEmail = _httpCertHandler.ClientCert.GetNameInfo(X509NameType.EmailName, false);
-            var isRunning = _workerAvailable != 0;
+            var isRunning = _sessionWorkerAvailable != 0;
             var eventSinkState = new EventSinkState();
             if (isRunning && SessionWorker != null) {
                 eventSinkState.Profile = SessionWorker.EventSinkProfile;
@@ -230,7 +230,7 @@ namespace KdSoft.EtwEvents.PushAgent
         //TODO use async disposable service scope when in .NET 6.0;
 
         async Task<bool> StartWorker(CancellationToken cancelToken) {
-            if (_workerAvailable != 0)
+            if (_sessionWorkerAvailable != 0)
                 return false;
 
             var scope = _services.CreateScope();
@@ -254,7 +254,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 // if we executing worker Task ends on its own (error?), clean up and update state
                 _ = sessionWorker.ExecuteTask
                     .ContinueWith(swt => {
-                        Interlocked.Exchange(ref _workerAvailable, 0);
+                        Interlocked.Exchange(ref _sessionWorkerAvailable, 0);
                         var oldScope = Interlocked.CompareExchange<IServiceScope?>(ref this._workerScope, null, scope);
                         oldScope?.Dispose();
                         Interlocked.CompareExchange(ref this._sessionWorker, null, sessionWorker);
@@ -264,7 +264,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 await workerStartTask.ConfigureAwait(false);
 
                 this._sessionWorker = sessionWorker;
-                Interlocked.Exchange(ref _workerAvailable, 99);
+                Interlocked.Exchange(ref _sessionWorkerAvailable, 99);
                 return true;
             }
             catch {
@@ -274,7 +274,7 @@ namespace KdSoft.EtwEvents.PushAgent
         }
 
         async Task<bool> StopWorker(CancellationToken cancelToken) {
-            var oldWorkerAvailable = Interlocked.Exchange(ref _workerAvailable, 0);
+            var oldWorkerAvailable = Interlocked.Exchange(ref _sessionWorkerAvailable, 0);
             if (oldWorkerAvailable == 0)
                 return false;
 

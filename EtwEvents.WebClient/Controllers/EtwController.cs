@@ -133,9 +133,7 @@ namespace KdSoft.EtwEvents.WebClient
         Task ConfigureEventSinkClosure(string name, IEventSink sink, EventSinkHolder holder) {
             return sink.RunTask.ContinueWith(async rt => {
                 try {
-                    if (!rt.Result) { // was not disposed
-                        await sink.DisposeAsync().ConfigureAwait(false);
-                    }
+                    await sink.DisposeAsync().ConfigureAwait(false);
                     holder.DeleteEventSink(name);
                     await _sessionManager.PostSessionStateChange().ConfigureAwait(false);
                 }
