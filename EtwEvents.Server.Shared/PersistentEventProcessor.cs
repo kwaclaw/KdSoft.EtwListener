@@ -85,8 +85,11 @@ namespace KdSoft.EtwEvents.Server
             if (deltaTicks > _maxWriteDelayMSecs) {
                 Volatile.Write(ref _batchCounter, 0);
                 // need a non-empty sentinel message, as FasterChannel ignores empty messages;
-                _channel.TryWrite(_batchSentinel);
-                _channel.Commit(true);
+                if (_channel.TryWrite(_batchSentinel))
+                    _channel.Commit(true);
+                else
+                    _logger.LogInformation($"Could not post batch sentinel.");
+
             }
         }
 
