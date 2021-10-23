@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
+using Microsoft.Extensions.Logging;
 
 namespace KdSoft.EtwEvents.EventSinks
 {
@@ -24,6 +25,7 @@ namespace KdSoft.EtwEvents.EventSinks
         public static Regex ErrorRegex = new Regex(@"""Error""\s*:\s*""(.+)""\s*[,\}]", RegexOptions.Compiled);
 
         readonly HttpClient _http;
+        readonly ILogger _logger;
         readonly JsonWriterOptions _jsonOptions;
         readonly ArrayBufferWriter<byte> _bufferWriter;
         readonly Utf8JsonWriter _jsonWriter;
@@ -37,10 +39,11 @@ namespace KdSoft.EtwEvents.EventSinks
 
         public Task<bool> RunTask { get; }
 
-        public SeqSink(HttpClient http, Uri requestUri, TraceEventLevel? maxLevel) {
+        public SeqSink(HttpClient http, Uri requestUri, TraceEventLevel? maxLevel, ILogger logger) {
             this._http = http;
             this._requestUri = requestUri;
             this._maxTraceEventLevel = maxLevel;
+            this._logger = logger;
 
             _tcs = new TaskCompletionSource<bool>();
             RunTask = _tcs.Task;

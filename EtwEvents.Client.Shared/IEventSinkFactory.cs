@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace KdSoft.EtwEvents.Client.Shared
 {
@@ -20,6 +21,6 @@ namespace KdSoft.EtwEvents.Client.Shared
         /// <param name="optionsJson"></param>
         /// <param name="credentialsJson"></param>
         /// <returns></returns>
-        Task<IEventSink> Create(string optionsJson, string credentialsJson);
+        Task<IEventSink> Create(string optionsJson, string credentialsJson, ILogger logger);
     }
 }

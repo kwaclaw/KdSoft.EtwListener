@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
+using Microsoft.Extensions.Logging;
 
 namespace KdSoft.EtwEvents.EventSinks
 {
@@ -25,7 +26,7 @@ namespace KdSoft.EtwEvents.EventSinks
             };
         }
 
-        public async Task<IEventSink> Create(SeqSinkOptions options, string? apiKey = null) {
+        public async Task<IEventSink> Create(SeqSinkOptions options, ILogger logger, string? apiKey = null) {
             var serverUrl = new Uri(options.ServerUrl, UriKind.Absolute);
             var requestUri = new Uri(serverUrl, SeqSink.BulkUploadResource);
 
@@ -49,19 +50,20 @@ namespace KdSoft.EtwEvents.EventSinks
                 var minSeqLevel = await SeqSink.PostAsync(http, requestUri, ReadOnlyMemory<byte>.Empty);
                 TraceEventLevel? maxLevel = minSeqLevel == null ? null : SeqSink.FromSeqLogLevel(minSeqLevel.Value);
 
-                return new SeqSink(http, requestUri, maxLevel);
+                return new SeqSink(http, requestUri, maxLevel, logger);
             }
-            catch {
+            catch(Exception ex) {
                 handler?.Dispose();
                 http?.Dispose();
+                logger.LogError(ex, $"Error in {nameof(SeqSink)} initialization.");
                 throw;
             }
         }
 
-        public Task<IEventSink> Create(string optionsJson, string credentialsJson) {
+        public Task<IEventSink> Create(string optionsJson, string credentialsJson, ILogger logger) {
             var options = JsonSerializer.Deserialize<SeqSinkOptions>(optionsJson, _serializerOptions);
             var creds = JsonSerializer.Deserialize<SeqSinkCredentials>(credentialsJson, _serializerOptions);
-            return Create(options!, creds!.ApiKey);
+            return Create(options!, logger, creds!.ApiKey);
         }
 
         public string GetCredentialsJsonSchema() {

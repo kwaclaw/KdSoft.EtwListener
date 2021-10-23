@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
 using KdSoft.Utils;
+using Microsoft.Extensions.Logging;
 
 namespace KdSoft.EtwEvents.EventSinks
 {
@@ -20,14 +21,16 @@ namespace KdSoft.EtwEvents.EventSinks
         readonly Utf8JsonWriter _jsonWriter;
         readonly ReadOnlyMemory<byte> _newLine = new byte[] { 10 };
         readonly RollingFileFactory _fileFactory;
+        readonly ILogger _logger;
         readonly Channel<(EtwEvent evt, long sequenceNo)> _channel;
 
         int _isDisposed = 0;
 
         public Task<bool> RunTask { get; }
 
-        public RollingFileSink(RollingFileFactory fileFactory) {
+        public RollingFileSink(RollingFileFactory fileFactory, ILogger logger) {
             this._fileFactory = fileFactory;
+            this._logger = logger;
             this._channel = Channel.CreateUnbounded<(EtwEvent evt, long sequenceNo)>(new UnboundedChannelOptions {
                 AllowSynchronousContinuations = true,
                 SingleReader = true,

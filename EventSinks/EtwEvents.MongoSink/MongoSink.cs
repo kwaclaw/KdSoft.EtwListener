@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
+using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
@@ -16,6 +17,7 @@ namespace KdSoft.EtwEvents.EventSinks
         readonly IMongoCollection<BsonDocument> _coll;
         readonly IImmutableList<string> _eventFilterFields;
         readonly IImmutableList<string> _payloadFilterFields;
+        readonly ILogger _logger;
         readonly FilterDefinitionBuilder<BsonDocument> _fb;
         readonly List<WriteModel<BsonDocument>> _evl;
         readonly TaskCompletionSource<bool> _tcs;
@@ -27,11 +29,13 @@ namespace KdSoft.EtwEvents.EventSinks
         public MongoSink(
             IMongoCollection<BsonDocument> coll,
             IImmutableList<string> eventFilterFields,
-            IImmutableList<string> payloadFilterFields
+            IImmutableList<string> payloadFilterFields,
+            ILogger logger
         ) {
             this._coll = coll;
             this._eventFilterFields = eventFilterFields;
             this._payloadFilterFields = payloadFilterFields;
+            this._logger = logger;
 
             _tcs = new TaskCompletionSource<bool>();
             RunTask = _tcs.Task;

@@ -164,6 +164,7 @@ namespace KdSoft.EtwEvents.PushAgent
             var loadContext = new CollectibleAssemblyLoadContext();
             var sinkFactory = _sinkService.LoadEventSinkFactory(sinkType, version, loadContext);
             if (sinkFactory == null) {
+                _logger.LogInformation($"Downloading event sink factory '{sinkType}~{version}'.");
                 await _sinkService.DownloadEventSink(sinkType, version);
             }
             sinkFactory = _sinkService.LoadEventSinkFactory(sinkType, version, loadContext);
@@ -175,8 +176,9 @@ namespace KdSoft.EtwEvents.PushAgent
             var credsJson = JsonSerializer.Serialize(sinkProfile.Credentials, _jsonOptions);
             var sinkFactory = await LoadSinkFactory(sinkProfile.SinkType, sinkProfile.Version).ConfigureAwait(false);
             if (sinkFactory == null)
-                throw new InvalidOperationException("Missing event sink factory.");
-            return await sinkFactory.Create(optsJson, credsJson).ConfigureAwait(false);
+                throw new InvalidOperationException($"Error loading event sink factory '{sinkProfile.SinkType}~{sinkProfile.Version}'.");
+            var logger = _loggerFactory.CreateLogger(sinkProfile.SinkType);
+            return await sinkFactory.Create(optsJson, credsJson, logger).ConfigureAwait(false);
         }
 
         // this can be called from two locations: ConfigureEventSinkClosure() and ExecuteAsync()->CloseEventSinks()

@@ -7,12 +7,14 @@ using Elasticsearch.Net;
 using Google.Protobuf;
 using KdSoft.EtwEvents.Client.Shared;
 using KdSoft.EtwLogging;
+using Microsoft.Extensions.Logging;
 
 namespace KdSoft.EtwEvents.EventSinks
 {
     public class ElasticSink: IEventSink
     {
         readonly ElasticSinkOptions _options;
+        readonly ILogger _logger;
         readonly IConnectionPool _connectionPool;
         readonly TaskCompletionSource<bool> _tcs;
         readonly List<string> _evl;
@@ -23,12 +25,14 @@ namespace KdSoft.EtwEvents.EventSinks
 
         public Task<bool> RunTask { get; }
 
-        public ElasticSink(ElasticSinkOptions options, string dbUser, string dbPwd) {
+        public ElasticSink(ElasticSinkOptions options, string dbUser, string dbPwd, ILogger logger) {
+            this._options = options;
+            this._logger = logger;
+
             _tcs = new TaskCompletionSource<bool>();
             RunTask = _tcs.Task;
 
             _evl = new List<string>();
-            _options = options;
 
             try {
                 IConnectionPool connectionPool;
@@ -44,8 +48,7 @@ namespace KdSoft.EtwEvents.EventSinks
                 _client = new ElasticLowLevelClient(config);
             }
             catch (Exception ex) {
-                var errStr = $@"Error in {nameof(ElasticSink)} initialization encountered:{Environment.NewLine}{ex.Message}";
-                //healthReporter.ReportProblem(errStr, EventFlowContextIdentifiers.Configuration);
+                _logger.LogError(ex, $"Error in {nameof(ElasticSink)} initialization.");
                 throw;
             }
 

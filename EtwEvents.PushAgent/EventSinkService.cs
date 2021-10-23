@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace KdSoft.EtwEvents.PushAgent
@@ -20,14 +21,22 @@ namespace KdSoft.EtwEvents.PushAgent
         readonly string _eventSinksDir;
         readonly IOptions<ControlOptions> _controlOptions;
         readonly HttpClient _http;
+        readonly ILogger<EventSinkService> _logger;
         readonly string[] _runtimeAssemblyPaths;
         const string SinkAssemblyFilter = "*Sink.dll";
 
-        public EventSinkService(string rootPath, string eventSinksDir, IOptions<ControlOptions> controlOptions, HttpClient http) {
+        public EventSinkService(
+            string rootPath,
+            string eventSinksDir,
+            IOptions<ControlOptions> controlOptions,
+            HttpClient http,
+            ILogger<EventSinkService> logger
+        ) {
             this._rootPath = rootPath;
             this._eventSinksDir = eventSinksDir;
             this._controlOptions = controlOptions;
             this._http = http;
+            this._logger = logger;
             this._runtimeAssemblyPaths = Directory.GetFiles(RuntimeEnvironment.GetRuntimeDirectory(), "*.dll");
         }
 
@@ -75,8 +84,11 @@ namespace KdSoft.EtwEvents.PushAgent
             var request = new HttpRequestMessage(HttpMethod.Post, moduleUri);
             request.Content = JsonContent.Create(new { sinkType, version });
 
-            var dirName = $"{sinkType}~{ version}";
+
+            var dirName = $"{sinkType}~{version}";
             var eventSinkDir = Path.Combine(_rootPath, _eventSinksDir, dirName);
+
+            _logger.LogInformation($"Downloading event sink module '{dirName}' from {opts.Uri}");
 
             var tempDir = Path.GetTempPath();
             var randFile = Path.GetRandomFileName();

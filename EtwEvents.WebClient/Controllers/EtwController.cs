@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 using shared = KdSoft.EtwEvents.Client.Shared;
@@ -26,6 +27,7 @@ namespace KdSoft.EtwEvents.WebClient
     {
         readonly TraceSessionManager _sessionManager;
         readonly EventSinks.EventSinkService _evtSinkService;
+        readonly ILoggerFactory _loggerFactory;
         readonly IOptionsMonitor<Models.EventSessionOptions> _optionsMonitor;
         readonly IOptions<Models.ClientCertOptions> _clientCertOptions;
         readonly IOptions<JsonOptions> _jsonOptions;
@@ -34,6 +36,7 @@ namespace KdSoft.EtwEvents.WebClient
         public EtwController(
             TraceSessionManager sessionManager,
             EventSinks.EventSinkService evtSinkService,
+            ILoggerFactory loggerFactory,
             IOptionsMonitor<Models.EventSessionOptions> optionsMonitor,
             IOptions<Models.ClientCertOptions> clientCertOptions,
             IOptions<JsonOptions> jsonOptions,
@@ -41,6 +44,7 @@ namespace KdSoft.EtwEvents.WebClient
         ) {
             this._sessionManager = sessionManager;
             this._evtSinkService = evtSinkService;
+            this._loggerFactory = loggerFactory;
             this._optionsMonitor = optionsMonitor;
             this._clientCertOptions = clientCertOptions;
             this._jsonOptions = jsonOptions;
@@ -112,7 +116,8 @@ namespace KdSoft.EtwEvents.WebClient
                         throw new InvalidOperationException($"Cannot load event sink {request.SinkType}.");
                     var optionsJson = JsonSerializer.Serialize(request.Options);
                     var credentialsJson = JsonSerializer.Serialize(request.Credentials);
-                    result = await factory.Create(optionsJson, credentialsJson).ConfigureAwait(false);
+                    var logger = _loggerFactory.CreateLogger(request.SinkType);
+                    result = await factory.Create(optionsJson, credentialsJson, logger).ConfigureAwait(false);
                     break;
             }
 

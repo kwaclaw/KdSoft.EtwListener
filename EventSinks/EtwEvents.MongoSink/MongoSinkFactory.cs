@@ -5,6 +5,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
+using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Newtonsoft.Json.Schema.Generation;
@@ -26,7 +27,7 @@ namespace KdSoft.EtwEvents.EventSinks
             };
         }
 
-        public Task<IEventSink> Create(MongoSinkOptions options, MongoSinkCredentials creds) {
+        public Task<IEventSink> Create(MongoSinkOptions options, MongoSinkCredentials creds, ILogger logger) {
             try {
                 MongoUrl connectionUrl;
                 MongoCredential credential;
@@ -58,20 +59,19 @@ namespace KdSoft.EtwEvents.EventSinks
                 var db = client.GetDatabase(options.Database);
                 var coll = db.GetCollection<BsonDocument>(options.Collection);
 
-                var result = new MongoSink(coll, options.EventFilterFields, options.PayloadFilterFields);
+                var result = new MongoSink(coll, options.EventFilterFields, options.PayloadFilterFields, logger);
                 return Task.FromResult((IEventSink)result);
             }
             catch (Exception ex) {
-                var errStr = $@"Error in {nameof(MongoSink)} initialization encountered:{Environment.NewLine}{ex.Message}";
-                //healthReporter.ReportProblem(errStr, EventFlowContextIdentifiers.Configuration);
+                logger.LogError(ex, $"Error in {nameof(MongoSink)} initialization.");
                 throw;
             }
         }
 
-        public Task<IEventSink> Create(string optionsJson, string credentialsJson) {
+        public Task<IEventSink> Create(string optionsJson, string credentialsJson, ILogger logger) {
             var options = JsonSerializer.Deserialize<MongoSinkOptions>(optionsJson, _serializerOptions);
             var creds = JsonSerializer.Deserialize<MongoSinkCredentials>(credentialsJson, _serializerOptions);
-            return Create(options!, creds!);
+            return Create(options!, creds!, logger);
         }
 
         string GetJsonSchema<T>() {

@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client.Shared;
+using Microsoft.Extensions.Logging;
 
 namespace KdSoft.EtwEvents.EventSinks
 {
@@ -22,15 +23,15 @@ namespace KdSoft.EtwEvents.EventSinks
             };
         }
 
-        public Task<IEventSink> Create(ElasticSinkOptions options, string user, string pwd) {
-            var result = new ElasticSink(options, user, pwd);
+        public Task<IEventSink> Create(ElasticSinkOptions options, string user, string pwd, ILogger logger) {
+            var result = new ElasticSink(options, user, pwd, logger);
             return Task.FromResult((IEventSink)result);
         }
 
-        public Task<IEventSink> Create(string optionsJson, string credentialsJson) {
+        public Task<IEventSink> Create(string optionsJson, string credentialsJson, ILogger logger) {
             var options = JsonSerializer.Deserialize<ElasticSinkOptions>(optionsJson, _serializerOptions);
             var creds = JsonSerializer.Deserialize<ElasticSinkCredentials>(credentialsJson, _serializerOptions);
-            return Create(options!, creds!.User, creds!.Password);
+            return Create(options!, creds!.User, creds!.Password, logger);
         }
 
         public string GetCredentialsJsonSchema() {
