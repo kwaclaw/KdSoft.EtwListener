@@ -56,22 +56,19 @@ namespace KdSoft.EtwEvents.PushAgent
                         opts.FilePath = Path.Combine(hostContext.HostingEnvironment.ContentRootPath, opts.FilePath);
                     });
                     services.AddSingleton(provider => {
-                        var options = provider.GetService<IOptions<ControlOptions>>();
-                        if (options == null)
-                            throw new Exception("Missing ControlOptions.");
+                        var options = provider.GetRequiredService<IOptions<ControlOptions>>();
                         var httpCertHandler = new HttpClientCertificateHandler(options.Value.ClientCertificate);
                         return new HttpClient(httpCertHandler);
                     });
                     services.AddSingleton(provider => new TraceSessionManager(TimeSpan.FromMinutes(3)));
                     services.AddSingleton(provider => {
-                        var options = provider.GetService<IOptions<ControlOptions>>();
-                        if (options == null)
-                            throw new Exception("Missing ControlOptions.");
+                        var options = provider.GetRequiredService<IOptions<ControlOptions>>();
                         return new EventSinkService(
                             hostContext.HostingEnvironment.ContentRootPath,
                             "EventSinks",
                             options,
-                            provider.GetRequiredService<HttpClient>()
+                            provider.GetRequiredService<HttpClient>(),
+                            provider.GetRequiredService<ILogger<EventSinkService>>()
                         );
                     });
                     services.AddHostedService<ControlWorker>();
