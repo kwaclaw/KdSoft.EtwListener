@@ -130,7 +130,7 @@ class EtwAgent extends LitMvvmElement {
           display: grid;
           grid-template-columns: auto auto;
           grid-gap: 1em;
-          justify-items: center;
+          justify-items: stretch;
           overflow-y: scroll;
         }
 

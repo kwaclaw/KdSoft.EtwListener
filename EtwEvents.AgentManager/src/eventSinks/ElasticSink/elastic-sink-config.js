@@ -111,7 +111,7 @@ class ElasticSinkConfig extends LitMvvmElement {
         }
 
         #nodes {
-          resize: vertical;
+          resize: both;
         }
         `,
     ];
@@ -124,14 +124,14 @@ class ElasticSinkConfig extends LitMvvmElement {
 
     const result = html`
       <form>
-        <input type="url" id="check-url" style="display:none" />
+        <input type="url" id="check-url" name="url" style="display:none" />
         <section id="options" class="mb-5" @change=${this._optionsChange}>
           <fieldset>
             <legend>Options</legend>
             <div>
               <label for="nodes">Hosts</label>
               <textarea id="nodes" name="nodes"
-                type="text" cols="64" rows="3" wrap="hard"
+                type="text" cols="42" rows="3" wrap="hard"
                 @change=${this._nodesChanged}
                 placeholder="Enter one or more URLs, each on its own line"
                 .value=${nodesList} required></textarea>
