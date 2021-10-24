@@ -238,6 +238,9 @@ class FilterEdit extends LitMvvmElement {
       tailwindStyles,
       fontAwesomeStyles,
       css`
+        :host {
+          display: block;
+        }
         #code-wrapper {
           color: gray;
           line-height: 1rem;
@@ -279,11 +282,6 @@ class FilterEdit extends LitMvvmElement {
   render() {
     const codeToolTip = getToolTip(this.model.diagnostics);
     const result = html`
-      <style>
-        :host {
-          display: block;
-        }
-      </style>
       <div id="code-wrapper" class="border p-2"><pre>${html`using System;
 using Microsoft.Diagnostics.Tracing;
 

@@ -187,6 +187,10 @@ class EventSinkConfig extends LitMvvmElement {
           color: #718096;
         }
 
+        input, textarea {
+          border-width: 1px;
+        }
+
         #ok-cancel-buttons {
           margin-top: auto;
         }

@@ -140,6 +140,7 @@ class EtwAppSideBar extends LitMvvmElement {
       css`
         :host {
           display: block;
+          position: relative;
         }
 
         dialog {
@@ -282,11 +283,6 @@ class EtwAppSideBar extends LitMvvmElement {
 
   render() {
     return html`
-      <style>
-        :host {
-          position: relative;
-        }
-      </style>
       <nav id="sidebar" class="text-gray-500 bg-gray-800 pt-0 pb-3 h-full z-30">
         <!-- <div class="pr-2"> -->
           <button id="nav-toggle"

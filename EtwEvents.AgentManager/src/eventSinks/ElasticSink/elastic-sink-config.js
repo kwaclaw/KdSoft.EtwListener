@@ -106,6 +106,10 @@ class ElasticSinkConfig extends LitMvvmElement {
           column-gap: 10px;
         }
 
+        input, textarea {
+          border-width: 1px;
+        }
+
         input:invalid, textarea:invalid {
           border: 2px solid red;
         }

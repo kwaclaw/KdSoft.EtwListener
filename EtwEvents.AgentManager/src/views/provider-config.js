@@ -88,6 +88,10 @@ class ProviderConfig extends LitMvvmElement {
       checkboxStyles,
       fontAwesomeStyles,
       css`
+        :host {
+          display: block;
+        }
+
         fieldset {
           display: contents;
         }
@@ -119,6 +123,10 @@ class ProviderConfig extends LitMvvmElement {
         #keywords:invalid {
           border: 2px solid red;
         }
+
+        input, textarea {
+          border-width: 1px;
+        }
       `,
     ];
   }
@@ -135,12 +143,6 @@ class ProviderConfig extends LitMvvmElement {
     // Note: number inputs can be sized by setting their max value
 
     return html`
-      <style>
-        :host {
-          display: block;
-        }
-      </style>
-
       <article class="bg-gray-100 p-2" @change=${this._fieldChange}>
         <div class="border-l-2 ${borderColor}">
           <header class="flex items-center justify-start pl-1 cursor-pointer select-none relative">
@@ -167,7 +169,7 @@ class ProviderConfig extends LitMvvmElement {
                 </kdsoft-dropdown>
               </fieldset>
               <fieldset>
-              <label class="text-gray-600" for="keywords">Match Keywords</label>
+                <label class="text-gray-600" for="keywords">Match Keywords</label>
                 <input id="keywords" name="matchKeywords"
                   type="number" min="0" max="99999999999999999999" .value=${this.model.matchKeywords} />
               </fieldset>
