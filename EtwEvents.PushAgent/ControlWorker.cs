@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -25,6 +26,7 @@ namespace KdSoft.EtwEvents.PushAgent
         readonly IServiceProvider _services;
         readonly HttpClient _http;
         readonly IOptions<ControlOptions> _controlOptions;
+        readonly SessionConfig _sessionConfig;
         readonly ILogger<ControlWorker> _logger;
         readonly JsonSerializerOptions _jsonOptions;
 
@@ -40,12 +42,14 @@ namespace KdSoft.EtwEvents.PushAgent
             IServiceProvider services,
             HttpClient http,
             IOptions<ControlOptions> controlOptions,
+            SessionConfig sessionConfig,
             ILogger<ControlWorker> logger
         ) {
             this._context = context;
             this._services = services;
             this._http = http;
             this._controlOptions = controlOptions;
+            this._sessionConfig = sessionConfig;
             this._logger = logger;
 
             _jsonOptions = new JsonSerializerOptions {
@@ -53,7 +57,6 @@ namespace KdSoft.EtwEvents.PushAgent
                 AllowTrailingCommas = true,
                 WriteIndented = true
             };
-
         }
 
         #region Control Channel
@@ -161,22 +164,42 @@ namespace KdSoft.EtwEvents.PushAgent
             var ses = SessionWorker?.Session;
             //var agentName = _httpCertHandler.ClientCert.GetNameInfo(X509NameType.SimpleName, false);
             //var agentEmail = _httpCertHandler.ClientCert.GetNameInfo(X509NameType.EmailName, false);
-            var isRunning = _sessionWorkerAvailable != 0;
+            // 
+            ImmutableList<EtwLogging.ProviderSetting> enabledProviders;
+            string filterBody;
             var eventSinkState = new EventSinkState();
+
+            eventSinkState.Profile = _sessionConfig.SinkProfile;
+
+            var isRunning = _sessionWorkerAvailable != 0;
             if (isRunning && SessionWorker != null) {
-                eventSinkState.Profile = SessionWorker.EventSinkProfile;
+                enabledProviders = ses?.EnabledProviders.ToImmutableList() ?? ImmutableList<EtwLogging.ProviderSetting>.Empty;
                 eventSinkState.Error = SessionWorker.EventSinkError?.Message;
+                filterBody = ses?.GetCurrentFilterBody() ?? "";
             }
+            else {
+                enabledProviders = _sessionConfig.Options.Providers.Select(provider => {
+                    var setting = new ProviderSetting();
+                    setting.Name = provider.Name;
+                    setting.Level = (TraceEventLevel)provider.Level;
+                    setting.MatchKeywords = provider.MatchKeywords;
+                    return setting;
+                }).ToImmutableList();
+                filterBody = _sessionConfig.Options.Filter;
+            }
+
             var state = new Models.AgentState {
-                EnabledProviders = ses?.EnabledProviders.ToImmutableList() ?? ImmutableList<EtwLogging.ProviderSetting>.Empty,
+                EnabledProviders = enabledProviders,
                 // Id = string.IsNullOrWhiteSpace(agentEmail) ? agentName : $"{agentName} ({agentEmail})",
                 Id = string.Empty,  // will be filled in on server using the client certificate
                 Host = Dns.GetHostName(),
                 Site = _context.Configuration["Site"],
-                FilterBody = ses?.GetCurrentFilterBody(),
                 IsRunning = isRunning,
                 IsStopped = !isRunning,
                 EventSink = eventSinkState,
+                BatchSize = _sessionConfig.Options.BatchSize,
+                MaxWriteDelayMSecs = _sessionConfig.Options.MaxWriteDelayMSecs,
+                FilterBody = filterBody,
             };
             return PostMessage("Agent/UpdateState", state);
         }

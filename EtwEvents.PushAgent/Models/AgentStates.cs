@@ -23,6 +23,9 @@ namespace KdSoft.EtwEvents.PushAgent.Models
 
         public IImmutableList<ProviderSetting> EnabledProviders { get; set; } = ImmutableList<ProviderSetting>.Empty;
         public EventSinkState EventSink { get; set; } = new EventSinkState();
+
+        public int BatchSize { get; set; }
+        public int MaxWriteDelayMSecs { get; set; }
         public string? FilterBody { get; set; }
     }
 

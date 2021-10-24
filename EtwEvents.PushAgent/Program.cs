@@ -55,6 +55,7 @@ namespace KdSoft.EtwEvents.PushAgent
                         // make sure opts.LogPath is an absolute path
                         opts.FilePath = Path.Combine(hostContext.HostingEnvironment.ContentRootPath, opts.FilePath);
                     });
+                    services.AddSingleton<SessionConfig>();
                     services.AddSingleton(provider => {
                         var options = provider.GetRequiredService<IOptions<ControlOptions>>();
                         var httpCertHandler = new HttpClientCertificateHandler(options.Value.ClientCertificate);
