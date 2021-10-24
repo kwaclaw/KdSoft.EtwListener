@@ -13,6 +13,7 @@ import appStyles from '../styles/etw-app-styles.js';
 import dialogStyles from '../styles/dialog-polyfill-styles.js';
 import * as utils from '../js/utils.js';
 import AgentConfig from '../js/agentConfig.js';
+import EventProvider from '../js/eventProvider.js';
 
 function getAgentIndex(agentList, agentId) {
   return agentList.findIndex(val => val.id === agentId);
@@ -45,6 +46,15 @@ class EtwAppSideBar extends LitMvvmElement {
 
     const exportObject = new AgentConfig();
     utils.setTargetProperties(exportObject, agentState);
+    // fix up enabled providers to exclude extra properties
+    const enabledProviders = [];
+    for (const provider of agentState.enabledProviders) {
+      const exportProvider = new EventProvider();
+      utils.setTargetProperties(exportProvider, provider);
+      enabledProviders.push(exportProvider);
+    }
+    exportObject.enabledProviders = enabledProviders;
+
     const exportString = JSON.stringify(exportObject, null, 2);
     const exportURL = `data:text/plain,${exportString}`;
 

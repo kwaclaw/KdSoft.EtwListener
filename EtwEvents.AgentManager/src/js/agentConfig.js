@@ -5,7 +5,7 @@
     this.host = host || 'Host';
     this.enabledProviders = enabledProviders || [];
     this.eventSink = eventSink || {};
-    this.filterBody = filterBody || 'return true';
+    this.filterBody = filterBody || 'return true;';
   }
 }
 
