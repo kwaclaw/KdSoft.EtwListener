@@ -48,6 +48,17 @@
         ],
         "problemMatcher": "$msCompile"
       },
+      {
+        "label": "rebuild solution",
+        "command": "dotnet",
+        "type": "process",
+        "args": [
+          "build",
+          "--no-incremental",
+          "../EtwListener.sln"
+        ],
+        "problemMatcher": "$msCompile"
+      },
     ]
   }
 }
