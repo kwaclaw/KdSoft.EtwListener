@@ -78,6 +78,7 @@ namespace KdSoft.EtwEvents.PushAgent
             }
             return null;
         }
+
         public async Task<string> DownloadEventSink(string sinkType, string version) {
             var opts = _controlOptions.Value;
             var moduleUri = new Uri(opts.Uri, "Agent/GetEventSinkModule");

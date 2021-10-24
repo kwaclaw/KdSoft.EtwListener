@@ -9,6 +9,6 @@ namespace KdSoft.EtwEvents.Server
 
         protected override Assembly? Load(AssemblyName assemblyName) {
             return null;
-        }
+        } 
     }
 }

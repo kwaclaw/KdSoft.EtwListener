@@ -2,7 +2,6 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Runtime.Loader;
 using System.Threading.Tasks;
 using KdSoft.EtwLogging;
 
@@ -155,43 +154,22 @@ namespace KdSoft.EtwEvents.Client
             }
         }
 
-        // unload only once! otherwise we get a System.ExecutionEngineException
-        void UnloadEventSink(string name, IEventSink eventSink) {
-            var sinkAssembly = eventSink.GetType().Assembly;
-            if (sinkAssembly != null) {
-                var loadContext = AssemblyLoadContext.GetLoadContext(sinkAssembly);
-                if (loadContext != null && loadContext.IsCollectible)
-                    loadContext.Unload();
-            }
-        }
-
         // Note: Disposes of IEventSink instance
-        public async Task CloseEventSink(string name, IEventSink sink) {
+        public async Task<bool> CloseEventSink(string name, IEventSink sink) {
             bool removed = DeleteEventSink(name);
-            try {
-                await sink.DisposeAsync().ConfigureAwait(false);
-            }
-            finally {
-                if (removed)
-                    UnloadEventSink(name, sink);
-            }
+            // must not throw!
+            await sink.DisposeAsync().ConfigureAwait(false);
+            return removed;
         }
 
         // Note: Disposes of failed IEventSink instance
         public async Task HandleFailedEventSink(string name, IEventSink sink, Exception ex) {
-            bool removed = DeleteEventSink(name);
-            try {
-                await sink.DisposeAsync().ConfigureAwait(false);
-                if (removed) {
-                    var failedType = sink.GetType().Name;
-                    lock (_failedEventSinkLock) {
-                        this._failedEventSinks = this._failedEventSinks.SetItem(name, (failedType, ex));
-                    }
+            var removed = await CloseEventSink(name, sink).ConfigureAwait(false);
+            if (removed) {
+                var failedType = sink.GetType().Name;
+                lock (_failedEventSinkLock) {
+                    this._failedEventSinks = this._failedEventSinks.SetItem(name, (failedType, ex));
                 }
-            }
-            finally {
-                if (removed)
-                    UnloadEventSink(name, sink);
             }
         }
 

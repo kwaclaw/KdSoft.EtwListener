@@ -161,6 +161,9 @@ namespace KdSoft.EtwEvents.PushAgent
         }
 
         async Task<IEventSinkFactory?> LoadSinkFactory(string sinkType, string version) {
+            // One can initiate unloading of the CollectibleAssemblyLoadContext by either calling its Unload method
+            // getting rid of the reference to the AssemblyLoadContext, e.g. by just using a local variable;
+            // see https://docs.microsoft.com/en-us/dotnet/standard/assembly/unloadability
             var loadContext = new CollectibleAssemblyLoadContext();
             var sinkFactory = _sinkService.LoadEventSinkFactory(sinkType, version, loadContext);
             if (sinkFactory == null) {
