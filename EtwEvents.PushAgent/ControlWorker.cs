@@ -31,7 +31,7 @@ namespace KdSoft.EtwEvents.PushAgent
         EventSource? _eventSource;
         IServiceScope? _workerScope;
 
-        SessionWorker? _sessionWorker;  // only valid when _workerAvailable != 0
+        SessionWorker? _sessionWorker;  // only valid when _sessionWorkerAvailable != 0
         int _sessionWorkerAvailable = 0;
         SessionWorker? SessionWorker => _sessionWorkerAvailable == 0 ? null : _sessionWorker!;
 
@@ -259,7 +259,17 @@ namespace KdSoft.EtwEvents.PushAgent
                         oldScope?.Dispose();
                         Interlocked.CompareExchange(ref this._sessionWorker, null, sessionWorker);
                     }, TaskContinuationOptions.ExecuteSynchronously)
-                    .ContinueWith(t => SendStateUpdate());
+                    .ContinueWith(async swt => {
+                        try {
+                            if (swt.Exception != null) {
+                                _logger.LogError(swt.Exception, "Session failure.");
+                            }
+                            await SendStateUpdate().ConfigureAwait(false);
+                        }
+                        catch (Exception ex) {
+                            _logger.LogError(ex, "Error sending update to agent.");
+                        }
+                    });
 
                 await workerStartTask.ConfigureAwait(false);
 
@@ -300,13 +310,26 @@ namespace KdSoft.EtwEvents.PushAgent
                         evt.Close();
                     }
                 });
-
-                await StartWorker(default).ConfigureAwait(false);
-                await SendStateUpdate().ConfigureAwait(false);
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Failure running service.");
             }
+
+            try {
+                await StartWorker(default).ConfigureAwait(false);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Failure starting session.");
+            }
+
+            try {
+                await SendStateUpdate().ConfigureAwait(false);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error sending update to agent.");
+            }
+
+            // this task ends only when EventSource is shut down, e.g. calling EventSource.Close()
             await sseTask.ConfigureAwait(false);
         }
 

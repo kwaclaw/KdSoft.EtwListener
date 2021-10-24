@@ -292,7 +292,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 _logger.LogInformation("SessionWorker stopped.");
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Failure running service.");
+                _logger.LogError(ex, "Session failure.");
             }
         }
 
