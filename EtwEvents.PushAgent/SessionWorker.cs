@@ -29,6 +29,8 @@ namespace KdSoft.EtwEvents.PushAgent
         RealTimeTraceSession? _session;
         public RealTimeTraceSession? Session => _session;
 
+        PersistentEventProcessor? _processor;
+
         public Exception? EventSinkError => _sinkHolder.FailedEventSinks.FirstOrDefault().Value.error;
 
         public SessionWorker(
@@ -71,22 +73,24 @@ namespace KdSoft.EtwEvents.PushAgent
 
         #endregion
 
-        #region Filter
+        #region Processing
 
-        public BuildFilterResult ApplyFilter(string filter) {
+        public static BuildFilterResult TestFilter(string filter) {
+            var diagnostics = RealTimeTraceSession.TestFilter(filter);
+            return new BuildFilterResult().AddDiagnostics(diagnostics);
+        }
+
+        public BuildFilterResult ApplyProcessingOptions(int batchSize, int maxWriteDelay, string filter) {
             var ses = _session;
             if (ses == null)
                 throw new InvalidOperationException("No trace session active.");
             var diagnostics = ses.SetFilter(filter);
-            var filterResult = new BuildFilterResult().AddDiagnostics(diagnostics);
-            if (diagnostics.Length == 0) {
-                _config.SaveFilterSettings(filter);
+            if (diagnostics.Length > 0) {
+                filter = SessionConfig.NoFilter;
             }
-            return filterResult;
-        }
-
-        public BuildFilterResult TestFilter(string filter) {
-            var diagnostics = RealTimeTraceSession.TestFilter(filter);
+            var oldBatchSize = _processor?.ChangeBatchSize(batchSize) ?? -1;
+            var oldMaxWriteDelay = _processor?.ChangeWriteDelay(maxWriteDelay) ?? -1;
+            _config.SaveProcessingOptions(batchSize, maxWriteDelay, filter);
             return new BuildFilterResult().AddDiagnostics(diagnostics);
         }
 
@@ -209,14 +213,20 @@ namespace KdSoft.EtwEvents.PushAgent
                     };
 
                     var processorLogger = _loggerFactory.CreateLogger<PersistentEventProcessor>();
-                    using (var processor = new PersistentEventProcessor(writeBatch, _eventQueueOptions.Value.FilePath, processorLogger, _config.Options.BatchSize)) {
-                        var maxWriteDelay = TimeSpan.FromMilliseconds(_config.Options.MaxWriteDelayMSecs);
+                    using (var processor = new PersistentEventProcessor(
+                        writeBatch,
+                        _eventQueueOptions.Value.FilePath,
+                        processorLogger,
+                        _config.Options.BatchSize,
+                        _config.Options.MaxWriteDelayMSecs)
+                    ) {
+                        this._processor = processor;
                         _logger.LogInformation("SessionWorker started.");
-                        await processor.Process(session, maxWriteDelay, stoppingToken).ConfigureAwait(false);
+                        await processor.Process(session, stoppingToken).ConfigureAwait(false);
                     }
-
                 }
                 finally {
+                    this._processor = null;
                     await CloseEventSinks().ConfigureAwait(false);
                 }
             }

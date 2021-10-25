@@ -18,25 +18,28 @@ namespace KdSoft.EtwEvents.Server
         readonly ArrayBufferWriter<byte> _bufferWriter;
         readonly FasterChannel _channel;
         readonly ILogger _logger;
-        readonly int _batchSize;
 
         // need a non-empty sentinel message, as FasterChannel ignores empty messages;
         // this messages must also never match a regular message written to the channel
         static readonly ReadOnlyMemory<byte> _batchSentinel = new byte[4] { 0, 0, 0, 0 };
 
-        int _lastWrittenMSecs;
+        int _batchSize;
         int _maxWriteDelayMSecs;
+        int _lastWrittenMSecs;
         int _batchCounter;
+        Timer? _timer;
 
         public PersistentEventProcessor(
             WriteBatchAsync writeBatchAsync,
             string filePath,
             ILogger logger,
-            int batchSize = 100
+            int batchSize = 100,
+            int maxWriteDelayMSecs = 400
         ) {
             this._writeBatchAsync = writeBatchAsync;
             this._logger = logger;
             this._batchSize = batchSize;
+            this._maxWriteDelayMSecs = maxWriteDelayMSecs;
             this._channel = new FasterChannel(filePath);
             this._etwEventPool = new DefaultObjectPool<EtwEvent>(new DefaultPooledObjectPolicy<EtwEvent>(), batchSize);
             this._bufferWriter = new ArrayBufferWriter<byte>(1024);
@@ -133,21 +136,56 @@ namespace KdSoft.EtwEvents.Server
             }
         }
 
-        public async Task Process(RealTimeTraceSession session, TimeSpan maxWriteDelay, CancellationToken stoppingToken) {
-            this._maxWriteDelayMSecs = (int)maxWriteDelay.TotalMilliseconds;
+        /// <summary>
+        /// Changes batch size.
+        /// </summary>
+        /// <param name="newBatchSize">New batch size.</param>
+        /// <returns>Old batch size.</returns>
+        public int ChangeBatchSize(int newBatchSize) {
+            return Interlocked.Exchange(ref _batchSize, newBatchSize);
+        }
+
+        /// <summary>
+        /// Changes maximum write delay and updates timer.
+        /// </summary>
+        /// <param name="newWriteDelayMSecs">New write delay in milliseconds.</param>
+        /// <returns>Old write delay.</returns>
+        public int ChangeWriteDelay(int newWriteDelayMSecs) {
+            var oldDelay = Interlocked.Exchange(ref _maxWriteDelayMSecs, newWriteDelayMSecs);
+            _timer?.Change(newWriteDelayMSecs, newWriteDelayMSecs);
+            return oldDelay;
+        }
+
+        /// <summary>
+        /// Process trace events, writing them to <see cref="FasterChannel"/>.
+        /// </summary>
+        /// <param name="session">Trace session to start.</param>
+        /// <param name="maxWriteDelay">Maximum delay between write operations - even if batch is not full.</param>
+        /// <param name="stoppingToken">Token to stop the trace session and processing.</param>
+        /// <returns></returns>
+        public async Task Process(RealTimeTraceSession session, CancellationToken stoppingToken) {
             Task processTask;
-            using (var timer = new Timer(TimerCallback)) {
+            var timer = new Timer(TimerCallback);
+            try {
+                this._timer = timer;
                 //var creationOptions = TaskCreationOptions.LongRunning | TaskCreationOptions.RunContinuationsAsynchronously;
                 //processTask = Task.Factory.StartNew(() => ProcessBatches(stoppingToken), creationOptions).Unwrap();
                 processTask = ProcessBatches(stoppingToken);
-                timer.Change(maxWriteDelay, maxWriteDelay);
+                timer.Change(_maxWriteDelayMSecs, _maxWriteDelayMSecs);
                 await session.StartEvents(PostEvent, stoppingToken).ConfigureAwait(false);
+            }
+            finally {
+                _timer = null;
+                timer.Dispose();
             }
             await processTask.ConfigureAwait(false);
         }
 
         public void Dispose() {
-            try { _channel.Dispose(); }
+            try { 
+                _channel.Dispose();
+                _timer?.Dispose();
+            }
             catch { }
         }
     }

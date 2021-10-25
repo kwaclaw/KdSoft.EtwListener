@@ -125,11 +125,16 @@ namespace KdSoft.EtwEvents.PushAgent
 
         #endregion
 
-        #region Filter
+        #region Processing Options
 
-        public bool SaveFilterSettings(string csharpFilter) {
+        public const string NoFilter = "#no-filter#";
+
+        public bool SaveProcessingOptions(int batchSize, int maxWriteDelayMSecs, string filter = NoFilter) {
             if (LoadSessionOptions()) {
-                _sessionOptions.Filter = csharpFilter;
+                if (!Object.ReferenceEquals(filter, NoFilter))
+                    _sessionOptions.Filter = filter;
+                _sessionOptions.BatchSize = batchSize;
+                _sessionOptions.MaxWriteDelayMSecs = maxWriteDelayMSecs;
                 return SaveSessionOptions(_sessionOptions);
             }
             return false;

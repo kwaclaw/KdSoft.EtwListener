@@ -86,12 +86,8 @@ namespace KdSoft.EtwEvents.PushAgent
                     break;
             }
 
-            // for the rest, SessionWorker must be running
-            SessionWorker? worker;
-            if (_sessionWorkerAvailable == 0 || (worker = SessionWorker) == null) {
-                _logger?.LogInformation("No session available for request.");
-                return;
-            }
+            // need different logic depending on whether a session is active or not
+            SessionWorker? worker = _sessionWorkerAvailable == 0 ? null : SessionWorker;
 
             string? filter;
             BuildFilterResult filterResult;
@@ -111,21 +107,30 @@ namespace KdSoft.EtwEvents.PushAgent
                     var providerSettingsList = ProviderSettingsList.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
                     var providerSettings = providerSettingsList.ProviderSettings;
                     if (providerSettings != null) {
-                        worker.UpdateProviders(providerSettings);
+                        if (worker == null) {
+                            _sessionConfig.SaveProviderSettings(providerSettings);
+                        } else {
+                            worker.UpdateProviders(providerSettings);
+                        }
                         await SendStateUpdate().ConfigureAwait(false);
                     }
                     break;
-                case "ApplyFilter":
-                    var filterRequest = SetFilterRequest.Parser.ParseJson(sse.Data);
-                    //var filterRequest = JsonSerializer.Deserialize<SetFilterRequest>(sse.Data, _jsonOptions);
-                    filter = filterRequest?.CsharpFilter;
-                    if (string.IsNullOrEmpty(filter))
+                case "ApplyProcessingOptions":
+                    var opts = JsonSerializer.Deserialize<EventSessionOptions>(sse.Data, _jsonOptions);
+                    if (opts == null)
                         return;
-                    filterResult = worker.ApplyFilter(filter);
-                    await PostMessage($"Agent/ApplyFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
-                    if (filterResult.Diagnostics.Count == 0) {
-                        await SendStateUpdate().ConfigureAwait(false);
+                    if (worker == null) {
+                        filterResult = SessionWorker.TestFilter(opts.Filter);
+                        filter = opts.Filter;
+                        if (filterResult.Diagnostics.Count > 0)
+                            filter = SessionConfig.NoFilter;
+                        _sessionConfig.SaveProcessingOptions(opts.BatchSize, opts.MaxWriteDelayMSecs, filter);
                     }
+                    else {
+                        filterResult = worker.ApplyProcessingOptions(opts.BatchSize, opts.MaxWriteDelayMSecs, opts.Filter);
+                    }
+                    await PostMessage($"Agent/ApplyFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
+                    await SendStateUpdate().ConfigureAwait(false);
                     break;
                 case "TestFilter":
                     var testRequest = TestFilterRequest.Parser.ParseJson(sse.Data);
@@ -133,14 +138,19 @@ namespace KdSoft.EtwEvents.PushAgent
                     filter = testRequest?.CsharpFilter;
                     if (string.IsNullOrEmpty(filter))
                         return;
-                    filterResult = worker.TestFilter(filter);
+                    filterResult = SessionWorker.TestFilter(filter);
                     await PostMessage($"Agent/TestFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
                     break;
                 case "UpdateEventSink":
                     var sinkProfile = JsonSerializer.Deserialize<EventSinkProfile>(sse.Data, _jsonOptions);
                     if (sinkProfile == null)
                         return;
-                    await worker.UpdateEventSink(sinkProfile).ConfigureAwait(false);
+                    if (worker == null) {
+                        _sessionConfig.SaveSinkProfile(sinkProfile);
+                    }
+                    else {
+                        await worker.UpdateEventSink(sinkProfile).ConfigureAwait(false);
+                    }
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
                 default:
