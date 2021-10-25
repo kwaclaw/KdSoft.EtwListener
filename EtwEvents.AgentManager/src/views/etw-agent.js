@@ -11,6 +11,7 @@ import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.j
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
 import gridStyles from '../styles/kdsoft-grid-styles.js';
+import * as utils from '../js/utils.js';
 
 function formDoneHandler(e) {
   if (e.target.localName === 'event-sink-config') {
@@ -69,14 +70,19 @@ class EtwAgent extends LitMvvmElement {
 
   //#endregion
 
-  //#region Filter
+  //#region Processing
 
-  _applyFilterClick() {
-    this.model.applyFilter();
+  _processingFieldChange(e, agentState) {
+    e.stopPropagation();
+    agentState[e.target.name] = utils.getFieldValue(e.target);
   }
 
-  _resetFilterClick() {
-    this.model.resetFilter();
+  _applyProcessingClick() {
+    this.model.applyProcessing();
+  }
+
+  _resetProcessingClick() {
+    this.model.resetProcessing();
   }
 
   _testFilterClick() {
@@ -138,6 +144,28 @@ class EtwAgent extends LitMvvmElement {
           min-width:400px;
         }
 
+        label {
+          font-weight: bolder;
+          color: #718096;
+        }
+
+        input {
+          border-width: 1px;
+        }
+
+        #processingEdit {
+          margin: 10px;
+        }
+
+        #processingVars {
+          display: grid;
+          grid-template-columns: auto auto;
+          background: rgba(255,255,255,0.3);
+          row-gap: 5px;
+          column-gap: 10px;
+          margin-bottom: 10px;
+        }
+
         event-sink-config {
           margin: 10px;
         }
@@ -183,22 +211,31 @@ class EtwAgent extends LitMvvmElement {
                 </div>
               </form>
 
-              <form id="filter" class="max-w-full border">
+              <form id="processing" class="max-w-full border"  @change=${e => this._processingFieldChange(e, activeAgentState)}>
                 <div class="flex my-2 pr-2">
-                  <span class="font-semibold ${this.model.filterModified ? 'italic text-red-500' : ''}">Filter</span>
+                  <span class="font-semibold ${this.model.processingModified ? 'italic text-red-500' : ''}">Processing</span>
                 </div>
-                <filter-edit class="p-2" .model=${activeAgentState.filterModel}></filter-edit>
-                <hr class="my-3" />
-                <div class="flex flex-wrap mt-2 bt-1">
-                  <button type="button" class="py-1 px-2" @click=${this._testFilterClick}>
-                    <i class="fas fa-lg fa-stethoscope" style="color:orange"></i>
-                  </button>
-                  <button type="button" class="py-1 px-2 ml-auto" @click=${this._applyFilterClick} title="Apply">
-                    <i class="fas fa-lg fa-check text-green-500"></i>
-                  </button>
-                  <button type="button" class="py-1 px-2" @click=${this._resetFilterClick} title="Reset to Current">
-                    <i class="fas fa-lg fa-times text-red-500"></i>
-                  </button>
+                <div id="processingEdit">
+                  <div id="processingVars">
+                    <label for="batchSize">Batch Size</label>
+                    <input type="number" id="batchSize" name="batchSize" .value=${activeAgentState.batchSize} />
+                    <label for="maxWriteDelayMSecs">Max Write Delay (msecs)</label>
+                    <input type="number" id="maxWriteDelayMSecs" name="maxWriteDelayMSecs" .value=${activeAgentState.maxWriteDelayMSecs} />
+                  </div>
+                  <label for="filterEdit">Filter</label>
+                  <filter-edit id="filterEdit" class="p-2" .model=${activeAgentState.filterModel}></filter-edit>
+                  <hr class="my-3" />
+                  <div class="flex flex-wrap mt-2 bt-1">
+                    <button type="button" class="py-1 px-2" @click=${this._testFilterClick}>
+                      <i class="fas fa-lg fa-stethoscope" style="color:orange"></i>
+                    </button>
+                    <button type="button" class="py-1 px-2 ml-auto" @click=${this._applyProcessingClick} title="Apply">
+                      <i class="fas fa-lg fa-check text-green-500"></i>
+                    </button>
+                    <button type="button" class="py-1 px-2" @click=${this._resetProcessingClick} title="Reset to Current">
+                      <i class="fas fa-lg fa-times text-red-500"></i>
+                    </button>
+                  </div>
                 </div>
               </form> 
 

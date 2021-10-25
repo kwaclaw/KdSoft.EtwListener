@@ -146,7 +146,9 @@ function _resetProviders(agentEntry) {
   agentEntry.state.enabledProviders = freshProviders;
 }
 
-function _resetFilter(agentEntry) {
+function _resetProcessing(agentEntry) {
+  agentEntry.state.batchSize = agentEntry.current?.batchSize;
+  agentEntry.state.maxWriteDelayMSecs = agentEntry.current?.maxWriteDelayMSecs;
   const filterModel = agentEntry.state.filterModel;
   filterModel.filter = agentEntry.current?.filterBody;
   filterModel.diagnostics = [];
@@ -318,7 +320,7 @@ class EtwAppModel {
 
   //#endregion
 
-  //#region Filter
+  //#region Processing
 
   testFilter() {
     const agentState = this.activeAgentState;
@@ -333,12 +335,18 @@ class EtwAppModel {
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
-  applyFilter() {
+  applyProcessing() {
     const agentState = this.activeAgentState;
     if (!agentState) return;
 
+    const args = {
+      batchSize: agentState.batchSize,
+      maxWriteDelayMSecs: agentState.maxWriteDelayMSecs,
+      filter: agentState.filterModel.filter,
+    };
+
     // argument must match protobuf message TestFilterRequest
-    this.fetcher.postJson('ApplyFilter', { agentId: agentState.id }, { csharpFilter: agentState.filterModel.filter })
+    this.fetcher.postJson('ApplyProcessingOptions', { agentId: agentState.id }, args)
       // result matches protobuf message BuildFilterResult
       .then(result => {
         agentState.filterModel.diagnostics = result.diagnostics;
@@ -346,16 +354,18 @@ class EtwAppModel {
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
-  resetFilter() {
+  resetProcessing() {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return;
-    _resetFilter(activeEntry);
+    _resetProcessing(activeEntry);
   }
 
-  get filterModified() {
+  get processingModified() {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return false;
-    return !utils.targetEquals(activeEntry.current?.filterBody, activeEntry.state.filterBody);
+    return !utils.targetEquals(activeEntry.current?.filterBody, activeEntry.state.filterBody)
+      || !utils.targetEquals(activeEntry.current?.batchSize, activeEntry.state.batchSize)
+      || !utils.targetEquals(activeEntry.current?.maxWriteDelayMSecs, activeEntry.state.maxWriteDelayMSecs);
   }
 
   //#endregion

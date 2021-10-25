@@ -176,9 +176,9 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         [HttpPost]
-        public Task<IActionResult> ApplyFilter(string agentId, [FromBody] object filterRequest) {
-            // we are passing the JSON simply through, filterRequest should match protobuf message TestFilterRequest
-            return CallAgent(agentId, "ApplyFilter", filterRequest?.ToString() ?? "", TimeSpan.FromSeconds(15));
+        public Task<IActionResult> ApplyProcessingOptions(string agentId, [FromBody] object processingOptions) {
+            // we are passing the JSON simply through
+            return CallAgent(agentId, "ApplyProcessingOptions", processingOptions?.ToString() ?? "", TimeSpan.FromSeconds(15));
         }
 
         [HttpPost]
