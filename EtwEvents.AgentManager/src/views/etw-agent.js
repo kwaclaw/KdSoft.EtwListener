@@ -243,6 +243,7 @@ class EtwAgent extends LitMvvmElement {
                 <div class="flex my-2 pr-2">
                   <span class="font-semibold ${this.model.eventSinkModified ? 'italic text-red-500' : ''}">Event Sink</span>
                 </div>
+                <pre ?hidden=${!activeAgentState.eventSink.error}><textarea class="my-2 w-full border-2 border-red-500">${activeAgentState.eventSink.error}</textarea></pre>
                 <event-sink-config .model=${activeAgentState.sinkConfigModel}></event-sink-config>
               </form>
             `

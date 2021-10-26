@@ -276,6 +276,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 }
 
                 var sessionWorker = scope.ServiceProvider.GetRequiredService<SessionWorker>();
+                // this returns the executing Task if it is already finished, or Task.CompletedTask
                 var workerStartTask = sessionWorker.StartAsync(cancelToken);
 
                 // if the new background service has already stopped, clean up and exit
