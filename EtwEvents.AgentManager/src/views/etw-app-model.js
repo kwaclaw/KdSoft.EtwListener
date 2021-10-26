@@ -393,6 +393,12 @@ class EtwAppModel {
     return !utils.targetEquals(activeEntry.current?.eventSink, activeEntry.state.eventSink);
   }
 
+  get eventSinkError() {
+    const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
+    if (!activeEntry) return false;
+    return activeEntry.current?.eventSink.error;
+  }
+
   //#endregion
 
   resetAll() {
