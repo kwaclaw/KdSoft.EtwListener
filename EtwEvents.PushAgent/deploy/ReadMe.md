@@ -12,7 +12,10 @@
 - On an existing installation:
     - Take note of the current install directory, if it needs to stay the same
     - Update the current "appsettings.Local.json" file if changes are desired.
-- Check that the client certificate specified in "appsettings[.Local].json" is installed.
+- Check that the client certificate matching the settings in "appsettings[.Local].json" is installed.
+    - It must include the private key.
+    - It must have the role attribute (OID: 2.5.4.72): "etw-pushagent"
+    - It must be signed by a root certificate accessible to the AgentManager web site
 - Finally, run "CreateService.cmd \<target directory>" as administrator:
     - \<target directory> is optional, it defaults to "C:\EtwEvents.PushAgent", on an existing installation
       it may optionally match current the install directory from above.
