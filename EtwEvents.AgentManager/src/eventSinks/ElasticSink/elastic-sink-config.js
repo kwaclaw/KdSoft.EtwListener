@@ -137,8 +137,7 @@ class ElasticSinkConfig extends LitMvvmElement {
               <textarea id="nodes" name="nodes"
                 cols="42" rows="3" wrap="hard"
                 @change=${this._nodesChanged}
-                placeholder="Enter one or more URLs, each on its own line"
-                .value=${nodesList} required></textarea>
+                placeholder="Enter one or more URLs, each on its own line" required>${nodesList}</textarea>
               <label for="index">Index Format</label>
               <input type="text" id="indexFormat" name="indexFormat" .value=${opts.indexFormat} />
             </div>
