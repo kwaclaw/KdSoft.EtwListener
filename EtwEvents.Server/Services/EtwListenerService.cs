@@ -130,7 +130,7 @@ namespace KdSoft.EtwEvents.Server
 
         public override Task<BuildFilterResult> SetCSharpFilter(SetFilterRequest request, ServerCallContext context) {
             var session = GetSession(request.SessionName);
-            var diagnostics = session.SetFilter(request.CsharpFilter);
+            var diagnostics = session.SetFilter(request.CsharpFilter, null!);
             var result = new BuildFilterResult().AddDiagnostics(diagnostics);
             return Task.FromResult(result);
         }
