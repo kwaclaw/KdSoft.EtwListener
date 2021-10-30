@@ -10,7 +10,6 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.Client;
-using KdSoft.EtwEvents.PushAgent.Models;
 using KdSoft.EtwLogging;
 using LaunchDarkly.EventSource;
 using Microsoft.Extensions.DependencyInjection;
@@ -89,8 +88,10 @@ namespace KdSoft.EtwEvents.PushAgent
             // need different logic depending on whether a session is active or not
             SessionWorker? worker = _sessionWorkerAvailable == 0 ? null : SessionWorker;
 
-            string? filter;
+            string? filterSource;
+            FilterModel? filterModel;
             BuildFilterResult filterResult;
+
 
             switch (sse.Event) {
                 case "ChangeLogLevel":
@@ -116,15 +117,20 @@ namespace KdSoft.EtwEvents.PushAgent
                     }
                     break;
                 case "ApplyProcessingOptions":
-                    var opts = JsonSerializer.Deserialize<EventSessionOptions>(sse.Data, _jsonOptions);
+                    var opts = JsonSerializer.Deserialize<ProcessingOptions>(sse.Data, _jsonOptions);
                     if (opts == null)
                         return;
+                    filterSource = SessionWorker.BuildFilterSource(opts.Filter);
                     if (worker == null) {
-                        filterResult = SessionWorker.TestFilter(opts.Filter);
-                        filter = opts.Filter;
-                        if (filterResult.Diagnostics.Count > 0)
-                            filter = SessionConfig.NoFilter;
-                        _sessionConfig.SaveProcessingOptions(opts.BatchSize, opts.MaxWriteDelayMSecs, filter);
+                        filterModel = SessionConfig.NoFilter;
+                        if (filterSource == null) {
+                            filterResult = new BuildFilterResult { NoFilter = true };
+                        } else {
+                            filterResult = SessionWorker.TestFilter(filterSource);
+                            if (filterResult.Diagnostics.Count == 0)
+                                filterModel = opts.Filter;
+                        }
+                        _sessionConfig.SaveProcessingOptions(opts.BatchSize, opts.MaxWriteDelayMSecs, filterModel);
                     }
                     else {
                         filterResult = worker.ApplyProcessingOptions(opts.BatchSize, opts.MaxWriteDelayMSecs, opts.Filter);
@@ -133,12 +139,12 @@ namespace KdSoft.EtwEvents.PushAgent
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
                 case "TestFilter":
-                    var testRequest = TestFilterRequest.Parser.ParseJson(sse.Data);
-                    //var testRequest = JsonSerializer.Deserialize<TestFilterRequest>(sse.Data, _jsonOptions);
-                    filter = testRequest?.CsharpFilter;
-                    if (string.IsNullOrEmpty(filter))
-                        return;
-                    filterResult = SessionWorker.TestFilter(filter);
+                    filterModel = JsonSerializer.Deserialize<FilterModel>(sse.Data, _jsonOptions);
+                    filterSource = SessionWorker.BuildFilterSource(filterModel);
+                    if (filterSource == null)
+                        filterResult = new BuildFilterResult { NoFilter = true };
+                    else
+                        filterResult = SessionWorker.TestFilter(filterSource);
                     await PostMessage($"Agent/TestFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
                     break;
                 case "UpdateEventSink":
@@ -176,7 +182,6 @@ namespace KdSoft.EtwEvents.PushAgent
             //var agentEmail = _httpCertHandler.ClientCert.GetNameInfo(X509NameType.EmailName, false);
             // 
             ImmutableList<EtwLogging.ProviderSetting> enabledProviders;
-            string filterBody;
             var eventSinkState = new EventSinkState();
 
             eventSinkState.Profile = _sessionConfig.SinkProfile;
@@ -185,7 +190,6 @@ namespace KdSoft.EtwEvents.PushAgent
             if (isRunning && SessionWorker != null) {
                 enabledProviders = ses?.EnabledProviders.ToImmutableList() ?? ImmutableList<EtwLogging.ProviderSetting>.Empty;
                 eventSinkState.Error = SessionWorker.EventSinkError?.Message;
-                filterBody = ses?.GetCurrentFilterBody() ?? "";
             }
             else {
                 enabledProviders = _sessionConfig.Options.Providers.Select(provider => {
@@ -195,10 +199,9 @@ namespace KdSoft.EtwEvents.PushAgent
                     setting.MatchKeywords = provider.MatchKeywords;
                     return setting;
                 }).ToImmutableList();
-                filterBody = _sessionConfig.Options.Filter;
             }
 
-            var state = new Models.AgentState {
+            var state = new AgentState {
                 EnabledProviders = enabledProviders,
                 // Id = string.IsNullOrWhiteSpace(agentEmail) ? agentName : $"{agentName} ({agentEmail})",
                 Id = string.Empty,  // will be filled in on server using the client certificate
@@ -207,9 +210,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 IsRunning = isRunning,
                 IsStopped = !isRunning,
                 EventSink = eventSinkState,
-                BatchSize = _sessionConfig.Options.BatchSize,
-                MaxWriteDelayMSecs = _sessionConfig.Options.MaxWriteDelayMSecs,
-                FilterBody = filterBody,
+                ProcessingOptions = _sessionConfig.Options,
             };
             return PostMessage("Agent/UpdateState", state);
         }

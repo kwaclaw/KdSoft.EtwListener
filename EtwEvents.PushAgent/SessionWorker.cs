@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
@@ -8,6 +9,7 @@ using Google.Protobuf.Collections;
 using KdSoft.EtwEvents.Client;
 using KdSoft.EtwEvents.Server;
 using KdSoft.EtwLogging;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -16,15 +18,17 @@ namespace KdSoft.EtwEvents.PushAgent
 {
     class SessionWorker: BackgroundService
     {
-        readonly SessionConfig _config;
+        readonly SessionConfig _sessionConfig;
         readonly IOptions<EventQueueOptions> _eventQueueOptions;
         readonly EventSinkService _sinkService;
-        readonly EventSinkHolder _sinkHolder;
+        readonly IConfiguration _config;
         readonly ILoggerFactory _loggerFactory;
+
         readonly ILogger<SessionWorker> _logger;
+        readonly EventSinkHolder _sinkHolder;
         readonly JsonSerializerOptions _jsonOptions;
 
-        public SessionConfig Config => _config;
+        public SessionConfig SessionConfig => _sessionConfig;
 
         RealTimeTraceSession? _session;
         public RealTimeTraceSession? Session => _session;
@@ -34,18 +38,20 @@ namespace KdSoft.EtwEvents.PushAgent
         public Exception? EventSinkError => _sinkHolder.FailedEventSinks.FirstOrDefault().Value.error;
 
         public SessionWorker(
-            SessionConfig config,
+            SessionConfig sessionConfig,
             HttpClient http,
             IOptions<EventQueueOptions> eventQueueOptions,
             EventSinkService sinkService,
+            IConfiguration config,
             ILoggerFactory loggerFactory
         ) {
-            this._config = config;
+            this._sessionConfig = sessionConfig;
             this._eventQueueOptions = eventQueueOptions;
             this._sinkService = sinkService;
+            this._config = config;
             this._loggerFactory = loggerFactory;
-            this._logger = loggerFactory.CreateLogger<SessionWorker>();
-
+            
+            _logger = loggerFactory.CreateLogger<SessionWorker>();
             _sinkHolder = new EventSinkHolder();
             _jsonOptions = new JsonSerializerOptions {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -68,30 +74,58 @@ namespace KdSoft.EtwEvents.PushAgent
             foreach (var providerName in providersToBeDisabled) {
                 ses.DisableProvider(providerName);
             }
-            _config.SaveProviderSettings(providerSettings);
+            _sessionConfig.SaveProviderSettings(providerSettings);
         }
 
         #endregion
 
         #region Processing
 
+        public static string? BuildFilterSource(FilterModel? filterModel) {
+            string? result;
+            var parts = filterModel?.FilterParts;
+            var template = filterModel?.FilterTemplate;
+            if (parts == null || parts.Length == 0 || string.IsNullOrWhiteSpace(parts[parts.Length - 1]))
+                result = null;
+            else if (string.IsNullOrWhiteSpace(template))
+                result = null;
+            else
+                result = string.Format(CultureInfo.InvariantCulture, template, parts);
+            return result;
+        }
+
         public static BuildFilterResult TestFilter(string filter) {
             var diagnostics = RealTimeTraceSession.TestFilter(filter);
             return new BuildFilterResult().AddDiagnostics(diagnostics);
         }
 
-        public BuildFilterResult ApplyProcessingOptions(int batchSize, int maxWriteDelay, string filter) {
+        public BuildFilterResult ApplyProcessingOptions(int batchSize, int maxWriteDelay, FilterModel? filterModel) {
             var ses = _session;
             if (ses == null)
                 throw new InvalidOperationException("No trace session active.");
-            var diagnostics = ses.SetFilter(filter);
-            if (diagnostics.Length > 0) {
-                filter = SessionConfig.NoFilter;
+            var result = new BuildFilterResult();
+
+            var filterSource = BuildFilterSource(filterModel);
+            if (filterSource == null) {
+                filterModel = SessionConfig.NoFilter;
+                result.NoFilter = true;
             }
+            else {
+                var diagnostics = ses.SetFilter(filterSource, _config);
+                if (diagnostics.Length > 0) {
+                    filterModel = SessionConfig.NoFilter;
+                    result.NoFilter = true;
+                }
+                else {
+                    result.AddDiagnostics(diagnostics);
+                }
+            }
+
             var oldBatchSize = _processor?.ChangeBatchSize(batchSize) ?? -1;
             var oldMaxWriteDelay = _processor?.ChangeWriteDelay(maxWriteDelay) ?? -1;
-            _config.SaveProcessingOptions(batchSize, maxWriteDelay, filter);
-            return new BuildFilterResult().AddDiagnostics(diagnostics);
+
+            _sessionConfig.SaveProcessingOptions(batchSize, maxWriteDelay, filterModel!);
+            return result;
         }
 
         #endregion
@@ -154,7 +188,7 @@ namespace KdSoft.EtwEvents.PushAgent
             try {
                 _sinkHolder.AddEventSink(sinkProfile.Name, sink);
                 var closureTask = ConfigureEventSinkClosure(sinkProfile.Name, sink);
-                _config.SaveSinkProfile(sinkProfile);
+                _sessionConfig.SaveSinkProfile(sinkProfile);
             }
             catch (Exception ex) {
                 await sink.DisposeAsync().ConfigureAwait(false);
@@ -167,7 +201,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
             try {
-                if (!_config.OptionsAvailable) {
+                if (!_sessionConfig.OptionsAvailable) {
                     _logger.LogInformation("Starting session without configured options.");
                 }
 
@@ -185,13 +219,16 @@ namespace KdSoft.EtwEvents.PushAgent
 
                 session.GetLifeCycle().Used();
 
-                var diagnostics = session.SetFilter(_config.Options.Filter);
-                if (!diagnostics.IsEmpty) {
-                    logger.LogError("Filter compilation failed.");
+                var filterSource = BuildFilterSource(_sessionConfig.Options.Filter);
+                if (filterSource != null) {
+                    var diagnostics = session.SetFilter(filterSource, _config);
+                    if (!diagnostics.IsEmpty) {
+                        logger.LogError("Filter compilation failed.");
+                    }
                 }
 
                 // enable the providers
-                foreach (var provider in _config.Options.Providers) {
+                foreach (var provider in _sessionConfig.Options.Providers) {
                     var setting = new ProviderSetting();
                     setting.Name = provider.Name;
                     setting.Level = (TraceEventLevel)provider.Level;
@@ -199,8 +236,8 @@ namespace KdSoft.EtwEvents.PushAgent
                     session.EnableProvider(setting);
                 }
 
-                if (_config.SinkProfileAvailable) {
-                    await UpdateEventSink(_config.SinkProfile!).ConfigureAwait(false);
+                if (_sessionConfig.SinkProfileAvailable) {
+                    await UpdateEventSink(_sessionConfig.SinkProfile!).ConfigureAwait(false);
                 }
                 try {
                     long sequenceNo = 0;
@@ -217,8 +254,8 @@ namespace KdSoft.EtwEvents.PushAgent
                         writeBatch,
                         _eventQueueOptions.Value.FilePath,
                         processorLogger,
-                        _config.Options.BatchSize,
-                        _config.Options.MaxWriteDelayMSecs)
+                        _sessionConfig.Options.BatchSize,
+                        _sessionConfig.Options.MaxWriteDelayMSecs)
                     ) {
                         this._processor = processor;
                         _logger.LogInformation("SessionWorker started.");
