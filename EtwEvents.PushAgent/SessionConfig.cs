@@ -11,7 +11,8 @@ using Microsoft.Extensions.Options;
 
 namespace KdSoft.EtwEvents.PushAgent
 {
-    class SessionConfig {
+    class SessionConfig
+    {
         readonly HostBuilderContext _context;
         readonly IOptions<EventQueueOptions> _eventQueueOptions;
         readonly ILogger<SessionConfig> _logger;
@@ -112,32 +113,28 @@ namespace KdSoft.EtwEvents.PushAgent
         #region Provider Settings
 
         public bool SaveProviderSettings(IEnumerable<ProviderSetting> providers) {
-            if (LoadSessionOptions()) {
-                _sessionOptions.Providers = providers.Select(p => new ProviderOptions {
-                    Name = p.Name,
-                    Level = (Microsoft.Diagnostics.Tracing.TraceEventLevel)p.Level,
-                    MatchKeywords = p.MatchKeywords
-                }).ToList();
-                return SaveSessionOptions(_sessionOptions);
-            }
-            return false;
+            LoadSessionOptions();
+            _sessionOptions.Providers = providers.Select(p => new ProviderOptions {
+                Name = p.Name,
+                Level = (Microsoft.Diagnostics.Tracing.TraceEventLevel)p.Level,
+                MatchKeywords = p.MatchKeywords
+            }).ToList();
+            return SaveSessionOptions(_sessionOptions);
         }
 
         #endregion
 
         #region Processing Options
 
-        public const string NoFilter = "#no-filter#";
+        public static readonly FilterModel NoFilter = new FilterModel();
 
-        public bool SaveProcessingOptions(int batchSize, int maxWriteDelayMSecs, string filter = NoFilter) {
-            if (LoadSessionOptions()) {
-                if (!Object.ReferenceEquals(filter, NoFilter))
-                    _sessionOptions.Filter = filter;
-                _sessionOptions.BatchSize = batchSize;
-                _sessionOptions.MaxWriteDelayMSecs = maxWriteDelayMSecs;
-                return SaveSessionOptions(_sessionOptions);
-            }
-            return false;
+        public bool SaveProcessingOptions(int batchSize, int maxWriteDelayMSecs, FilterModel filterModel) {
+            LoadSessionOptions();
+            if (!Object.ReferenceEquals(filterModel, NoFilter))
+                _sessionOptions.Filter = filterModel;
+            _sessionOptions.BatchSize = batchSize;
+            _sessionOptions.MaxWriteDelayMSecs = maxWriteDelayMSecs;
+            return SaveSessionOptions(_sessionOptions);
         }
 
         #endregion
