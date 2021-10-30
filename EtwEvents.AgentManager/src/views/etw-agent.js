@@ -74,7 +74,7 @@ class EtwAgent extends LitMvvmElement {
 
   _processingFieldChange(e, agentState) {
     e.stopPropagation();
-    agentState[e.target.name] = utils.getFieldValue(e.target);
+    agentState.processingOptions[e.target.name] = utils.getFieldValue(e.target);
   }
 
   _applyProcessingClick() {
@@ -153,6 +153,11 @@ class EtwAgent extends LitMvvmElement {
           border-width: 1px;
         }
 
+        #processing {
+          grid-column: 2;
+          grid-row: 1 / 3;
+        }
+
         #processingEdit {
           margin: 10px;
         }
@@ -218,9 +223,9 @@ class EtwAgent extends LitMvvmElement {
                 <div id="processingEdit">
                   <div id="processingVars">
                     <label for="batchSize">Batch Size</label>
-                    <input type="number" id="batchSize" name="batchSize" .value=${activeAgentState.batchSize} />
+                    <input type="number" id="batchSize" name="batchSize" .value=${activeAgentState.processingOptions.batchSize} />
                     <label for="maxWriteDelayMSecs">Max Write Delay (msecs)</label>
-                    <input type="number" id="maxWriteDelayMSecs" name="maxWriteDelayMSecs" .value=${activeAgentState.maxWriteDelayMSecs} />
+                    <input type="number" id="maxWriteDelayMSecs" name="maxWriteDelayMSecs" .value=${activeAgentState.processingOptions.maxWriteDelayMSecs} />
                   </div>
                   <label for="filterEdit">Filter</label>
                   <filter-edit id="filterEdit" class="p-2" .model=${activeAgentState.filterModel}></filter-edit>

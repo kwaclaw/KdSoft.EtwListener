@@ -36,15 +36,28 @@ function _enhanceProviderState(provider) {
 // adds view models and view related methods to agent state, agentState must be observable
 function _enhanceAgentState(agentState, eventSinkInfos) {
   if (!(raw(agentState.filterModel) instanceof Object)) {
+    const af = agentState.processingOptions.filter;
     agentState.filterModel = {
-      filter: agentState.filterBody,
+      header: af.filterParts[0],
+      body: af.filterParts[1],
+      init: af.filterParts[2],
+      method: af.filterParts[3],
       diagnostics: []
     };
     agentState._filterObserver = observe(() => {
-      agentState.filterBody = agentState.filterModel.filter;
+      const aof = agentState.processingOptions.filter;
+      aof.filterParts[0] = agentState.filterModel.header;
+      aof.filterParts[1] = agentState.filterModel.body;
+      aof.filterParts[2] = agentState.filterModel.init;
+      aof.filterParts[3] = agentState.filterModel.method;
     });
   }
-  agentState.filterModel.filter = agentState.filterBody;
+  const apf = agentState.processingOptions.filter;
+  const afm = agentState.filterModel;
+  afm.header = apf.filterParts[0];
+  afm.body = apf.filterParts[1];
+  afm.init = apf.filterParts[2];
+  afm.method = apf.filterParts[3];
 
   for (const provider of agentState.enabledProviders) {
     _enhanceProviderState(provider);
@@ -327,7 +340,7 @@ class EtwAppModel {
     if (!agentState) return;
 
     // argument must match protobuf message TestFilterRequest
-    this.fetcher.postJson('TestFilter', { agentId: agentState.id }, { csharpFilter: agentState.filterModel.filter })
+    this.fetcher.postJson('TestFilter', { agentId: agentState.id }, agentState.processingOptions.filter)
       // result matches protobuf message BuildFilterResult
       .then(result => {
         agentState.filterModel.diagnostics = result.diagnostics;
@@ -339,14 +352,8 @@ class EtwAppModel {
     const agentState = this.activeAgentState;
     if (!agentState) return;
 
-    const args = {
-      batchSize: agentState.batchSize,
-      maxWriteDelayMSecs: agentState.maxWriteDelayMSecs,
-      filter: agentState.filterModel.filter,
-    };
-
     // argument must match protobuf message TestFilterRequest
-    this.fetcher.postJson('ApplyProcessingOptions', { agentId: agentState.id }, args)
+    this.fetcher.postJson('ApplyProcessingOptions', { agentId: agentState.id }, agentState.processingOptions)
       // result matches protobuf message BuildFilterResult
       .then(result => {
         agentState.filterModel.diagnostics = result.diagnostics;
