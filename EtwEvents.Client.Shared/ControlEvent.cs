@@ -1,4 +1,4 @@
-﻿namespace KdSoft.EtwEvents.PushAgent
+﻿namespace KdSoft.EtwEvents
 {
     public struct ControlEvent
     {

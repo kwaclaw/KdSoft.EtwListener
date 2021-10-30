@@ -2,7 +2,7 @@
 using KdSoft.EtwEvents.Client;
 using KdSoft.EtwLogging;
 
-namespace KdSoft.EtwEvents.PushAgent.Models
+namespace KdSoft.EtwEvents
 {
     public class AgentState
     {
@@ -24,9 +24,7 @@ namespace KdSoft.EtwEvents.PushAgent.Models
         public IImmutableList<ProviderSetting> EnabledProviders { get; set; } = ImmutableList<ProviderSetting>.Empty;
         public EventSinkState EventSink { get; set; } = new EventSinkState();
 
-        public int BatchSize { get; set; }
-        public int MaxWriteDelayMSecs { get; set; }
-        public string? FilterBody { get; set; }
+        public ProcessingOptions ProcessingOptions { get; set; } = new ProcessingOptions();
     }
 
     public class EventSinkState
