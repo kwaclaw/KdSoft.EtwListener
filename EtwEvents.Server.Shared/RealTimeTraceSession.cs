@@ -17,6 +17,7 @@ using Microsoft.CodeAnalysis.Text;
 using Microsoft.Diagnostics.Tracing;
 using Microsoft.Diagnostics.Tracing.Session;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using tracing = Microsoft.Diagnostics.Tracing;
 
 namespace KdSoft.EtwEvents.Server
@@ -200,21 +201,8 @@ namespace KdSoft.EtwEvents.Server
 
         #region Filters
 
-        const string FilterTemplate = @"
-using System;
-using Microsoft.Diagnostics.Tracing;
-
-namespace KdSoft.EtwEvents.Server
-{{
-    public class EventFilter: IEventFilter
-    {{
-        public bool IncludeEvent(TraceEvent evt) {{
-            {0}
-        }}
-    }}
-}}
-";
         static readonly Assembly SystemRuntime = Assembly.Load(new AssemblyName("System.Runtime"));
+        static readonly Assembly SystemLinq = Assembly.Load(new AssemblyName("System.Linq"));
         static readonly Assembly NetStandard20 = Assembly.Load("netstandard, Version=2.0.0.0");
 
         class FilterHolder
@@ -246,8 +234,8 @@ namespace KdSoft.EtwEvents.Server
             return filterHolder?.FilterBody;
         }
 
-        public static ImmutableArray<Diagnostic> GenerateFilter(string filterBody, MemoryStream ms) {
-            var compilation = CompileFilter(filterBody);
+        public static ImmutableArray<Diagnostic> GenerateFilter(string filterSource, MemoryStream ms) {
+            var compilation = CompileFilter(filterSource);
             var emitResult = compilation.Emit(ms);
             if (emitResult.Success) {
                 return ImmutableArray<Diagnostic>.Empty;
@@ -255,12 +243,12 @@ namespace KdSoft.EtwEvents.Server
             return emitResult.Diagnostics;
         }
 
-        public static ImmutableArray<Diagnostic> TestFilter(string filterBody) {
-            if (string.IsNullOrWhiteSpace(filterBody)) {
+        public static ImmutableArray<Diagnostic> TestFilter(string filterSource) {
+            if (string.IsNullOrWhiteSpace(filterSource)) {
                 return ImmutableArray<Diagnostic>.Empty;
             }
             using (var ms = new MemoryStream()) {
-                var diagnostics = GenerateFilter(filterBody, ms);
+                var diagnostics = GenerateFilter(filterSource, ms);
                 if (diagnostics.Length > 0) {
                     return diagnostics;
                 }
@@ -268,17 +256,17 @@ namespace KdSoft.EtwEvents.Server
             return ImmutableArray<Diagnostic>.Empty;
         }
 
-        public ImmutableArray<Diagnostic> SetFilter(string filterBody) {
+        public ImmutableArray<Diagnostic> SetFilter(string filterSource, IConfiguration config) {
             CheckDisposed();
 
-            if (string.IsNullOrWhiteSpace(filterBody)) {
+            if (string.IsNullOrWhiteSpace(filterSource)) {
                 SetFilterHolder(null);
             }
 
             Assembly filterAssembly;
             var newFilterContext = new CollectibleAssemblyLoadContext();
             using (var ms = new MemoryStream()) {
-                var diagnostics = GenerateFilter(filterBody, ms);
+                var diagnostics = GenerateFilter(filterSource, ms);
                 if (diagnostics.Length == 0) {
                     ms.Seek(0, SeekOrigin.Begin);
                     filterAssembly = newFilterContext.LoadFromStream(ms);
@@ -290,16 +278,15 @@ namespace KdSoft.EtwEvents.Server
 
             var filterType = typeof(IEventFilter);
             var filterClass = filterAssembly.ExportedTypes.Where(tp => tp.IsClass && filterType.IsAssignableFrom(tp)).First();
-            var newFilter = (IEventFilter?)Activator.CreateInstance(filterClass);
+            var newFilter = (IEventFilter?)Activator.CreateInstance(filterClass, config);
 
-            SetFilterHolder(new FilterHolder(newFilter!, newFilterContext, filterBody));
+            SetFilterHolder(new FilterHolder(newFilter!, newFilterContext, filterSource));
 
             return ImmutableArray<Diagnostic>.Empty;
         }
 
-        public static CSharpCompilation CompileFilter(string filterBody) {
-            var sourceCode = string.Format(CultureInfo.InvariantCulture, FilterTemplate, filterBody);
-            var sourceText = SourceText.From(sourceCode);
+        public static CSharpCompilation CompileFilter(string filterSource) {
+            var sourceText = SourceText.From(filterSource);
             var options = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest);
 
             var parsedSyntaxTree = SyntaxFactory.ParseSyntaxTree(sourceText, options);
@@ -309,7 +296,10 @@ namespace KdSoft.EtwEvents.Server
                 MetadataReference.CreateFromFile(typeof(DynamicObject).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(TraceEventSession).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(IEventFilter).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(IConfiguration).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(ConfigurationBuilder).Assembly.Location),
                 MetadataReference.CreateFromFile(SystemRuntime.Location),
+                MetadataReference.CreateFromFile(SystemLinq.Location),
                 MetadataReference.CreateFromFile(NetStandard20.Location),
             };
 
