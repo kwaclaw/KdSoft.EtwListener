@@ -12,7 +12,7 @@ import spinnerStyles from '../styles/spinner-styles.js';
 import appStyles from '../styles/etw-app-styles.js';
 import dialogStyles from '../styles/dialog-polyfill-styles.js';
 import * as utils from '../js/utils.js';
-import AgentConfig from '../js/agentConfig.js';
+import AgentState from '../js/agentState.js';
 import EventProvider from '../js/eventProvider.js';
 
 function getAgentIndex(agentList, agentId) {
@@ -44,7 +44,7 @@ class EtwAppSideBar extends LitMvvmElement {
   _exportAgentConfig(agentState) {
     if (!agentState) return;
 
-    const exportObject = new AgentConfig();
+    const exportObject = new AgentState();
     utils.setTargetProperties(exportObject, agentState);
     // fix up enabled providers to exclude extra properties
     const enabledProviders = [];

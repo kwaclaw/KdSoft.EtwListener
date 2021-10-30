@@ -6,7 +6,7 @@ import EventSinkConfigModel from './event-sink-config-model.js';
 import RingBuffer from '../js/ringBuffer.js';
 import * as utils from '../js/utils.js';
 import FetchHelper from '../js/fetchHelper.js';
-import AgentConfig from '../js/agentConfig.js';
+import AgentState from '../js/agentState.js';
 
 const traceLevelList = () => [
   { name: i18n.__('Always'), value: 0 },
@@ -160,11 +160,8 @@ function _resetProviders(agentEntry) {
 }
 
 function _resetProcessing(agentEntry) {
-  agentEntry.state.batchSize = agentEntry.current?.batchSize;
-  agentEntry.state.maxWriteDelayMSecs = agentEntry.current?.maxWriteDelayMSecs;
-  const filterModel = agentEntry.state.filterModel;
-  filterModel.filter = agentEntry.current?.filterBody;
-  filterModel.diagnostics = [];
+  agentEntry.state.processingOptions = agentEntry.current?.processingOptions;
+  _updateFilterModelFromProcessingOptions(agentEntry.state);
 }
 
 function _resetEventSink(agentEntry) {
@@ -268,7 +265,7 @@ class EtwAppModel {
     if (!activeEntry) return;
 
     // it seems utils.setTargetProperties(entry.state, updateObject); does not work for event-sink-config
-    const newState = new AgentConfig();
+    const newState = new AgentState();
     utils.setTargetProperties(newState, updateObject);
     activeEntry.state = newState;
   }
