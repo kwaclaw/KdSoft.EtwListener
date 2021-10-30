@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.AgentManager.Services;
-using KdSoft.EtwEvents.Client;
-using KdSoft.EtwEvents.PushAgent;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -170,15 +168,19 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         [HttpPost]
-        public Task<IActionResult> TestFilter(string agentId, [FromBody] object filterRequest) {
-            // we are passing the JSON simply through, filterRequest should match protobuf message TestFilterRequest
-            return CallAgent(agentId, "TestFilter", filterRequest?.ToString() ?? "", TimeSpan.FromSeconds(15));
+        public Task<IActionResult> TestFilter(string agentId, [FromBody] FilterModel filterModel) {
+            // WE are supplying the filter template
+            filterModel.FilterTemplate = Constants.FilterTemplate;
+            var json = JsonSerializer.Serialize(filterModel, _jsonOptions.Value.JsonSerializerOptions);
+            return CallAgent(agentId, "TestFilter", json, TimeSpan.FromSeconds(15));
         }
 
         [HttpPost]
-        public Task<IActionResult> ApplyProcessingOptions(string agentId, [FromBody] object processingOptions) {
-            // we are passing the JSON simply through
-            return CallAgent(agentId, "ApplyProcessingOptions", processingOptions?.ToString() ?? "", TimeSpan.FromSeconds(15));
+        public Task<IActionResult> ApplyProcessingOptions(string agentId, [FromBody] ProcessingOptions processingOptions) {
+            // WE are supplying the filter template
+            processingOptions.Filter.FilterTemplate = Constants.FilterTemplate;
+            var json = JsonSerializer.Serialize(processingOptions, _jsonOptions.Value.JsonSerializerOptions);
+            return CallAgent(agentId, "ApplyProcessingOptions", json, TimeSpan.FromSeconds(15));
         }
 
         [HttpPost]
