@@ -20,7 +20,7 @@ const traceLevelList = () => [
 ];
 
 function _enhanceProviderState(provider) {
-  if (!(raw(provider.levelChecklistModel) instanceof KdSoftChecklistModel)) {
+  if (!(provider.levelChecklistModel instanceof KdSoftChecklistModel)) {
     provider.levelChecklistModel = observable(new KdSoftChecklistModel(
       traceLevelList(),
       [provider.level || 0],
@@ -57,7 +57,7 @@ function _enhanceAgentState(agentState, filterEditModel, eventSinkInfos) {
     if (index >= 0) agentState.enabledProviders.splice(index, 1);
   };
 
-  if (!(raw(agentState.sinkConfigModel) instanceof EventSinkConfigModel)) {
+  if (!(agentState.sinkConfigModel instanceof EventSinkConfigModel)) {
     agentState.sinkConfigModel = new EventSinkConfigModel(eventSinkInfos, agentState);
   }
 
@@ -130,13 +130,7 @@ function _updateAgentsMap(agentsMap, agentStates) {
 }
 
 function _resetProviders(agentEntry) {
-  const freshProviders = [];
-  if (agentEntry.current) {
-    for (const provider of agentEntry.current.enabledProviders || []) {
-      freshProviders.push(_enhanceProviderState(provider));
-    }
-  }
-  agentEntry.state.enabledProviders = freshProviders;
+  agentEntry.state.enabledProviders = utils.clone(agentEntry.current.enabledProviders || []);
 }
 
 function _resetProcessing(agentEntry) {
@@ -347,7 +341,9 @@ class EtwAppModel {
   get processingModified() {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return false;
-    return !utils.targetEquals(activeEntry.current?.processingOptions, activeEntry.state.processingOptions);
+    const currOpts = activeEntry.current?.processingOptions;
+    const stateOpts = activeEntry.state.processingOptions;
+    return !utils.targetEquals(currOpts, stateOpts) || !utils.targetEquals(currOpts?.filter, stateOpts.filter);
   }
 
   //#endregion
@@ -372,7 +368,9 @@ class EtwAppModel {
   get eventSinkModified() {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return false;
-    return !utils.targetEquals(activeEntry.current?.eventSink, activeEntry.state.eventSink);
+    const currSink = activeEntry.current?.eventSink;
+    const stateSink = activeEntry.state.eventSink;
+    return !utils.targetEquals(currSink, stateSink);
   }
 
   get eventSinkError() {
