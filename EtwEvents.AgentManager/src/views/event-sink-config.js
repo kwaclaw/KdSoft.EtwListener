@@ -49,6 +49,11 @@ class EventSinkConfig extends LitMvvmElement {
     );
   }
 
+  _profileChange(e) {
+    e.stopPropagation();
+    this.model.sinkProfile[e.target.name] = utils.getFieldValue(e.target);
+  }
+
   _cancel() {
     const container = this.renderRoot.getElementById('form-content');
     const configElement = container.children[0];
@@ -214,7 +219,7 @@ class EventSinkConfig extends LitMvvmElement {
             </kdsoft-checklist>
           </kdsoft-dropdown>
           <label for="sinktype-ddown">Profile Name</label>
-          <input id="sinkProfileName" type="text" value=${this.model.sinkProfile?.name} />
+          <input id="sinkProfileName" name="name" type="text" @change=${this._profileChange} .value=${this.model.sinkProfile?.name} />
         </div>
 
         <div id="form-content">
