@@ -228,7 +228,7 @@ class EtwAgent extends LitMvvmElement {
                     <input type="number" id="maxWriteDelayMSecs" name="maxWriteDelayMSecs" .value=${activeAgentState.processingOptions.maxWriteDelayMSecs} />
                   </div>
                   <label for="filterEdit">Filter</label>
-                  <filter-edit id="filterEdit" class="p-2" .model=${activeAgentState.filterModel}></filter-edit>
+                  <filter-edit id="filterEdit" class="p-2" .model=${this.model.activeFilterModel}></filter-edit>
                   <hr class="my-3" />
                   <div class="flex flex-wrap mt-2 bt-1">
                     <button type="button" class="py-1 px-2" @click=${this._testFilterClick}>

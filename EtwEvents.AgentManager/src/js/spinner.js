@@ -1,5 +1,4 @@
-﻿
-class Spinner {
+﻿class Spinner {
   constructor(element) {
     this._element = element;
   }

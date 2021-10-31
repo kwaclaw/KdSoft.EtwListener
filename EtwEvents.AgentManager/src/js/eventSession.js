@@ -31,7 +31,6 @@ function initialMessageHandler(ev) {
   }
 }
 
-
 class EventSession {
   constructor(wsUrl, bufferSize, handleError) {
     this.wsUrl = wsUrl;

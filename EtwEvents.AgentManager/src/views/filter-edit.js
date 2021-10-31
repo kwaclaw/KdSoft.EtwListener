@@ -220,17 +220,17 @@ class FilterEdit extends LitMvvmElement {
 
   _change(e) {
     this.model.diagnostics = [];
-    this.model.filter = e.currentTarget.innerText;
+    this.model[e.currentTarget.id] = e.currentTarget.innerText;
   }
 
   //TODO intercept tab key in code div
 
   rendered() {
-    const filter = this.model.filter;
-    const formattedFilter = formatFilter(filter, this.model.diagnostics);
-    const codeElement = this.renderRoot.getElementById('code');
-    codeElement.innerHTML = formattedFilter;
-    codeElement.classList.toggle('invalid', this.model.diagnostics.length);
+  //  const filter = this.model.filter;
+  //  const formattedFilter = formatFilter(filter, this.model.diagnostics);
+  //  const codeElement = this.renderRoot.getElementById('code');
+  //  codeElement.innerHTML = formattedFilter;
+  //  codeElement.classList.toggle('invalid', this.model.diagnostics.length);
   }
 
   static get styles() {
@@ -246,7 +246,7 @@ class FilterEdit extends LitMvvmElement {
           line-height: 1rem;
           position: relative;
         }
-        #code {
+        .code {
           display: inline-block;
           margin-left: auto;
           border: 1px solid LightGray;
@@ -263,11 +263,11 @@ class FilterEdit extends LitMvvmElement {
           max-width: 68ch;
         }
         /* only needed for contenteditable elements */
-        #code:empty::after {
+        .code:empty::after {
           color: gray;
           content: attr(placeholder);
         }
-        #code.invalid {
+        .code.invalid {
           border: 1px solid red;
         }
         mark {
@@ -279,23 +279,81 @@ class FilterEdit extends LitMvvmElement {
     ];
   }
 
+  /* Filter template definition in AgentManager application
+using System;
+using System.Linq;
+using Microsoft.Diagnostics.Tracing;
+using Microsoft.Extensions.Configuration;
+{0}
+
+namespace KdSoft.EtwEvents.Server
+{{
+    public class EventFilter: IEventFilter
+    {{
+        readonly IConfiguration _config;
+
+        {1}
+
+        public EventFilter(IConfiguration config) {{
+            this._config = config;
+            Init();
+        }}
+
+        void Init() {{
+            {2}
+        }}
+
+        public bool IncludeEvent(TraceEvent evt) {{
+            {3}
+        }}
+    }}
+}}
+   */
+
   render() {
     const codeToolTip = getToolTip(this.model.diagnostics);
     const result = html`
-      <div id="code-wrapper" class="border p-2"><pre>${html`using System;
+      <div id="code-wrapper" class="border p-2" title=${codeToolTip}><pre>${html`using System;
+using System.Linq;
 using Microsoft.Diagnostics.Tracing;
+using Microsoft.Extensions.Configuration;
+${html`<div id="header" class="code"
+  contenteditable="true"
+  @blur=${this._change}
+  spellcheck="false"
+  placeholder="Your optional using statements go here">${this.model.header}</div>`}
 
 namespace KdSoft.EtwEvents.Server
 {
     public class EventFilter: IEventFilter
     {
-        public bool IncludeEvent(TraceEvent evt) {
-            ${html`<div id="code"
+        readonly IConfiguration _config;
+
+        ${html`<div id="body" class="code"
+          contenteditable="true"
+          @blur=${this._change}
+          spellcheck="false"
+          placeholder="Your optional class body goes here">${this.model.body}</div>`}
+
+        public EventFilter(IConfiguration config) {
+            this._config = config;
+            Init();
+        }
+
+        void Init() {
+            ${html`<div id="init" class="code"
               contenteditable="true"
               @blur=${this._change}
               spellcheck="false"
-              title=${codeToolTip}
-              placeholder="Your code goes here"></div>`}
+              placeholder="Your optional initialization code goes here">${this.model.init}</div>`}
+        }
+
+        public bool IncludeEvent(TraceEvent evt) {
+            ${html`<div id="method" class="code"
+              contenteditable="true"
+              @blur=${this._change}
+              spellcheck="false"
+              placeholder="Your include logic goes here">${this.model.method}</div>`}
         }
     }
 }`}   </pre></div>

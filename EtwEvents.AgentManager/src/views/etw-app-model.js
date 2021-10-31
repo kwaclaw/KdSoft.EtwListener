@@ -7,6 +7,8 @@ import RingBuffer from '../js/ringBuffer.js';
 import * as utils from '../js/utils.js';
 import FetchHelper from '../js/fetchHelper.js';
 import AgentState from '../js/agentState.js';
+import ProcessingOptions from '../js/processingOptions.js';
+import FilterEditModel from './filter-edit-model.js';
 
 const traceLevelList = () => [
   { name: i18n.__('Always'), value: 0 },
@@ -34,30 +36,8 @@ function _enhanceProviderState(provider) {
 }
 
 // adds view models and view related methods to agent state, agentState must be observable
-function _enhanceAgentState(agentState, eventSinkInfos) {
-  if (!(raw(agentState.filterModel) instanceof Object)) {
-    const af = agentState.processingOptions.filter;
-    agentState.filterModel = {
-      header: af.filterParts[0],
-      body: af.filterParts[1],
-      init: af.filterParts[2],
-      method: af.filterParts[3],
-      diagnostics: []
-    };
-    agentState._filterObserver = observe(() => {
-      const aof = agentState.processingOptions.filter;
-      aof.filterParts[0] = agentState.filterModel.header;
-      aof.filterParts[1] = agentState.filterModel.body;
-      aof.filterParts[2] = agentState.filterModel.init;
-      aof.filterParts[3] = agentState.filterModel.method;
-    });
-  }
-  const apf = agentState.processingOptions.filter;
-  const afm = agentState.filterModel;
-  afm.header = apf.filterParts[0];
-  afm.body = apf.filterParts[1];
-  afm.init = apf.filterParts[2];
-  afm.method = apf.filterParts[3];
+function _enhanceAgentState(agentState, filterEditModel, eventSinkInfos) {
+  filterEditModel.activate(agentState);
 
   for (const provider of agentState.enabledProviders) {
     _enhanceProviderState(provider);
@@ -135,7 +115,7 @@ function _updateAgentsMap(agentsMap, agentStates) {
         }
       });
     } else {
-      // update but do not replace existing state, as it may have been enhanced already
+      // update only the current property of entry, the state property may be modified
       entry.current = state;
     }
     agentsMap.set(agentId, observable(entry));
@@ -160,8 +140,7 @@ function _resetProviders(agentEntry) {
 }
 
 function _resetProcessing(agentEntry) {
-  agentEntry.state.processingOptions = agentEntry.current?.processingOptions;
-  _updateFilterModelFromProcessingOptions(agentEntry.state);
+  agentEntry.state.processingOptions = agentEntry.current?.processingOptions || new ProcessingOptions();
 }
 
 function _resetEventSink(agentEntry) {
@@ -188,6 +167,7 @@ class EtwAppModel {
     const observableThis = observable(this);
     observableThis._agents = [];
     observableThis.activeAgentId = null;
+    observableThis.activeFilterModel = new FilterEditModel();
 
     observableThis.fetchErrors = new RingBuffer(50);
     observableThis.showLastError = false;
@@ -256,7 +236,7 @@ class EtwAppModel {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return null;
 
-    activeEntry.state = _enhanceAgentState(activeEntry.state, this.eventSinkInfos);
+    activeEntry.state = _enhanceAgentState(activeEntry.state, this.activeFilterModel, this.eventSinkInfos);
     return activeEntry.state;
   }
 
@@ -340,7 +320,7 @@ class EtwAppModel {
     this.fetcher.postJson('TestFilter', { agentId: agentState.id }, agentState.processingOptions.filter)
       // result matches protobuf message BuildFilterResult
       .then(result => {
-        agentState.filterModel.diagnostics = result.diagnostics;
+        this.activeFilterModel.diagnostics = result.diagnostics;
       })
       .catch(error => window.etwApp.defaultHandleError(error));
   }
@@ -353,7 +333,7 @@ class EtwAppModel {
     this.fetcher.postJson('ApplyProcessingOptions', { agentId: agentState.id }, agentState.processingOptions)
       // result matches protobuf message BuildFilterResult
       .then(result => {
-        agentState.filterModel.diagnostics = result.diagnostics;
+        this.activeFilterModel.diagnostics = result.diagnostics;
       })
       .catch(error => window.etwApp.defaultHandleError(error));
   }
@@ -367,9 +347,7 @@ class EtwAppModel {
   get processingModified() {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return false;
-    return !utils.targetEquals(activeEntry.current?.filterBody, activeEntry.state.filterBody)
-      || !utils.targetEquals(activeEntry.current?.batchSize, activeEntry.state.batchSize)
-      || !utils.targetEquals(activeEntry.current?.maxWriteDelayMSecs, activeEntry.state.maxWriteDelayMSecs);
+    return !utils.targetEquals(activeEntry.current?.processingOptions, activeEntry.state.processingOptions);
   }
 
   //#endregion

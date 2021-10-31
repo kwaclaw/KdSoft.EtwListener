@@ -114,11 +114,8 @@ namespace KdSoft.EtwEvents.PushAgent
                 var diagnostics = ses.SetFilter(filterSource, _config);
                 if (diagnostics.Length > 0) {
                     filterModel = SessionConfig.NoFilter;
-                    result.NoFilter = true;
                 }
-                else {
-                    result.AddDiagnostics(diagnostics);
-                }
+                result.AddDiagnostics(diagnostics);
             }
 
             var oldBatchSize = _processor?.ChangeBatchSize(batchSize) ?? -1;
