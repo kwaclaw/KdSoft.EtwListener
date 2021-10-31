@@ -219,6 +219,7 @@ class FilterEdit extends LitMvvmElement {
   }
 
   _change(e) {
+    e.stopPropagation();
     this.model.diagnostics = [];
     this.model[e.currentTarget.id] = e.currentTarget.innerText;
   }
@@ -310,6 +311,11 @@ namespace KdSoft.EtwEvents.Server
 }}
    */
 
+  /* Note
+   We cannot set the content of a contenteditable div like this: <div>${content}</div>
+   as it interferes with lit-html. We need to do use innerHTML: <div .innerHTML=${content}></div>
+  */
+
   render() {
     const codeToolTip = getToolTip(this.model.diagnostics);
     const result = html`
@@ -319,9 +325,10 @@ using Microsoft.Diagnostics.Tracing;
 using Microsoft.Extensions.Configuration;
 ${html`<div id="header" class="code"
   contenteditable="true"
-  @blur=${this._change}
   spellcheck="false"
-  placeholder="Your optional using statements go here">${this.model.header}</div>`}
+  @blur=${this._change}
+  .innerHTML=${this.model.header}
+  placeholder="Your optional using statements go here"></div>`}
 
 namespace KdSoft.EtwEvents.Server
 {
@@ -331,9 +338,10 @@ namespace KdSoft.EtwEvents.Server
 
         ${html`<div id="body" class="code"
           contenteditable="true"
-          @blur=${this._change}
           spellcheck="false"
-          placeholder="Your optional class body goes here">${this.model.body}</div>`}
+          @blur=${this._change}
+          .innerHTML=${this.model.body}
+          placeholder="Your optional class body goes here"></div>`}
 
         public EventFilter(IConfiguration config) {
             this._config = config;
@@ -343,17 +351,19 @@ namespace KdSoft.EtwEvents.Server
         void Init() {
             ${html`<div id="init" class="code"
               contenteditable="true"
-              @blur=${this._change}
               spellcheck="false"
-              placeholder="Your optional initialization code goes here">${this.model.init}</div>`}
+              @blur=${this._change}
+              .innerHTML=${this.model.init}
+              placeholder="Your optional initialization code goes here"></div>`}
         }
 
         public bool IncludeEvent(TraceEvent evt) {
             ${html`<div id="method" class="code"
               contenteditable="true"
-              @blur=${this._change}
               spellcheck="false"
-              placeholder="Your include logic goes here">${this.model.method}</div>`}
+              @blur=${this._change}
+              .innerHTML=${this.model.method}
+              placeholder="Your include logic goes here"></div>`}
         }
     }
 }`}   </pre></div>
