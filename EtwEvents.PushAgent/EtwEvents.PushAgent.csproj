@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <LangVersion>Latest</LangVersion>
     <Nullable>enable</Nullable>
     <AssemblyName>KdSoft.EtwEvents.PushAgent</AssemblyName>
@@ -23,10 +23,10 @@
   <ItemGroup>
     <PackageReference Include="KdSoft.Logging" Version="1.0.1" />
     <PackageReference Include="LaunchDarkly.EventSource" Version="4.1.3" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="6.0.0-rc.2.21480.5" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.0-rc.2.21480.5" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="5.0.1" />
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="5.0.11" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>
