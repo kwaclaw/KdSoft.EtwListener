@@ -20,20 +20,20 @@
     "eslint": "^7.32.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-plugin-import": "^2.25.2",
-    "postcss": "^8.3.9",
-    "postcss-cli": "^9.0.1",
+    "postcss": "^8.3.11",
+    "postcss-cli": "^9.0.2",
     "postcss-copy": "^7.1.0",
     "postcss-import": "^14.0.2",
     "shx": "^0.3.3",
-    "tailwindcss": "^2.2.17",
-    "vite": "^2.6.7"
+    "tailwindcss": "^2.2.19",
+    "vite": "^2.6.13"
   },
   "scripts": {
     "wrap-css": "node node_modules/@kdsoft/lit-mvvm-components/scripts/wrap-css.mjs",
-    "po2json": "po2json-gettextjs src/de_AT.po src/de_AT.json -p",
-    "postcss-css": "postcss src/css/**/*[.pcss,.css] --dir src/_tmp --ext css",
-    "wrap-css-tmp": "npm run wrap-css _tmp/**/*.css src/styles _tmp",
-    "wrap-css-dialog": "npm run wrap-css node_modules/dialog-polyfill/dialog-polyfill.css src/styles node_modules/dialog-polyfill",
+    "po2json": "po2json-gettextjs de_AT.po public/de_AT.json -p",
+    "postcss-css": "postcss css/**/*[.pcss,.css] --dir _tmp --ext css",
+    "wrap-css-tmp": "npm run wrap-css _tmp/**/*.css styles _tmp",
+    "wrap-css-dialog": "npm run wrap-css node_modules/dialog-polyfill/dialog-polyfill.css styles node_modules/dialog-polyfill",
     "prebuild": "rimraf _tmp/**/*  && npm run po2json",
     "build-styles": "npm run postcss-css && npm run wrap-css-tmp && npm run wrap-css-dialog",
     "prepare": "npm run prebuild && npm run build-styles",
@@ -49,7 +49,7 @@
           "node_modules"
         ],
         "template": "[path]/[name].[ext][query]",
-        "dest": "src/styles/assets"
+        "dest": "styles/assets"
       },
       "tailwindcss": {
         "theme": {},

@@ -8,7 +8,7 @@ import GetText from 'gettext.js';
 // use "new" so that "this" is defined inside of GetText()
 window.i18n = new GetText();
 
-const fetcher = new FetchHelper('./');
+const fetcher = new FetchHelper('');
 fetcher.getJson('de_AT.json')
   .then(json => {
     window.i18n.loadJSON(json, 'messages');
