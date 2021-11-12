@@ -7,17 +7,21 @@ namespace KdSoft.EtwEvents.AgentManager
         readonly Dictionary<string, List<Role>> _roleMap;
         static readonly IReadOnlyList<Role> _emptyRoles = new List<Role>().AsReadOnly();
 
-        public RoleService(ISet<string> agentNames, ISet<string> clientNames) {
+        public RoleService(ISet<string>? agentNames, ISet<string>? clientNames) {
             this._roleMap = new Dictionary<string, List<Role>>();
-            foreach (var agentName in agentNames) {
-                this._roleMap[agentName] = new List<Role> { Role.Agent };
-            }
-            foreach (var clientName in clientNames) {
-                if (this._roleMap.TryGetValue(clientName, out var roleList)) {
-                    roleList.Add(Role.Manager);
+            if (agentNames != null) {
+                foreach (var agentName in agentNames) {
+                    this._roleMap[agentName] = new List<Role> { Role.Agent };
                 }
-                else {
-                    this._roleMap[clientName] = new List<Role> { Role.Manager };
+            }
+            if (clientNames != null) {
+                foreach (var clientName in clientNames) {
+                    if (this._roleMap.TryGetValue(clientName, out var roleList)) {
+                        roleList.Add(Role.Manager);
+                    }
+                    else {
+                        this._roleMap[clientName] = new List<Role> { Role.Manager };
+                    }
                 }
             }
         }
