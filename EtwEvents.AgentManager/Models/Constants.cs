@@ -21,7 +21,7 @@ namespace KdSoft.EtwEvents.Server
     {{
         readonly IConfiguration _config;
 
-        {1}
+{1}
 
         public EventFilter(IConfiguration config) {{
             this._config = config;
@@ -29,11 +29,11 @@ namespace KdSoft.EtwEvents.Server
         }}
 
         void Init() {{
-            {2}
+{2}
         }}
 
         public bool IncludeEvent(TraceEvent evt) {{
-            {3}
+{3}
         }}
     }}
 }}
