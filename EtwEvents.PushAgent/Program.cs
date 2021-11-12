@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.Server;
 using KdSoft.Logging;
@@ -12,6 +13,8 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+
+[assembly: InternalsVisibleTo("EtwEvents.Tests")]
 
 namespace KdSoft.EtwEvents.PushAgent
 {

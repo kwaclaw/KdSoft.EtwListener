@@ -1,8 +1,12 @@
 using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using KdSoft.EtwLogging;
+using Microsoft.CodeAnalysis.Text;
 using Microsoft.Diagnostics.Tracing.Session;
 using Microsoft.Extensions.Logging;
 
@@ -128,16 +132,63 @@ namespace KdSoft.EtwEvents.Server
             return _emptyTask;
         }
 
+        static (SourceText source, IReadOnlyList<TextChangeRange> partRanges) BuildSource(string filterTemplate, IList<string> filterParts) {
+            int indx = 0;
+            var markers = filterParts.Select(p => $"\u001D{indx++}").ToArray();
+            var initSource = string.Format(CultureInfo.InvariantCulture, filterTemplate, markers);
+            var initSourceText = SourceText.From(initSource);
+            var partChanges = new TextChange[4];
+            for (indx = 0; indx < 4; indx++) {
+                var part = filterParts[indx] ?? String.Empty;
+                int insertionIndex = initSource.IndexOf(markers[indx], StringComparison.Ordinal);
+                partChanges[indx] = new TextChange(new TextSpan(insertionIndex, 2), part);
+            }
+            var changedSourceText = initSourceText.WithChanges(partChanges);
+            var ranges = changedSourceText.GetChangeRanges(initSourceText);
+            return (changedSourceText, ranges);
+        }
+
+        public static (SourceText? source, IReadOnlyList<TextChangeRange>? partRanges) BuildFilterSource(string filterTemplate, IList<string> filterParts) {
+            (SourceText? source, IReadOnlyList<TextChangeRange>? partRanges) result;
+            if (filterParts == null || filterParts.Count == 0 || string.IsNullOrWhiteSpace(filterParts[filterParts.Count - 1]))
+                result = (null, null);
+            else if (string.IsNullOrWhiteSpace(filterTemplate))
+                result = (null, null);
+            else
+                result = BuildSource(filterTemplate, filterParts);
+            return result;
+        }
+
+
         public override Task<BuildFilterResult> SetCSharpFilter(SetFilterRequest request, ServerCallContext context) {
-            var session = GetSession(request.SessionName);
-            var diagnostics = session.SetFilter(request.CsharpFilter, null!);
-            var result = new BuildFilterResult().AddDiagnostics(diagnostics);
+            var result = new BuildFilterResult();
+
+            var filterSource = BuildFilterSource(request.FilterTemplate, request.FilterParts);
+            if (filterSource.source == null) {
+                result.NoFilter = true;
+            }
+            else {
+                var diagnostics = RealTimeTraceSession.TestFilter(filterSource.source);
+                result.AddDiagnostics(diagnostics);
+                result.AddSourceLines(filterSource.source.Lines);
+            }
+
             return Task.FromResult(result);
         }
 
         public override Task<BuildFilterResult> TestCSharpFilter(TestFilterRequest request, ServerCallContext context) {
-            var diagnostics = RealTimeTraceSession.TestFilter(request.CsharpFilter);
-            var result = new BuildFilterResult().AddDiagnostics(diagnostics);
+            var result = new BuildFilterResult();
+
+            var filterSource = BuildFilterSource(request.FilterTemplate, request.FilterParts);
+            if (filterSource.source == null) {
+                result.NoFilter = true;
+            }
+            else {
+                var diagnostics = RealTimeTraceSession.TestFilter(filterSource.source);
+                result.AddDiagnostics(diagnostics);
+                result.AddSourceLines(filterSource.source.Lines);
+            }
+
             return Task.FromResult(result);
         }
     }

@@ -1,7 +1,9 @@
-﻿using System.Collections.Immutable;
+﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using Google.Protobuf.WellKnownTypes;
-using Microsoft.CodeAnalysis;
 using Microsoft.Diagnostics.Tracing;
+using ca = Microsoft.CodeAnalysis;
+using cat = Microsoft.CodeAnalysis.Text;
 
 namespace KdSoft.EtwLogging
 {
@@ -26,7 +28,7 @@ namespace KdSoft.EtwLogging
             return etw;
         }
 
-        public static BuildFilterResult AddDiagnostics(this BuildFilterResult bfr, ImmutableArray<Diagnostic> diagnostics) {
+        public static BuildFilterResult AddDiagnostics(this BuildFilterResult bfr, ImmutableArray<ca.Diagnostic> diagnostics) {
             foreach (var diag in diagnostics) {
                 LinePositionSpan? lineSpan = null;
                 if (diag.Location.IsInSource) {
@@ -45,6 +47,30 @@ namespace KdSoft.EtwLogging
                     LineSpan = lineSpan
                 };
                 bfr.Diagnostics.Add(dg);
+            }
+            return bfr;
+        }
+
+        public static BuildFilterResult AddSourceLines(this BuildFilterResult bfr, IReadOnlyList<cat.TextLine> lines) {
+            foreach (var line in lines) {
+                var textLine = new TextLine {
+                    Line = line.LineNumber,
+                    Start = line.Start,
+                    Length = line.Span.Length,
+                    Text = line.ToString(),
+                };
+                bfr.SourceLines.Add(textLine);
+            }
+            return bfr;
+        }
+
+        public static BuildFilterResult AddPartLineSpans(this BuildFilterResult bfr, IReadOnlyList<cat.LinePositionSpan> lineSpans) {
+            foreach (var lineSpan in lineSpans) {
+                var linePositionSpan = new LinePositionSpan {
+                     Start = new LinePosition { Line = lineSpan.Start.Line, Character = lineSpan.Start.Character },
+                     End = new LinePosition { Line = lineSpan.End.Line, Character = lineSpan.End.Character },
+                };
+                bfr.PartLineSpans.Add(linePositionSpan);
             }
             return bfr;
         }

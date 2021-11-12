@@ -313,8 +313,26 @@ namespace KdSoft.EtwEvents.WebClient
 
         #region CSharp Filter
 
+        const string FilterTemplate = @"using System;
+using Microsoft.Diagnostics.Tracing;
+
+namespace KdSoft.EtwEvents.Server
+{{
+    public class EventFilter: IEventFilter
+    {{
+        public bool IncludeEvent(TraceEvent evt) {{
+{0}
+        }}
+    }}
+}}
+";
+
         public async Task<BuildFilterResult> SetCSharpFilter(string csharpFilter) {
-            var setFilterRequest = new KdSoft.EtwLogging.SetFilterRequest { SessionName = this.Name, CsharpFilter = csharpFilter };
+            var setFilterRequest = new KdSoft.EtwLogging.SetFilterRequest {
+                SessionName = this.Name,
+                FilterTemplate = FilterTemplate,
+                FilterParts = { csharpFilter }
+            };
             var result = await _etwClient.SetCSharpFilterAsync(setFilterRequest).ResponseAsync.ConfigureAwait(false);
             return result;
         }
@@ -323,7 +341,10 @@ namespace KdSoft.EtwEvents.WebClient
             var channel = CreateChannel(host, clientCertificate);
             try {
                 var client = new EtwListener.EtwListenerClient(channel);
-                var testFilterRequest = new KdSoft.EtwLogging.TestFilterRequest { CsharpFilter = csharpFilter };
+                var testFilterRequest = new KdSoft.EtwLogging.TestFilterRequest {
+                    FilterTemplate = FilterTemplate,
+                    FilterParts = { csharpFilter }
+                };
                 var result = await client.TestCSharpFilterAsync(testFilterRequest).ResponseAsync.ConfigureAwait(false);
                 return result;
             }

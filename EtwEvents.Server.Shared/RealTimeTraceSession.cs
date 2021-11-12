@@ -207,14 +207,14 @@ namespace KdSoft.EtwEvents.Server
 
         class FilterHolder
         {
-            public FilterHolder(IEventFilter filter, CollectibleAssemblyLoadContext loadContext, string filterBody) {
+            public FilterHolder(IEventFilter filter, CollectibleAssemblyLoadContext loadContext, SourceText? filterSource) {
                 this.Filter = filter;
                 this.LoadContext = loadContext;
-                this.FilterBody = filterBody;
+                this.FilterSource = filterSource;
             }
             public readonly IEventFilter Filter;
             public readonly CollectibleAssemblyLoadContext LoadContext;
-            public readonly string FilterBody;
+            public readonly SourceText? FilterSource;
         }
 
         FilterHolder? _filterHolder;
@@ -229,13 +229,14 @@ namespace KdSoft.EtwEvents.Server
             return filterHolder?.Filter;
         }
 
-        public string? GetCurrentFilterBody() {
+        public SourceText? GetCurrentFilterSource() {
             var filterHolder = _filterHolder;
-            return filterHolder?.FilterBody;
+            return filterHolder?.FilterSource;
         }
 
-        public static ImmutableArray<Diagnostic> GenerateFilter(string filterSource, MemoryStream ms) {
+        public static ImmutableArray<Diagnostic> GenerateFilter(SourceText filterSource, MemoryStream ms) {
             var compilation = CompileFilter(filterSource);
+            var sourceText = compilation.SyntaxTrees[0].GetText();
             var emitResult = compilation.Emit(ms);
             if (emitResult.Success) {
                 return ImmutableArray<Diagnostic>.Empty;
@@ -243,36 +244,35 @@ namespace KdSoft.EtwEvents.Server
             return emitResult.Diagnostics;
         }
 
-        public static ImmutableArray<Diagnostic> TestFilter(string filterSource) {
-            if (string.IsNullOrWhiteSpace(filterSource)) {
+        public static ImmutableArray<Diagnostic> TestFilter(SourceText? filterSource) {
+            if (filterSource == null) {
                 return ImmutableArray<Diagnostic>.Empty;
             }
             using (var ms = new MemoryStream()) {
-                var diagnostics = GenerateFilter(filterSource, ms);
-                if (diagnostics.Length > 0) {
-                    return diagnostics;
-                }
+                return GenerateFilter(filterSource, ms);
             }
-            return ImmutableArray<Diagnostic>.Empty;
         }
 
-        public ImmutableArray<Diagnostic> SetFilter(string filterSource, IConfiguration config) {
+        public ImmutableArray<Diagnostic> SetFilter(SourceText? filterSource, IConfiguration config) {
             CheckDisposed();
 
-            if (string.IsNullOrWhiteSpace(filterSource)) {
+            if (filterSource == null) {
                 SetFilterHolder(null);
+                return ImmutableArray<Diagnostic>.Empty;
             }
+
+            ImmutableArray<Diagnostic> result;
 
             Assembly filterAssembly;
             var newFilterContext = new CollectibleAssemblyLoadContext();
             using (var ms = new MemoryStream()) {
-                var diagnostics = GenerateFilter(filterSource, ms);
-                if (diagnostics.Length == 0) {
+                result = GenerateFilter(filterSource, ms);
+                if (result.Length == 0) {
                     ms.Seek(0, SeekOrigin.Begin);
                     filterAssembly = newFilterContext.LoadFromStream(ms);
                 }
                 else {
-                    return diagnostics;
+                    return result;
                 }
             }
 
@@ -282,14 +282,13 @@ namespace KdSoft.EtwEvents.Server
 
             SetFilterHolder(new FilterHolder(newFilter!, newFilterContext, filterSource));
 
-            return ImmutableArray<Diagnostic>.Empty;
+            return result;
         }
 
-        public static CSharpCompilation CompileFilter(string filterSource) {
-            var sourceText = SourceText.From(filterSource);
+        public static CSharpCompilation CompileFilter(SourceText filterSource) {
             var options = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest);
 
-            var parsedSyntaxTree = SyntaxFactory.ParseSyntaxTree(sourceText, options);
+            var parsedSyntaxTree = SyntaxFactory.ParseSyntaxTree(filterSource, options);
             var references = new MetadataReference[]
             {
                 MetadataReference.CreateFromFile(typeof(object).Assembly.Location),

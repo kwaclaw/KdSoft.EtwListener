@@ -74,11 +74,11 @@ return result;
                 Console.WriteLine($"\t{res.Name} - {res.Restarted}");
             }
 
-            var filterRequest = new SetFilterRequest {
-                SessionName = "TestSession",
-                CsharpFilter = "return true;" //filterBody
-            };
-            client.SetCSharpFilter(filterRequest);
+            //var filterRequest = new SetFilterRequest {
+            //    SessionName = "TestSession",
+            //    CsharpFilter = "return true;" //filterBody
+            //};
+            //client.SetCSharpFilter(filterRequest);
 
             //var filterRequest2 = new SetFilterRequest {
             //    SessionName = "TestSession",

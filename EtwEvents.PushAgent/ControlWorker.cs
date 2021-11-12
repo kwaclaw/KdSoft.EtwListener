@@ -88,10 +88,8 @@ namespace KdSoft.EtwEvents.PushAgent
             // need different logic depending on whether a session is active or not
             SessionWorker? worker = _sessionWorkerAvailable == 0 ? null : SessionWorker;
 
-            string? filterSource;
             FilterModel? filterModel;
             BuildFilterResult filterResult;
-
 
             switch (sse.Event) {
                 case "ChangeLogLevel":
@@ -120,16 +118,11 @@ namespace KdSoft.EtwEvents.PushAgent
                     var opts = JsonSerializer.Deserialize<ProcessingOptions>(sse.Data, _jsonOptions);
                     if (opts == null)
                         return;
-                    filterSource = SessionWorker.BuildFilterSource(opts.Filter);
                     if (worker == null) {
                         filterModel = SessionConfig.NoFilter;
-                        if (filterSource == null) {
-                            filterResult = new BuildFilterResult { NoFilter = true };
-                        } else {
-                            filterResult = SessionWorker.TestFilter(filterSource);
-                            if (filterResult.Diagnostics.Count == 0)
-                                filterModel = opts.Filter;
-                        }
+                        filterResult = SessionWorker.TestFilter(opts.Filter);
+                        if (filterResult.Diagnostics.Count == 0)
+                            filterModel = opts.Filter;
                         _sessionConfig.SaveProcessingOptions(opts.BatchSize, opts.MaxWriteDelayMSecs, filterModel);
                     }
                     else {
@@ -140,11 +133,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     break;
                 case "TestFilter":
                     filterModel = JsonSerializer.Deserialize<FilterModel>(sse.Data, _jsonOptions);
-                    filterSource = SessionWorker.BuildFilterSource(filterModel);
-                    if (filterSource == null)
-                        filterResult = new BuildFilterResult { NoFilter = true };
-                    else
-                        filterResult = SessionWorker.TestFilter(filterSource);
+                    filterResult = SessionWorker.TestFilter(filterModel);
                     await PostMessage($"Agent/TestFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
                     break;
                 case "UpdateEventSink":
