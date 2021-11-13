@@ -315,6 +315,9 @@ class EtwAppModel {
       // result matches protobuf message BuildFilterResult
       .then(result => {
         this.activeFilterModel.diagnostics = result.diagnostics;
+        this.activeFilterModel.sourceLines = result.sourceLines;
+        this.activeFilterModel.partLineSpans = result.partLineSpans;
+        this.activeFilterModel.noFilter = result.noFilter;
       })
       .catch(error => window.etwApp.defaultHandleError(error));
   }
@@ -328,7 +331,10 @@ class EtwAppModel {
       // result matches protobuf message BuildFilterResult
       .then(result => {
         this.activeFilterModel.diagnostics = result.diagnostics;
-      })
+        this.activeFilterModel.sourceLines = result.sourceLines;
+        this.activeFilterModel.partLineSpans = result.partLineSpans;
+        this.activeFilterModel.noFilter = result.noFilter;
+})
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
@@ -336,6 +342,7 @@ class EtwAppModel {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return;
     _resetProcessing(activeEntry);
+    this.activeFilterModel.resetDiagnostics();
   }
 
   get processingModified() {

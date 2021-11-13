@@ -1,6 +1,5 @@
 ﻿class FilterModel {
-  constructor(filterTemplate, filterParts) {
-    this.filterTemplate = filterTemplate || null;
+  constructor(filterParts) {
     this.filterParts = filterParts || [];
   }
 }
