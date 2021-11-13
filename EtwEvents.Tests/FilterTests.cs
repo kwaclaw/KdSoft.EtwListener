@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using KdSoft.EtwEvents.PushAgent;
+using KdSoft.EtwEvents.Server;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -43,25 +44,29 @@ namespace KdSoft.EtwEvents.Server
 }}
 ";
 
-        const string header = @"using System.Text;";
-        const string body = @"int _count;";
+        const string header = null;  //@"using System.Text;";
+        const string body = @"int _count; tttt";
         const string init = @"_count = 23;
-_count++";
-        const string method = @"if (_count > 0)
+_count++;";
+        const string method = @"if (_count > 0) rt uu
     return true;
 else
     return false;";
 
         [Fact]
-        public void Test1()
-        {
+        public void Test1() {
             var (sourceText, ranges) = SessionWorker.BuildSource(FilterTemplate, header, body, init, method);
+
+            //NOTE: it is possible that diagnostics are reported against lines in the template,
+            //      depending on the nature of the error in the replaceable part of the code
+            var diagnostics = RealTimeTraceSession.TestFilter(sourceText);
 
             var linePositions = SessionWorker.GetPartLineSpans(sourceText, ranges);
             foreach (var linePos in linePositions) {
                 _output.WriteLine($"Part: {linePos.Start.Line}:{linePos.Start.Character} -- {linePos.End.Line}:{linePos.End.Character}");
             }
             _output.WriteLine("");
+
 
             List<KdSoft.EtwLogging.TextLine> textLines = new List<KdSoft.EtwLogging.TextLine>();
             foreach (var line in sourceText.Lines) {
