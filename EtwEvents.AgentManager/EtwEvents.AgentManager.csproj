@@ -24,13 +24,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <FontAwsomeSprites Include="src/css/fontawesome/sprites/**/*" />
-    <FontAwsomeSvgs Include="src/css/fontawesome/svgs/**/*" />
-    <FontAwsomeWebfonts Include="src/css/fontawesome/webfonts/**/*" />
+    <FontAwsomeSprites Include="Spa/css/fontawesome/sprites/**/*" />
+    <FontAwsomeSvgs Include="Spa/css/fontawesome/svgs/**/*" />
+    <FontAwsomeWebfonts Include="Spa/css/fontawesome/webfonts/**/*" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Remove="src/css/fontawesome/metadata/**/*" />
+    <Content Remove="Spa/css/fontawesome/metadata/**/*" />
   </ItemGroup>
 
   <ItemGroup>

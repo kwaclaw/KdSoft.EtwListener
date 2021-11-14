@@ -110,7 +110,7 @@ namespace KdSoft.EtwEvents.AgentManager
                 _env.ContentRootPath,
                 "EventSinks",
                 "EventSinksCache",
-                Path.Combine("src", "eventSinks")
+                Path.Combine("Spa", "eventSinks")
             ));
 
             //services.AddSingleton<AppSecretsHolder>(provider => {
@@ -194,7 +194,7 @@ namespace KdSoft.EtwEvents.AgentManager
 
             if (env.IsDevelopment()) {
                 app.UseSpa(spa => {
-                    spa.Options.SourcePath = "./src";
+                    spa.Options.SourcePath = "./Spa";
                     //spa.Options.DevServerPort = 41000;
                     spa.UseReactDevelopmentServer("dev");
 

@@ -3,7 +3,7 @@
 ## Import Styles before production build or development run
 
 Any CSS that is not available as CSS-in-JS in the form of lit-element css`...my styles...` must
-be imported/converted to that format. Place your CSS into src/css and then run "npm run import-styles".
+be imported/converted to that format. Place your CSS into Spa/css and then run "npm run import-styles" in Spa.
 
 ## Run in Development mode
 
@@ -96,7 +96,7 @@ Each event sink implementation must be located in a unique folder under the Even
 
 - These components provide a configuration UI for a specific event sink and version.
 
-- They must be located under the src/eventSinks directory and reflect the same directory structure as the binaries so they can be mapped.
+- They must be located under the Spa/eventSinks directory and reflect the same directory structure as the binaries so they can be mapped.
 
 - The file names must match the patterns `*-config.js` and `*-config-model.js`.
 

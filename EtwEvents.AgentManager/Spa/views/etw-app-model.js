@@ -170,8 +170,8 @@ class EtwAppModel {
     const fetcher = new FetchHelper('/Manager');
     this.fetcher = fetcher;
 
-    //TODO when running in dev mode with vite, we can only serve files under the root, i.e. 'src'
-    //     so maybe we need to copy the event sink config files to a directory under src on AgentManager build
+    //TODO when running in dev mode with vite, we can only serve files under the root, i.e. 'Spa'
+    //     so maybe we need to copy the event sink config files to a directory under Spa on AgentManager build
 
     observableThis.eventSinkInfos = [];
     fetcher.getJson('GetEventSinkInfos')
