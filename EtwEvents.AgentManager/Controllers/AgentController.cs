@@ -114,7 +114,7 @@ namespace KdSoft.EtwEvents.AgentManager
         #region Requests from Agent
 
         [HttpPost]
-        public async Task<IActionResult> UpdateState(AgentState state) {
+        public async Task<IActionResult> UpdateState([FromBody] AgentState state) {
             var agentId = User.Identity?.Name;
             if (agentId == null)
                 return Unauthorized();
