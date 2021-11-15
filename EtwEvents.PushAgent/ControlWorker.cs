@@ -195,7 +195,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 // Id = string.IsNullOrWhiteSpace(agentEmail) ? agentName : $"{agentName} ({agentEmail})",
                 Id = string.Empty,  // will be filled in on server using the client certificate
                 Host = Dns.GetHostName(),
-                Site = _context.Configuration["Site"],
+                Site = _context.Configuration["Site"] ?? "<Undefined>",
                 IsRunning = isRunning,
                 IsStopped = !isRunning,
                 EventSink = eventSinkState,
