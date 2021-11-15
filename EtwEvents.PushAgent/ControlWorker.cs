@@ -212,12 +212,12 @@ namespace KdSoft.EtwEvents.PushAgent
                 await ProcessEvent(new ControlEvent { Event = e.EventName, Id = e.Message.LastEventId ?? "", Data = e.Message.Data ?? "" }).ConfigureAwait(false);
             }
             catch (Exception ex) {
-                _logger?.LogAllErrors(ex, $"Error in {nameof(EventReceived)}:\n");
+                _logger?.LogAllErrors(ex, $"Error in {nameof(EventReceived)}:");
             }
         }
 
         void EventError(object? sender, ExceptionEventArgs e) {
-            _logger?.LogAllErrors(e.Exception, $"Error in {nameof(EventError)}:\n");
+            _logger?.LogAllErrors(e.Exception, $"Error in {nameof(EventError)}:");
         }
 
         void EventSourceStateChanged(object? sender, StateChangedEventArgs e) {
@@ -249,8 +249,6 @@ namespace KdSoft.EtwEvents.PushAgent
         }
 
         #endregion
-
-        //TODO use async disposable service scope when in .NET 6.0;
 
         async Task<bool> StartWorker(CancellationToken cancelToken) {
             if (_sessionWorkerAvailable != 0)
