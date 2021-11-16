@@ -170,9 +170,6 @@ namespace KdSoft.EtwEvents.PushAgent
 
         Task SendStateUpdate() {
             var ses = SessionWorker?.Session;
-            //var agentName = _httpCertHandler.ClientCert.GetNameInfo(X509NameType.SimpleName, false);
-            //var agentEmail = _httpCertHandler.ClientCert.GetNameInfo(X509NameType.EmailName, false);
-            // 
             ImmutableList<EtwLogging.ProviderSetting> enabledProviders;
             var eventSinkState = new EventSinkState();
 
@@ -193,12 +190,15 @@ namespace KdSoft.EtwEvents.PushAgent
                 }).ToImmutableList();
             }
 
+            var clientCert = (_httpHandler.SslOptions.ClientCertificates as X509Certificate2Collection)?.First();
+
             var state = new AgentState {
                 EnabledProviders = enabledProviders,
                 // Id = string.IsNullOrWhiteSpace(agentEmail) ? agentName : $"{agentName} ({agentEmail})",
                 Id = string.Empty,  // will be filled in on server using the client certificate
                 Host = Dns.GetHostName(),
-                Site = _context.Configuration["Site"] ?? "<Undefined>",
+                //Site = _context.Configuration["Site"] ?? "<Undefined>",
+                Site = clientCert?.GetNameInfo(X509NameType.SimpleName, false) ?? "<Undefined>",
                 IsRunning = isRunning,
                 IsStopped = !isRunning,
                 EventSink = eventSinkState,
