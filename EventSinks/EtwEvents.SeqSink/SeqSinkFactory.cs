@@ -30,19 +30,18 @@ namespace KdSoft.EtwEvents.EventSinks
             var serverUrl = new Uri(options.ServerUrl, UriKind.Absolute);
             var requestUri = new Uri(serverUrl, SeqSink.BulkUploadResource);
 
-            HttpClientHandler? handler = null;
             HttpClient? http = null;
+            SocketsHttpHandler? handler = null;
             try {
                 if (!string.IsNullOrEmpty(options.ProxyAddress)) {
                     var proxy = new WebProxy(options.ProxyAddress, true);
-                    handler = new HttpClientHandler {
+                    handler = new SocketsHttpHandler {
                         Proxy = proxy,
                         UseProxy = true
                     };
                 }
 
-                http = handler == null ? new HttpClient() : new HttpClient(handler);
-
+                http = handler != null ? new HttpClient(handler) : new HttpClient();
                 if (!string.IsNullOrWhiteSpace(apiKey))
                     http.DefaultRequestHeaders.Add(SeqSink.ApiKeyHeaderName, apiKey);
 
@@ -52,7 +51,7 @@ namespace KdSoft.EtwEvents.EventSinks
 
                 return new SeqSink(http, requestUri, maxLevel, logger);
             }
-            catch(Exception ex) {
+            catch (Exception ex) {
                 handler?.Dispose();
                 http?.Dispose();
                 logger.LogError(ex, $"Error in {nameof(SeqSink)} initialization.");

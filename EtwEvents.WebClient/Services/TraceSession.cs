@@ -2,6 +2,7 @@ using System;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
@@ -70,12 +71,15 @@ namespace KdSoft.EtwEvents.WebClient
         }
 
         static GrpcChannel CreateChannel(string host, X509Certificate2 clientCertificate) {
-#pragma warning disable CA2000 // Dispose objects before losing scope
-            var handler = new HttpClientHandler();
-#pragma warning restore CA2000 // Dispose objects before losing scope
-            handler.ClientCertificates.Add(clientCertificate);
+            var httpHandler = new SocketsHttpHandler {
+                //PooledConnectionLifetime = TimeSpan.FromHours(4),
+                SslOptions = new SslClientAuthenticationOptions {
+                    ClientCertificates = new X509Certificate2Collection { clientCertificate },
+                },
+            };
+
             var channel = GrpcChannel.ForAddress(host, new GrpcChannelOptions {
-                HttpClient = new HttpClient(handler, true),
+                HttpClient = new HttpClient(httpHandler, true),
                 DisposeHttpClient = true
             });
             return channel;

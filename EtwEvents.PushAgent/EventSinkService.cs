@@ -20,7 +20,7 @@ namespace KdSoft.EtwEvents.PushAgent
         readonly string _rootPath;
         readonly string _eventSinksDir;
         readonly IOptions<ControlOptions> _controlOptions;
-        readonly HttpClient _http;
+        readonly SocketsHttpHandler _httpHandler;
         readonly ILogger<EventSinkService> _logger;
         readonly string[] _runtimeAssemblyPaths;
         const string SinkAssemblyFilter = "*Sink.dll";
@@ -29,13 +29,13 @@ namespace KdSoft.EtwEvents.PushAgent
             string rootPath,
             string eventSinksDir,
             IOptions<ControlOptions> controlOptions,
-            HttpClient http,
+            SocketsHttpHandler httpHandler,
             ILogger<EventSinkService> logger
         ) {
             this._rootPath = rootPath;
             this._eventSinksDir = eventSinksDir;
             this._controlOptions = controlOptions;
-            this._http = http;
+            this._httpHandler = httpHandler;
             this._logger = logger;
             this._runtimeAssemblyPaths = Directory.GetFiles(RuntimeEnvironment.GetRuntimeDirectory(), "*.dll");
         }
@@ -95,14 +95,16 @@ namespace KdSoft.EtwEvents.PushAgent
             var randFile = Path.GetRandomFileName();
             var zipTempFilename = Path.Combine(tempDir, randFile);
             try {
-                using (var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead)) {
-                    response.EnsureSuccessStatusCode();
-                    using (var streamToReadFrom = await response.Content.ReadAsStreamAsync()) {
-                        using (var streamToWriteTo = new FileStream(zipTempFilename, FileMode.Create, FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.DeleteOnClose)) {
-                            await streamToReadFrom.CopyToAsync(streamToWriteTo);
-                            streamToWriteTo.Position = 0;
-                            var archive = new ZipArchive(streamToWriteTo, ZipArchiveMode.Read);
-                            archive.ExtractToDirectory(eventSinkDir, true);
+                using (var http = new HttpClient(_httpHandler, false)) {
+                    using (var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead)) {
+                        response.EnsureSuccessStatusCode();
+                        using (var streamToReadFrom = await response.Content.ReadAsStreamAsync()) {
+                            using (var streamToWriteTo = new FileStream(zipTempFilename, FileMode.Create, FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.DeleteOnClose)) {
+                                await streamToReadFrom.CopyToAsync(streamToWriteTo);
+                                streamToWriteTo.Position = 0;
+                                var archive = new ZipArchive(streamToWriteTo, ZipArchiveMode.Read);
+                                archive.ExtractToDirectory(eventSinkDir, true);
+                            }
                         }
                     }
                 }

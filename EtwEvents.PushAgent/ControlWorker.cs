@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Net.Mime;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,7 +24,7 @@ namespace KdSoft.EtwEvents.PushAgent
     {
         readonly HostBuilderContext _context;
         readonly IServiceProvider _services;
-        readonly HttpClient _http;
+        readonly SocketsHttpHandler _httpHandler;
         readonly IOptions<ControlOptions> _controlOptions;
         readonly SessionConfig _sessionConfig;
         readonly ILogger<ControlWorker> _logger;
@@ -39,14 +40,14 @@ namespace KdSoft.EtwEvents.PushAgent
         public ControlWorker(
             HostBuilderContext context,
             IServiceProvider services,
-            HttpClient http,
+            SocketsHttpHandler httpHandler,
             IOptions<ControlOptions> controlOptions,
             SessionConfig sessionConfig,
             ILogger<ControlWorker> logger
         ) {
             this._context = context;
             this._services = services;
-            this._http = http;
+            this._httpHandler = httpHandler;
             this._controlOptions = controlOptions;
             this._sessionConfig = sessionConfig;
             this._logger = logger;
@@ -161,8 +162,10 @@ namespace KdSoft.EtwEvents.PushAgent
             var mediaType = new MediaTypeHeaderValue(MediaTypeNames.Application.Json);
             httpMsg.Content = JsonContent.Create<T>(content, mediaType, _jsonOptions);
 
-            var response = await _http.SendAsync(httpMsg).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
+            using (var http = new HttpClient(_httpHandler, false)) {
+                var response = await http.SendAsync(httpMsg).ConfigureAwait(false);
+                response.EnsureSuccessStatusCode();
+            }
         }
 
         Task SendStateUpdate() {
@@ -227,7 +230,7 @@ namespace KdSoft.EtwEvents.PushAgent
         public Task StartSSE() {
             var opts = _controlOptions.Value;
             var evtUri = new Uri(opts.Uri, "Agent/GetEvents");
-            var cfgBuilder = Configuration.Builder(evtUri).HttpClient(_http);
+            var cfgBuilder = Configuration.Builder(evtUri).HttpMessageHandler(_httpHandler);
             if (opts.InitialRetryDelay != null)
                 cfgBuilder.InitialRetryDelay(opts.InitialRetryDelay.Value);
             if (opts.MaxRetryDelay != null)

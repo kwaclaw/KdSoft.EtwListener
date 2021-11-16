@@ -61,8 +61,8 @@ namespace KdSoft.EtwEvents.PushAgent
                     services.AddSingleton<SessionConfig>();
                     services.AddSingleton(provider => {
                         var options = provider.GetRequiredService<IOptions<ControlOptions>>();
-                        var httpCertHandler = new HttpClientCertificateHandler(options.Value.ClientCertificate);
-                        return new HttpClient(httpCertHandler);
+                        var handler = Utils.CreateHttpHandler(options.Value.ClientCertificate);
+                        return handler;
                     });
                     services.AddSingleton(provider => new TraceSessionManager(TimeSpan.FromMinutes(3)));
                     services.AddSingleton(provider => {
@@ -71,7 +71,7 @@ namespace KdSoft.EtwEvents.PushAgent
                             hostContext.HostingEnvironment.ContentRootPath,
                             "EventSinks",
                             options,
-                            provider.GetRequiredService<HttpClient>(),
+                            provider.GetRequiredService<SocketsHttpHandler>(),
                             provider.GetRequiredService<ILogger<EventSinkService>>()
                         );
                     });
