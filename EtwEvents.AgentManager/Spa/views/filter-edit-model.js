@@ -18,17 +18,29 @@ class FilterEditModel {
     this.partLineSpans = [];
   }
 
-  get header() { return this._agentState.processingOptions.filter.filterParts[0]; }
-  set header(value) { this._agentState.processingOptions.filter.filterParts[0] = value; this.diagnostics = []; }
+  get header() { return this._agentState.processingOptions.filter.filterParts[0] || null; }
+  set header(value) {
+    this._agentState.processingOptions.filter.filterParts[0] = value || null;
+    this.diagnostics = [];
+  }
 
-  get body() { return this._agentState.processingOptions.filter.filterParts[1]; }
-  set body(value) { this._agentState.processingOptions.filter.filterParts[1] = value; this.diagnostics = []; }
+  get body() { return this._agentState.processingOptions.filter.filterParts[1] || null; }
+  set body(value) {
+    this._agentState.processingOptions.filter.filterParts[1] = value || null;
+    this.diagnostics = [];
+  }
 
-  get init() { return this._agentState.processingOptions.filter.filterParts[2]; }
-  set init(value) { this._agentState.processingOptions.filter.filterParts[2] = value; this.diagnostics = []; }
+  get init() { return this._agentState.processingOptions.filter.filterParts[2] || null; }
+  set init(value) {
+    this._agentState.processingOptions.filter.filterParts[2] = value || null;
+    this.diagnostics = [];
+  }
 
-  get method() { return this._agentState.processingOptions.filter.filterParts[3]; }
-  set method(value) { this._agentState.processingOptions.filter.filterParts[3] = value; this.diagnostics = []; }
+  get method() { return this._agentState.processingOptions.filter.filterParts[3] || null; }
+  set method(value) {
+    this._agentState.processingOptions.filter.filterParts[3] = value || null;
+    this.diagnostics = [];
+  }
 }
 
 export default FilterEditModel;

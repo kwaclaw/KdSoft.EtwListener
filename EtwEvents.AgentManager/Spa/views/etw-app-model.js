@@ -7,6 +7,7 @@ import RingBuffer from '../js/ringBuffer.js';
 import * as utils from '../js/utils.js';
 import FetchHelper from '../js/fetchHelper.js';
 import AgentState from '../js/agentState.js';
+import FilterModel from '../js/filterModel.js';
 import ProcessingOptions from '../js/processingOptions.js';
 import FilterEditModel from './filter-edit-model.js';
 
@@ -310,14 +311,24 @@ class EtwAppModel {
     const agentState = this.activeAgentState;
     if (!agentState) return;
 
+    // if the main method body is empty then we clear the filter
+    let filterModel = new FilterModel();
+    if (this.activeFilterModel.method) filterModel = agentState.processingOptions.filter;
+
     // argument must match protobuf message TestFilterRequest
-    this.fetcher.postJson('TestFilter', { agentId: agentState.id }, agentState.processingOptions.filter)
+    this.fetcher.postJson('TestFilter', { agentId: agentState.id }, filterModel)
       // result matches protobuf message BuildFilterResult
       .then(result => {
-        this.activeFilterModel.diagnostics = result.diagnostics;
-        this.activeFilterModel.sourceLines = result.sourceLines;
-        this.activeFilterModel.partLineSpans = result.partLineSpans;
         this.activeFilterModel.noFilter = result.noFilter;
+        if (result.noFilter) {
+          this.activeFilterModel.diagnostics = [];
+          this.activeFilterModel.sourceLines = [];
+          this.activeFilterModel.partLineSpans = [];
+        } else {
+          this.activeFilterModel.diagnostics = result.diagnostics;
+          this.activeFilterModel.sourceLines = result.sourceLines;
+          this.activeFilterModel.partLineSpans = result.partLineSpans;
+        }
       })
       .catch(error => window.etwApp.defaultHandleError(error));
   }
@@ -326,15 +337,24 @@ class EtwAppModel {
     const agentState = this.activeAgentState;
     if (!agentState) return;
 
+    // if the main method body is empty then we clear the filter
+    if (!this.activeFilterModel.method) agentState.processingOptions.filter = new FilterModel();
+
     // argument must match protobuf message TestFilterRequest
     this.fetcher.postJson('ApplyProcessingOptions', { agentId: agentState.id }, agentState.processingOptions)
       // result matches protobuf message BuildFilterResult
       .then(result => {
-        this.activeFilterModel.diagnostics = result.diagnostics;
-        this.activeFilterModel.sourceLines = result.sourceLines;
-        this.activeFilterModel.partLineSpans = result.partLineSpans;
         this.activeFilterModel.noFilter = result.noFilter;
-})
+        if (result.noFilter) {
+          this.activeFilterModel.diagnostics = [];
+          this.activeFilterModel.sourceLines = [];
+          this.activeFilterModel.partLineSpans = [];
+        } else {
+          this.activeFilterModel.diagnostics = result.diagnostics;
+          this.activeFilterModel.sourceLines = result.sourceLines;
+          this.activeFilterModel.partLineSpans = result.partLineSpans;
+        }
+      })
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
