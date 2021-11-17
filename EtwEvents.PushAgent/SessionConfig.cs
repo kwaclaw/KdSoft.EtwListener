@@ -126,11 +126,14 @@ namespace KdSoft.EtwEvents.PushAgent
 
         #region Processing Options
 
+        // means: don't save
         public static readonly FilterModel NoFilter = new FilterModel();
+        // means: clear the filter
+        public static readonly FilterModel ClearFilter = new FilterModel();
 
         public bool SaveProcessingOptions(int batchSize, int maxWriteDelayMSecs, FilterModel filterModel) {
             LoadSessionOptions();
-            if (!Object.ReferenceEquals(filterModel, NoFilter))
+            if (!object.ReferenceEquals(filterModel, NoFilter))
                 _sessionOptions.Filter = filterModel;
             _sessionOptions.BatchSize = batchSize;
             _sessionOptions.MaxWriteDelayMSecs = maxWriteDelayMSecs;

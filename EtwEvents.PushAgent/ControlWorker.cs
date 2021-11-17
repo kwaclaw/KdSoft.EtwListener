@@ -119,22 +119,36 @@ namespace KdSoft.EtwEvents.PushAgent
                     var opts = JsonSerializer.Deserialize<ProcessingOptions>(sse.Data, _jsonOptions);
                     if (opts == null)
                         return;
+                    filterResult = new BuildFilterResult { NoFilter = true };
+
+                    // check if we got a filter
+                    filterModel = opts.Filter;
+                    var gotFilter = filterModel != null && (filterModel.FilterParts?.Length ?? 0) > 0;
+                    if (!gotFilter) {
+                        filterModel = SessionConfig.ClearFilter;
+                    }
+
                     if (worker == null) {
-                        filterModel = SessionConfig.NoFilter;
-                        filterResult = SessionWorker.TestFilter(opts.Filter);
-                        if (filterResult.Diagnostics.Count == 0)
-                            filterModel = opts.Filter;
-                        _sessionConfig.SaveProcessingOptions(opts.BatchSize, opts.MaxWriteDelayMSecs, filterModel);
+                        if (gotFilter) {
+                            filterResult = SessionWorker.TestFilter(filterModel);
+                            if (filterResult.Diagnostics.Count > 0)
+                                filterModel = SessionConfig.NoFilter;
+                        }
+                        _sessionConfig.SaveProcessingOptions(opts.BatchSize, opts.MaxWriteDelayMSecs, filterModel!);
                     }
                     else {
-                        filterResult = worker.ApplyProcessingOptions(opts.BatchSize, opts.MaxWriteDelayMSecs, opts.Filter);
+                        filterResult = worker.ApplyProcessingOptions(opts.BatchSize, opts.MaxWriteDelayMSecs, filterModel);
                     }
+
                     await PostMessage($"Agent/ApplyFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
                 case "TestFilter":
                     filterModel = JsonSerializer.Deserialize<FilterModel>(sse.Data, _jsonOptions);
-                    filterResult = SessionWorker.TestFilter(filterModel);
+                    if ((filterModel?.FilterParts?.Length ?? 0) > 0)
+                        filterResult = SessionWorker.TestFilter(filterModel);
+                    else
+                        filterResult = new BuildFilterResult { NoFilter = true };
                     await PostMessage($"Agent/TestFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
                     break;
                 case "UpdateEventSink":
@@ -197,7 +211,6 @@ namespace KdSoft.EtwEvents.PushAgent
                 // Id = string.IsNullOrWhiteSpace(agentEmail) ? agentName : $"{agentName} ({agentEmail})",
                 Id = string.Empty,  // will be filled in on server using the client certificate
                 Host = Dns.GetHostName(),
-                //Site = _context.Configuration["Site"] ?? "<Undefined>",
                 Site = clientCert?.GetNameInfo(X509NameType.SimpleName, false) ?? "<Undefined>",
                 IsRunning = isRunning,
                 IsStopped = !isRunning,

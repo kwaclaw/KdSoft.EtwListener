@@ -148,20 +148,26 @@ namespace KdSoft.EtwEvents.PushAgent
                 throw new InvalidOperationException("No trace session active.");
             var result = new BuildFilterResult();
 
-            var filterSource = BuildFilterSource(filterModel);
-            if (filterSource.source == null) {
-                filterModel = SessionConfig.NoFilter;
-                result.NoFilter = true;
+            if (object.ReferenceEquals(filterModel, SessionConfig.ClearFilter)) {
+                // clear filter
+                ses.SetFilter(null, _config);
             }
             else {
-                var diagnostics = ses.SetFilter(filterSource.source, _config);
-                if (diagnostics.Length > 0) {
+                var filterSource = BuildFilterSource(filterModel);
+                if (filterSource.source == null) {
                     filterModel = SessionConfig.NoFilter;
+                    result.NoFilter = true;
                 }
-                result.AddDiagnostics(diagnostics);
-                result.AddSourceLines(filterSource.source.Lines);
-                var partLineSpans = GetPartLineSpans(filterSource.source, filterSource.partRanges!);
-                result.AddPartLineSpans(partLineSpans);
+                else {
+                    var diagnostics = ses.SetFilter(filterSource.source, _config);
+                    if (diagnostics.Length > 0) {
+                        filterModel = SessionConfig.NoFilter;
+                    }
+                    result.AddDiagnostics(diagnostics);
+                    result.AddSourceLines(filterSource.source.Lines);
+                    var partLineSpans = GetPartLineSpans(filterSource.source, filterSource.partRanges!);
+                    result.AddPartLineSpans(partLineSpans);
+                }
             }
 
             var oldBatchSize = _processor?.ChangeBatchSize(batchSize) ?? -1;
