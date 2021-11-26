@@ -59,7 +59,7 @@ namespace KdSoft.EtwLogging
                     Length = line.Span.Length,
                     Text = line.ToString(),
                 };
-                bfr.SourceLines.Add(textLine);
+                bfr.FilterSource.SourceLines.Add(textLine);
             }
             return bfr;
         }
@@ -70,7 +70,7 @@ namespace KdSoft.EtwLogging
                      Start = new LinePosition { Line = lineSpan.Start.Line, Character = lineSpan.Start.Character },
                      End = new LinePosition { Line = lineSpan.End.Line, Character = lineSpan.End.Character },
                 };
-                bfr.PartLineSpans.Add(linePositionSpan);
+                bfr.FilterSource.PartLineSpans.Add(linePositionSpan);
             }
             return bfr;
         }

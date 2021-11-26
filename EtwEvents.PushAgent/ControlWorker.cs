@@ -89,7 +89,6 @@ namespace KdSoft.EtwEvents.PushAgent
             // need different logic depending on whether a session is active or not
             SessionWorker? worker = _sessionWorkerAvailable == 0 ? null : SessionWorker;
 
-            FilterModel? filterModel;
             BuildFilterResult filterResult;
 
             switch (sse.Event) {
@@ -116,37 +115,37 @@ namespace KdSoft.EtwEvents.PushAgent
                     }
                     break;
                 case "ApplyProcessingOptions":
-                    var opts = JsonSerializer.Deserialize<ProcessingOptions>(sse.Data, _jsonOptions);
-                    if (opts == null)
+                    // WithDiscardUnknownFields does currently not work, so we should fix this at source
+                    var processingOptions = string.IsNullOrEmpty(sse.Data) ? null : ProcessingOptions.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
+                    if (processingOptions == null)
                         return;
+
                     filterResult = new BuildFilterResult { NoFilter = true };
-
-                    // check if we got a filter
-                    filterModel = opts.Filter;
-                    var gotFilter = filterModel != null && (filterModel.FilterParts?.Length ?? 0) > 0;
-                    if (!gotFilter) {
-                        filterModel = SessionConfig.ClearFilter;
-                    }
-
+                    // if we are not running, lets treat this like a filter test with saving
                     if (worker == null) {
-                        if (gotFilter) {
-                            filterResult = SessionWorker.TestFilter(filterModel);
-                            if (filterResult.Diagnostics.Count > 0)
-                                filterModel = SessionConfig.NoFilter;
+                        if (SessionWorker.FilterMethodExists(processingOptions.Filter)) {
+                            filterResult = SessionWorker.TestFilter(processingOptions.Filter!);
+                            if (filterResult.Diagnostics.Count > 0) {
+                                processingOptions.Filter = SessionConfig.NoFilter;
+                            }
                         }
-                        _sessionConfig.SaveProcessingOptions(opts.BatchSize, opts.MaxWriteDelayMSecs, filterModel!);
+                        else {
+                            processingOptions.Filter = SessionConfig.NoFilter;
+                        }
+                        _sessionConfig.SaveProcessingOptions(processingOptions);
                     }
                     else {
-                        filterResult = worker.ApplyProcessingOptions(opts.BatchSize, opts.MaxWriteDelayMSecs, filterModel);
+                        filterResult = worker.ApplyProcessingOptions(processingOptions);
                     }
 
                     await PostMessage($"Agent/ApplyFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
                 case "TestFilter":
-                    filterModel = JsonSerializer.Deserialize<FilterModel>(sse.Data, _jsonOptions);
-                    if ((filterModel?.FilterParts?.Length ?? 0) > 0)
-                        filterResult = SessionWorker.TestFilter(filterModel);
+                    // WithDiscardUnknownFields does currently not work, so we should fix this at source
+                    var filter = string.IsNullOrEmpty(sse.Data) ? null : Filter.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
+                    if (filter != null)
+                        filterResult = SessionWorker.TestFilter(filter);
                     else
                         filterResult = new BuildFilterResult { NoFilter = true };
                     await PostMessage($"Agent/TestFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
@@ -195,13 +194,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 eventSinkState.Error = SessionWorker.EventSinkError?.Message;
             }
             else {
-                enabledProviders = _sessionConfig.Options.Providers.Select(provider => {
-                    var setting = new ProviderSetting();
-                    setting.Name = provider.Name;
-                    setting.Level = (TraceEventLevel)provider.Level;
-                    setting.MatchKeywords = provider.MatchKeywords;
-                    return setting;
-                }).ToImmutableList();
+                enabledProviders = _sessionConfig.Options.ProviderSettings.ToImmutableList();
             }
 
             var clientCert = (_httpHandler.SslOptions.ClientCertificates as X509Certificate2Collection)?.First();
@@ -215,7 +208,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 IsRunning = isRunning,
                 IsStopped = !isRunning,
                 EventSink = eventSinkState,
-                ProcessingOptions = _sessionConfig.Options,
+                ProcessingOptions = _sessionConfig.Options.ProcessingOptions,
             };
             return PostMessage("Agent/UpdateState", state);
         }

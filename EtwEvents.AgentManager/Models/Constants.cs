@@ -1,7 +1,8 @@
-﻿namespace KdSoft.EtwEvents.AgentManager
+﻿using System.Collections.Immutable;
+
+namespace KdSoft.EtwEvents.AgentManager
 {
-    public static class Constants
-    {
+    public static class Constants {
         public const string EventStreamHeaderValue = "text/event-stream";
         public const string CloseEvent = "##close";
         public const string KeepAliveEvent = "##keepAlive";
@@ -9,34 +10,49 @@
 
         public const string X500DistNameClaim = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/x500distinguishedname";
 
-        public const string FilterTemplate = @"using System;
-using System.Linq;
-using Microsoft.Diagnostics.Tracing;
-using Microsoft.Extensions.Configuration;
-{0}
+        public static readonly ImmutableArray<string> FilterLines1 = new string[] {
+            "using System.Linq;",
+            "using Microsoft.Diagnostics.Tracing;",
+            "using Microsoft.Extensions.Configuration;",
+        }.ToImmutableArray();
 
-namespace KdSoft.EtwEvents.Server
-{{
-    public class EventFilter: IEventFilter
-    {{
-        readonly IConfiguration _config;
+        public static readonly ImmutableArray<string> FilterLines2 = new string[] {
+            "",
+            "namespace KdSoft.EtwEvents.Server",
+            "{",
+            "    public class EventFilter: IEventFilter",
+            "    {",
+            "        readonly IConfiguration _config;",
+            "",
+        }.ToImmutableArray();
 
-{1}
+        public static readonly ImmutableArray<string> FilterLines3 = new string[] {
+            "",
+            "        public EventFilter(IConfiguration config) {",
+            "            this._config = config;",
+            "            Init();",
+            "        }",
+            "",
+            "        void Init() {"
+        }.ToImmutableArray();
 
-        public EventFilter(IConfiguration config) {{
-            this._config = config;
-            Init();
-        }}
+        public static readonly ImmutableArray<string> FilterLines4 = new string[] {
+            "        }",
+            "",
+            "        public bool IncludeEvent(TraceEvent evt) {",
+        }.ToImmutableArray();
 
-        void Init() {{
-{2}
-        }}
+        public static readonly ImmutableArray<string> FilterLines5 = new string[] {
+            "        }",
+            "    }",
+            "}",
+        }.ToImmutableArray();
 
-        public bool IncludeEvent(TraceEvent evt) {{
-{3}
-        }}
-    }}
-}}
-";
+        public static readonly ImmutableArray<ImmutableArray<string>> FilterTemplateParts = ImmutableArray<ImmutableArray<string>>.Empty
+            .Add(FilterLines1)
+            .Add(FilterLines2)
+            .Add(FilterLines3)
+            .Add(FilterLines4)
+            .Add(FilterLines5);
     }
 }

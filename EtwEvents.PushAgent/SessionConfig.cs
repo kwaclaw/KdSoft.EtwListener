@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.Json;
+using Google.Protobuf;
 using KdSoft.EtwEvents.Client;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Hosting;
@@ -17,6 +17,7 @@ namespace KdSoft.EtwEvents.PushAgent
         readonly IOptions<EventQueueOptions> _eventQueueOptions;
         readonly ILogger<SessionConfig> _logger;
         readonly JsonSerializerOptions _jsonOptions;
+        readonly JsonFormatter _jsonFormatter;
 
         bool _optionsAvailable;
         bool _sinkProfileAvailable;
@@ -30,12 +31,15 @@ namespace KdSoft.EtwEvents.PushAgent
                 AllowTrailingCommas = true,
                 WriteIndented = true
             };
+            var jsonSettings = JsonFormatter.Settings.Default.WithFormatDefaultValues(true).WithFormatEnumsAsIntegers(true);
+            _jsonFormatter = new JsonFormatter(jsonSettings);
 
             LoadSessionOptions();
             LoadSinkProfile();
         }
 
         public JsonSerializerOptions JsonOptions => _jsonOptions;
+        public JsonFormatter JsonFormatter => _jsonFormatter;
 
         EventSessionOptions _sessionOptions = new EventSessionOptions();
         public EventSessionOptions Options => _sessionOptions;
@@ -53,7 +57,9 @@ namespace KdSoft.EtwEvents.PushAgent
         public bool LoadSessionOptions() {
             try {
                 var sessionOptionsJson = File.ReadAllText(EventSessionOptionsPath);
-                _sessionOptions = JsonSerializer.Deserialize<EventSessionOptions>(sessionOptionsJson, _jsonOptions) ?? new EventSessionOptions();
+                _sessionOptions = string.IsNullOrWhiteSpace(sessionOptionsJson)
+                    ? new EventSessionOptions()
+                    : EventSessionOptions.Parser.WithDiscardUnknownFields(true).ParseJson(sessionOptionsJson);
                 _optionsAvailable = true;
                 return true;
             }
@@ -67,7 +73,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
         public bool SaveSessionOptions(EventSessionOptions options) {
             try {
-                var json = JsonSerializer.Serialize(options, _jsonOptions);
+                var json = options.ToString();
                 File.WriteAllText(EventSessionOptionsPath, json);
                 _sessionOptions = options;
                 _optionsAvailable = true;
@@ -114,11 +120,8 @@ namespace KdSoft.EtwEvents.PushAgent
 
         public bool SaveProviderSettings(IEnumerable<ProviderSetting> providers) {
             LoadSessionOptions();
-            _sessionOptions.Providers = providers.Select(p => new ProviderOptions {
-                Name = p.Name,
-                Level = (Microsoft.Diagnostics.Tracing.TraceEventLevel)p.Level,
-                MatchKeywords = p.MatchKeywords
-            }).ToList();
+            _sessionOptions.ProviderSettings.Clear();
+            _sessionOptions.ProviderSettings.AddRange(providers);
             return SaveSessionOptions(_sessionOptions);
         }
 
@@ -127,16 +130,11 @@ namespace KdSoft.EtwEvents.PushAgent
         #region Processing Options
 
         // means: don't save
-        public static readonly FilterModel NoFilter = new FilterModel();
-        // means: clear the filter
-        public static readonly FilterModel ClearFilter = new FilterModel();
+        public static readonly Filter NoFilter = new Filter();
 
-        public bool SaveProcessingOptions(int batchSize, int maxWriteDelayMSecs, FilterModel filterModel) {
+        public bool SaveProcessingOptions(ProcessingOptions options) {
             LoadSessionOptions();
-            if (!object.ReferenceEquals(filterModel, NoFilter))
-                _sessionOptions.Filter = filterModel;
-            _sessionOptions.BatchSize = batchSize;
-            _sessionOptions.MaxWriteDelayMSecs = maxWriteDelayMSecs;
+            _sessionOptions.ProcessingOptions = options;
             return SaveSessionOptions(_sessionOptions);
         }
 

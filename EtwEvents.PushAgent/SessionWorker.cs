@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
+using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -81,32 +82,67 @@ namespace KdSoft.EtwEvents.PushAgent
 
         #region Processing
 
-        public static (cat.SourceText source, IReadOnlyList<cat.TextChangeRange> partRanges) BuildSource(string filterTemplate, params string[] filterParts) {
+        public static (string? source, List<string> markers) BuildTemplateSource(Filter filter) {
+            var sb = new StringBuilder();
+            var markers = new List<string>();
             int indx = 0;
-            var markers = filterParts.Select(p => $"\u001D{indx++}").ToArray();
-            var initSource = string.Format(CultureInfo.InvariantCulture, filterTemplate, markers);
-            var initSourceText = cat.SourceText.From(initSource);
-            var partChanges = new cat.TextChange[4];
-            for (indx = 0; indx < 4; indx++) {
-                var part = filterParts[indx] ?? String.Empty;
-                int insertionIndex = initSource.IndexOf(markers[indx], StringComparison.Ordinal);
-                partChanges[indx] = new cat.TextChange(new cat.TextSpan(insertionIndex, 2), part);
+            foreach (var filterPart in filter.FilterParts) {
+                var partName = filterPart.Name?.Trim();
+                if (string.IsNullOrEmpty(partName)) {
+                    return (null, markers);
+                }
+                // if the main method body is empty then we have no filter
+                if (string.Equals(partName, "method", StringComparison.OrdinalIgnoreCase)) {
+                    if (filterPart.Lines.Count == 0)
+                        return (null, markers);
+                }
+                if (string.Equals(partName, "template", StringComparison.OrdinalIgnoreCase)) {
+                    foreach (var line in filterPart.Lines)
+                        sb.AppendLine(line);
+                }
+                else {
+                    var marker = $"\u001D{indx++}";
+                    sb.AppendLine(marker);
+                    markers.Add(marker);
+                }
             }
-            var changedSourceText = initSourceText.WithChanges(partChanges);
-            var ranges = changedSourceText.GetChangeRanges(initSourceText);
-            return (changedSourceText, ranges);
+            return (sb.ToString(), markers);
         }
 
-        public static (cat.SourceText? source, IReadOnlyList<cat.TextChangeRange>? partRanges) BuildFilterSource(FilterModel? filterModel) {
-            (cat.SourceText? source, IReadOnlyList<cat.TextChangeRange>? partRanges) result;
-            var parts = filterModel?.FilterParts;
-            var template = filterModel?.FilterTemplate;
-            if (parts == null || parts.Length == 0 || string.IsNullOrWhiteSpace(parts[parts.Length - 1]))
-                result = (null, null);
-            else if (string.IsNullOrWhiteSpace(template))
-                result = (null, null);
-            else
-                result = BuildSource(template, parts);
+        public static List<cat.TextChange> BuildSourceChanges(string initSource, IList<string> markers, Filter filter) {
+            var sb = new StringBuilder();
+            int indx = 0;
+            var partChanges = new List<cat.TextChange>(markers.Count);
+            foreach (var filterPart in filter.FilterParts) {
+                var partName = filterPart.Name?.Trim();
+                if (string.IsNullOrEmpty(partName) || string.Equals(partName, "Template", StringComparison.OrdinalIgnoreCase)) {
+                    continue;
+                }
+                int insertionIndex = initSource.IndexOf(markers[indx++], StringComparison.Ordinal);
+                sb.Clear();
+                foreach (var line in filterPart.Lines)
+                    sb.AppendLine(line);
+                partChanges.Add(new cat.TextChange(new cat.TextSpan(insertionIndex, 2), sb.ToString()));
+            }
+            return partChanges;
+        }
+
+        public static (cat.SourceText? sourceText, IReadOnlyList<cat.TextChangeRange>? partRanges) BuildFilterSource(Filter filter) {
+            (cat.SourceText? sourceText, IReadOnlyList<cat.TextChangeRange>? partRanges) result;
+
+            var (templateSource, markers) = BuildTemplateSource(filter);
+            if (templateSource == null)
+                return (null, null);
+
+            var partChanges = BuildSourceChanges(templateSource, markers, filter);
+            Debug.Assert(partChanges.Count == markers.Count);
+            if (partChanges.Count == 0)
+                return (null, null);
+
+            var initSourceText = cat.SourceText.From(templateSource);
+            result.sourceText = initSourceText.WithChanges(partChanges);
+            result.partRanges = result.sourceText.GetChangeRanges(initSourceText);
+
             return result;
         }
 
@@ -124,56 +160,63 @@ namespace KdSoft.EtwEvents.PushAgent
             return result;
         }
 
-        public static BuildFilterResult TestFilter(FilterModel? filterModel) {
+        public static BuildFilterResult TestFilter(Filter filter) {
             var result = new BuildFilterResult();
 
-            var filterSource = BuildFilterSource(filterModel);
-            if (filterSource.source == null) {
+            var (sourceText, partRanges) = BuildFilterSource(filter);
+            if (sourceText == null) {
                 result.NoFilter = true;
             }
             else {
-                var diagnostics = RealTimeTraceSession.TestFilter(filterSource.source);
+                var diagnostics = RealTimeTraceSession.TestFilter(sourceText);
                 result.AddDiagnostics(diagnostics);
-                result.AddSourceLines(filterSource.source.Lines);
-                var partLineSpans = GetPartLineSpans(filterSource.source, filterSource.partRanges!);
+                result.AddSourceLines(sourceText.Lines);
+                var partLineSpans = GetPartLineSpans(sourceText, partRanges!);
                 result.AddPartLineSpans(partLineSpans);
             }
 
             return result;
         }
 
-        public BuildFilterResult ApplyProcessingOptions(int batchSize, int maxWriteDelay, FilterModel? filterModel) {
+        public static bool FilterMethodExists(Filter? filter) {
+            if (filter == null)
+                return false;
+            return filter.FilterParts.Any(fp => string.Equals(fp.Name, "method", StringComparison.OrdinalIgnoreCase) && fp.Lines.Count > 0);
+        }
+
+        public BuildFilterResult ApplyProcessingOptions(ProcessingOptions options) {
             var ses = _session;
             if (ses == null)
                 throw new InvalidOperationException("No trace session active.");
             var result = new BuildFilterResult();
 
-            if (object.ReferenceEquals(filterModel, SessionConfig.ClearFilter)) {
-                // clear filter
-                ses.SetFilter(null, _config);
-            }
-            else {
-                var filterSource = BuildFilterSource(filterModel);
-                if (filterSource.source == null) {
-                    filterModel = SessionConfig.NoFilter;
+            if (FilterMethodExists(options.Filter)) {
+                var (sourceText, partRanges) = BuildFilterSource(options.Filter);
+                if (sourceText == null) {
+                    options.Filter = SessionConfig.NoFilter;
                     result.NoFilter = true;
                 }
                 else {
-                    var diagnostics = ses.SetFilter(filterSource.source, _config);
+                    var diagnostics = ses.SetFilter(sourceText, _config);
                     if (diagnostics.Length > 0) {
-                        filterModel = SessionConfig.NoFilter;
+                        options.Filter = SessionConfig.NoFilter;
                     }
                     result.AddDiagnostics(diagnostics);
-                    result.AddSourceLines(filterSource.source.Lines);
-                    var partLineSpans = GetPartLineSpans(filterSource.source, filterSource.partRanges!);
+                    result.AddSourceLines(sourceText.Lines);
+                    var partLineSpans = GetPartLineSpans(sourceText, partRanges!);
                     result.AddPartLineSpans(partLineSpans);
                 }
             }
+            else {
+                // clear filter
+                ses.SetFilter(null, _config);
+                options.Filter = SessionConfig.NoFilter;
+            }
 
-            var oldBatchSize = _processor?.ChangeBatchSize(batchSize) ?? -1;
-            var oldMaxWriteDelay = _processor?.ChangeWriteDelay(maxWriteDelay) ?? -1;
+            var oldBatchSize = _processor?.ChangeBatchSize(options.BatchSize) ?? -1;
+            var oldMaxWriteDelay = _processor?.ChangeWriteDelay(options.MaxWriteDelayMSecs) ?? -1;
 
-            _sessionConfig.SaveProcessingOptions(batchSize, maxWriteDelay, filterModel!);
+            _sessionConfig.SaveProcessingOptions(options);
             return result;
         }
 
@@ -268,20 +311,18 @@ namespace KdSoft.EtwEvents.PushAgent
 
                 session.GetLifeCycle().Used();
 
-                var filterSource = BuildFilterSource(_sessionConfig.Options.Filter);
-                if (filterSource.source != null) {
-                    var diagnostics = session.SetFilter(filterSource.source, _config);
-                    if (!diagnostics.IsEmpty) {
-                        logger.LogError($"Filter compilation failed.\n{diagnostics}");
+                if (_sessionConfig.Options.ProcessingOptions.Filter != null) {
+                    var (sourceText, partRanges) = BuildFilterSource(_sessionConfig.Options.ProcessingOptions.Filter);
+                    if (sourceText != null) {
+                        var diagnostics = session.SetFilter(sourceText, _config);
+                        if (!diagnostics.IsEmpty) {
+                            logger.LogError($"Filter compilation failed.\n{diagnostics}");
+                        }
                     }
                 }
 
                 // enable the providers
-                foreach (var provider in _sessionConfig.Options.Providers) {
-                    var setting = new ProviderSetting();
-                    setting.Name = provider.Name;
-                    setting.Level = (TraceEventLevel)provider.Level;
-                    setting.MatchKeywords = provider.MatchKeywords;
+                foreach (var setting in _sessionConfig.Options.ProviderSettings) {
                     session.EnableProvider(setting);
                 }
 
@@ -303,8 +344,8 @@ namespace KdSoft.EtwEvents.PushAgent
                         writeBatch,
                         _eventQueueOptions.Value.FilePath,
                         processorLogger,
-                        _sessionConfig.Options.BatchSize,
-                        _sessionConfig.Options.MaxWriteDelayMSecs)
+                        _sessionConfig.Options.ProcessingOptions.BatchSize,
+                        _sessionConfig.Options.ProcessingOptions.MaxWriteDelayMSecs)
                     ) {
                         this._processor = processor;
                         _logger.LogInformation("SessionWorker started.");

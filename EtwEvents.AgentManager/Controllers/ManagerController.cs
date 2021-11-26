@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Google.Protobuf;
 using KdSoft.EtwEvents.AgentManager.Services;
+using KdSoft.EtwLogging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -24,6 +27,7 @@ namespace KdSoft.EtwEvents.AgentManager
         readonly AgentProxyManager _agentProxyManager;
         readonly EventSinkService _evtSinkService;
         readonly IOptions<JsonOptions> _jsonOptions;
+        readonly JsonFormatter _jsonFormatter;
         readonly ILogger<ManagerController> _logger;
 
         public ManagerController(
@@ -36,6 +40,8 @@ namespace KdSoft.EtwEvents.AgentManager
             this._evtSinkService = evtSinkService;
             this._jsonOptions = jsonOptions;
             this._logger = logger;
+            var jsonSettings = JsonFormatter.Settings.Default.WithFormatDefaultValues(true).WithFormatEnumsAsIntegers(true);
+            _jsonFormatter = new JsonFormatter(jsonSettings);
         }
 
         [HttpGet]
@@ -167,19 +173,40 @@ namespace KdSoft.EtwEvents.AgentManager
             return PostAgent(agentId, "UpdateProviders", enabledProviders?.ToString() ?? "");
         }
 
+        Filter MergeFilterTemplate(IReadOnlyList<FilterPart> dynamicParts) {
+            var filter = new Filter();
+            // merge template parts with application provided (dynamic) filterparts
+            for (int indx = 0; indx < Constants.FilterTemplateParts.Length; indx++) {
+                var templatePart = Constants.FilterTemplateParts[indx];
+                filter.FilterParts.Add(new FilterPart { Name = "template", Lines = { templatePart } });
+                if (indx < dynamicParts.Count) {
+                    var dynamicPart = dynamicParts[indx];
+                    filter.FilterParts.Add(dynamicPart);
+                }
+                else {
+                    filter.FilterParts.Add(new FilterPart { Name = "empty" });
+                }
+            }
+            return filter;
+        }
+
         [HttpPost]
-        public Task<IActionResult> TestFilter(string agentId, [FromBody] FilterModel filterModel) {
+        public Task<IActionResult> TestFilter(string agentId, [FromBody] string filterJson) {
             // WE are supplying the filter template
-            filterModel.FilterTemplate = Constants.FilterTemplate;
-            var json = JsonSerializer.Serialize(filterModel, _jsonOptions.Value.JsonSerializerOptions);
+            var dynamicParts = Filter.Parser.WithDiscardUnknownFields(true).ParseJson(filterJson).FilterParts;
+            var filter = MergeFilterTemplate(dynamicParts);
+            var json = _jsonFormatter.Format(filter);
             return CallAgent(agentId, "TestFilter", json, TimeSpan.FromSeconds(15));
         }
 
         [HttpPost]
-        public Task<IActionResult> ApplyProcessingOptions(string agentId, [FromBody] ProcessingOptions processingOptions) {
+        public Task<IActionResult> ApplyProcessingOptions(string agentId, [FromBody] string processingOptionsJson) {
+            var processingOptions = ProcessingOptions.Parser.WithDiscardUnknownFields(true).ParseJson(processingOptionsJson);
             // WE are supplying the filter template
-            processingOptions.Filter.FilterTemplate = Constants.FilterTemplate;
-            var json = JsonSerializer.Serialize(processingOptions, _jsonOptions.Value.JsonSerializerOptions);
+            var dynamicParts = processingOptions.Filter.FilterParts;
+            var filter = MergeFilterTemplate(dynamicParts);
+            processingOptions.Filter = filter;
+            var json = _jsonFormatter.Format(processingOptions);
             return CallAgent(agentId, "ApplyProcessingOptions", json, TimeSpan.FromSeconds(15));
         }
 

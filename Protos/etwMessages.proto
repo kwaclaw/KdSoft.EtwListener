@@ -98,6 +98,15 @@ message TestFilterRequest {
     repeated string filter_parts = 2;
 }
 
+message FilterPart {
+    string name = 1;
+    repeated string lines = 2;
+}
+
+message Filter {
+    repeated FilterPart filter_parts = 1;
+}
+
 message LinePosition {
     int32 line = 1;
     int32 character = 2;
@@ -119,6 +128,24 @@ message TextLine {
     int32 length = 4;
 }
 
+message FilterSource {
+    // all text lines of the filter source
+    repeated TextLine source_lines = 1;
+    // for each filter part the line and character position span
+    repeated LinePositionSpan part_line_spans = 2;
+}
+
+message ProcessingOptions {
+    int32 batch_size = 1;
+    int32 max_write_delay_mSecs = 2;
+    Filter filter = 3;
+}
+
+message EventSessionOptions {
+    ProcessingOptions processing_options = 1;
+    repeated ProviderSetting provider_settings = 2;
+}
+
 message CompileDiagnostic {
     string id = 1;
     bool is_warning_as_error = 2;
@@ -131,10 +158,7 @@ message CompileDiagnostic {
 message BuildFilterResult {
     repeated CompileDiagnostic diagnostics = 1;
     bool no_filter = 2;
-    // all text lines of the filter source
-    repeated TextLine source_lines = 3;
-    // for each filter part the line and character position span
-    repeated LinePositionSpan part_line_spans = 4;
+    FilterSource filter_source = 3; 
 }
 
 // Note: multiple enums in the same namespace cannot have duplicate value identifiers, so we prefix them;

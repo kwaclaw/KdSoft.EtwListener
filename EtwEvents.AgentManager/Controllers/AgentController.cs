@@ -132,6 +132,7 @@ namespace KdSoft.EtwEvents.AgentManager
         {
             [Required(AllowEmptyStrings = false)]
             public string SinkType { get; set; } = "";
+
             [Required(AllowEmptyStrings = false)]
             public string Version { get; set; } = "";
         }
