@@ -6,6 +6,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.AgentManager.Services;
+using KdSoft.EtwLogging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -118,6 +119,10 @@ namespace KdSoft.EtwEvents.AgentManager
             var agentId = User.Identity?.Name;
             if (agentId == null)
                 return Unauthorized();
+
+            state.ProcessingOptions = state.ProcessingOptions ?? new ProcessingOptions();
+            state.ProcessingOptions.Filter = state.ProcessingOptions.Filter ?? new Filter();
+            state.ProcessingOptions.Filter = FilterHelper.MergeFilterTemplate(state.ProcessingOptions.Filter.FilterParts);
 
             var agentProxy = _agentProxyManager.ActivateProxy(agentId);
             // AgentState.ID must always match the authenticated identity
