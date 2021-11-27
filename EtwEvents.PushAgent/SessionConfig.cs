@@ -73,7 +73,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
         public bool SaveSessionOptions(EventSessionOptions options) {
             try {
-                var json = options.ToString();
+                var json = _jsonFormatter.Format(options);
                 File.WriteAllText(EventSessionOptionsPath, json);
                 _sessionOptions = options;
                 _optionsAvailable = true;

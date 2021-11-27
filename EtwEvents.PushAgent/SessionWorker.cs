@@ -311,7 +311,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
                 session.GetLifeCycle().Used();
 
-                if (_sessionConfig.Options.ProcessingOptions.Filter != null) {
+                if (_sessionConfig.Options.ProcessingOptions?.Filter != null) {
                     var (sourceText, partRanges) = BuildFilterSource(_sessionConfig.Options.ProcessingOptions.Filter);
                     if (sourceText != null) {
                         var diagnostics = session.SetFilter(sourceText, _config);
@@ -344,8 +344,8 @@ namespace KdSoft.EtwEvents.PushAgent
                         writeBatch,
                         _eventQueueOptions.Value.FilePath,
                         processorLogger,
-                        _sessionConfig.Options.ProcessingOptions.BatchSize,
-                        _sessionConfig.Options.ProcessingOptions.MaxWriteDelayMSecs)
+                        _sessionConfig.Options.ProcessingOptions?.BatchSize ?? 100,
+                        _sessionConfig.Options.ProcessingOptions?.MaxWriteDelayMSecs ?? 400)
                     ) {
                         this._processor = processor;
                         _logger.LogInformation("SessionWorker started.");
