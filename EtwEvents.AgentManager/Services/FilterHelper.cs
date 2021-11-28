@@ -14,10 +14,13 @@ namespace KdSoft.EtwEvents.AgentManager.Services
                 filter.FilterParts.Add(new FilterPart { Name = "template", Lines = { templatePart } });
                 if (indx < dynamicParts.Count) {
                     var dynamicPart = dynamicParts[indx];
+                    if (dynamicPart.Lines.Count == 0) {
+                        dynamicPart.Lines.Add("");
+                    }
                     filter.FilterParts.Add(dynamicPart);
                 }
                 else if (indx <= lastEmptyIndx) {
-                    filter.FilterParts.Add(new FilterPart { Name = "empty" });
+                    filter.FilterParts.Add(new FilterPart { Name = "empty", Lines = { "" } });
                 }
             }
             return filter;
