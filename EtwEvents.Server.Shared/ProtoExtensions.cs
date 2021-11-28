@@ -51,7 +51,7 @@ namespace KdSoft.EtwLogging
             return bfr;
         }
 
-        public static BuildFilterResult AddSourceLines(this BuildFilterResult bfr, IReadOnlyList<cat.TextLine> lines) {
+        public static FilterSource AddSourceLines(this FilterSource filterSource, IReadOnlyList<cat.TextLine> lines) {
             foreach (var line in lines) {
                 var textLine = new TextLine {
                     Line = line.LineNumber,
@@ -59,20 +59,20 @@ namespace KdSoft.EtwLogging
                     Length = line.Span.Length,
                     Text = line.ToString(),
                 };
-                bfr.FilterSource.SourceLines.Add(textLine);
+                filterSource.SourceLines.Add(textLine);
             }
-            return bfr;
+            return filterSource;
         }
 
-        public static BuildFilterResult AddPartLineSpans(this BuildFilterResult bfr, IReadOnlyList<cat.LinePositionSpan> lineSpans) {
+        public static FilterSource AddPartLineSpans(this FilterSource filterSource, IReadOnlyList<cat.LinePositionSpan> lineSpans) {
             foreach (var lineSpan in lineSpans) {
                 var linePositionSpan = new LinePositionSpan {
                      Start = new LinePosition { Line = lineSpan.Start.Line, Character = lineSpan.Start.Character },
                      End = new LinePosition { Line = lineSpan.End.Line, Character = lineSpan.End.Character },
                 };
-                bfr.FilterSource.PartLineSpans.Add(linePositionSpan);
+                filterSource.PartLineSpans.Add(linePositionSpan);
             }
-            return bfr;
+            return filterSource;
         }
     }
 }

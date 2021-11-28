@@ -115,19 +115,26 @@ namespace KdSoft.EtwEvents.PushAgent
             var partChanges = new List<cat.TextChange>(markers.Count);
             foreach (var filterPart in filter.FilterParts) {
                 var partName = filterPart.Name?.Trim();
-                if (string.IsNullOrEmpty(partName) || string.Equals(partName, "Template", StringComparison.OrdinalIgnoreCase)) {
+                if (string.IsNullOrEmpty(partName) || string.Equals(partName, "template", StringComparison.OrdinalIgnoreCase)) {
                     continue;
                 }
+
                 int insertionIndex = initSource.IndexOf(markers[indx++], StringComparison.Ordinal);
                 sb.Clear();
-                foreach (var line in filterPart.Lines)
+
+                for (int lineIndx = 0; lineIndx < filterPart.Lines.Count - 1; lineIndx++) {
+                    var line = filterPart.Lines[lineIndx];
                     sb.AppendLine(line);
+                }
+                // don't want to add an extra line at the end
+                sb.Append(filterPart.Lines[filterPart.Lines.Count - 1]);
+
                 partChanges.Add(new cat.TextChange(new cat.TextSpan(insertionIndex, 2), sb.ToString()));
             }
             return partChanges;
         }
 
-        public static (cat.SourceText? sourceText, IReadOnlyList<cat.TextChangeRange>? partRanges) BuildFilterSource(Filter filter) {
+        public static (cat.SourceText? sourceText, IReadOnlyList<cat.TextChangeRange>? partRanges) BuildSourceText(Filter filter) {
             (cat.SourceText? sourceText, IReadOnlyList<cat.TextChangeRange>? partRanges) result;
 
             var (templateSource, markers) = BuildTemplateSource(filter);
@@ -160,19 +167,35 @@ namespace KdSoft.EtwEvents.PushAgent
             return result;
         }
 
+        public static FilterSource BuildFilterSource(cat.SourceText sourceText, IReadOnlyList<cat.TextChangeRange> partRanges) {
+            var partLineSpans = GetPartLineSpans(sourceText, partRanges!);
+            return new FilterSource()
+                .AddSourceLines(sourceText.Lines)
+                .AddPartLineSpans(partLineSpans);
+        }
+
+        public static FilterSource? BuildFilterSource(Filter filter) {
+            var (sourceText, partRanges) = BuildSourceText(filter);
+            if (sourceText == null)
+                return null;
+
+            var partLineSpans = GetPartLineSpans(sourceText, partRanges!);
+            return new FilterSource()
+                .AddSourceLines(sourceText.Lines)
+                .AddPartLineSpans(partLineSpans);
+        }
+
         public static BuildFilterResult TestFilter(Filter filter) {
             var result = new BuildFilterResult();
 
-            var (sourceText, partRanges) = BuildFilterSource(filter);
+            var (sourceText, partRanges) = BuildSourceText(filter);
             if (sourceText == null) {
                 result.NoFilter = true;
             }
             else {
                 var diagnostics = RealTimeTraceSession.TestFilter(sourceText);
                 result.AddDiagnostics(diagnostics);
-                result.AddSourceLines(sourceText.Lines);
-                var partLineSpans = GetPartLineSpans(sourceText, partRanges!);
-                result.AddPartLineSpans(partLineSpans);
+                result.FilterSource = BuildFilterSource(sourceText, partRanges!);
             }
 
             return result;
@@ -191,7 +214,7 @@ namespace KdSoft.EtwEvents.PushAgent
             var result = new BuildFilterResult();
 
             if (FilterMethodExists(options.Filter)) {
-                var (sourceText, partRanges) = BuildFilterSource(options.Filter);
+                var (sourceText, partRanges) = BuildSourceText(options.Filter);
                 if (sourceText == null) {
                     options.Filter = SessionConfig.NoFilter;
                     result.NoFilter = true;
@@ -202,9 +225,7 @@ namespace KdSoft.EtwEvents.PushAgent
                         options.Filter = SessionConfig.NoFilter;
                     }
                     result.AddDiagnostics(diagnostics);
-                    result.AddSourceLines(sourceText.Lines);
-                    var partLineSpans = GetPartLineSpans(sourceText, partRanges!);
-                    result.AddPartLineSpans(partLineSpans);
+                    result.FilterSource = BuildFilterSource(sourceText, partRanges!);
                 }
             }
             else {
@@ -312,7 +333,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 session.GetLifeCycle().Used();
 
                 if (_sessionConfig.Options.ProcessingOptions?.Filter != null) {
-                    var (sourceText, partRanges) = BuildFilterSource(_sessionConfig.Options.ProcessingOptions.Filter);
+                    var (sourceText, partRanges) = BuildSourceText(_sessionConfig.Options.ProcessingOptions.Filter);
                     if (sourceText != null) {
                         var diagnostics = session.SetFilter(sourceText, _config);
                         if (!diagnostics.IsEmpty) {
