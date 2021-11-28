@@ -172,17 +172,17 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         [HttpPost]
-        public Task<IActionResult> TestFilter(string agentId, [FromBody] string filterJson) {
+        public Task<IActionResult> TestFilter(string agentId, [FromBody] object filterObj) {
             // WE are supplying the filter template
-            var dynamicParts = Filter.Parser.WithDiscardUnknownFields(true).ParseJson(filterJson).FilterParts;
+            var dynamicParts = Filter.Parser.WithDiscardUnknownFields(true).ParseJson(filterObj.ToString()).FilterParts;
             var filter = FilterHelper.MergeFilterTemplate(dynamicParts);
             var json = _jsonFormatter.Format(filter);
             return CallAgent(agentId, "TestFilter", json, TimeSpan.FromSeconds(15));
         }
 
         [HttpPost]
-        public Task<IActionResult> ApplyProcessingOptions(string agentId, [FromBody] string processingOptionsJson) {
-            var processingOptions = ProcessingOptions.Parser.WithDiscardUnknownFields(true).ParseJson(processingOptionsJson);
+        public Task<IActionResult> ApplyProcessingOptions(string agentId, [FromBody] object processingOptionsObj) {
+            var processingOptions = ProcessingOptions.Parser.WithDiscardUnknownFields(true).ParseJson(processingOptionsObj.ToString());
             // WE are supplying the filter template
             var dynamicParts = processingOptions.Filter.FilterParts;
             var filter = FilterHelper.MergeFilterTemplate(dynamicParts);

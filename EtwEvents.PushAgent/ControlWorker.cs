@@ -7,16 +7,18 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Net.Mime;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using KdSoft.EtwEvents.Client;
+using Google.Protobuf;
 using KdSoft.EtwLogging;
 using LaunchDarkly.EventSource;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using pb = global::Google.Protobuf;
 
 namespace KdSoft.EtwEvents.PushAgent
 {
@@ -29,6 +31,7 @@ namespace KdSoft.EtwEvents.PushAgent
         readonly SessionConfig _sessionConfig;
         readonly ILogger<ControlWorker> _logger;
         readonly JsonSerializerOptions _jsonOptions;
+        readonly JsonFormatter _jsonFormatter;
 
         EventSource? _eventSource;
         IServiceScope? _workerScope;
@@ -57,6 +60,8 @@ namespace KdSoft.EtwEvents.PushAgent
                 AllowTrailingCommas = true,
                 WriteIndented = true
             };
+            var jsonSettings = JsonFormatter.Settings.Default.WithFormatDefaultValues(true).WithFormatEnumsAsIntegers(true);
+            _jsonFormatter = new JsonFormatter(jsonSettings);
         }
 
         #region Control Channel
@@ -138,7 +143,7 @@ namespace KdSoft.EtwEvents.PushAgent
                         filterResult = worker.ApplyProcessingOptions(processingOptions);
                     }
 
-                    await PostMessage($"Agent/ApplyFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
+                    await PostProtoMessage($"Agent/ApplyFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
                 case "TestFilter":
@@ -148,7 +153,7 @@ namespace KdSoft.EtwEvents.PushAgent
                         filterResult = SessionWorker.TestFilter(filter);
                     else
                         filterResult = new BuildFilterResult { NoFilter = true };
-                    await PostMessage($"Agent/TestFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
+                    await PostProtoMessage($"Agent/TestFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
                     break;
                 case "UpdateEventSink":
                     var sinkProfile = JsonSerializer.Deserialize<EventSinkProfile>(sse.Data, _jsonOptions);
@@ -167,18 +172,27 @@ namespace KdSoft.EtwEvents.PushAgent
             }
         }
 
-        async Task PostMessage<T>(string path, T content) {
+        async Task PostMessage(string path, HttpContent content) {
             var opts = _controlOptions.Value;
             var postUri = new Uri(opts.Uri, path);
             var httpMsg = new HttpRequestMessage(HttpMethod.Post, postUri);
-
-            var mediaType = new MediaTypeHeaderValue(MediaTypeNames.Application.Json);
-            httpMsg.Content = JsonContent.Create<T>(content, mediaType, _jsonOptions);
+            httpMsg.Content = content;
 
             using (var http = new HttpClient(_httpHandler, false)) {
                 var response = await http.SendAsync(httpMsg).ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
             }
+        }
+
+        Task PostJsonMessage<T>(string path, T content) {
+            var mediaType = new MediaTypeHeaderValue(MediaTypeNames.Application.Json);
+            var httpContent = JsonContent.Create<T>(content, mediaType, _jsonOptions);
+            return PostMessage(path, httpContent);
+        }
+
+        Task PostProtoMessage<T>(string path, T content) where T: pb::IMessage<T> {
+            var httpContent = new StringContent(_jsonFormatter.Format(content), Encoding.UTF8, MediaTypeNames.Application.Json);
+            return PostMessage(path, httpContent);
         }
 
         Task SendStateUpdate() {
@@ -191,7 +205,7 @@ namespace KdSoft.EtwEvents.PushAgent
             var isRunning = _sessionWorkerAvailable != 0;
             if (isRunning && SessionWorker != null) {
                 enabledProviders = ses?.EnabledProviders.ToImmutableList() ?? ImmutableList<EtwLogging.ProviderSetting>.Empty;
-                eventSinkState.Error = SessionWorker.EventSinkError?.Message;
+                eventSinkState.Error = SessionWorker.EventSinkError?.Message ?? String.Empty;
             }
             else {
                 enabledProviders = _sessionConfig.Options.ProviderSettings.ToImmutableList();
@@ -199,8 +213,17 @@ namespace KdSoft.EtwEvents.PushAgent
 
             var clientCert = (_httpHandler.SslOptions.ClientCertificates as X509Certificate2Collection)?.First();
 
+            var processingOptions = _sessionConfig.Options.ProcessingOptions;
+            var processingState = new ProcessingState();
+            if (processingOptions != null) {
+                processingState.BatchSize = processingOptions.BatchSize;
+                processingState.MaxWriteDelayMSecs = processingOptions.MaxWriteDelayMSecs;
+                var filter = processingOptions.Filter ?? new Filter();
+                processingState.FilterSource = SessionWorker.BuildFilterSource(filter); 
+            }
+
             var state = new AgentState {
-                EnabledProviders = enabledProviders,
+                EnabledProviders = { enabledProviders },
                 // Id = string.IsNullOrWhiteSpace(agentEmail) ? agentName : $"{agentName} ({agentEmail})",
                 Id = string.Empty,  // will be filled in on server using the client certificate
                 Host = Dns.GetHostName(),
@@ -208,9 +231,9 @@ namespace KdSoft.EtwEvents.PushAgent
                 IsRunning = isRunning,
                 IsStopped = !isRunning,
                 EventSink = eventSinkState,
-                ProcessingOptions = _sessionConfig.Options.ProcessingOptions,
+                ProcessingState = processingState,
             };
-            return PostMessage("Agent/UpdateState", state);
+            return PostProtoMessage("Agent/UpdateState", state);
         }
 
         async void EventReceived(object? sender, MessageReceivedEventArgs e) {

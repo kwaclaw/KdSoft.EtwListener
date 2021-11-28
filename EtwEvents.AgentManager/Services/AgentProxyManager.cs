@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
+using KdSoft.EtwLogging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -68,15 +68,15 @@ namespace KdSoft.EtwEvents.AgentManager.Services
         }
 
         public Task<AgentStates> GetAgentStates() {
-            var asb = ImmutableArray.CreateBuilder<AgentState>();
+            var agentStates = new List<AgentState>();
             foreach (var entry in _proxies) {
                 if (!entry.Value.IsConnected())
                     continue;
                 var agentState = entry.Value.GetState();
                 if (agentState != null)
-                    asb.Add(agentState);
+                    agentStates.Add(agentState);
             }
-            var result = new AgentStates { Agents = asb.ToImmutableArray() };
+            var result = new AgentStates { Agents = { agentStates } };
             return Task.FromResult(result);
         }
 

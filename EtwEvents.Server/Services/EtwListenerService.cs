@@ -170,7 +170,7 @@ namespace KdSoft.EtwEvents.Server
             else {
                 var diagnostics = RealTimeTraceSession.TestFilter(filterSource.source);
                 result.AddDiagnostics(diagnostics);
-                result.AddSourceLines(filterSource.source.Lines);
+                result.FilterSource.AddSourceLines(filterSource.source.Lines);
             }
 
             return Task.FromResult(result);
@@ -186,7 +186,7 @@ namespace KdSoft.EtwEvents.Server
             else {
                 var diagnostics = RealTimeTraceSession.TestFilter(filterSource.source);
                 result.AddDiagnostics(diagnostics);
-                result.AddSourceLines(filterSource.source.Lines);
+                result.FilterSource.AddSourceLines(filterSource.source.Lines);
             }
 
             return Task.FromResult(result);

@@ -101,13 +101,13 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         [HttpPost]
-        public IActionResult TestFilterResult(string eventId, [FromBody] object buildFilterResult) {
-            return CompleteResponse(eventId, buildFilterResult?.ToString() ?? "");
+        public IActionResult TestFilterResult(string eventId, [FromBody] string buildFilterResult) {
+            return CompleteResponse(eventId, buildFilterResult ?? "");
         }
 
         [HttpPost]
-        public IActionResult ApplyFilterResult(string eventId, [FromBody] object buildFilterResult) {
-            return CompleteResponse(eventId, buildFilterResult?.ToString() ?? "");
+        public IActionResult ApplyFilterResult(string eventId, [FromBody] string buildFilterResult) {
+            return CompleteResponse(eventId, buildFilterResult ?? "");
         }
 
         #endregion
@@ -115,14 +115,12 @@ namespace KdSoft.EtwEvents.AgentManager
         #region Requests from Agent
 
         [HttpPost]
-        public async Task<IActionResult> UpdateState([FromBody] AgentState state) {
+        public async Task<IActionResult> UpdateState([FromBody] object stateObj) {
             var agentId = User.Identity?.Name;
             if (agentId == null)
                 return Unauthorized();
 
-            state.ProcessingOptions = state.ProcessingOptions ?? new ProcessingOptions();
-            state.ProcessingOptions.Filter = state.ProcessingOptions.Filter ?? new Filter();
-            state.ProcessingOptions.Filter = FilterHelper.MergeFilterTemplate(state.ProcessingOptions.Filter.FilterParts);
+            var state = AgentState.Parser.WithDiscardUnknownFields(true).ParseJson(stateObj.ToString());
 
             var agentProxy = _agentProxyManager.ActivateProxy(agentId);
             // AgentState.ID must always match the authenticated identity
