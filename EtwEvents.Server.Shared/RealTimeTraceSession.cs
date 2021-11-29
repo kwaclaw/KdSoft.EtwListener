@@ -278,6 +278,11 @@ namespace KdSoft.EtwEvents.Server
 
             var filterType = typeof(IEventFilter);
             var filterClass = filterAssembly.ExportedTypes.Where(tp => tp.IsClass && filterType.IsAssignableFrom(tp)).First();
+            if (filterClass == null) {
+                return ImmutableArray<Diagnostic>.Empty.Add(Diagnostic.Create(
+                    "FL1001", "Filter", "Cannot find IEventFilter instance.", DiagnosticSeverity.Error, DiagnosticSeverity.Error, true, 0
+                ));
+            }
             var newFilter = (IEventFilter?)Activator.CreateInstance(filterClass, config);
 
             SetFilterHolder(new FilterHolder(newFilter!, newFilterContext, filterSource));
