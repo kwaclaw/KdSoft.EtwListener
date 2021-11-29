@@ -1,13 +1,11 @@
-﻿import ProcessingOptions from './processingOptions.js';
-
-class AgentState {
-  constructor(id, site, host, enabledProviders, eventSink, processingOptions) {
+﻿class AgentState {
+  constructor(id, site, host, enabledProviders, eventSink, processingState) {
     this.id = id || 'id';
     this.site = site || 'Site';
     this.host = host || 'Host';
     this.enabledProviders = enabledProviders || [];
     this.eventSink = eventSink || {};
-    this.processingOptions = processingOptions || new ProcessingOptions();
+    this.processingState = processingState || {};
   }
 }
 
