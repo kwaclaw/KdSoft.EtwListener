@@ -125,19 +125,23 @@ namespace KdSoft.EtwEvents.PushAgent
                     if (processingOptions == null)
                         return;
 
-                    filterResult = new BuildFilterResult { NoFilter = true };
+                    filterResult = new BuildFilterResult();
                     // if we are not running, lets treat this like a filter test with saving
                     if (worker == null) {
                         if (SessionWorker.FilterMethodExists(processingOptions.Filter)) {
                             filterResult = SessionWorker.TestFilter(processingOptions.Filter!);
-                            if (filterResult.Diagnostics.Count > 0) {
-                                processingOptions.Filter = SessionConfig.NoFilter;
-                            }
                         }
                         else {
-                            processingOptions.Filter = SessionConfig.NoFilter;
+                            filterResult.NoFilter = true;
                         }
-                        _sessionConfig.SaveProcessingOptions(processingOptions);
+
+                        var processingState = new ProcessingState {
+                            BatchSize = processingOptions.BatchSize,
+                            MaxWriteDelayMSecs = processingOptions.MaxWriteDelayMSecs,
+                            FilterSource = filterResult.FilterSource,
+                        };
+                        bool saveFilterSource = filterResult.Diagnostics.Count == 0; // also true when clearing filter
+                        _sessionConfig.SaveProcessingState(processingState, saveFilterSource);
                     }
                     else {
                         filterResult = worker.ApplyProcessingOptions(processingOptions);
@@ -208,19 +212,10 @@ namespace KdSoft.EtwEvents.PushAgent
                 eventSinkState.Error = SessionWorker.EventSinkError?.Message ?? String.Empty;
             }
             else {
-                enabledProviders = _sessionConfig.Options.ProviderSettings.ToImmutableList();
+                enabledProviders = _sessionConfig.State.ProviderSettings.ToImmutableList();
             }
 
             var clientCert = (_httpHandler.SslOptions.ClientCertificates as X509Certificate2Collection)?.First();
-
-            var processingOptions = _sessionConfig.Options.ProcessingOptions;
-            var processingState = new ProcessingState();
-            if (processingOptions != null) {
-                processingState.BatchSize = processingOptions.BatchSize;
-                processingState.MaxWriteDelayMSecs = processingOptions.MaxWriteDelayMSecs;
-                var filter = processingOptions.Filter ?? new Filter();
-                processingState.FilterSource = SessionWorker.BuildFilterSource(filter); 
-            }
 
             var state = new AgentState {
                 EnabledProviders = { enabledProviders },
@@ -231,7 +226,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 IsRunning = isRunning,
                 IsStopped = !isRunning,
                 EventSink = eventSinkState,
-                ProcessingState = processingState,
+                ProcessingState = _sessionConfig.State.ProcessingState,
             };
             return PostProtoMessage("Agent/UpdateState", state);
         }

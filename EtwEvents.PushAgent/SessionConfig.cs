@@ -3,28 +3,24 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using Google.Protobuf;
-using KdSoft.EtwEvents.Client;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace KdSoft.EtwEvents.PushAgent
 {
     class SessionConfig
     {
         readonly HostBuilderContext _context;
-        readonly IOptions<EventQueueOptions> _eventQueueOptions;
         readonly ILogger<SessionConfig> _logger;
         readonly JsonSerializerOptions _jsonOptions;
         readonly JsonFormatter _jsonFormatter;
 
-        bool _optionsAvailable;
+        bool _stateAvailable;
         bool _sinkProfileAvailable;
 
-        public SessionConfig(HostBuilderContext context, IOptions<EventQueueOptions> eventQueueOptions, ILogger<SessionConfig> logger) {
+        public SessionConfig(HostBuilderContext context, ILogger<SessionConfig> logger) {
             this._context = context;
-            this._eventQueueOptions = eventQueueOptions;
             this._logger = logger;
             _jsonOptions = new JsonSerializerOptions {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -34,16 +30,16 @@ namespace KdSoft.EtwEvents.PushAgent
             var jsonSettings = JsonFormatter.Settings.Default.WithFormatDefaultValues(true).WithFormatEnumsAsIntegers(true);
             _jsonFormatter = new JsonFormatter(jsonSettings);
 
-            LoadSessionOptions();
+            LoadSessionState();
             LoadSinkProfile();
         }
 
         public JsonSerializerOptions JsonOptions => _jsonOptions;
         public JsonFormatter JsonFormatter => _jsonFormatter;
 
-        EventSessionOptions _sessionOptions = new EventSessionOptions();
-        public EventSessionOptions Options => _sessionOptions;
-        public bool OptionsAvailable => _optionsAvailable;
+        EventSessionState _sessionState = new EventSessionState();
+        public EventSessionState State => _sessionState;
+        public bool StateAvailable => _stateAvailable;
 
         EventSinkProfile? _sinkProfile;
         public EventSinkProfile? SinkProfile => _sinkProfile;
@@ -51,32 +47,32 @@ namespace KdSoft.EtwEvents.PushAgent
 
         #region Load and Save Options
 
-        string EventSessionOptionsPath => Path.Combine(_context.HostingEnvironment.ContentRootPath, "eventSession.json");
+        string EventSessionStatePath => Path.Combine(_context.HostingEnvironment.ContentRootPath, "eventSession.json");
         string EventSinkOptionsPath => Path.Combine(_context.HostingEnvironment.ContentRootPath, "eventSink.json");
 
-        public bool LoadSessionOptions() {
+        public bool LoadSessionState() {
             try {
-                var sessionOptionsJson = File.ReadAllText(EventSessionOptionsPath);
-                _sessionOptions = string.IsNullOrWhiteSpace(sessionOptionsJson)
-                    ? new EventSessionOptions()
-                    : EventSessionOptions.Parser.WithDiscardUnknownFields(true).ParseJson(sessionOptionsJson);
-                _optionsAvailable = true;
+                var sessionStateJson = File.ReadAllText(EventSessionStatePath);
+                _sessionState = string.IsNullOrWhiteSpace(sessionStateJson)
+                    ? new EventSessionState()
+                    : EventSessionState.Parser.WithDiscardUnknownFields(true).ParseJson(sessionStateJson);
+                _stateAvailable = true;
                 return true;
             }
             catch (Exception ex) {
-                _sessionOptions = new EventSessionOptions();
-                _optionsAvailable = false;
+                _sessionState = new EventSessionState();
+                _stateAvailable = false;
                 _logger.LogError(ex, "Error loading event session options.");
                 return false;
             }
         }
 
-        public bool SaveSessionOptions(EventSessionOptions options) {
+        public bool SaveSessionState(EventSessionState state) {
             try {
-                var json = _jsonFormatter.Format(options);
-                File.WriteAllText(EventSessionOptionsPath, json);
-                _sessionOptions = options;
-                _optionsAvailable = true;
+                var json = _jsonFormatter.Format(state);
+                File.WriteAllText(EventSessionStatePath, json);
+                _sessionState = state;
+                _stateAvailable = true;
                 return true;
             }
             catch (Exception ex) {
@@ -119,23 +115,24 @@ namespace KdSoft.EtwEvents.PushAgent
         #region Provider Settings
 
         public bool SaveProviderSettings(IEnumerable<ProviderSetting> providers) {
-            LoadSessionOptions();
-            _sessionOptions.ProviderSettings.Clear();
-            _sessionOptions.ProviderSettings.AddRange(providers);
-            return SaveSessionOptions(_sessionOptions);
+            LoadSessionState();
+            _sessionState.ProviderSettings.Clear();
+            _sessionState.ProviderSettings.AddRange(providers);
+            return SaveSessionState(_sessionState);
         }
 
         #endregion
 
-        #region Processing Options
+        #region Processing State
 
-        // means: don't save
-        public static readonly Filter NoFilter = new Filter();
-
-        public bool SaveProcessingOptions(ProcessingOptions options) {
-            LoadSessionOptions();
-            _sessionOptions.ProcessingOptions = options;
-            return SaveSessionOptions(_sessionOptions);
+        public bool SaveProcessingState(ProcessingState state, bool updateFilterSource) {
+            LoadSessionState();
+            _sessionState.ProcessingState.BatchSize = state.BatchSize;
+            _sessionState.ProcessingState.MaxWriteDelayMSecs = state.MaxWriteDelayMSecs;
+            if (updateFilterSource) {
+                _sessionState.ProcessingState.FilterSource = state.FilterSource;
+            }
+            return SaveSessionState(_sessionState);
         }
 
         #endregion

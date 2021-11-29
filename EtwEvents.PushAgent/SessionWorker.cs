@@ -10,6 +10,7 @@ using Google.Protobuf.Collections;
 using KdSoft.EtwEvents.Client;
 using KdSoft.EtwEvents.Server;
 using KdSoft.EtwLogging;
+using Microsoft.CodeAnalysis.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -216,14 +217,10 @@ namespace KdSoft.EtwEvents.PushAgent
             if (FilterMethodExists(options.Filter)) {
                 var (sourceText, partRanges) = BuildSourceText(options.Filter);
                 if (sourceText == null) {
-                    options.Filter = SessionConfig.NoFilter;
                     result.NoFilter = true;
                 }
                 else {
                     var diagnostics = ses.SetFilter(sourceText, _config);
-                    if (diagnostics.Length > 0) {
-                        options.Filter = SessionConfig.NoFilter;
-                    }
                     result.AddDiagnostics(diagnostics);
                     result.FilterSource = BuildFilterSource(sourceText, partRanges!);
                 }
@@ -231,13 +228,19 @@ namespace KdSoft.EtwEvents.PushAgent
             else {
                 // clear filter
                 ses.SetFilter(null, _config);
-                options.Filter = SessionConfig.NoFilter;
+                result.NoFilter = true;
             }
 
             var oldBatchSize = _processor?.ChangeBatchSize(options.BatchSize) ?? -1;
             var oldMaxWriteDelay = _processor?.ChangeWriteDelay(options.MaxWriteDelayMSecs) ?? -1;
 
-            _sessionConfig.SaveProcessingOptions(options);
+            var processingState = new ProcessingState {
+                BatchSize = options.BatchSize,
+                MaxWriteDelayMSecs = options.MaxWriteDelayMSecs,
+                FilterSource = result.FilterSource,
+            };
+            bool saveFilterSource = result.Diagnostics.Count == 0;  // also true when clearing filter
+            _sessionConfig.SaveProcessingState(processingState, saveFilterSource);
             return result;
         }
 
@@ -314,7 +317,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
             try {
-                if (!_sessionConfig.OptionsAvailable) {
+                if (!_sessionConfig.StateAvailable) {
                     _logger.LogInformation("Starting session without configured options.");
                 }
 
@@ -332,18 +335,17 @@ namespace KdSoft.EtwEvents.PushAgent
 
                 session.GetLifeCycle().Used();
 
-                if (_sessionConfig.Options.ProcessingOptions?.Filter != null) {
-                    var (sourceText, partRanges) = BuildSourceText(_sessionConfig.Options.ProcessingOptions.Filter);
-                    if (sourceText != null) {
-                        var diagnostics = session.SetFilter(sourceText, _config);
-                        if (!diagnostics.IsEmpty) {
-                            logger.LogError($"Filter compilation failed.\n{diagnostics}");
-                        }
+                FilterSource? filterSource = _sessionConfig.State.ProcessingState?.FilterSource;
+                if (filterSource != null) {
+                    var filter = string.Join(Environment.NewLine, filterSource.SourceLines);
+                    var diagnostics = session.SetFilter(SourceText.From(filter), _config);
+                    if (!diagnostics.IsEmpty) {
+                        logger.LogError($"Filter compilation failed.\n{diagnostics}");
                     }
                 }
 
                 // enable the providers
-                foreach (var setting in _sessionConfig.Options.ProviderSettings) {
+                foreach (var setting in _sessionConfig.State.ProviderSettings) {
                     session.EnableProvider(setting);
                 }
 
@@ -365,8 +367,8 @@ namespace KdSoft.EtwEvents.PushAgent
                         writeBatch,
                         _eventQueueOptions.Value.FilePath,
                         processorLogger,
-                        _sessionConfig.Options.ProcessingOptions?.BatchSize ?? 100,
-                        _sessionConfig.Options.ProcessingOptions?.MaxWriteDelayMSecs ?? 400)
+                        _sessionConfig.State.ProcessingState?.BatchSize ?? 100,
+                        _sessionConfig.State.ProcessingState?.MaxWriteDelayMSecs ?? 400)
                     ) {
                         this._processor = processor;
                         _logger.LogInformation("SessionWorker started.");
