@@ -1,6 +1,10 @@
 {
   "folders": [
     {
+      "path": ".",
+      "name": "<Root>"
+    },
+    {
       "path": "EtwEvents.AgentManager"
     },
     {
@@ -33,7 +37,9 @@
   },
   "settings": {
     "eslint.alwaysShowStatus": true,
-    "eslint.format.enable": true
+    "eslint.format.enable": true,
+    "omnisharp.enableRoslynAnalyzers": true,
+    "omnisharp.useGlobalMono": "never"
   },
   "tasks":{
     "version": "2.0.0",
@@ -44,7 +50,7 @@
         "type": "process",
         "args": [
           "build",
-          "../EtwListener.sln"
+          "EtwListener.sln"
         ],
         "problemMatcher": "$msCompile"
       },
@@ -55,7 +61,7 @@
         "args": [
           "build",
           "--no-incremental",
-          "../EtwListener.sln"
+          "EtwListener.sln"
         ],
         "problemMatcher": "$msCompile"
       },
