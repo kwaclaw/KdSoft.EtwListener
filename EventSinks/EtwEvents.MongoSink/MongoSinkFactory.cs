@@ -63,7 +63,7 @@ namespace KdSoft.EtwEvents.EventSinks
                 return Task.FromResult((IEventSink)result);
             }
             catch (Exception ex) {
-                logger.LogError(ex, $"Error in {nameof(MongoSink)} initialization.");
+                logger.LogError(ex, "Error in {eventSink} initialization.", nameof(MongoSink));
                 throw;
             }
         }
@@ -74,7 +74,7 @@ namespace KdSoft.EtwEvents.EventSinks
             return Create(options!, creds!, logger);
         }
 
-        string GetJsonSchema<T>() {
+        static string GetJsonSchema<T>() {
             var generator = new JSchemaGenerator();
             var schema = generator.Generate(typeof(T));
             return schema.ToString();

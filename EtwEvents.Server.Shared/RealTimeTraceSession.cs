@@ -140,7 +140,7 @@ namespace KdSoft.EtwEvents.Server
                     }
                 }
                 catch (Exception ex) {
-                    _logger.LogError(ex, $"Error in {nameof(handleEvent)}");
+                    _logger.LogError(ex, "Error in {method}", nameof(handleEvent));
                 }
             }
             Instance.Source.Dynamic.All += handleEvent;
@@ -152,21 +152,21 @@ namespace KdSoft.EtwEvents.Server
                 Interlocked.MemoryBarrier();
                 _isStopped = 1;
                 Interlocked.MemoryBarrier();
-                _logger.LogInformation($"{nameof(RealTimeTraceSession)} '{sessionName}' has finished.");
+                _logger.LogInformation("{sessionType} '{sessionName}' has finished.", nameof(RealTimeTraceSession), sessionName);
             }
             Instance.Source.Completed += handleCompleted;
 
             // this cannot be called multiple times for a given real-time session;
             // once stopped we will need to close and re-open the TraceSession to continue
             var processTask = Task.Run<bool>(Instance.Source.Process);
-            _logger.LogInformation($"{nameof(RealTimeTraceSession)} '{sessionName}' has started.");
+            _logger.LogInformation("{sessionType} '{sessionName}' has started.", nameof(RealTimeTraceSession), sessionName);
 
             processTask.ContinueWith(t => {
                 Interlocked.MemoryBarrier();
                 _isStopped = 1;
                 Interlocked.MemoryBarrier();
                 if (t.IsFaulted)
-                    _logger.LogError(t.Exception, $"Error in {nameof(RealTimeTraceSession)} '{sessionName}'.");
+                    _logger.LogError(t.Exception, "Error in {sessionType} '{sessionName}'.", nameof(RealTimeTraceSession), sessionName);
             }, TaskContinuationOptions.ExecuteSynchronously);
 
             return processTask;
@@ -186,14 +186,14 @@ namespace KdSoft.EtwEvents.Server
 
         public bool EnableProvider(ProviderSetting setting) {
             var result = Instance.EnableProvider(setting.Name, (tracing.TraceEventLevel)setting.Level, setting.MatchKeywords);
-            _logger.LogInformation($"Enabled provider '{setting.Name}': {result}.");
+            _logger.LogInformation("Enabled provider '{provider}': {enabled}.", setting.Name, result);
             _enabledProviders = _enabledProviders.SetItem(setting.Name, setting);
             return result;
         }
 
         public void DisableProvider(string provider) {
             Instance.DisableProvider(provider);
-            _logger.LogInformation($"Disabled provider '{provider}'.");
+            _logger.LogInformation("Disabled provider '{provider}'.", provider);
             _enabledProviders = _enabledProviders.Remove(provider);
         }
 

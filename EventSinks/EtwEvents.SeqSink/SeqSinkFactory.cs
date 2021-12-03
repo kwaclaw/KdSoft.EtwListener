@@ -54,7 +54,7 @@ namespace KdSoft.EtwEvents.EventSinks
             catch (Exception ex) {
                 handler?.Dispose();
                 http?.Dispose();
-                logger.LogError(ex, $"Error in {nameof(SeqSink)} initialization.");
+                logger.LogError(ex, "Error in {eventSink} initialization.", nameof(SeqSink));
                 throw;
             }
         }

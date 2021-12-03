@@ -73,7 +73,7 @@ namespace KdSoft.EtwEvents.EventSinks
                     _jsonWriter?.Dispose();
                 }
                 catch (Exception ex) {
-                    _logger.LogError(ex, $"Error closing event sink '{nameof(SeqSink)}'.");
+                    _logger.LogError(ex, "Error closing event sink '{eventSink}'.", nameof(SeqSink));
                 }
                 _tcs.TrySetResult(true);
             }

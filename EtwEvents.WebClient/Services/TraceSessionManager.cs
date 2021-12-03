@@ -63,8 +63,8 @@ namespace KdSoft.EtwEvents.WebClient
                 traceSession = await entry.ConfigureAwait(false);
             }
             catch (Exception ex) {
-                _ = this.TryRemove(request.Name, out var failedEntry);
-                sessionLogger.LogError(ex, $"Error in {nameof(OpenSession)}");
+                _ = TryRemove(request.Name, out var failedEntry);
+                sessionLogger.LogError(ex, "Error in {method}", nameof(OpenSession));
                 throw;
             }
 
@@ -83,14 +83,14 @@ namespace KdSoft.EtwEvents.WebClient
                 await PostSessionStateChange().ConfigureAwait(false);
             }
             catch (Exception ex) {
-                sessionLogger.LogError(ex, $"Error in {nameof(PostSessionStateChange)}");
+                sessionLogger.LogError(ex, "Error in {method}", nameof(PostSessionStateChange));
             }
 
             return openSessionState;
         }
 
         public async Task<bool> CloseRemoteSession(string name) {
-            if (this.TryRemove(name, out var entry)) {
+            if (TryRemove(name, out var entry)) {
                 var traceSession = await entry.ConfigureAwait(false);
                 await traceSession.CloseRemote().ConfigureAwait(false);
                 await PostSessionStateChange().ConfigureAwait(false);

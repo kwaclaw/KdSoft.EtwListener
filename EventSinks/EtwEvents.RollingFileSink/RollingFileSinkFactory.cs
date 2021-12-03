@@ -45,7 +45,7 @@ namespace KdSoft.EtwEvents.EventSinks
                 return Task.FromResult((IEventSink)new RollingFileSink(rollingFileFactory, logger));
             }
             catch (Exception ex) {
-                logger.LogError(ex, $"Error in {nameof(RollingFileSink)} initialization.");
+                logger.LogError(ex, "Error in {eventSink} initialization.", nameof(RollingFileSink));
                 throw;
             }
         }

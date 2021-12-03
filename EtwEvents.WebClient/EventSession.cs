@@ -58,7 +58,7 @@ namespace KdSoft.EtwEvents.WebClient
 
                     var posted = _responseQueue.Writer.TryWrite((evtBatch, sequenceNo));
                     if (!posted) {
-                        //_logger.LogInformation($"Could not post trace event {evt.Id}."
+                        //_logger.LogInformation("Could not post trace event {eventId}.", evt.Id);
                         break;
                     }
                     sequenceNo += evtBatch.Events.Count;

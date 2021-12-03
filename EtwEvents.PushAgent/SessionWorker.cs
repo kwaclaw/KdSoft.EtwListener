@@ -255,7 +255,7 @@ namespace KdSoft.EtwEvents.PushAgent
             var loadContext = new CollectibleAssemblyLoadContext();
             var sinkFactory = _sinkService.LoadEventSinkFactory(sinkType, version, loadContext);
             if (sinkFactory == null) {
-                _logger.LogInformation($"Downloading event sink factory '{sinkType}~{version}'.");
+                _logger.LogInformation("Downloading event sink factory '{sinkType}~{version}'.", sinkType, version);
                 await _sinkService.DownloadEventSink(sinkType, version);
             }
             sinkFactory = _sinkService.LoadEventSinkFactory(sinkType, version, loadContext);
@@ -291,7 +291,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     await disposeEntry.Item2.ConfigureAwait(false);
                 }
                 catch (Exception ex) {
-                    _logger.LogError(ex, $"Error closing event sink '{disposeEntry.Item1}'.");
+                    _logger.LogError(ex, "Error closing event sink '{eventSink}'.", disposeEntry.Key);
                 }
             }
         }
@@ -308,7 +308,7 @@ namespace KdSoft.EtwEvents.PushAgent
             }
             catch (Exception ex) {
                 await sink.DisposeAsync().ConfigureAwait(false);
-                _logger.LogError(ex, $"Error updating event sink '{sinkProfile.Name}'.");
+                _logger.LogError(ex, "Error updating event sink '{eventSink}'.", sinkProfile.Name);
                 throw;
             }
         }
@@ -335,12 +335,13 @@ namespace KdSoft.EtwEvents.PushAgent
 
                 session.GetLifeCycle().Used();
 
-                FilterSource? filterSource = _sessionConfig.State.ProcessingState?.FilterSource;
+                var filterSource = _sessionConfig.State.ProcessingState?.FilterSource;
                 if (filterSource != null) {
                     var filter = string.Join(Environment.NewLine, filterSource.SourceLines);
                     var diagnostics = session.SetFilter(SourceText.From(filter), _config);
                     if (!diagnostics.IsEmpty) {
-                        logger.LogError($"Filter compilation failed.\n{diagnostics}");
+                        var diagnosticsStr = string.Join("\n\t", diagnostics.Select(dg => dg.ToString()).ToArray());
+                        logger.LogError("Filter compilation failed.\n\t{diagnostics}", diagnosticsStr);
                     }
                 }
 
@@ -354,26 +355,25 @@ namespace KdSoft.EtwEvents.PushAgent
                 }
                 try {
                     long sequenceNo = 0;
-                    WriteBatchAsync writeBatch = async (batch) => {
+                    async ValueTask<bool> writeBatch(EtwEventBatch batch) {
                         bool success = await _sinkHolder.ProcessEventBatch(batch, sequenceNo).ConfigureAwait(false);
                         if (success) {
                             sequenceNo += batch.Events.Count;
                         }
                         return success;
-                    };
+                    }
 
                     var processorLogger = _loggerFactory.CreateLogger<PersistentEventProcessor>();
-                    using (var processor = new PersistentEventProcessor(
+                    using var processor = new PersistentEventProcessor(
                         writeBatch,
                         _eventQueueOptions.Value.FilePath,
                         processorLogger,
                         _sessionConfig.State.ProcessingState?.BatchSize ?? 100,
-                        _sessionConfig.State.ProcessingState?.MaxWriteDelayMSecs ?? 400)
-                    ) {
-                        this._processor = processor;
-                        _logger.LogInformation("SessionWorker started.");
-                        await processor.Process(session, stoppingToken).ConfigureAwait(false);
-                    }
+                        _sessionConfig.State.ProcessingState?.MaxWriteDelayMSecs ?? 400
+                    );
+                    this._processor = processor;
+                    _logger.LogInformation("SessionWorker started.");
+                    await processor.Process(session, stoppingToken).ConfigureAwait(false);
                 }
                 finally {
                     this._processor = null;

@@ -201,7 +201,7 @@ namespace KdSoft.EtwEvents.WebClient
                 return GetSessionStateSnapshot<Models.TraceSessionState>();
             }
             catch (Exception ex) {
-                _logger.LogError(ex, _.GetString("GetSessionState error."));
+                _logger.LogError(ex, "GetSessionState error.");
                 return null;
             }
         }
@@ -258,7 +258,7 @@ namespace KdSoft.EtwEvents.WebClient
             this._eventsTask = eventsTask;
             eventsTask.ContinueWith(t => {
                 if (t.IsFaulted)
-                    _logger.LogError(t.Exception, $"Error in {nameof(eventsTask)}");
+                    _logger.LogError(t.Exception, "Error in {method}", nameof(eventsTask));
                 PostSessionStateChange();
             });
             return result;

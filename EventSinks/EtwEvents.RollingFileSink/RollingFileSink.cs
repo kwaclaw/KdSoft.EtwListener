@@ -75,7 +75,7 @@ namespace KdSoft.EtwEvents.EventSinks
                     _fileFactory.Dispose();
                 }
                 catch (Exception ex) {
-                    _logger.LogError(ex, $"Error closing event sink '{nameof(RollingFileSink)}'.");
+                    _logger.LogError(ex, "Error closing event sink '{eventSink}'.", nameof(RollingFileSink));
                 }
             }
         }
@@ -89,7 +89,7 @@ namespace KdSoft.EtwEvents.EventSinks
                     await _fileFactory.DisposeAsync().ConfigureAwait(false);
                 }
                 catch (Exception ex) {
-                    _logger.LogError(ex, $"Error closing event sink '{nameof(RollingFileSink)}'.");
+                    _logger.LogError(ex, "Error closing event sink '{eventSink}'.", nameof(RollingFileSink));
                 }
             }
         }

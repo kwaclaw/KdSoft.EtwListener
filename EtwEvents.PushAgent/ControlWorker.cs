@@ -202,14 +202,12 @@ namespace KdSoft.EtwEvents.PushAgent
         Task SendStateUpdate() {
             var ses = SessionWorker?.Session;
             ImmutableList<EtwLogging.ProviderSetting> enabledProviders;
-            var eventSinkState = new EventSinkState();
-
-            eventSinkState.Profile = _sessionConfig.SinkProfile;
+            var eventSinkState = new EventSinkState{ Profile = _sessionConfig.SinkProfile };
 
             var isRunning = _sessionWorkerAvailable != 0;
             if (isRunning && SessionWorker != null) {
                 enabledProviders = ses?.EnabledProviders.ToImmutableList() ?? ImmutableList<EtwLogging.ProviderSetting>.Empty;
-                eventSinkState.Error = SessionWorker.EventSinkError?.Message ?? String.Empty;
+                eventSinkState.Error = SessionWorker.EventSinkError?.Message ?? string.Empty;
             }
             else {
                 enabledProviders = _sessionConfig.State.ProviderSettings.ToImmutableList();
@@ -233,22 +231,22 @@ namespace KdSoft.EtwEvents.PushAgent
 
         async void EventReceived(object? sender, MessageReceivedEventArgs e) {
             try {
-                var lastEventIdStr = string.IsNullOrEmpty(e.Message.LastEventId) ? "" : $"-{e.Message.LastEventId}";
-                var messageDataStr = string.IsNullOrEmpty(e.Message.Data) ? "" : $", {e.Message.Data}";
-                _logger?.LogInformation($"{nameof(EventReceived)}: {e.EventName}{lastEventIdStr}{messageDataStr}");
+                var lastEventIdStr = string.IsNullOrEmpty(e.Message.LastEventId) ? "-1" : e.Message.LastEventId;
+                var messageDataStr = string.IsNullOrEmpty(e.Message.Data) ? "<None>" : e.Message.Data;
+                _logger?.LogInformation("{method}: {eventName}-{lastEventId}, {messageData}", nameof(EventReceived), e.EventName, lastEventIdStr, messageDataStr);
                 await ProcessEvent(new ControlEvent { Event = e.EventName, Id = e.Message.LastEventId ?? "", Data = e.Message.Data ?? "" }).ConfigureAwait(false);
             }
             catch (Exception ex) {
-                _logger?.LogAllErrors(ex, $"Error in {nameof(EventReceived)}:");
+                _logger?.LogError(ex, "Error in {method}.", nameof(EventReceived));
             }
         }
 
         void EventError(object? sender, ExceptionEventArgs e) {
-            _logger?.LogAllErrors(e.Exception, $"Error in {nameof(EventError)}:");
+            _logger?.LogError(e.Exception, "Error in EventSource.");
         }
 
         void EventSourceStateChanged(object? sender, StateChangedEventArgs e) {
-            _logger?.LogInformation($"{nameof(EventSourceStateChanged)}: {e.ReadyState}");
+            _logger?.LogInformation("{method}: {readyState}", nameof(EventSourceStateChanged), e.ReadyState);
         }
 
         public Task StartSSE() {

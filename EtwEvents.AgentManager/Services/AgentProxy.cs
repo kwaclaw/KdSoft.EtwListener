@@ -158,7 +158,7 @@ namespace KdSoft.EtwEvents.AgentManager.Services
                     await response.WriteAsync(msg, linkedToken).ConfigureAwait(false);
                     await response.Body.FlushAsync(linkedToken).ConfigureAwait(false);
 
-                    _logger.LogInformation($"Pushed Control Event: {sse.Event}:{sse.Id} -> {AgentId}");
+                    _logger.LogInformation("Pushed Control Event: {event}:{eventId} -> {agentId}", sse.Event, sse.Id, AgentId);
 
                     if (linkedToken.IsCancellationRequested) {
                         finished = false;

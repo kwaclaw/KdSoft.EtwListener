@@ -73,7 +73,7 @@ namespace KdSoft.EtwEvents.Server
                 }
             }
             else {
-                _logger.LogInformation($"Could not post trace event {evt.EventIndex}.");
+                _logger.LogInformation("Could not post trace event {eventIndex}.", evt.EventIndex);
             }
         }
 
@@ -99,41 +99,38 @@ namespace KdSoft.EtwEvents.Server
         async Task ProcessBatches(CancellationToken stoppingToken) {
             await Task.Yield();
 
-            using (var reader = _channel.GetNewReader()) {
-                do {
+            using var reader = _channel.GetNewReader();
+            do {
+                var batch = new EtwEventBatch();
 
-                    var batch = new EtwEventBatch();
+                //TODO this does not update the _nextAddress field in reader!, but it works without NullReferenceExceptions in TryEnqueue
+                //await foreach (var (owner, length, _, _) in reader.GetAsyncEnumerable(stoppingToken).ConfigureAwait(false)) {
+                await foreach (var (owner, length) in reader.ReadAllAsync(stoppingToken).ConfigureAwait(false)) {
+                    using (owner) {
+                        var byteSequence = new ReadOnlySequence<byte>(owner.Memory).Slice(0, length);
 
-                    //TODO this does not update the _nextAddress field in reader!, but it works without NullReferenceExceptions in TryEnqueue
-                    //await foreach (var (owner, length, _, _) in reader.GetAsyncEnumerable(stoppingToken).ConfigureAwait(false)) {
-                    await foreach (var (owner, length) in reader.ReadAllAsync(stoppingToken).ConfigureAwait(false)) {
-                        using (owner) {
-                            var byteSequence = new ReadOnlySequence<byte>(owner.Memory).Slice(0, length);
-
-                            // check if this data items indicates the end of a batch
-                            if (length == _batchSentinel.Length && byteSequence.FirstSpan.SequenceEqual(_batchSentinel.Span)) {
-                                if (batch.Events.Count == 0)
-                                    continue;
-                                break;
-                            }
-
-                            var etwEvent = EtwEvent.Parser.ParseFrom(byteSequence);
-                            batch.Events.Add(etwEvent);
+                        // check if this data items indicates the end of a batch
+                        if (length == _batchSentinel.Length && byteSequence.FirstSpan.SequenceEqual(_batchSentinel.Span)) {
+                            if (batch.Events.Count == 0)
+                                continue;
+                            break;
                         }
+
+                        var etwEvent = EtwEvent.Parser.ParseFrom(byteSequence);
+                        batch.Events.Add(etwEvent);
                     }
+                }
 
-
-                    if (batch.Events.Count > 0) {
-                        _logger.LogInformation($"Received batch with {batch.Events.Count} events.");
-                        bool success = await _writeBatchAsync(batch).ConfigureAwait(false);
-                        if (success) {
-                            reader.Truncate();
-                            await _channel.CommitAsync().ConfigureAwait(false);
-                        }
+                if (batch.Events.Count > 0) {
+                    _logger.LogInformation("Received batch with {eventCount} events.", batch.Events.Count);
+                    bool success = await _writeBatchAsync(batch).ConfigureAwait(false);
+                    if (success) {
+                        reader.Truncate();
+                        await _channel.CommitAsync(default).ConfigureAwait(false);
                     }
+                }
 
-                } while (!stoppingToken.IsCancellationRequested);
-            }
+            } while (!stoppingToken.IsCancellationRequested);
         }
 
         /// <summary>
@@ -182,7 +179,7 @@ namespace KdSoft.EtwEvents.Server
         }
 
         public void Dispose() {
-            try { 
+            try {
                 _channel.Dispose();
                 _timer?.Dispose();
             }

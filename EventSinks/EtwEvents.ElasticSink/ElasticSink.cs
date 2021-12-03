@@ -48,7 +48,7 @@ namespace KdSoft.EtwEvents.EventSinks
                 _client = new ElasticLowLevelClient(config);
             }
             catch (Exception ex) {
-                _logger.LogError(ex, $"Error in {nameof(ElasticSink)} initialization.");
+                _logger.LogError(ex, "Error in {eventSink} initialization.", nameof(ElasticSink));
                 throw;
             }
 
@@ -72,7 +72,7 @@ namespace KdSoft.EtwEvents.EventSinks
                     _connectionPool.Dispose();
                 }
                 catch (Exception ex) {
-                    _logger.LogError(ex, $"Error closing event sink '{nameof(ElasticSink)}'.");
+                    _logger.LogError(ex, "Error closing event sink '{eventSink)}'.", nameof(ElasticSink));
                 }
                 _tcs.TrySetResult(true);
             }

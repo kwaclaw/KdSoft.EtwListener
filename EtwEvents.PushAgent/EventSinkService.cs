@@ -82,32 +82,31 @@ namespace KdSoft.EtwEvents.PushAgent
         public async Task<string> DownloadEventSink(string sinkType, string version) {
             var opts = _controlOptions.Value;
             var moduleUri = new Uri(opts.Uri, "Agent/GetEventSinkModule");
-            var request = new HttpRequestMessage(HttpMethod.Post, moduleUri);
-            request.Content = JsonContent.Create(new { sinkType, version });
-
+            var request = new HttpRequestMessage(HttpMethod.Post, moduleUri) {
+                Content = JsonContent.Create(new { sinkType, version })
+            };
 
             var dirName = $"{sinkType}~{version}";
             var eventSinkDir = Path.Combine(_rootPath, _eventSinksDir, dirName);
 
-            _logger.LogInformation($"Downloading event sink module '{dirName}' from {opts.Uri}");
+            _logger.LogInformation("Downloading event sink module '{dirName}' from {uri}", dirName, opts.Uri );
 
             var tempDir = Path.GetTempPath();
             var randFile = Path.GetRandomFileName();
             var zipTempFilename = Path.Combine(tempDir, randFile);
+
             try {
-                using (var http = new HttpClient(_httpHandler, false)) {
-                    using (var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead)) {
-                        response.EnsureSuccessStatusCode();
-                        using (var streamToReadFrom = await response.Content.ReadAsStreamAsync()) {
-                            using (var streamToWriteTo = new FileStream(zipTempFilename, FileMode.Create, FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.DeleteOnClose)) {
-                                await streamToReadFrom.CopyToAsync(streamToWriteTo);
-                                streamToWriteTo.Position = 0;
-                                var archive = new ZipArchive(streamToWriteTo, ZipArchiveMode.Read);
-                                archive.ExtractToDirectory(eventSinkDir, true);
-                            }
-                        }
-                    }
-                }
+                using var http = new HttpClient(_httpHandler, false);
+                using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+                response.EnsureSuccessStatusCode();
+
+                using var streamToReadFrom = await response.Content.ReadAsStreamAsync();
+                using var streamToWriteTo = new FileStream(zipTempFilename, FileMode.Create, FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.DeleteOnClose);
+                await streamToReadFrom.CopyToAsync(streamToWriteTo);
+
+                streamToWriteTo.Position = 0;
+                var archive = new ZipArchive(streamToWriteTo, ZipArchiveMode.Read);
+                archive.ExtractToDirectory(eventSinkDir, true);
             }
             finally {
                 if (zipTempFilename != null)

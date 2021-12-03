@@ -43,10 +43,10 @@ namespace KdSoft.EtwEvents.Server
             var etwEvent = _etwEventPool.Get();
             var posted = _channel.Writer.TryWrite(etwEvent.SetTraceEvent(evt));
             if (!posted)
-                _logger.LogInformation($"Could not post trace event {evt.EventIndex}.");
+                _logger.LogInformation("Could not post trace event {eventIndex}.", evt.EventIndex) ;
         }
 
-        static readonly EtwEvent _emptyEvent = new EtwEvent();
+        static readonly EtwEvent _emptyEvent = new();
 
         /// <summary>
         /// Timer callback that triggers periodical write operations even if the event batch is not full
@@ -86,7 +86,7 @@ namespace KdSoft.EtwEvents.Server
                     }
 
                     Volatile.Write(ref _lastWrittenMSecs, Environment.TickCount);
-                    _logger.LogInformation($"Received batch with {batch.Events.Count} events.");
+                    _logger.LogInformation("Received batch with {eventCount} events.", batch.Events.Count);
                     await _writeBatchAsync(batch).ConfigureAwait(false);
                 }
                 finally {

@@ -44,9 +44,9 @@ namespace KdSoft.EtwEvents.AgentManager
 
             var finished = await agentProxy.ProcessMessages(Response, cancelToken).ConfigureAwait(false);
             if (finished)
-                _logger.LogInformation($"Finished SSE connection: {agentId}");
+                _logger.LogInformation("Finished SSE connection: {agentId}", agentId);
             else
-                _logger.LogInformation($"Cancelled SSE connection: {agentId}");
+                _logger.LogInformation("Cancelled SSE connection: {agentId}", agentId);
 
             await _agentProxyManager.PostAgentStateChange().ConfigureAwait(false);
 
@@ -65,10 +65,10 @@ namespace KdSoft.EtwEvents.AgentManager
             var acceptHeaders = Request.Headers[HeaderNames.Accept];
             if (acceptHeaders.Count == 0 || acceptHeaders.Contains(Constants.EventStreamHeaderValue)) {
                 if (string.IsNullOrEmpty(lastEventId)) {
-                    _logger.LogInformation($"Connected SSE: {agentId}");
+                    _logger.LogInformation("Connected SSE: {agentId}", agentId);
                 }
                 else {
-                    _logger.LogInformation($"Reconnected SSE: {agentId} - Last event id: {lastEventId}");
+                    _logger.LogInformation("Reconnected SSE: {agentId} - Last event id: {lastEventId}", agentId, lastEventId);
                 }
 
                 return await GetMessageEventStream(agentId, cancelToken).ConfigureAwait(false);
