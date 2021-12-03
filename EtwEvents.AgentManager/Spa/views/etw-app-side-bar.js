@@ -83,7 +83,7 @@ class EtwAppSideBar extends LitMvvmElement {
 
     selectedFile.text().then(txt => {
       const importObject = JSON.parse(txt);
-      this.model.updateAgentState(importObject);
+      this.model.setAgentState(importObject);
     });
   }
 

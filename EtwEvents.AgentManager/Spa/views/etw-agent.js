@@ -74,7 +74,7 @@ class EtwAgent extends LitMvvmElement {
 
   _processingFieldChange(e, agentState) {
     e.stopPropagation();
-    agentState.processingOptions[e.target.name] = utils.getFieldValue(e.target);
+    agentState.processingModel[e.target.name] = utils.getFieldValue(e.target);
   }
 
   _applyProcessingClick() {
@@ -187,6 +187,7 @@ class EtwAgent extends LitMvvmElement {
 
   render() {
     const activeAgentState = this.model.activeAgentState;
+    const processingModel = activeAgentState?.processingModel;
     return html`
       <div id="main">
         ${activeAgentState
@@ -223,12 +224,12 @@ class EtwAgent extends LitMvvmElement {
                 <div id="processingEdit">
                   <div id="processingVars">
                     <label for="batchSize">Batch Size</label>
-                    <input type="number" id="batchSize" name="batchSize" .value=${activeAgentState.processingOptions.batchSize} />
+                    <input type="number" id="batchSize" name="batchSize" .value=${processingModel.batchSize} />
                     <label for="maxWriteDelayMSecs">Max Write Delay (msecs)</label>
-                    <input type="number" id="maxWriteDelayMSecs" name="maxWriteDelayMSecs" .value=${activeAgentState.processingOptions.maxWriteDelayMSecs} />
+                    <input type="number" id="maxWriteDelayMSecs" name="maxWriteDelayMSecs" .value=${processingModel.maxWriteDelayMSecs} />
                   </div>
                   <label for="filterEdit">Filter</label>
-                  <filter-edit id="filterEdit" class="p-2" .model=${this.model.activeFilterModel}></filter-edit>
+                  <filter-edit id="filterEdit" class="p-2" .model=${processingModel.filter}></filter-edit>
                   <hr class="my-3" />
                   <div class="flex flex-wrap mt-2 bt-1">
                     <button type="button" class="py-1 px-2" @click=${this._testFilterClick}>

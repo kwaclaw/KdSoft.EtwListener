@@ -9,7 +9,7 @@ import FetchHelper from '../js/fetchHelper.js';
 import AgentState from '../js/agentState.js';
 import FilterModel from '../js/filterModel.js';
 import ProcessingOptions from '../js/processingOptions.js';
-import FilterEditModel from './filter-edit-model.js';
+import ProcessingModel from './processing-model.js';
 
 const traceLevelList = () => [
   { name: i18n.__('Always'), value: 0 },
@@ -37,9 +37,7 @@ function _enhanceProviderState(provider) {
 }
 
 // adds view models and view related methods to agent state, agentState must be observable
-function _enhanceAgentState(agentState, filterEditModel, eventSinkInfos) {
-  filterEditModel.activate(agentState);
-
+function _enhanceAgentState(agentState, eventSinkInfos) {
   for (const provider of agentState.enabledProviders) {
     _enhanceProviderState(provider);
   }
@@ -57,6 +55,11 @@ function _enhanceAgentState(agentState, filterEditModel, eventSinkInfos) {
     const index = agentState.enabledProviders.findIndex(p => p.name === name);
     if (index >= 0) agentState.enabledProviders.splice(index, 1);
   };
+
+  if (!(agentState.processingModel instanceof ProcessingModel)) {
+    agentState.processingModel = new ProcessingModel(agentState.processingState);
+  }
+  agentState.processingModel.refresh(agentState.processingState);
 
   if (!(agentState.sinkConfigModel instanceof EventSinkConfigModel)) {
     agentState.sinkConfigModel = new EventSinkConfigModel(eventSinkInfos, agentState);
@@ -115,11 +118,11 @@ function _updateAgentsMap(agentsMap, agentStates) {
           return entry.current == null;
         }
       });
+      agentsMap.set(agentId, observable(entry));
     } else {
       // update only the current property of entry, the state property may be modified
       entry.current = state;
     }
-    agentsMap.set(agentId, observable(entry));
     localAgentKeys.delete(agentId);
   }
 
@@ -162,7 +165,6 @@ class EtwAppModel {
     const observableThis = observable(this);
     observableThis._agents = [];
     observableThis.activeAgentId = null;
-    observableThis.activeFilterModel = new FilterEditModel();
 
     observableThis.fetchErrors = new RingBuffer(50);
     observableThis.showLastError = false;
@@ -231,11 +233,11 @@ class EtwAppModel {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return null;
 
-    activeEntry.state = _enhanceAgentState(activeEntry.state, this.activeFilterModel, this.eventSinkInfos);
+    activeEntry.state = _enhanceAgentState(activeEntry.state, this.eventSinkInfos);
     return activeEntry.state;
   }
 
-  updateAgentState(updateObject) {
+  setAgentState(updateObject) {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return;
 
@@ -312,22 +314,22 @@ class EtwAppModel {
     if (!agentState) return;
 
     // if the main method body is empty then we clear the filter
-    let filterModel = new FilterModel();
-    if (this.activeFilterModel.method) filterModel = agentState.processingOptions.filter;
+    const filterModel = new FilterModel();
+    const filterEditModel = agentState.processingModel.filter;
+    if (filterEditModel.method) filterModel.filterParts = filterEditModel.dynamicParts;
 
     // argument must match protobuf message TestFilterRequest
     this.fetcher.postJson('TestFilter', { agentId: agentState.id }, filterModel)
       // result matches protobuf message BuildFilterResult
       .then(result => {
-        this.activeFilterModel.noFilter = result.noFilter;
         if (result.noFilter) {
-          this.activeFilterModel.diagnostics = [];
-          this.activeFilterModel.sourceLines = [];
-          this.activeFilterModel.partLineSpans = [];
+          //TODO should indicate an error instead
+          filterEditModel.diagnostics = [];
         } else {
-          this.activeFilterModel.diagnostics = result.diagnostics;
-          this.activeFilterModel.sourceLines = result.sourceLines;
-          this.activeFilterModel.partLineSpans = result.partLineSpans;
+          filterEditModel.diagnostics = result.diagnostics;
+          if (!result.diagnostics || !result.diagnostics.length) {
+            agentState.processingState.filterSource = result.filterSource;
+          }
         }
       })
       .catch(error => window.etwApp.defaultHandleError(error));
@@ -337,22 +339,19 @@ class EtwAppModel {
     const agentState = this.activeAgentState;
     if (!agentState) return;
 
-    // if the main method body is empty then we clear the filter
-    if (!this.activeFilterModel.method) agentState.processingOptions.filter = new FilterModel();
-
+    const processingOptions = agentState.processingModel.toProcessingOptions();
     // argument must match protobuf message TestFilterRequest
-    this.fetcher.postJson('ApplyProcessingOptions', { agentId: agentState.id }, agentState.processingOptions)
+    this.fetcher.postJson('ApplyProcessingOptions', { agentId: agentState.id }, processingOptions)
       // result matches protobuf message BuildFilterResult
       .then(result => {
-        this.activeFilterModel.noFilter = result.noFilter;
+        const filterEditModel = agentState.processingModel.filter;
         if (result.noFilter) {
-          this.activeFilterModel.diagnostics = [];
-          this.activeFilterModel.sourceLines = [];
-          this.activeFilterModel.partLineSpans = [];
+          filterEditModel.diagnostics = [];
         } else {
-          this.activeFilterModel.diagnostics = result.diagnostics;
-          this.activeFilterModel.sourceLines = result.sourceLines;
-          this.activeFilterModel.partLineSpans = result.partLineSpans;
+          filterEditModel.diagnostics = result.diagnostics;
+          if (!result.diagnostics || !result.diagnostics.length) {
+            agentState.processingState.filterSource = result.filterSource;
+          }
         }
       })
       .catch(error => window.etwApp.defaultHandleError(error));
@@ -362,15 +361,16 @@ class EtwAppModel {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return;
     _resetProcessing(activeEntry);
-    this.activeFilterModel.resetDiagnostics();
+    const filterEditModel = activeEntry.state.processingModel.filter;
+    filterEditModel.resetDiagnostics();
   }
 
   get processingModified() {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return false;
-    const currOpts = activeEntry.current?.processingOptions;
-    const stateOpts = activeEntry.state.processingOptions;
-    return !utils.targetEquals(currOpts, stateOpts) || !utils.targetEquals(currOpts?.filter, stateOpts.filter);
+    const currState = activeEntry.current?.processingState;
+    const state = activeEntry.state.processingState;
+    return !utils.targetEquals(currState, state) || !utils.targetEquals(currState?.filterSource, state.filterSource);
   }
 
   //#endregion
