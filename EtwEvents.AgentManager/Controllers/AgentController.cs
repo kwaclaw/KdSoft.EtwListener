@@ -6,6 +6,7 @@ using System.Net;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Google.Protobuf;
 using KdSoft.EtwEvents.AgentManager.Services;
 using KdSoft.EtwLogging;
 using Microsoft.AspNetCore.Authorization;
@@ -23,15 +24,18 @@ namespace KdSoft.EtwEvents.AgentManager
     {
         readonly AgentProxyManager _agentProxyManager;
         readonly EventSinkService _evtSinkService;
+        readonly JsonFormatter _jsonFormatter;
         readonly ILogger<AgentController> _logger;
 
         public AgentController(
             AgentProxyManager agentProxyManager,
             EventSinkService evtSinkService,
+            JsonFormatter jsonFormatter,
             ILogger<AgentController> logger
         ) {
             this._agentProxyManager = agentProxyManager;
             this._evtSinkService = evtSinkService;
+            this._jsonFormatter = jsonFormatter;
             this._logger = logger;
         }
 

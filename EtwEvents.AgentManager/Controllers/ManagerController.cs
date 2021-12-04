@@ -33,15 +33,15 @@ namespace KdSoft.EtwEvents.AgentManager
         public ManagerController(
             AgentProxyManager agentProxyManager,
             EventSinkService evtSinkService,
+            JsonFormatter jsonFormatter,
             IOptions<JsonOptions> jsonOptions,
             ILogger<ManagerController> logger
         ) {
             this._agentProxyManager = agentProxyManager;
             this._evtSinkService = evtSinkService;
+            this._jsonFormatter = jsonFormatter;
             this._jsonOptions = jsonOptions;
             this._logger = logger;
-            var jsonSettings = JsonFormatter.Settings.Default.WithFormatDefaultValues(true).WithFormatEnumsAsIntegers(true);
-            _jsonFormatter = new JsonFormatter(jsonSettings);
         }
 
         [HttpGet]

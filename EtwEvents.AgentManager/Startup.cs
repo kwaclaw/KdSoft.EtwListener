@@ -7,6 +7,7 @@ using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Google.Protobuf;
 using KdSoft.EtwEvents.AgentManager.Services;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Builder;
@@ -113,6 +114,12 @@ namespace KdSoft.EtwEvents.AgentManager
                 "EventSinksCache",
                 Path.Combine("Spa", "eventSinks")
             ));
+            services.AddSingleton(provider => {
+                var jsonSettings = JsonFormatter.Settings.Default
+                    .WithFormatDefaultValues(true)
+                    .WithFormatEnumsAsIntegers(true);
+                return new JsonFormatter(jsonSettings);
+            });
 
             //services.AddSingleton<AppSecretsHolder>(provider => {
             //    var secretsPath = Path.Combine(_env.ContentRootPath, "appsecrets.json");
