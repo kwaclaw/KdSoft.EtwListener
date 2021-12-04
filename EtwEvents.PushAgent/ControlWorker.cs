@@ -36,6 +36,8 @@ namespace KdSoft.EtwEvents.PushAgent
         EventSource? _eventSource;
         IServiceScope? _workerScope;
 
+        FilterSource? _emptyFilterSource;
+
         SessionWorker? _sessionWorker;  // only valid when _sessionWorkerAvailable != 0
         int _sessionWorkerAvailable = 0;
         SessionWorker? SessionWorker => _sessionWorkerAvailable == 0 ? null : _sessionWorker!;
@@ -212,6 +214,10 @@ namespace KdSoft.EtwEvents.PushAgent
                 enabledProviders = _sessionConfig.State.ProviderSettings.ToImmutableList();
             }
 
+            var processingState = _sessionConfig.State.ProcessingState.Clone();
+            if (processingState.FilterSource == null)
+                processingState.FilterSource = _emptyFilterSource;
+
             var clientCert = (_httpHandler.SslOptions.ClientCertificates as X509Certificate2Collection)?.First();
 
             var state = new AgentState {
@@ -223,7 +229,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 IsRunning = isRunning,
                 IsStopped = !isRunning,
                 EventSink = eventSinkState,
-                ProcessingState = _sessionConfig.State.ProcessingState,
+                ProcessingState = processingState,
             };
             return PostProtoMessage("Agent/UpdateState", state);
         }
@@ -273,6 +279,25 @@ namespace KdSoft.EtwEvents.PushAgent
         }
 
         #endregion
+
+        #region Lifecycle
+
+        async Task<Filter> GetInitialFilter() {
+            var opts = _controlOptions.Value;
+            var getUri = new Uri(opts.Uri, "Agent/GetInitialFilter");
+
+            using var http = new HttpClient(_httpHandler, false);
+            var response = await http.GetAsync(getUri).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+
+            var filterJson = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            return Filter.Parser.WithDiscardUnknownFields(true).ParseJson(filterJson);
+        }
+
+        async Task InitializeEmptyFilterSource() {
+            var filter = await GetInitialFilter().ConfigureAwait(false);
+            _emptyFilterSource = SessionWorker.BuildFilterSource(filter);
+        }
 
         async Task<bool> StartWorker(CancellationToken cancelToken) {
             if (_sessionWorkerAvailable != 0)
@@ -359,6 +384,13 @@ namespace KdSoft.EtwEvents.PushAgent
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Failure running service.");
+            }
+
+            try {
+                await InitializeEmptyFilterSource().ConfigureAwait(false);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Failure initializing session configuration.");
             }
 
             try {

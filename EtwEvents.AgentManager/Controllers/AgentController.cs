@@ -136,6 +136,11 @@ namespace KdSoft.EtwEvents.AgentManager
             return Ok();
         }
 
+        public IActionResult GetInitialFilter() {
+            var filter = FilterHelper.MergeFilterTemplate();
+            return Ok(_jsonFormatter.Format(filter));
+        }
+
         public class ModuleRequest
         {
             [Required(AllowEmptyStrings = false)]
