@@ -92,7 +92,7 @@ namespace KdSoft.EtwEvents.PushAgent
             }
 
             // need different logic depending on whether a session is active or not
-            SessionWorker? worker = _sessionWorkerAvailable == 0 ? null : SessionWorker;
+            var worker = _sessionWorkerAvailable == 0 ? null : SessionWorker;
 
             BuildFilterResult filterResult;
 
@@ -113,7 +113,8 @@ namespace KdSoft.EtwEvents.PushAgent
                     if (providerSettings != null) {
                         if (worker == null) {
                             _sessionConfig.SaveProviderSettings(providerSettings);
-                        } else {
+                        }
+                        else {
                             worker.UpdateProviders(providerSettings);
                         }
                         await SendStateUpdate().ConfigureAwait(false);
@@ -179,13 +180,11 @@ namespace KdSoft.EtwEvents.PushAgent
         async Task PostMessage(string path, HttpContent content) {
             var opts = _controlOptions.Value;
             var postUri = new Uri(opts.Uri, path);
-            var httpMsg = new HttpRequestMessage(HttpMethod.Post, postUri);
-            httpMsg.Content = content;
+            var httpMsg = new HttpRequestMessage(HttpMethod.Post, postUri) { Content = content };
 
-            using (var http = new HttpClient(_httpHandler, false)) {
-                var response = await http.SendAsync(httpMsg).ConfigureAwait(false);
-                response.EnsureSuccessStatusCode();
-            }
+            using var http = new HttpClient(_httpHandler, false);
+            var response = await http.SendAsync(httpMsg).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
         }
 
         Task PostJsonMessage<T>(string path, T content) {
@@ -194,15 +193,15 @@ namespace KdSoft.EtwEvents.PushAgent
             return PostMessage(path, httpContent);
         }
 
-        Task PostProtoMessage<T>(string path, T content) where T: pb::IMessage<T> {
+        Task PostProtoMessage<T>(string path, T content) where T : pb::IMessage<T> {
             var httpContent = new StringContent(_jsonFormatter.Format(content), Encoding.UTF8, MediaTypeNames.Application.Json);
             return PostMessage(path, httpContent);
         }
 
         Task SendStateUpdate() {
             var ses = SessionWorker?.Session;
-            ImmutableList<EtwLogging.ProviderSetting> enabledProviders;
-            var eventSinkState = new EventSinkState{ Profile = _sessionConfig.SinkProfile };
+            ImmutableList<ProviderSetting> enabledProviders;
+            var eventSinkState = new EventSinkState { Profile = _sessionConfig.SinkProfile };
 
             var isRunning = _sessionWorkerAvailable != 0;
             if (isRunning && SessionWorker != null) {
@@ -267,7 +266,7 @@ namespace KdSoft.EtwEvents.PushAgent
             evt.Opened += EventSourceStateChanged;
             evt.Closed += EventSourceStateChanged;
 
-            this._eventSource = evt;
+            _eventSource = evt;
 
             // this Task will only terminate when the EventSource gets closed/disposed!
             return evt.StartAsync();
@@ -281,10 +280,10 @@ namespace KdSoft.EtwEvents.PushAgent
 
             var scope = _services.CreateScope();
             try {
-                var oldScope = Interlocked.CompareExchange(ref this._workerScope, scope, null);
+                var oldScope = Interlocked.CompareExchange(ref _workerScope, scope, null);
                 if (oldScope != null) { // should not happen
                     oldScope.Dispose();
-                    Interlocked.Exchange<IServiceScope?>(ref this._workerScope, null);
+                    Interlocked.Exchange<IServiceScope?>(ref _workerScope, null);
                     return false;
                 }
 
@@ -335,7 +334,7 @@ namespace KdSoft.EtwEvents.PushAgent
             if (oldWorkerAvailable == 0)
                 return false;
 
-            var oldWorker = Interlocked.Exchange(ref this._sessionWorker, null);
+            var oldWorker = Interlocked.Exchange(ref _sessionWorker, null);
             if (oldWorker == null)  // should not happen 
                 return false;
             await oldWorker.StopAsync(cancelToken).ConfigureAwait(false);
@@ -385,5 +384,7 @@ namespace KdSoft.EtwEvents.PushAgent
             _eventSource?.Dispose();
             _workerScope?.Dispose();
         }
+
+        #endregion
     }
 }

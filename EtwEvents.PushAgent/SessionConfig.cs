@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text.Json;
 using Google.Protobuf;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Hosting;
