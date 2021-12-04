@@ -214,8 +214,10 @@ namespace KdSoft.EtwEvents.PushAgent
                 enabledProviders = _sessionConfig.State.ProviderSettings.ToImmutableList();
             }
 
+            // fix up processingState with default FilterSource if missing, but don't affect the saved state
             var processingState = _sessionConfig.State.ProcessingState.Clone();
-            if (processingState.FilterSource == null)
+            if (processingState.FilterSource == null
+                || processingState.FilterSource.TemplateVersion < (_emptyFilterSource?.TemplateVersion ?? 0))
                 processingState.FilterSource = _emptyFilterSource;
 
             var clientCert = (_httpHandler.SslOptions.ClientCertificates as X509Certificate2Collection)?.First();

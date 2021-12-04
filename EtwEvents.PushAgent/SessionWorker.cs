@@ -92,12 +92,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 if (string.IsNullOrEmpty(partName)) {
                     return (null, markers);
                 }
-                // if the main method body is empty then we have no filter
-                if (string.Equals(partName, "method", StringComparison.OrdinalIgnoreCase)) {
-                    if (filterPart.Lines.Count == 0)
-                        return (null, markers);
-                }
-                if (string.Equals(partName, "template", StringComparison.OrdinalIgnoreCase)) {
+                if (partName.StartsWith("template", StringComparison.OrdinalIgnoreCase)) {
                     foreach (var line in filterPart.Lines)
                         sb.AppendLine(line);
                 }
@@ -116,7 +111,7 @@ namespace KdSoft.EtwEvents.PushAgent
             var partChanges = new List<cat.TextChange>(markers.Count);
             foreach (var filterPart in filter.FilterParts) {
                 var partName = filterPart.Name?.Trim();
-                if (string.IsNullOrEmpty(partName) || string.Equals(partName, "template", StringComparison.OrdinalIgnoreCase)) {
+                if (string.IsNullOrEmpty(partName) || partName.StartsWith("template", StringComparison.OrdinalIgnoreCase)) {
                     continue;
                 }
 
@@ -168,9 +163,9 @@ namespace KdSoft.EtwEvents.PushAgent
             return result;
         }
 
-        public static FilterSource BuildFilterSource(cat.SourceText sourceText, IReadOnlyList<cat.TextChangeRange> partRanges) {
+        public static FilterSource BuildFilterSource(cat.SourceText sourceText, IReadOnlyList<cat.TextChangeRange> partRanges, int version) {
             var partLineSpans = GetPartLineSpans(sourceText, partRanges!);
-            return new FilterSource()
+            return new FilterSource { TemplateVersion = version }
                 .AddSourceLines(sourceText.Lines)
                 .AddPartLineSpans(partLineSpans);
         }
@@ -181,7 +176,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 return null;
 
             var partLineSpans = GetPartLineSpans(sourceText, partRanges!);
-            return new FilterSource()
+            return new FilterSource { TemplateVersion = filter.TemplateVersion }
                 .AddSourceLines(sourceText.Lines)
                 .AddPartLineSpans(partLineSpans);
         }
@@ -196,7 +191,7 @@ namespace KdSoft.EtwEvents.PushAgent
             else {
                 var diagnostics = RealTimeTraceSession.TestFilter(sourceText);
                 result.AddDiagnostics(diagnostics);
-                result.FilterSource = BuildFilterSource(sourceText, partRanges!);
+                result.FilterSource = BuildFilterSource(sourceText, partRanges!, filter.TemplateVersion);
             }
 
             return result;
@@ -222,7 +217,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 else {
                     var diagnostics = ses.SetFilter(sourceText, _config);
                     result.AddDiagnostics(diagnostics);
-                    result.FilterSource = BuildFilterSource(sourceText, partRanges!);
+                    result.FilterSource = BuildFilterSource(sourceText, partRanges!, options.Filter.TemplateVersion);
                 }
             }
             else {

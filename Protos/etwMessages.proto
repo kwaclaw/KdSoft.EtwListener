@@ -145,7 +145,8 @@ message FilterPart {
 }
 
 message Filter {
-    repeated FilterPart filter_parts = 1;
+    int32 template_version = 1;
+    repeated FilterPart filter_parts = 2;
 }
 
 message LinePosition {
@@ -170,10 +171,11 @@ message TextLine {
 }
 
 message FilterSource {
+    int32 template_version = 1;
     // all text lines of the filter source
-    repeated TextLine source_lines = 1;
+    repeated TextLine source_lines = 2;
     // for each dynamic (non-template) filter part the line and character position span
-    repeated LinePositionSpan part_line_spans = 2;
+    repeated LinePositionSpan part_line_spans = 3;
 }
 
 message ProcessingState {
