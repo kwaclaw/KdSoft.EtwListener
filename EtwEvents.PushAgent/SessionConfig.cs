@@ -13,7 +13,6 @@ namespace KdSoft.EtwEvents.PushAgent
     {
         readonly HostBuilderContext _context;
         readonly ILogger<SessionConfig> _logger;
-        readonly JsonSerializerOptions _jsonOptions;
         readonly JsonFormatter _jsonFormatter;
 
         bool _stateAvailable;
@@ -22,11 +21,6 @@ namespace KdSoft.EtwEvents.PushAgent
         public SessionConfig(HostBuilderContext context, ILogger<SessionConfig> logger) {
             this._context = context;
             this._logger = logger;
-            _jsonOptions = new JsonSerializerOptions {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                AllowTrailingCommas = true,
-                WriteIndented = true
-            };
             var jsonSettings = JsonFormatter.Settings.Default.WithFormatDefaultValues(true).WithFormatEnumsAsIntegers(true);
             _jsonFormatter = new JsonFormatter(jsonSettings);
 
@@ -34,10 +28,9 @@ namespace KdSoft.EtwEvents.PushAgent
             LoadSinkProfile();
         }
 
-        public JsonSerializerOptions JsonOptions => _jsonOptions;
         public JsonFormatter JsonFormatter => _jsonFormatter;
 
-        EventSessionState _sessionState = new EventSessionState();
+        EventSessionState _sessionState = new();
         public EventSessionState State => _sessionState;
         public bool StateAvailable => _stateAvailable;
 
@@ -84,7 +77,9 @@ namespace KdSoft.EtwEvents.PushAgent
         public bool LoadSinkProfile() {
             try {
                 var sinkOptionsJson = File.ReadAllText(EventSinkOptionsPath);
-                _sinkProfile = JsonSerializer.Deserialize<EventSinkProfile>(sinkOptionsJson, _jsonOptions) ?? new EventSinkProfile();
+                _sinkProfile = string.IsNullOrWhiteSpace(sinkOptionsJson)
+                    ? new EventSinkProfile()
+                    : EventSinkProfile.Parser.WithDiscardUnknownFields(true).ParseJson(sinkOptionsJson);
                 _sinkProfileAvailable = true;
                 return true;
             }
@@ -98,7 +93,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
         public bool SaveSinkProfile(EventSinkProfile profile) {
             try {
-                var json = JsonSerializer.Serialize(profile, _jsonOptions);
+                var json = _jsonFormatter.Format(profile);
                 File.WriteAllText(EventSinkOptionsPath, json);
                 _sinkProfile = profile;
                 _sinkProfileAvailable = true;

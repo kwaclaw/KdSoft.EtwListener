@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
 using System.Net;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Protobuf;
@@ -166,23 +168,23 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         [HttpPost]
-        public IActionResult UpdateProviders(string agentId, [FromBody] object enabledProviders) {
+        public IActionResult UpdateProviders(string agentId, [FromBody] JsonElement enabledProviders) {
             // we are passing the JSON simply through, enabledProviders should match protobuf message ProviderSettingsList
-            return PostAgent(agentId, "UpdateProviders", enabledProviders?.ToString() ?? "");
+            return PostAgent(agentId, "UpdateProviders", enabledProviders.GetRawText() ?? "");
         }
 
         [HttpPost]
-        public Task<IActionResult> TestFilter(string agentId, [FromBody] object filterObj) {
+        public Task<IActionResult> TestFilter(string agentId, [FromBody] JsonElement filterObj) {
             // WE are supplying the filter template
-            var dynamicParts = Filter.Parser.WithDiscardUnknownFields(true).ParseJson(filterObj.ToString()).FilterParts;
+            var dynamicParts = Filter.Parser.WithDiscardUnknownFields(true).ParseJson(filterObj.GetRawText()).FilterParts;
             var filter = FilterHelper.MergeFilterTemplate(dynamicParts);
             var json = _jsonFormatter.Format(filter);
             return CallAgent(agentId, "TestFilter", json, TimeSpan.FromSeconds(15));
         }
 
         [HttpPost]
-        public Task<IActionResult> ApplyProcessingOptions(string agentId, [FromBody] object processingOptionsObj) {
-            var processingOptions = ProcessingOptions.Parser.WithDiscardUnknownFields(true).ParseJson(processingOptionsObj.ToString());
+        public Task<IActionResult> ApplyProcessingOptions(string agentId, [FromBody] JsonElement processingOptionsObj) {
+            var processingOptions = ProcessingOptions.Parser.WithDiscardUnknownFields(true).ParseJson(processingOptionsObj.GetRawText());
             // WE are supplying the filter template
             var dynamicParts = processingOptions.Filter.FilterParts;
             var filter = FilterHelper.MergeFilterTemplate(dynamicParts);
@@ -192,9 +194,21 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         [HttpPost]
-        public IActionResult UpdateEventSink(string agentId, [FromBody] object eventSinkProfile) {
-            // we are passing the JSON simply through
-            return PostAgent(agentId, "UpdateEventSink", eventSinkProfile?.ToString() ?? "");
+        public IActionResult UpdateEventSink(string agentId, [FromBody] JsonNode eventSinkProfile) {
+            // The Credentials and Options properties need to be converted back to JSON
+
+            var jsonSettings = _jsonOptions.Value.JsonSerializerOptions;
+
+            var opts = eventSinkProfile["options"];
+            var optsString = opts?.ToJsonString(jsonSettings);
+            eventSinkProfile["options"] = optsString;
+
+            var creds = eventSinkProfile["credentials"];
+            var credsString = creds?.ToJsonString();
+            eventSinkProfile["credentials"] = credsString;
+
+            var profileJson = eventSinkProfile.ToJsonString(jsonSettings);
+            return PostAgent(agentId, "UpdateEventSink", profileJson ?? "");
         }
 
         #endregion

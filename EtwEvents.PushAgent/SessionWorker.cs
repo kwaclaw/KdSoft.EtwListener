@@ -52,7 +52,7 @@ namespace KdSoft.EtwEvents.PushAgent
             this._sinkService = sinkService;
             this._config = config;
             this._loggerFactory = loggerFactory;
-            
+
             _logger = loggerFactory.CreateLogger<SessionWorker>();
             _sinkHolder = new EventSinkHolder();
             _jsonOptions = new JsonSerializerOptions {
@@ -263,13 +263,11 @@ namespace KdSoft.EtwEvents.PushAgent
         }
 
         async Task<IEventSink> CreateEventSink(EventSinkProfile sinkProfile) {
-            var optsJson = JsonSerializer.Serialize(sinkProfile.Options, _jsonOptions);
-            var credsJson = JsonSerializer.Serialize(sinkProfile.Credentials, _jsonOptions);
             var sinkFactory = await LoadSinkFactory(sinkProfile.SinkType, sinkProfile.Version).ConfigureAwait(false);
             if (sinkFactory == null)
                 throw new InvalidOperationException($"Error loading event sink factory '{sinkProfile.SinkType}~{sinkProfile.Version}'.");
             var logger = _loggerFactory.CreateLogger(sinkProfile.SinkType);
-            return await sinkFactory.Create(optsJson, credsJson, logger).ConfigureAwait(false);
+            return await sinkFactory.Create(sinkProfile.Options, sinkProfile.Credentials, logger).ConfigureAwait(false);
         }
 
         Task ConfigureEventSinkClosure(string name, IEventSink sink) {

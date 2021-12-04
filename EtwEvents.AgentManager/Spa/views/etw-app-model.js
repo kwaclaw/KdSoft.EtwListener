@@ -98,11 +98,22 @@ function _updateAgentsList(agentsList, agentsMap) {
   }
 }
 
+function _convertEventSinkProfile(agentState) {
+  const sinkProfile = agentState.eventSink.profile;
+  sinkProfile.options = JSON.parse(sinkProfile.options);
+  sinkProfile.credentials = JSON.parse(sinkProfile.credentials);
+  return sinkProfile;
+}
+
+
 function _updateAgentsMap(agentsMap, agentStates) {
   const localAgentKeys = new Set(agentsMap.keys());
 
   // agentStates have unique ids (case-insensitive) - //TODO server culture vs local culture?
   for (const state of (agentStates || [])) {
+    // convert eventSinkProfile.options/credentials from a JSON string to a JSON object
+    _convertEventSinkProfile(state);
+
     const agentId = state.id.toLowerCase();
     let entry = agentsMap.get(agentId);
     if (!entry) {

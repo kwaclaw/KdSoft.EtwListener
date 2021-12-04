@@ -102,8 +102,10 @@ message EventSinkProfile {
     string sink_type  = 1;
     string name = 2;
     string version = 3;
-    map<string, google.protobuf.Any> options = 4;
-    map<string, google.protobuf.Any> credentials = 5;
+    // JSON representation
+    string options = 4;
+    // JSON representation
+    string credentials = 5;
 }
 
 message EventSinkState {

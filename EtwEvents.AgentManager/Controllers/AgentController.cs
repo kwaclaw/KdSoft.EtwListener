@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents.AgentManager.Services;
@@ -115,12 +116,12 @@ namespace KdSoft.EtwEvents.AgentManager
         #region Requests from Agent
 
         [HttpPost]
-        public async Task<IActionResult> UpdateState([FromBody] object stateObj) {
+        public async Task<IActionResult> UpdateState([FromBody] JsonElement stateObj) {
             var agentId = User.Identity?.Name;
             if (agentId == null)
                 return Unauthorized();
 
-            var state = AgentState.Parser.WithDiscardUnknownFields(true).ParseJson(stateObj.ToString());
+            var state = AgentState.Parser.WithDiscardUnknownFields(true).ParseJson(stateObj.GetRawText());
 
             var agentProxy = _agentProxyManager.ActivateProxy(agentId);
             // AgentState.ID must always match the authenticated identity

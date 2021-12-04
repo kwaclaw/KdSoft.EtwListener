@@ -160,7 +160,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     await PostProtoMessage($"Agent/TestFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
                     break;
                 case "UpdateEventSink":
-                    var sinkProfile = JsonSerializer.Deserialize<EventSinkProfile>(sse.Data, _jsonOptions);
+                    var sinkProfile = string.IsNullOrEmpty(sse.Data) ? null : EventSinkProfile.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
                     if (sinkProfile == null)
                         return;
                     if (worker == null) {
