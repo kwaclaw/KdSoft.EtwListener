@@ -177,7 +177,7 @@ message FilterSource {
     // all text lines of the filter source
     repeated TextLine source_lines = 2;
     // for each dynamic (non-template) filter part the line and character position span
-    repeated LinePositionSpan part_line_spans = 3;
+    repeated LinePositionSpan dynamic_line_spans = 3;
 }
 
 message ProcessingState {

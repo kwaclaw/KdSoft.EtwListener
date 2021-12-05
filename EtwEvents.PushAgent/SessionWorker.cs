@@ -122,8 +122,8 @@ namespace KdSoft.EtwEvents.PushAgent
             return partChanges;
         }
 
-        public static (cat.SourceText? sourceText, IReadOnlyList<cat.TextChangeRange>? partRanges) BuildSourceText(Filter filter) {
-            (cat.SourceText? sourceText, IReadOnlyList<cat.TextChangeRange>? partRanges) result;
+        public static (cat.SourceText? sourceText, IReadOnlyList<cat.TextChangeRange>? dynamicRanges) BuildSourceText(Filter filter) {
+            (cat.SourceText? sourceText, IReadOnlyList<cat.TextChangeRange>? dynamicRanges) result;
 
             var (templateSource, markers) = BuildTemplateSource(filter);
             if (templateSource == null)
@@ -136,18 +136,18 @@ namespace KdSoft.EtwEvents.PushAgent
 
             var initSourceText = cat.SourceText.From(templateSource);
             result.sourceText = initSourceText.WithChanges(partChanges);
-            result.partRanges = result.sourceText.GetChangeRanges(initSourceText);
+            result.dynamicRanges = result.sourceText.GetChangeRanges(initSourceText);
 
             return result;
         }
 
-        public static IReadOnlyList<cat.LinePositionSpan> GetPartLineSpans(cat.SourceText sourceText, IReadOnlyList<cat.TextChangeRange> partRanges) {
-            var result = new cat.LinePositionSpan[partRanges.Count];
+        public static IReadOnlyList<cat.LinePositionSpan> GetPartLineSpans(cat.SourceText sourceText, IReadOnlyList<cat.TextChangeRange> dynamicRanges) {
+            var result = new cat.LinePositionSpan[dynamicRanges.Count];
             int offset = 0;
             var lines = sourceText.Lines;
-            for (int indx = 0; indx < partRanges.Count; indx++) {
-                var newLen = partRanges[indx].NewLength;
-                var span = new cat.TextSpan(partRanges[indx].Span.Start + offset, newLen);
+            for (int indx = 0; indx < dynamicRanges.Count; indx++) {
+                var newLen = dynamicRanges[indx].NewLength;
+                var span = new cat.TextSpan(dynamicRanges[indx].Span.Start + offset, newLen);
                 result[indx] = lines.GetLinePositionSpan(span);
 
                 offset += newLen - 2;
@@ -155,35 +155,37 @@ namespace KdSoft.EtwEvents.PushAgent
             return result;
         }
 
-        public static FilterSource BuildFilterSource(cat.SourceText sourceText, IReadOnlyList<cat.TextChangeRange> partRanges, Filter filter) {
-            var partLineSpans = GetPartLineSpans(sourceText, partRanges!);
+        public static FilterSource BuildFilterSource(cat.SourceText sourceText, IReadOnlyList<cat.TextChangeRange> dynamicRanges, Filter filter) {
+            var dynamicLineSpans = GetPartLineSpans(sourceText, dynamicRanges!);
+            var dynamicParts = filter.FilterParts.Where(fp => fp.Name.StartsWith("dynamic", StringComparison.OrdinalIgnoreCase)).ToList();
             return new FilterSource { TemplateVersion = filter.TemplateVersion }
                 .AddSourceLines(sourceText.Lines)
-                .AddPartLineSpans(partLineSpans, filter.FilterParts);
+                .AddDynamicLineSpans(dynamicLineSpans, dynamicParts);
         }
 
         public static FilterSource? BuildFilterSource(Filter filter) {
-            var (sourceText, partRanges) = BuildSourceText(filter);
+            var (sourceText, dynamicRanges) = BuildSourceText(filter);
             if (sourceText == null)
                 return null;
 
-            var partLineSpans = GetPartLineSpans(sourceText, partRanges!);
+            var dynamicLineSpans = GetPartLineSpans(sourceText, dynamicRanges!);
+            var dynamicParts = filter.FilterParts.Where(fp => fp.Name.StartsWith("dynamic", StringComparison.OrdinalIgnoreCase)).ToList();
             return new FilterSource { TemplateVersion = filter.TemplateVersion }
                 .AddSourceLines(sourceText.Lines)
-                .AddPartLineSpans(partLineSpans, filter.FilterParts);
+                .AddDynamicLineSpans(dynamicLineSpans, dynamicParts);
         }
 
         public static BuildFilterResult TestFilter(Filter filter) {
             var result = new BuildFilterResult();
 
-            var (sourceText, partRanges) = BuildSourceText(filter);
+            var (sourceText, dynamicRanges) = BuildSourceText(filter);
             if (sourceText == null) {
                 result.NoFilter = true;
             }
             else {
                 var diagnostics = RealTimeTraceSession.TestFilter(sourceText);
                 result.AddDiagnostics(diagnostics);
-                result.FilterSource = BuildFilterSource(sourceText, partRanges!, filter);
+                result.FilterSource = BuildFilterSource(sourceText, dynamicRanges!, filter);
             }
 
             return result;
@@ -196,14 +198,14 @@ namespace KdSoft.EtwEvents.PushAgent
             var result = new BuildFilterResult();
 
             if (options.Filter.FilterParts.Count > 0) {
-                var (sourceText, partRanges) = BuildSourceText(options.Filter);
+                var (sourceText, dynamicRanges) = BuildSourceText(options.Filter);
                 if (sourceText == null) {
                     result.NoFilter = true;
                 }
                 else {
                     var diagnostics = ses.SetFilter(sourceText, _config);
                     result.AddDiagnostics(diagnostics);
-                    result.FilterSource = BuildFilterSource(sourceText, partRanges!, options.Filter);
+                    result.FilterSource = BuildFilterSource(sourceText, dynamicRanges!, options.Filter);
                 }
             }
             else {

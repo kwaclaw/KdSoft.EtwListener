@@ -65,20 +65,20 @@ namespace KdSoft.EtwLogging
             return filterSource;
         }
 
-        public static FilterSource AddPartLineSpans(
+        public static FilterSource AddDynamicLineSpans(
             this FilterSource filterSource,
             IReadOnlyList<cat.LinePositionSpan> lineSpans,
-            IList<FilterPart> filterParts
+            IList<FilterPart> dynamicParts
         ) {
-            Debug.Assert(lineSpans.Count == filterParts.Count);
+            Debug.Assert(lineSpans.Count == dynamicParts.Count);
             for (int indx = 0; indx < lineSpans.Count; indx++) {
                 var lineSpan = lineSpans[indx];
                 var linePositionSpan = new LinePositionSpan {
                      Start = new LinePosition { Line = lineSpan.Start.Line, Character = lineSpan.Start.Character },
                      End = new LinePosition { Line = lineSpan.End.Line, Character = lineSpan.End.Character },
-                     Indent = filterParts[indx].Indent
+                     Indent = dynamicParts[indx].Indent
                 };
-                filterSource.PartLineSpans.Add(linePositionSpan);
+                filterSource.DynamicLineSpans.Add(linePositionSpan);
             }
             return filterSource;
         }
