@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Net;
 using System.Text.Json;
@@ -173,22 +174,51 @@ namespace KdSoft.EtwEvents.AgentManager
             return PostAgent(agentId, "UpdateProviders", enabledProviders.GetRawText() ?? "");
         }
 
+        /// <summary>
+        /// Dynamic filter parts passed from SPA client to agent.
+        /// </summary>
+        /// <param name="agentId">Agent Id</param>
+        /// <param name="filterObj">JSON object like:
+        /// {
+        ///   "dynamicParts": [
+        ///     "int num = 0;"
+        ///     "return num > 0;"
+        ///   ]
+        /// } 
+        /// </param>
         [HttpPost]
         public Task<IActionResult> TestFilter(string agentId, [FromBody] JsonElement filterObj) {
+            var dynamicParts = filterObj.GetProperty("dynamicParts").EnumerateArray().Select(dp => dp.GetString()).ToImmutableArray();
             // WE are supplying the filter template
-            var dynamicParts = Filter.Parser.WithDiscardUnknownFields(true).ParseJson(filterObj.GetRawText()).FilterParts;
             var filter = FilterHelper.MergeFilterTemplate(dynamicParts);
             var json = _jsonFormatter.Format(filter);
             return CallAgent(agentId, "TestFilter", json, TimeSpan.FromSeconds(15));
         }
 
+        /// <summary>
+        /// Processing options passed from SPA client to agent.
+        /// </summary>
+        /// <param name="agentId">Agent Id</param>
+        /// <param name="optionsObj">JSON object like:
+        /// {
+        ///   "batchSize": 100,
+        ///   "maxWriteDelayMSecs": 400,
+        ///   "dynamicParts": [
+        ///     "int num = 0;"
+        ///     "return num > 0;"
+        ///   ]
+        /// } 
+        /// </param>
         [HttpPost]
-        public Task<IActionResult> ApplyProcessingOptions(string agentId, [FromBody] JsonElement processingOptionsObj) {
-            var processingOptions = ProcessingOptions.Parser.WithDiscardUnknownFields(true).ParseJson(processingOptionsObj.GetRawText());
+        public Task<IActionResult> ApplyProcessingOptions(string agentId, [FromBody] JsonElement optionsObj) {
+            var dynamicParts = optionsObj.GetProperty("dynamicParts").EnumerateArray().Select(dp => dp.GetString()).ToImmutableArray();
             // WE are supplying the filter template
-            var dynamicParts = processingOptions.Filter.FilterParts;
             var filter = FilterHelper.MergeFilterTemplate(dynamicParts);
-            processingOptions.Filter = filter;
+            var processingOptions = new ProcessingOptions {
+                BatchSize = optionsObj.GetProperty("batchSize").GetInt32(),
+                MaxWriteDelayMSecs = optionsObj.GetProperty("maxWriteDelayMSecs").GetInt32(),
+                Filter = filter
+            };
             var json = _jsonFormatter.Format(processingOptions);
             return CallAgent(agentId, "ApplyProcessingOptions", json, TimeSpan.FromSeconds(15));
         }
