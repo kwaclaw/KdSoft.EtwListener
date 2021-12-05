@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.Diagnostics.Tracing;
 using ca = Microsoft.CodeAnalysis;
@@ -64,11 +65,18 @@ namespace KdSoft.EtwLogging
             return filterSource;
         }
 
-        public static FilterSource AddPartLineSpans(this FilterSource filterSource, IReadOnlyList<cat.LinePositionSpan> lineSpans) {
-            foreach (var lineSpan in lineSpans) {
+        public static FilterSource AddPartLineSpans(
+            this FilterSource filterSource,
+            IReadOnlyList<cat.LinePositionSpan> lineSpans,
+            IList<FilterPart> filterParts
+        ) {
+            Debug.Assert(lineSpans.Count == filterParts.Count);
+            for (int indx = 0; indx < lineSpans.Count; indx++) {
+                var lineSpan = lineSpans[indx];
                 var linePositionSpan = new LinePositionSpan {
                      Start = new LinePosition { Line = lineSpan.Start.Line, Character = lineSpan.Start.Character },
                      End = new LinePosition { Line = lineSpan.End.Line, Character = lineSpan.End.Character },
+                     Indent = filterParts[indx].Indent
                 };
                 filterSource.PartLineSpans.Add(linePositionSpan);
             }

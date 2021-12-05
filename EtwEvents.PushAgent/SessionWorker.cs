@@ -155,11 +155,11 @@ namespace KdSoft.EtwEvents.PushAgent
             return result;
         }
 
-        public static FilterSource BuildFilterSource(cat.SourceText sourceText, IReadOnlyList<cat.TextChangeRange> partRanges, int version) {
+        public static FilterSource BuildFilterSource(cat.SourceText sourceText, IReadOnlyList<cat.TextChangeRange> partRanges, Filter filter) {
             var partLineSpans = GetPartLineSpans(sourceText, partRanges!);
-            return new FilterSource { TemplateVersion = version }
+            return new FilterSource { TemplateVersion = filter.TemplateVersion }
                 .AddSourceLines(sourceText.Lines)
-                .AddPartLineSpans(partLineSpans);
+                .AddPartLineSpans(partLineSpans, filter.FilterParts);
         }
 
         public static FilterSource? BuildFilterSource(Filter filter) {
@@ -170,7 +170,7 @@ namespace KdSoft.EtwEvents.PushAgent
             var partLineSpans = GetPartLineSpans(sourceText, partRanges!);
             return new FilterSource { TemplateVersion = filter.TemplateVersion }
                 .AddSourceLines(sourceText.Lines)
-                .AddPartLineSpans(partLineSpans);
+                .AddPartLineSpans(partLineSpans, filter.FilterParts);
         }
 
         public static BuildFilterResult TestFilter(Filter filter) {
@@ -183,7 +183,7 @@ namespace KdSoft.EtwEvents.PushAgent
             else {
                 var diagnostics = RealTimeTraceSession.TestFilter(sourceText);
                 result.AddDiagnostics(diagnostics);
-                result.FilterSource = BuildFilterSource(sourceText, partRanges!, filter.TemplateVersion);
+                result.FilterSource = BuildFilterSource(sourceText, partRanges!, filter);
             }
 
             return result;
@@ -203,7 +203,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 else {
                     var diagnostics = ses.SetFilter(sourceText, _config);
                     result.AddDiagnostics(diagnostics);
-                    result.FilterSource = BuildFilterSource(sourceText, partRanges!, options.Filter.TemplateVersion);
+                    result.FilterSource = BuildFilterSource(sourceText, partRanges!, options.Filter);
                 }
             }
             else {

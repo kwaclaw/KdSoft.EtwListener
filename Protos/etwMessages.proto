@@ -158,6 +158,7 @@ message LinePosition {
 message LinePositionSpan {
     LinePosition start = 1;
     LinePosition end = 2;
+    int32 indent = 3;
 }
 
 message TextLine {
