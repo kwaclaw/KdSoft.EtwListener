@@ -141,7 +141,8 @@ message AgentStates {
 
 message FilterPart {
     string name = 1;
-    repeated string lines = 2;
+    string code = 2;
+    int32 indent = 3;
 }
 
 message Filter {

@@ -131,7 +131,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     filterResult = new BuildFilterResult();
                     // if we are not running, lets treat this like a filter test with saving
                     if (worker == null) {
-                        if (SessionWorker.FilterMethodExists(processingOptions.Filter)) {
+                        if ((processingOptions.Filter?.FilterParts.Count ?? 0) > 0) {
                             filterResult = SessionWorker.TestFilter(processingOptions.Filter!);
                         }
                         else {

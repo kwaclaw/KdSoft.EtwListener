@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using KdSoft.EtwEvents.AgentManager.Services;
 using KdSoft.EtwEvents.PushAgent;
 using KdSoft.EtwEvents.Server;
-using KdSoft.EtwLogging;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -18,13 +17,13 @@ namespace EtwEvents.Tests
 
         [Fact]
         public void Test1() {
-            var parts = new FilterPart[] {
-                new FilterPart { Name = "header" },
-                new FilterPart { Name = "body", Lines = { @"int _count; tttt" } },
-                new FilterPart { Name = "init", Lines = { @"_count = 23;", @"_count++;" } },
-                new FilterPart { Name = "method", Lines = { @"if (_count > 0)", @"    return true;", "else", "    return false;" } },
+            var codeParts = new string[] {
+                "using System;",
+                "int _count; tttt",
+                "_count = 23;\ncount++;",
+                "if (_count > 0)\n    return true;\nelse\n    return false;"
             };
-            var filter = FilterHelper.MergeFilterTemplate(parts);
+            var filter = FilterHelper.MergeFilterTemplate(codeParts);
             var (sourceText, ranges) = SessionWorker.BuildSourceText(filter);
 
             //NOTE: it is possible that diagnostics are reported against lines in the template,
@@ -55,11 +54,9 @@ namespace EtwEvents.Tests
                     Text = line.ToString(),
                 };
                 textLines.Add(textLine);
-                _output.WriteLine(textLine.Text);
             }
+            _output.WriteLine(sourceText.ToString());
 
-
-            //int rr = 29;
         }
     }
 }

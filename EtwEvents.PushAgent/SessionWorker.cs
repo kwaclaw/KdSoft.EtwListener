@@ -93,12 +93,11 @@ namespace KdSoft.EtwEvents.PushAgent
                     return (null, markers);
                 }
                 if (partName.StartsWith("template", StringComparison.OrdinalIgnoreCase)) {
-                    foreach (var line in filterPart.Lines)
-                        sb.AppendLine(line);
+                    sb.Append(filterPart.Code);
                 }
                 else {
                     var marker = $"\u001D{indx++}";
-                    sb.AppendLine(marker);
+                    sb.Append(marker);
                     markers.Add(marker);
                 }
             }
@@ -118,14 +117,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 int insertionIndex = initSource.IndexOf(markers[indx++], StringComparison.Ordinal);
                 sb.Clear();
 
-                for (int lineIndx = 0; lineIndx < filterPart.Lines.Count - 1; lineIndx++) {
-                    var line = filterPart.Lines[lineIndx];
-                    sb.AppendLine(line);
-                }
-                // don't want to add an extra line at the end
-                sb.Append(filterPart.Lines[filterPart.Lines.Count - 1]);
-
-                partChanges.Add(new cat.TextChange(new cat.TextSpan(insertionIndex, 2), sb.ToString()));
+                partChanges.Add(new cat.TextChange(new cat.TextSpan(insertionIndex, 2), filterPart.Code));
             }
             return partChanges;
         }
@@ -197,19 +189,13 @@ namespace KdSoft.EtwEvents.PushAgent
             return result;
         }
 
-        public static bool FilterMethodExists(Filter? filter) {
-            if (filter == null)
-                return false;
-            return filter.FilterParts.Any(fp => string.Equals(fp.Name, "method", StringComparison.OrdinalIgnoreCase) && fp.Lines.Count > 0);
-        }
-
         public BuildFilterResult ApplyProcessingOptions(ProcessingOptions options) {
             var ses = _session;
             if (ses == null)
                 throw new InvalidOperationException("No trace session active.");
             var result = new BuildFilterResult();
 
-            if (FilterMethodExists(options.Filter)) {
+            if (options.Filter.FilterParts.Count > 0) {
                 var (sourceText, partRanges) = BuildSourceText(options.Filter);
                 if (sourceText == null) {
                     result.NoFilter = true;

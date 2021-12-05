@@ -6,27 +6,29 @@ namespace KdSoft.EtwEvents.AgentManager.Services
 {
     public class FilterHelper
     {
-        public static Filter MergeFilterTemplate(IReadOnlyList<FilterPart>? dynamicParts = null) {
+        public static Filter MergeFilterTemplate(IReadOnlyList<string>? dynamicParts = null) {
             if (dynamicParts == null)
-                dynamicParts = ImmutableArray<FilterPart>.Empty;
-            var filter = new Filter { TemplateVersion = Constants.FilterTemplateVersion };
+                dynamicParts = ImmutableArray<string>.Empty;
 
-            // merge template parts with application provided (dynamic) filterparts
-            int lastEmptyIndx = Constants.FilterTemplateParts.Length - 2;
+            var filterParts = ImmutableArray<FilterPart>.Empty;
+            int dynamicIndx = 0;
             for (int indx = 0; indx < Constants.FilterTemplateParts.Length; indx++) {
-                var templatePart = Constants.FilterTemplateParts[indx];
-                filter.FilterParts.Add(new FilterPart { Name = $"template{indx}", Lines = { templatePart } });
-                if (indx < dynamicParts.Count) {
-                    var dynamicPart = dynamicParts[indx];
-                    if (dynamicPart.Lines.Count == 0) {
-                        dynamicPart.Lines.Add("");
+                var clonedPart = Constants.FilterTemplateParts[indx].Clone();
+                if (clonedPart.Name.StartsWith("dynamic")) {
+                    if (dynamicIndx < dynamicParts.Count) {
+                        var dynamicPart = dynamicParts[dynamicIndx++];
+                        if (dynamicPart != null) {
+                            clonedPart.Code = dynamicPart;
+                        }
                     }
-                    filter.FilterParts.Add(dynamicPart);
                 }
-                else if (indx <= lastEmptyIndx) {
-                    filter.FilterParts.Add(new FilterPart { Name = $"empty{indx}", Lines = { "" } });
-                }
+                filterParts = filterParts.Add(clonedPart);
             }
+
+            var filter = new Filter {
+                TemplateVersion = Constants.FilterTemplateVersion,
+                FilterParts = { filterParts }
+            };
             return filter;
         }
     }
