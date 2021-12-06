@@ -106,13 +106,13 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         [HttpPost]
-        public IActionResult TestFilterResult(string eventId, [FromBody] string buildFilterResult) {
-            return CompleteResponse(eventId, buildFilterResult ?? "");
+        public IActionResult TestFilterResult(string eventId, [FromBody] JsonElement buildFilterResult) {
+            return CompleteResponse(eventId, buildFilterResult.GetRawText() ?? "{}");
         }
 
         [HttpPost]
-        public IActionResult ApplyFilterResult(string eventId, [FromBody] string buildFilterResult) {
-            return CompleteResponse(eventId, buildFilterResult ?? "");
+        public IActionResult ApplyFilterResult(string eventId, [FromBody] JsonElement buildFilterResult) {
+            return CompleteResponse(eventId, buildFilterResult.GetRawText() ?? "{}");
         }
 
         #endregion
