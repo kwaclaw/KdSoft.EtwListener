@@ -7,7 +7,6 @@ import RingBuffer from '../js/ringBuffer.js';
 import * as utils from '../js/utils.js';
 import FetchHelper from '../js/fetchHelper.js';
 import AgentState from '../js/agentState.js';
-import FilterModel from '../js/filterModel.js';
 import ProcessingOptions from '../js/processingOptions.js';
 import ProcessingModel from './processing-model.js';
 
@@ -104,7 +103,6 @@ function _convertEventSinkProfile(agentState) {
   sinkProfile.credentials = JSON.parse(sinkProfile.credentials);
   return sinkProfile;
 }
-
 
 function _updateAgentsMap(agentsMap, agentStates) {
   const localAgentKeys = new Set(agentsMap.keys());
@@ -325,9 +323,9 @@ class EtwAppModel {
     if (!agentState) return;
 
     // if the main method body is empty then we clear the filter
-    const filterModel = new FilterModel();
+    const filterModel = { dynamicParts: [] };
     const filterEditModel = agentState.processingModel.filter;
-    if (filterEditModel.method) filterModel.filterParts = filterEditModel.dynamicParts;
+    if (filterEditModel.method) filterModel.dynamicParts = filterEditModel.dynamicParts;
 
     // argument must match protobuf message TestFilterRequest
     this.fetcher.postJson('TestFilter', { agentId: agentState.id }, filterModel)

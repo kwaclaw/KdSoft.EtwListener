@@ -10,21 +10,21 @@ function getPartLines(sourceLines, lineSpan) {
   return result;
 }
 
-function getAllLineSpans(partLineSpans, lineCount) {
+function getAllLineSpans(dynamicLineSpans, lineCount) {
   const totalLineSpans = [];
   let lastLine = 0;
   // we  work with full lines, character positions are ignored
-  for (const partLineSpan of partLineSpans) {
-    const startLine = partLineSpan.start.line;
+  for (const dynamicLineSpan of dynamicLineSpans) {
+    const startLine = dynamicLineSpan.start.line;
     if (startLine > lastLine) {
-      totalLineSpans.push({ template: true, start: lastLine, end: startLine - 1 });
+      totalLineSpans.push({ template: true, start: lastLine, end: startLine - 1, indent: 0 });
     }
-    lastLine = partLineSpan.end.line;
-    totalLineSpans.push({ template: false, start: startLine, end: lastLine });
+    lastLine = dynamicLineSpan.end.line;
+    totalLineSpans.push({ template: false, start: startLine, end: lastLine, indent: dynamicLineSpan.indent });
   }
   const endLine = lineCount - 1;
   if (lastLine < endLine) {
-    totalLineSpans.push({ template: true, start: lastLine, end: endLine });
+    totalLineSpans.push({ template: true, start: lastLine, end: endLine, indent: 0 });
   }
   return totalLineSpans;
 }
@@ -32,19 +32,21 @@ function getAllLineSpans(partLineSpans, lineCount) {
 // const filterPart = { name: '', lines: [] }
 function splitSourceIntoParts(filterSource) {
   const filterParts = [];
-  const lineSpans = getAllLineSpans(filterSource.partLineSpans, filterSource.sourceLines.length);
+  const lineSpans = getAllLineSpans(filterSource.dynamicLineSpans, filterSource.sourceLines.length);
 
-  for (const lineSpan of lineSpans) {
+  for (let indx = 0; indx < lineSpans.length; indx += 1) {
+    const lineSpan = lineSpans[indx];
     const partLines = getPartLines(filterSource.sourceLines, lineSpan);
     filterParts.push({
-      name: lineSpan.template ? 'template' : 'dynamic',
-      lines: partLines
+      name: lineSpan.template ? `template${indx}` : `dynamic${indx}`,
+      lines: partLines,
+      indent: lineSpan.indent
     });
   }
   return filterParts;
 }
 
-const lsrx = /\r\n|\n\r|\n|\r/g;
+// const lsrx = /\r\n|\n\r|\n|\r/g;
 
 class FilterEditModel {
   constructor(filterSource, diagnostics) {
@@ -57,7 +59,7 @@ class FilterEditModel {
     const newDynParts = [];
     for (let indx = 0; indx < this.filterParts.length; indx += 1) {
       const part = this.filterParts[indx];
-      if (part.name === 'dynamic') {
+      if (part.name.startsWith('dynamic')) {
         newDynParts.push(part);
       }
     }
@@ -67,34 +69,6 @@ class FilterEditModel {
 
   resetDiagnostics() {
     this.diagnostics = [];
-  }
-
-  _getPartText(indx) {
-    const lines = this.dynamicParts[indx]?.lines;
-    return lines?.join('\n') || null;
-  }
-
-  _setPartText(indx, value) {
-    // normalize line-breaks for splitting
-    const lines = value.replace(lsrx, '\n').split('\n');
-    this.dynamicParts[indx].lines = lines;
-    this.diagnostics = [];
-  }
-
-  get header() { return this._getPartText(0); }
-  set header(value) { this._setPartText(0, value); }
-
-  get body() { return this._getPartText(1); }
-  set body(value) { this._setPartText(1, value); }
-
-  get init() { return this._getPartText(2); }
-  set init(value) { this._setPartText(2, value);  }
-
-  get method() { return this._getPartText(3); }
-  set method(value) { this._setPartText(3, value); }
-
-  get isModified() {
-    return utils.targetEquals(this.cleanDynamicParts, this.dynamicParts);
   }
 }
 

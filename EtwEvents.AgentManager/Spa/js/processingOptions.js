@@ -1,10 +1,8 @@
-﻿import FilterModel from './filterModel.js';
-
-class ProcessingOptions {
-  constructor(batchSize, maxWriteDelayMSecs, filter) {
+﻿class ProcessingOptions {
+  constructor(batchSize, maxWriteDelayMSecs, dynamicParts) {
     this.batchSize = batchSize || 100;
     this.maxWriteDelayMSecs = maxWriteDelayMSecs || 400;
-    this.filter = filter || new FilterModel();
+    this.dynamicParts = dynamicParts || [];
   }
 }
 
