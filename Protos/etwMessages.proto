@@ -213,8 +213,7 @@ message CompileDiagnostic {
 
 message BuildFilterResult {
     repeated CompileDiagnostic diagnostics = 1;
-    bool no_filter = 2;
-    FilterSource filter_source = 3; 
+    FilterSource filter_source = 2; 
 }
 
 // Note: multiple enums in the same namespace cannot have duplicate value identifiers, so we prefix them;

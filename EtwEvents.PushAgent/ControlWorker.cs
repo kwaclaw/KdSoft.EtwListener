@@ -131,13 +131,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     filterResult = new BuildFilterResult();
                     // if we are not running, lets treat this like a filter test with saving
                     if (worker == null) {
-                        if ((processingOptions.Filter?.FilterParts.Count ?? 0) > 0) {
-                            filterResult = SessionWorker.TestFilter(processingOptions.Filter!);
-                        }
-                        else {
-                            filterResult.NoFilter = true;
-                        }
-
+                        filterResult = SessionWorker.TestFilter(processingOptions.Filter ?? new Filter());
                         var processingState = new ProcessingState {
                             BatchSize = processingOptions.BatchSize,
                             MaxWriteDelayMSecs = processingOptions.MaxWriteDelayMSecs,
@@ -155,11 +149,8 @@ namespace KdSoft.EtwEvents.PushAgent
                     break;
                 case "TestFilter":
                     // WithDiscardUnknownFields does currently not work, so we should fix this at source
-                    var filter = string.IsNullOrEmpty(sse.Data) ? null : Filter.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
-                    if (filter != null)
-                        filterResult = SessionWorker.TestFilter(filter);
-                    else
-                        filterResult = new BuildFilterResult { NoFilter = true };
+                    var filter = string.IsNullOrEmpty(sse.Data) ? new Filter() : Filter.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
+                    filterResult = SessionWorker.TestFilter(filter);
                     await PostProtoMessage($"Agent/TestFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
                     break;
                 case "UpdateEventSink":

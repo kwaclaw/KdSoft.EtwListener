@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -10,6 +11,7 @@ using Google.Protobuf.Collections;
 using KdSoft.EtwEvents.Client;
 using KdSoft.EtwEvents.Server;
 using KdSoft.EtwLogging;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -86,6 +88,9 @@ namespace KdSoft.EtwEvents.PushAgent
         public static (string? source, List<string> markers) BuildTemplateSource(Filter filter) {
             var sb = new StringBuilder();
             var markers = new List<string>();
+            if (filter.FilterParts.Count == 0) {
+                return (null, markers);
+            }
             int indx = 0;
             foreach (var filterPart in filter.FilterParts) {
                 var partName = filterPart.Name?.Trim();
@@ -101,7 +106,12 @@ namespace KdSoft.EtwEvents.PushAgent
                     markers.Add(marker);
                 }
             }
-            return (sb.ToString(), markers);
+
+            var source = sb.ToString();
+            if (string.IsNullOrWhiteSpace(source)) {
+                source = null;
+            }
+            return (source, markers);
         }
 
         public static List<cat.TextChange> BuildSourceChanges(string initSource, IList<string> markers, Filter filter) {
@@ -180,7 +190,10 @@ namespace KdSoft.EtwEvents.PushAgent
 
             var (sourceText, dynamicRanges) = BuildSourceText(filter);
             if (sourceText == null) {
-                result.NoFilter = true;
+                var diagnostic = Diagnostic.Create(
+                    "FL1000", "Filter", "Input filter not well formed.", DiagnosticSeverity.Error, DiagnosticSeverity.Error, true, 0
+                );
+                result.AddDiagnostics(ImmutableArray<Diagnostic>.Empty.Add(diagnostic));
             }
             else {
                 var diagnostics = RealTimeTraceSession.TestFilter(sourceText);
@@ -200,7 +213,10 @@ namespace KdSoft.EtwEvents.PushAgent
             if (options.Filter.FilterParts.Count > 0) {
                 var (sourceText, dynamicRanges) = BuildSourceText(options.Filter);
                 if (sourceText == null) {
-                    result.NoFilter = true;
+                    var diagnostic = Diagnostic.Create(
+                        "FL1000", "Filter", "Input filter not well formed.", DiagnosticSeverity.Error, DiagnosticSeverity.Error, true, 0
+                    );
+                    result.AddDiagnostics(ImmutableArray<Diagnostic>.Empty.Add(diagnostic));
                 }
                 else {
                     var diagnostics = ses.SetFilter(sourceText, _config);
@@ -211,7 +227,6 @@ namespace KdSoft.EtwEvents.PushAgent
             else {
                 // clear filter
                 ses.SetFilter(null, _config);
-                result.NoFilter = true;
             }
 
             var oldBatchSize = _processor?.ChangeBatchSize(options.BatchSize) ?? -1;
