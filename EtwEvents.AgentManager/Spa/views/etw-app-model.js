@@ -149,6 +149,8 @@ function _resetProviders(agentEntry) {
 
 function _resetProcessing(agentEntry) {
   agentEntry.state.processingState = agentEntry.current?.processingState || {};
+  const filterEditModel = agentEntry.state.processingModel.filter;
+  filterEditModel.reset();
 }
 
 function _resetEventSink(agentEntry) {
@@ -339,15 +341,7 @@ class EtwAppModel {
       // result matches protobuf message BuildFilterResult
       .then(result => {
         const filterEditModel = agentState.processingModel.filter;
-        if (result.noFilter) {
-          //TODO should indicate an error instead
-          filterEditModel.diagnostics = [];
-        } else {
-          filterEditModel.diagnostics = result.diagnostics;
-          if (!result.diagnostics || !result.diagnostics.length) {
-            agentState.processingState.filterSource = result.filterSource;
-          }
-        }
+        filterEditModel.diagnostics = result.diagnostics;
       })
       .catch(error => window.etwApp.defaultHandleError(error));
   }
@@ -357,15 +351,14 @@ class EtwAppModel {
     if (!agentState) return;
 
     const processingOptions = agentState.processingModel.toProcessingOptions();
+
     // argument must match protobuf message TestFilterRequest
     this.fetcher.postJson('ApplyProcessingOptions', { agentId: agentState.id }, processingOptions)
       // result matches protobuf message BuildFilterResult
       .then(result => {
         const filterEditModel = agentState.processingModel.filter;
-        if (result.noFilter) {
-          filterEditModel.diagnostics = [];
-        } else {
-          filterEditModel.diagnostics = result.diagnostics;
+        filterEditModel.diagnostics = result.diagnostics;
+        if (result.filterSource) {
           if (!result.diagnostics || !result.diagnostics.length) {
             agentState.processingState.filterSource = result.filterSource;
           }
@@ -378,8 +371,6 @@ class EtwAppModel {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return;
     _resetProcessing(activeEntry);
-    const filterEditModel = activeEntry.state.processingModel.filter;
-    filterEditModel.resetDiagnostics();
   }
 
   get processingModified() {

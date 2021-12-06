@@ -270,18 +270,6 @@ class FilterEdit extends LitMvvmElement {
           overflow-wrap: normal;
           width: 100%;
         }
-        .code#header {
-          max-width: 100%;
-        }
-        .code#body {
-          max-width: calc(100% - 8ch);
-        }
-        .code#init {
-          max-width: calc(100% - 12ch);
-        }
-        .code#method {
-          max-width: calc(100% - 12ch);
-        }
         /* only needed for contenteditable elements */
         .code:empty::after {
           color: gray;
@@ -306,37 +294,6 @@ class FilterEdit extends LitMvvmElement {
     ];
   }
 
-  /* Filter template definition in AgentManager application
-using System;
-using System.Linq;
-using Microsoft.Diagnostics.Tracing;
-using Microsoft.Extensions.Configuration;
-{0}
-
-namespace KdSoft.EtwEvents.Server
-{{
-    public class EventFilter: IEventFilter
-    {{
-        readonly IConfiguration _config;
-
-{1}
-
-        public EventFilter(IConfiguration config) {{
-            this._config = config;
-            Init();
-        }}
-
-        void Init() {{
-{2}
-        }}
-
-        public bool IncludeEvent(TraceEvent evt) {{
-{3}
-        }}
-    }}
-}}
-   */
-
   /* Note
    We cannot set the content of a contenteditable div like this: <div>${content}</div>
    as it interferes with lit-html. We need to do use innerHTML: <div .innerHTML=${content}></div>
@@ -347,12 +304,16 @@ namespace KdSoft.EtwEvents.Server
       return html`${item.lines?.join('\n')}`;
     }
     const indent = ' '.repeat(item.indent);
-    return html`\n${indent}<div id="${item.name}" class="code"
+    const dynamicHTML = `${item.lines?.join('\n')}`;
+    return html`\n${indent}<div
+      id="${item.name}"
+      class="code"
+      style="max-width: calc(100% - ${item.indent}ch);"
       contenteditable="true"
       spellcheck="false"
       @blur=${this._change}
-      .innerHTML="${item.lines?.join('\n')}"
-      placeholder="Your code goes here"></div>`;
+      .innerHTML=${dynamicHTML}
+      placeholder="Your code goes here"></div>\n`;
   }
 
   render() {
@@ -361,7 +322,7 @@ namespace KdSoft.EtwEvents.Server
       <div id="code-wrapper"
         class="border p-2 ${this.model.diagnostics.length ? 'invalid' : ''}"
         title=${codeToolTip}><pre>${repeat(
-          this.model.filterParts,
+          this.model.parts,
           item => item.name,
           item => this.getFilterPart(item)
         )}</pre></div>
@@ -369,63 +330,6 @@ namespace KdSoft.EtwEvents.Server
     return result;
   }
 
-
-//  render() {
-//    const codeToolTip = getToolTip(this.model.diagnostics);
-//    const result = html`
-//      <div id="code-wrapper"
-//        class="border p-2 ${this.model.diagnostics.length ? 'invalid' : ''}"
-//        title=${codeToolTip}><pre>${html`using System;
-//using System.Linq;
-//using Microsoft.Diagnostics.Tracing;
-//using Microsoft.Extensions.Configuration;
-//${html`<div id="header" class="code"
-//  contenteditable="true"
-//  spellcheck="false"
-//  @blur=${this._change}
-//  .innerHTML=${this.model.header}
-//  placeholder="Your optional using statements go here"></div>`}
-
-//namespace KdSoft.EtwEvents.Server
-//{
-//    public class EventFilter: IEventFilter
-//    {
-//        readonly IConfiguration _config;
-
-//        ${html`<div id="body" class="code"
-//          contenteditable="true"
-//          spellcheck="false"
-//          @blur=${this._change}
-//          .innerHTML=${this.model.body}
-//          placeholder="Your optional class body goes here"></div>`}
-
-//        public EventFilter(IConfiguration config) {
-//            this._config = config;
-//            Init();
-//        }
-
-//        void Init() {
-//            ${html`<div id="init" class="code"
-//              contenteditable="true"
-//              spellcheck="false"
-//              @blur=${this._change}
-//              .innerHTML=${this.model.init}
-//              placeholder="Your optional initialization code goes here"></div>`}
-//        }
-
-//        public bool IncludeEvent(TraceEvent evt) {
-//            ${html`<div id="method" class="code"
-//              contenteditable="true"
-//              spellcheck="false"
-//              @blur=${this._change}
-//              .innerHTML=${this.model.method}
-//              placeholder="Your include logic goes here"></div>`}
-//        }
-//    }
-//}`}   </pre></div>
-//    `;
-//    return result;
-//  }
 }
 
 window.customElements.define('filter-edit', FilterEdit);

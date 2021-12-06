@@ -16,11 +16,13 @@ class ProcessingModel {
     }
   }
 
-  getDynamicParts() {
+  getDynamicPartBodies() {
     const dynamicParts = [];
-    for (let indx = 0; indx < this.filter.dynamicParts.length; indx += 1) {
-      const part = this.filter.dynamicParts[indx];
-      dynamicParts.push(part.lines?.join('\n'));
+    for (let indx = 0; indx < this.filter.parts.length; indx += 1) {
+      const part = this.filter.parts[indx];
+      if (part.name.startsWith('dynamic')) {
+        dynamicParts.push(part.lines?.join('\n'));
+      }
     }
     return dynamicParts;
   }
