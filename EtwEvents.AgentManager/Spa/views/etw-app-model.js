@@ -57,8 +57,9 @@ function _enhanceAgentState(agentState, eventSinkInfos) {
 
   if (!(agentState.processingModel instanceof ProcessingModel)) {
     agentState.processingModel = new ProcessingModel(agentState.processingState);
+  } else {
+    agentState.processingModel.refresh(agentState.processingState);
   }
-  agentState.processingModel.refresh(agentState.processingState);
 
   if (!(agentState.sinkConfigModel instanceof EventSinkConfigModel)) {
     agentState.sinkConfigModel = new EventSinkConfigModel(eventSinkInfos, agentState);
@@ -147,7 +148,7 @@ function _resetProviders(agentEntry) {
 }
 
 function _resetProcessing(agentEntry) {
-  agentEntry.state.processingOptions = agentEntry.current?.processingOptions || new ProcessingOptions();
+  agentEntry.state.processingState = agentEntry.current?.processingState || {};
 }
 
 function _resetEventSink(agentEntry) {
@@ -322,15 +323,14 @@ class EtwAppModel {
     const agentState = this.activeAgentState;
     if (!agentState) return;
 
-    // if the main method body is empty then we clear the filter
-    const filterModel = { dynamicParts: [] };
-    const filterEditModel = agentState.processingModel.filter;
-    if (filterEditModel.method) filterModel.dynamicParts = filterEditModel.dynamicParts;
+    //TODO how do we clear the filter?
+    const dynamicParts = agentState.processingModel.getDynamicParts();
 
     // argument must match protobuf message TestFilterRequest
-    this.fetcher.postJson('TestFilter', { agentId: agentState.id }, filterModel)
+    this.fetcher.postJson('TestFilter', { agentId: agentState.id }, { dynamicParts })
       // result matches protobuf message BuildFilterResult
       .then(result => {
+        const filterEditModel = agentState.processingModel.filter;
         if (result.noFilter) {
           //TODO should indicate an error instead
           filterEditModel.diagnostics = [];

@@ -16,9 +16,18 @@ class ProcessingModel {
     }
   }
 
+  getDynamicParts() {
+    const dynamicParts = [];
+    for (let indx = 0; indx < this.filter.dynamicParts.length; indx += 1) {
+      const part = this.filter.dynamicParts[indx];
+      dynamicParts.push(part.lines?.join('\n'));
+    }
+    return dynamicParts;
+  }
+
   toProcessingOptions() {
     const result = new ProcessingOptions(this.batchSize, this.maxWriteDelayMSecs);
-    result.dynamicParts = this.filter.dynamicParts;
+    result.dynamicParts = this.getDynamicParts();
     return result;
   }
 }

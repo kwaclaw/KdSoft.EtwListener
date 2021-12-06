@@ -39,32 +39,57 @@ function splitSourceIntoParts(filterSource) {
     const partLines = getPartLines(filterSource.sourceLines, lineSpan);
     filterParts.push({
       name: lineSpan.template ? `template${indx}` : `dynamic${indx}`,
-      lines: partLines,
+      lines: partLines.map(pl => pl.text),
       indent: lineSpan.indent
     });
   }
   return filterParts;
 }
 
-// const lsrx = /\r\n|\n\r|\n|\r/g;
+function getParts(filterSource) {
+  const parts = filterSource ? splitSourceIntoParts(filterSource) : [];
+  const dynParts = [];
+  for (let indx = 0; indx < parts.length; indx += 1) {
+    const part = parts[indx];
+    if (part.name.startsWith('dynamic')) {
+      dynParts.push(part);
+    }
+  }
+  return [parts, dynParts];
+}
+
+const lsrx = /\r\n|\n\r|\n|\r/g;
 
 class FilterEditModel {
   constructor(filterSource, diagnostics) {
     this.diagnostics = diagnostics || [];
-    this.refresh(filterSource);
+    const [parts, dynParts] = getParts(filterSource);
+    this.filterParts = parts;
+    this.cleanFilterParts = utils.clone(parts);
+    this.dynamicParts = dynParts;
+    this.cleanDynamicParts = utils.clone(dynParts);
   }
 
   refresh(filterSource) {
-    this.filterParts = filterSource ? splitSourceIntoParts(filterSource) : [];
-    const newDynParts = [];
-    for (let indx = 0; indx < this.filterParts.length; indx += 1) {
-      const part = this.filterParts[indx];
-      if (part.name.startsWith('dynamic')) {
-        newDynParts.push(part);
-      }
+    const [parts, dynParts] = getParts(filterSource);
+    this.cleanFilterParts = parts;
+    this.cleanDynamicParts = dynParts;
+  }
+
+  setValue(name, value) {
+    const part = this.dynamicParts.find(dp => dp.name === name);
+    if (part) {
+      const lines = (value || '').replace(lsrx, '\n').split('\n');
+      part.lines = lines;
     }
-    this.dynamicParts = newDynParts;
-    this.cleanDynamicParts = utils.clone(newDynParts);
+  }
+
+  getValue(name) {
+    const part = this.dynamicParts.find(dp => dp.name === name);
+    if (part) {
+      return part.lines?.join('\n');
+    }
+    return null;
   }
 
   resetDiagnostics() {

@@ -164,7 +164,9 @@ class FilterEdit extends LitMvvmElement {
   _change(e) {
     e.stopPropagation();
     this.model.diagnostics = [];
-    this.model[e.currentTarget.id] = e.currentTarget.innerText?.trimEnd();
+    const name = e.currentTarget.id;
+    const value = e.currentTarget.innerText?.trimEnd();
+    this.model.setValue(name, value);
   }
 
   formatPartElement(id, sourceLines, diagMap) {
@@ -342,15 +344,15 @@ namespace KdSoft.EtwEvents.Server
 
   getFilterPart(item) {
     if (item.name.startsWith('template')) {
-      return html`${item.lines.map(l => l.text).join('\n')}`;
+      return html`${item.lines?.join('\n')}`;
     }
     const indent = ' '.repeat(item.indent);
     return html`\n${indent}<div id="${item.name}" class="code"
       contenteditable="true"
       spellcheck="false"
       @blur=${this._change}
-      .value="${item.lines.map(l => l.text).join('\n')}"
-      placeholder="Your optional initialization code goes here"></div>`;
+      .innerHTML="${item.lines?.join('\n')}"
+      placeholder="Your code goes here"></div>`;
   }
 
   render() {
