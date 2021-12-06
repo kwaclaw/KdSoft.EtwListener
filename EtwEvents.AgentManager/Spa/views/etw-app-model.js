@@ -319,12 +319,20 @@ class EtwAppModel {
 
   //#region Processing
 
+  clearFilter() {
+    const agentState = this.activeAgentState;
+    if (!agentState) return;
+    agentState.processingModel.filter.clearDynamicParts();
+  }
+
   testFilter() {
     const agentState = this.activeAgentState;
     if (!agentState) return;
 
-    //TODO how do we clear the filter?
-    const dynamicParts = agentState.processingModel.getDynamicParts();
+    let dynamicParts = agentState.processingModel.getDynamicPartBodies();
+    // if the dynamic bodies add up to an empty string, then we clear the filter
+    const dynamicAggregate = dynamicParts.reduce((p, c) => ''.concat(p, c)).trim();
+    if (!dynamicAggregate) dynamicParts = [];
 
     // argument must match protobuf message TestFilterRequest
     this.fetcher.postJson('TestFilter', { agentId: agentState.id }, { dynamicParts })

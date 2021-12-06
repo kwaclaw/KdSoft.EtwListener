@@ -85,6 +85,10 @@ class EtwAgent extends LitMvvmElement {
     this.model.resetProcessing();
   }
 
+  _clearFilterClick() {
+    this.model.clearFilter();
+  }
+
   _testFilterClick() {
     this.model.testFilter();
   }
@@ -232,8 +236,11 @@ class EtwAgent extends LitMvvmElement {
                   <filter-edit id="filterEdit" class="p-2" .model=${processingModel.filter}></filter-edit>
                   <hr class="my-3" />
                   <div class="flex flex-wrap mt-2 bt-1">
-                    <button type="button" class="py-1 px-2" @click=${this._testFilterClick}>
+                    <button type="button" class="py-1 px-2" @click=${this._testFilterClick} title="Test">
                       <i class="fas fa-lg fa-stethoscope" style="color:orange"></i>
+                    </button>
+                    <button type="button" class="py-1 px-2" @click=${this._clearFilterClick} title="Clear">
+                      <i class="fas fa-lg fa-ban text-gray-500"></i>
                     </button>
                     <button type="button" class="py-1 px-2 ml-auto" @click=${this._applyProcessingClick} title="Apply">
                       <i class="fas fa-lg fa-check text-green-500"></i>

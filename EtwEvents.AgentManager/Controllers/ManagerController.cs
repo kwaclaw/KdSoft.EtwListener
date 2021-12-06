@@ -189,8 +189,9 @@ namespace KdSoft.EtwEvents.AgentManager
         [HttpPost]
         public Task<IActionResult> TestFilter(string agentId, [FromBody] JsonElement filterObj) {
             var dynamicParts = filterObj.GetProperty("dynamicParts").EnumerateArray().Select(dp => dp.GetString()).ToImmutableArray();
-            // WE are supplying the filter template
-            var filter = FilterHelper.MergeFilterTemplate(dynamicParts);
+            var filter = dynamicParts.Length == 0
+                ? new Filter()  // we are clearing the filter
+                : FilterHelper.MergeFilterTemplate(dynamicParts); // WE are supplying the filter template
             var json = _jsonFormatter.Format(filter);
             return CallAgent(agentId, "TestFilter", json, TimeSpan.FromSeconds(15));
         }
@@ -212,8 +213,9 @@ namespace KdSoft.EtwEvents.AgentManager
         [HttpPost]
         public Task<IActionResult> ApplyProcessingOptions(string agentId, [FromBody] JsonElement optionsObj) {
             var dynamicParts = optionsObj.GetProperty("dynamicParts").EnumerateArray().Select(dp => dp.GetString()).ToImmutableArray();
-            // WE are supplying the filter template
-            var filter = FilterHelper.MergeFilterTemplate(dynamicParts);
+            var filter = dynamicParts.Length == 0
+                ? new Filter()  // we are clearing the filter
+                : FilterHelper.MergeFilterTemplate(dynamicParts); // WE are supplying the filter template
             var processingOptions = new ProcessingOptions {
                 BatchSize = optionsObj.GetProperty("batchSize").GetInt32(),
                 MaxWriteDelayMSecs = optionsObj.GetProperty("maxWriteDelayMSecs").GetInt32(),

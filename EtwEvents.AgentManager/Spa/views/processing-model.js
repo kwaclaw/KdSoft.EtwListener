@@ -27,7 +27,13 @@ class ProcessingModel {
 
   toProcessingOptions() {
     const result = new ProcessingOptions(this.batchSize, this.maxWriteDelayMSecs);
-    result.dynamicParts = this.getDynamicParts();
+
+    let dynamicParts = this.getDynamicPartBodies();
+    // if the dynamic bodies add up to an empty string, then we clear the filter
+    const dynamicAggregate = dynamicParts.reduce((p, c) => ''.concat(p, c)).trim();
+    if (!dynamicAggregate) dynamicParts = [];
+    result.dynamicParts = dynamicParts;
+
     return result;
   }
 }
