@@ -162,7 +162,7 @@ class FilterEdit extends LitMvvmElement {
   }
 
   _change(e) {
-    e.stopPropagation();
+    //e.stopPropagation();
     this.model.diagnostics = [];
     const name = e.currentTarget.id;
     const value = e.currentTarget.innerText?.trimEnd();
@@ -183,63 +183,6 @@ class FilterEdit extends LitMvvmElement {
 
     const partDiagnostics = diagMap.map(dg => dg.diagnostics).flat(2);
     codeElement.title = getToolTip(partDiagnostics);
-  }
-
-  rendered_inactive() {
-    // DOM manipulation should only be done once lit-html has done its work
-    const diagMap = consolidateOverlappingSpans(this.model.diagnostics || []);
-    const lines = this.model.sourceLines;
-
-    const headerLines = getPartLines(lines, this.model.partLineSpans[0]);
-    const headerDiagMap = getPartMap(headerLines, diagMap);
-    this.formatPartElement('header', headerLines, headerDiagMap);
-
-    const bodyLines = getPartLines(lines, this.model.partLineSpans[1]);
-    const bodyDiagMap = getPartMap(bodyLines, diagMap);
-    this.formatPartElement('body', bodyLines, bodyDiagMap);
-
-    const initLines = getPartLines(lines, this.model.partLineSpans[2]);
-    const initDiagMap = getPartMap(initLines, diagMap);
-    this.formatPartElement('init', initLines, initDiagMap);
-
-    const methodLines = getPartLines(lines, this.model.partLineSpans[3]);
-    const methodDiagMap = getPartMap(methodLines, diagMap);
-    this.formatPartElement('method', methodLines, methodDiagMap);
-
-    // get diagMap entries not used for a filter part
-    const tplDiagMap = [];
-    for (let diagIndx = 0; diagIndx < diagMap.length; diagIndx += 1) {
-      const dgEntry = diagMap[diagIndx];
-      // when not used for filter part, use for template
-      if (dgEntry) {
-        tplDiagMap.push(dgEntry);
-      }
-    }
-
-    const wrapper = this.renderRoot.getElementById('code-wrapper');
-    const wrapperContent = wrapper.innerHTML;
-
-    for (let lineIndx = 0; lineIndx < lines.length; lineIndx += 1) {
-      const line = lines[lineIndx];
-      const lineParts = [];
-      const markups = getMarkupsForLine(line, tplDiagMap);
-      let sliceStart = 0;
-      const lineText = line.text || '';
-      for (const mk of markups) {
-        lineParts.push(lineText.slice(sliceStart, mk.pos));
-        lineParts.push(mk.markup);
-        sliceStart = mk.pos;
-      }
-      lineParts.push(lineText.slice(sliceStart));
-      const newLine = lineParts.join('');
-      //TODO find line in code-wrapper element and replace it
-      // test
-      if (markups.length) {
-        const newHTML = wrapperContent.replace(line.text, newLine);;
-        wrapper.innerHTML = newHTML;
-      }
-      //line.text = lineParts.join('');
-    }
   }
 
   static get styles() {
