@@ -47,7 +47,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 var sessionStateJson = File.ReadAllText(EventSessionStatePath);
                 _sessionState = string.IsNullOrWhiteSpace(sessionStateJson)
                     ? new EventSessionState()
-                    : EventSessionState.Parser.WithDiscardUnknownFields(true).ParseJson(sessionStateJson);
+                    : EventSessionState.Parser.ParseJson(sessionStateJson);
                 _stateAvailable = true;
                 return true;
             }
@@ -78,7 +78,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 var sinkOptionsJson = File.ReadAllText(EventSinkOptionsPath);
                 _sinkProfile = string.IsNullOrWhiteSpace(sinkOptionsJson)
                     ? new EventSinkProfile()
-                    : EventSinkProfile.Parser.WithDiscardUnknownFields(true).ParseJson(sinkOptionsJson);
+                    : EventSinkProfile.Parser.ParseJson(sinkOptionsJson);
                 _sinkProfileAvailable = true;
                 return true;
             }

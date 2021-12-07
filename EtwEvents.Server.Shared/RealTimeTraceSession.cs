@@ -236,7 +236,6 @@ namespace KdSoft.EtwEvents.Server
 
         public static ImmutableArray<Diagnostic> GenerateFilter(SourceText filterSource, MemoryStream ms) {
             var compilation = CompileFilter(filterSource);
-            var sourceText = compilation.SyntaxTrees[0].GetText();
             var emitResult = compilation.Emit(ms);
             if (emitResult.Success) {
                 return ImmutableArray<Diagnostic>.Empty;

@@ -331,9 +331,10 @@ namespace KdSoft.EtwEvents.PushAgent
 
                 session.GetLifeCycle().Used();
 
+                // load filter from session configuration storage and apply/set filter
                 var filterSource = _sessionConfig.State.ProcessingState?.FilterSource;
                 if (filterSource != null) {
-                    var filter = string.Join(Environment.NewLine, filterSource.SourceLines);
+                    var filter = string.Join(Environment.NewLine, filterSource.SourceLines.Select(sl => sl.Text ?? ""));
                     var diagnostics = session.SetFilter(SourceText.From(filter), _config);
                     if (!diagnostics.IsEmpty) {
                         var diagnosticsStr = string.Join("\n\t", diagnostics.Select(dg => dg.ToString()).ToArray());
