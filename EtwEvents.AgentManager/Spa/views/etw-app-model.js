@@ -341,7 +341,13 @@ class EtwAppModel {
       // result matches protobuf message BuildFilterResult
       .then(result => {
         const filterEditModel = agentState.processingModel.filter;
-        filterEditModel.diagnostics = result.diagnostics;
+        if (result.filterSource) {
+          filterEditModel.refreshSourceLines(result.filterSource);
+          filterEditModel.diagnostics = result.diagnostics;
+        } else { // no filter set
+          filterEditModel.clearDynamicParts();
+          filterEditModel.diagnostics = [];
+        }
       })
       .catch(error => window.etwApp.defaultHandleError(error));
   }
@@ -357,11 +363,15 @@ class EtwAppModel {
       // result matches protobuf message BuildFilterResult
       .then(result => {
         const filterEditModel = agentState.processingModel.filter;
-        filterEditModel.diagnostics = result.diagnostics;
         if (result.filterSource) {
+          filterEditModel.refreshSourceLines(result.filterSource);
+          filterEditModel.diagnostics = result.diagnostics;
           if (!result.diagnostics || !result.diagnostics.length) {
             agentState.processingState.filterSource = result.filterSource;
           }
+        } else { // no filter set
+          filterEditModel.clearDynamicParts();
+          filterEditModel.diagnostics = [];
         }
       })
       .catch(error => window.etwApp.defaultHandleError(error));

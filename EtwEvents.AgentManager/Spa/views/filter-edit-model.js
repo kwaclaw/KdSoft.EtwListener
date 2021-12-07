@@ -12,6 +12,12 @@ function getPartLines(sourceLines, lineSpan) {
 
 function getAllLineSpans(dynamicLineSpans, lineCount) {
   const totalLineSpans = [];
+
+  if (!dynamicLineSpans || !dynamicLineSpans.length) {
+    totalLineSpans.push({ template: true, start: 0, end: lineCount - 1, indent: 0 });
+    return totalLineSpans;
+  }
+
   let lastLine = 0;
   // we  work with full lines, character positions are ignored
   for (const dynamicLineSpan of dynamicLineSpans) {
@@ -39,7 +45,7 @@ function splitSourceIntoParts(filterSource) {
     const partLines = getPartLines(filterSource.sourceLines, lineSpan);
     filterParts.push({
       name: lineSpan.template ? `template${indx}` : `dynamic${indx}`,
-      lines: partLines.map(pl => pl.text),
+      lines: partLines,
       indent: lineSpan.indent
     });
   }
@@ -61,20 +67,28 @@ class FilterEditModel {
     this.cleanParts = parts;
   }
 
+  refreshSourceLines(filterSource) {
+    const parts = splitSourceIntoParts(filterSource) || [];
+    this.parts = parts;
+  }
+
   clearDynamicParts() {
     for (let indx = 0; indx < this.parts.length; indx += 1) {
       const part = this.parts[indx];
       if (part.name.startsWith('dynamic')) {
         part.lines = [];
+        delete part.body;
       }
     }
   }
 
+  // we use part.body for update purposes only;
+  // part.lines is refreshed on return from testing/applying the filter and is used for rendering
   setValue(name, value) {
     const part = this.parts.find(dp => dp.name === name);
     if (part) {
-      const lines = (value || '').replace(lsrx, '\n').split('\n');
-      part.lines = lines;
+      part.lines = [];
+      part.body = value;
     }
   }
 

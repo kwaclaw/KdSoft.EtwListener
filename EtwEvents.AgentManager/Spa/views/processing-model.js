@@ -21,7 +21,9 @@ class ProcessingModel {
     for (let indx = 0; indx < this.filter.parts.length; indx += 1) {
       const part = this.filter.parts[indx];
       if (part.name.startsWith('dynamic')) {
-        dynamicParts.push(part.lines?.join('\n'));
+        // part.body only exists if the value has been set explicitly
+        const partBody = Object.prototype.hasOwnProperty.call(part, 'body') ? part.body : part.lines?.map(l => l.text).join('\n');
+        dynamicParts.push(partBody);
       }
     }
     return dynamicParts;

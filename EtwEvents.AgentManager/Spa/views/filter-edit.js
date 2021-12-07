@@ -78,9 +78,6 @@ function consolidateOverlappingSpans(diagnostics) {
 
   // since they don't overlap we can sort simply by span start positions
   result.sort((x, y) => comparePos(x.span.start, y.span.start));
-
-  // console.log(JSON.stringify(diagnostics));
-  // console.log(JSON.stringify(result));
   return result;
 }
 
@@ -104,16 +101,6 @@ function getMarkupsForLine(line, diagMap) {
   return result;
 }
 
-function getPartLines(sourceLines, partLineSpan) {
-  const result = [];
-  if (!partLineSpan) return result;
-
-  for (let indx = partLineSpan.start.line; indx <= partLineSpan.end.line; indx += 1) {
-    result.push(sourceLines[indx]);
-  }
-  return result;
-}
-
 function getPartMap(partLines, diagMap) {
   if (!diagMap.length) return diagMap;
   if (!partLines.length) return [];
@@ -129,13 +116,14 @@ function getPartMap(partLines, diagMap) {
     if (dgSpan.end.line < startLine) continue;
     if (dgSpan.start.line > endLine) continue;
     result.push(dgEntry);
-    delete diagMap[diagIndx];
   }
   return result;
 }
 
 function formatPart(lines, diagMap) {
   if (!diagMap?.length) return lines.map(l => l.text).join('\n');
+
+  const partLines = [];
 
   for (let lineIndx = 0; lineIndx < lines.length; lineIndx += 1) {
     const line = lines[lineIndx];
@@ -149,10 +137,10 @@ function formatPart(lines, diagMap) {
       sliceStart = mk.pos;
     }
     lineParts.push(lineText.slice(sliceStart));
-    line.text = lineParts.join('');
+    partLines.push(lineParts.join(''));
   }
 
-  return lines.map(l => l.text).join('\n');
+  return partLines.join('\n');
 }
 
 class FilterEdit extends LitMvvmElement {
@@ -167,22 +155,6 @@ class FilterEdit extends LitMvvmElement {
     const name = e.currentTarget.id;
     const value = e.currentTarget.innerText?.trimEnd();
     this.model.setValue(name, value);
-  }
-
-  formatPartElement(id, sourceLines, diagMap) {
-    const codeElement = this.renderRoot.getElementById(id);
-    if (!diagMap.length) {
-      codeElement.classList.remove('invalid');
-      return;
-    }
-
-    codeElement.classList.add('invalid');
-
-    const formattedPart = formatPart(sourceLines, diagMap);
-    codeElement.innerHTML = formattedPart;
-
-    const partDiagnostics = diagMap.map(dg => dg.diagnostics).flat(2);
-    codeElement.title = getToolTip(partDiagnostics);
   }
 
   static get styles() {
@@ -242,24 +214,33 @@ class FilterEdit extends LitMvvmElement {
    as it interferes with lit-html. We need to do use innerHTML: <div .innerHTML=${content}></div>
   */
 
-  getFilterPart(item) {
+  getFilterPart(item, diagMap) {
+    const partMap = getPartMap(item.lines, diagMap);
     if (item.name.startsWith('template')) {
-      return html`${item.lines?.join('\n')}`;
+      const partBody = formatPart(item.lines, partMap);
+      return html`<span .innerHTML=${partBody} />`;
     }
+
     const indent = ' '.repeat(item.indent);
-    const dynamicHTML = `${item.lines?.join('\n')}`;
+    const partBody = formatPart(item.lines, partMap);
+    const partDiagnostics = partMap.map(dg => dg.diagnostics).flat(2);
+    const invalidClass = partMap.length ? 'invalid' : '';
+    const title = getToolTip(partDiagnostics);
+
     return html`\n${indent}<div
       id="${item.name}"
-      class="code"
+      class="code ${invalidClass}"
       style="max-width: calc(100% - ${item.indent}ch);"
       contenteditable="true"
       spellcheck="false"
       @blur=${this._change}
-      .innerHTML=${dynamicHTML}
+      .innerHTML=${partBody}
+      title=${title}
       placeholder="Your code goes here"></div>\n`;
   }
 
   render() {
+    const diagMap = consolidateOverlappingSpans(this.model.diagnostics || []);
     const codeToolTip = getToolTip(this.model.diagnostics);
     const result = html`
       <div id="code-wrapper"
@@ -267,7 +248,7 @@ class FilterEdit extends LitMvvmElement {
         title=${codeToolTip}><pre>${repeat(
           this.model.parts,
           item => item.name,
-          item => this.getFilterPart(item)
+          item => this.getFilterPart(item, diagMap)
         )}</pre></div>
     `;
     return result;
