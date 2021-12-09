@@ -108,6 +108,12 @@ namespace KdSoft.EtwEvents.PushAgent
                         await SendStateUpdate().ConfigureAwait(false);
                     }
                     break;
+                case "SetEmptyFilter":
+                    var emptyFilter = string.IsNullOrEmpty(sse.Data) ? null : Filter.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
+                    if (emptyFilter == null)
+                        return;
+                    _emptyFilterSource = SessionWorker.BuildFilterSource(emptyFilter);
+                    break;
                 case "UpdateProviders":
                     // WithDiscardUnknownFields does currently not work, so we should fix this at source
                     var providerSettingsList = ProviderSettingsList.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
@@ -275,23 +281,6 @@ namespace KdSoft.EtwEvents.PushAgent
 
         #region Lifecycle
 
-        async Task<Filter> GetInitialFilter() {
-            var opts = _controlOptions.Value;
-            var getUri = new Uri(opts.Uri, "Agent/GetInitialFilter");
-
-            using var http = new HttpClient(_httpHandler, false);
-            var response = await http.GetAsync(getUri).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
-
-            var filterJson = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            return Filter.Parser.WithDiscardUnknownFields(true).ParseJson(filterJson);
-        }
-
-        async Task InitializeEmptyFilterSource() {
-            var filter = await GetInitialFilter().ConfigureAwait(false);
-            _emptyFilterSource = SessionWorker.BuildFilterSource(filter);
-        }
-
         async Task<bool> StartWorker(CancellationToken cancelToken) {
             if (_sessionWorkerAvailable != 0)
                 return false;
@@ -377,13 +366,6 @@ namespace KdSoft.EtwEvents.PushAgent
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Failure running service.");
-            }
-
-            try {
-                await InitializeEmptyFilterSource().ConfigureAwait(false);
-            }
-            catch (Exception ex) {
-                _logger.LogError(ex, "Failure initializing session configuration.");
             }
 
             try {

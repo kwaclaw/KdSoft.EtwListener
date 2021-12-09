@@ -9,6 +9,7 @@ namespace KdSoft.EtwEvents.AgentManager
         public const string CloseEvent = "##close";
         public const string KeepAliveEvent = "##keepAlive";
         public const string GetStateEvent = "GetState";
+        public const string SetEmptyFilterEvent = "SetEmptyFilter";
 
         public const int FilterTemplateVersion = 1;
 

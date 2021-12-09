@@ -44,6 +44,14 @@ namespace KdSoft.EtwEvents.AgentManager
         async Task<IActionResult> GetMessageEventStream(string agentId, CancellationToken cancelToken) {
             var agentProxy = _agentProxyManager.ActivateProxy(agentId);
 
+            var emptyFilter = FilterHelper.MergeFilterTemplate();
+            var emptyFilterEvent = new ControlEvent {
+                Event = Constants.SetEmptyFilterEvent,
+                Id = agentProxy.GetNextEventId().ToString(),
+                Data = _jsonFormatter.Format(emptyFilter)
+            };
+            agentProxy.Post(emptyFilterEvent);
+
             // initial agent state update
             agentProxy.Post(AgentProxyManager.GetStateMessage);
 
@@ -134,11 +142,6 @@ namespace KdSoft.EtwEvents.AgentManager
 
             await _agentProxyManager.PostAgentStateChange().ConfigureAwait(false);
             return Ok();
-        }
-
-        public IActionResult GetInitialFilter() {
-            var filter = FilterHelper.MergeFilterTemplate();
-            return Ok(_jsonFormatter.Format(filter));
         }
 
         public class ModuleRequest
