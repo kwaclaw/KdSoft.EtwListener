@@ -34,7 +34,7 @@ class ProcessingModel {
 
     let dynamicParts = this.getDynamicPartBodies();
     // if the dynamic bodies add up to an empty string, then we clear the filter
-    const dynamicAggregate = dynamicParts.reduce((p, c) => ''.concat(p, c)).trim();
+    const dynamicAggregate = dynamicParts.reduce((p, c) => ''.concat(p, c), '').trim();
     if (!dynamicAggregate) dynamicParts = [];
     result.dynamicParts = dynamicParts;
 

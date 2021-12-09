@@ -57,19 +57,23 @@ const lsrx = /\r\n|\n\r|\n|\r/g;
 class FilterEditModel {
   constructor(filterSource, diagnostics) {
     this.diagnostics = diagnostics || [];
-    const parts = splitSourceIntoParts(filterSource) || [];
+    const parts = filterSource ? splitSourceIntoParts(filterSource) : [];
     this.parts = parts;
     this.cleanParts = utils.clone(parts);
   }
 
   refresh(filterSource) {
-    const parts = splitSourceIntoParts(filterSource) || [];
+    const parts = filterSource ? splitSourceIntoParts(filterSource) : [];
     this.cleanParts = parts;
   }
 
   refreshSourceLines(filterSource) {
-    const parts = splitSourceIntoParts(filterSource) || [];
-    this.parts = parts;
+    if (filterSource) {
+      const parts = splitSourceIntoParts(filterSource);
+      this.parts = parts;
+    } else {
+      this.clearDynamicParts();
+    }
   }
 
   clearDynamicParts() {

@@ -333,7 +333,7 @@ class EtwAppModel {
 
     let dynamicParts = agentState.processingModel.getDynamicPartBodies();
     // if the dynamic bodies add up to an empty string, then we clear the filter
-    const dynamicAggregate = dynamicParts.reduce((p, c) => ''.concat(p, c)).trim();
+    const dynamicAggregate = dynamicParts.reduce((p, c) => ''.concat(p, c), '').trim();
     if (!dynamicAggregate) dynamicParts = [];
 
     // argument must match protobuf message TestFilterRequest
@@ -341,13 +341,8 @@ class EtwAppModel {
       // result matches protobuf message BuildFilterResult
       .then(result => {
         const filterEditModel = agentState.processingModel.filter;
-        if (result.filterSource) {
-          filterEditModel.refreshSourceLines(result.filterSource);
-          filterEditModel.diagnostics = result.diagnostics;
-        } else { // no filter set
-          filterEditModel.clearDynamicParts();
-          filterEditModel.diagnostics = [];
-        }
+        filterEditModel.refreshSourceLines(result.filterSource);
+        filterEditModel.diagnostics = result.diagnostics;
       })
       .catch(error => window.etwApp.defaultHandleError(error));
   }
@@ -363,15 +358,10 @@ class EtwAppModel {
       // result matches protobuf message BuildFilterResult
       .then(result => {
         const filterEditModel = agentState.processingModel.filter;
-        if (result.filterSource) {
-          filterEditModel.refreshSourceLines(result.filterSource);
-          filterEditModel.diagnostics = result.diagnostics;
-          if (!result.diagnostics || !result.diagnostics.length) {
-            agentState.processingState.filterSource = result.filterSource;
-          }
-        } else { // no filter set
-          filterEditModel.clearDynamicParts();
-          filterEditModel.diagnostics = [];
+        filterEditModel.refreshSourceLines(result.filterSource);
+        filterEditModel.diagnostics = result.diagnostics;
+        if (result.filterSource && (!result.diagnostics || !result.diagnostics.length)) {
+          agentState.processingState.filterSource = result.filterSource;
         }
       })
       .catch(error => window.etwApp.defaultHandleError(error));

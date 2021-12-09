@@ -13,13 +13,6 @@ function comparePos(pos1, pos2) {
   return 0;
 }
 
-function getSpan(dg) {
-  return {
-    start: dg.lineSpan.start,
-    end: dg.lineSpan.end,
-  };
-}
-
 function getOverlap(span1, span2) {
   if (comparePos(span1.start, span2.end) > 0) return null;
   if (comparePos(span1.end, span2.start) < 0) return null;
@@ -64,12 +57,16 @@ function mergeOverlapping(dgSpans, startIndex) {
   mergeOverlapping(dgSpans, startIndex - 1);
 }
 
-function consolidateOverlappingSpans(diagnostics) {
+function consolidateOverlappingSpans(diagnostics, lineCount) {
   let result = [];
 
   for (let indx = 0; indx < diagnostics.length; indx += 1) {
     const dg = diagnostics[indx];
-    result.push({ span: getSpan(dg), diagnostics: [dg] });
+    if (dg.lineSpan) {
+      result.push({ span: { start: dg.lineSpan.start, end: dg.lineSpan.end }, diagnostics: [dg] });
+    } else {
+      result.push({ span: { start: 0, end: lineCount - 1 }, diagnostics: [dg] });
+    }
   }
 
   mergeOverlapping(result);
@@ -101,6 +98,7 @@ function getMarkupsForLine(line, diagMap) {
   return result;
 }
 
+// get diagMap for part
 function getPartMap(partLines, diagMap) {
   if (!diagMap.length) return diagMap;
   if (!partLines.length) return [];
