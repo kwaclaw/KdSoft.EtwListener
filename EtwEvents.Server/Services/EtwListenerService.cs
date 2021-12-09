@@ -165,7 +165,7 @@ namespace KdSoft.EtwEvents.Server
 
             var filterSource = BuildFilterSource(request.FilterTemplate, request.FilterParts);
             if (filterSource.source == null) {
-                result.NoFilter = true;
+                result.FilterSource = null;
             }
             else {
                 var diagnostics = RealTimeTraceSession.TestFilter(filterSource.source);
@@ -181,7 +181,7 @@ namespace KdSoft.EtwEvents.Server
 
             var filterSource = BuildFilterSource(request.FilterTemplate, request.FilterParts);
             if (filterSource.source == null) {
-                result.NoFilter = true;
+                result.FilterSource = null;
             }
             else {
                 var diagnostics = RealTimeTraceSession.TestFilter(filterSource.source);
