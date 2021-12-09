@@ -21,11 +21,11 @@ function getAllLineSpans(dynamicLineSpans, lineCount) {
   let lastLine = 0;
   // we  work with full lines, character positions are ignored
   for (const dynamicLineSpan of dynamicLineSpans) {
-    const startLine = dynamicLineSpan.start.line;
+    const startLine = dynamicLineSpan.start;
     if (startLine > lastLine) {
       totalLineSpans.push({ template: true, start: lastLine, end: startLine - 1, indent: 0 });
     }
-    lastLine = dynamicLineSpan.end.line;
+    lastLine = dynamicLineSpan.end;
     totalLineSpans.push({ template: false, start: startLine, end: lastLine, indent: dynamicLineSpan.indent });
     lastLine += 1;
   }
