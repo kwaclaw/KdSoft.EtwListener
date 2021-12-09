@@ -49,8 +49,6 @@ namespace EtwEvents.Tests
             foreach (var line in sourceText.Lines) {
                 var textLine = new KdSoft.EtwLogging.TextLine {
                     Line = line.LineNumber,
-                    Start = line.Start,
-                    Length = line.Span.Length,
                     Text = line.ToString(),
                 };
                 textLines.Add(textLine);

@@ -150,26 +150,17 @@ message Filter {
     repeated FilterPart filter_parts = 2;
 }
 
-message LinePosition {
-    int32 line = 1;
-    int32 character = 2;
-}
-
-message LinePositionSpan {
-    LinePosition start = 1;
-    LinePosition end = 2;
-    int32 indent = 3;
-}
-
 message TextLine {
     // source text in line
     string text = 1;
     // line number
     int32 line = 2;
-    // overall position of line start character
-    int32 start = 3;
-    // length of line, i.e. number of characters (excluding line break)
-    int32 length = 4;
+}
+
+message LineSpan {
+    int32 start = 1;
+    int32 end = 2;
+    int32 indent = 3;
 }
 
 message FilterSource {
@@ -177,7 +168,7 @@ message FilterSource {
     // all text lines of the filter source
     repeated TextLine source_lines = 2;
     // for each dynamic (non-template) filter part the line and character position span
-    repeated LinePositionSpan dynamic_line_spans = 3;
+    repeated LineSpan dynamic_line_spans = 3;
 }
 
 message ProcessingState {
@@ -200,6 +191,16 @@ message ProcessingOptions {
 message EventSessionOptions {
     ProcessingOptions processing_options = 1;
     repeated ProviderSetting provider_settings = 2;
+}
+
+message LinePosition {
+    int32 line = 1;
+    int32 character = 2;
+}
+
+message LinePositionSpan {
+    LinePosition start = 1;
+    LinePosition end = 2;
 }
 
 message CompileDiagnostic {

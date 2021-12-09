@@ -56,8 +56,6 @@ namespace KdSoft.EtwLogging
             foreach (var line in lines) {
                 var textLine = new TextLine {
                     Line = line.LineNumber,
-                    Start = line.Start,
-                    Length = line.Span.Length,
                     Text = line.ToString(),
                 };
                 filterSource.SourceLines.Add(textLine);
@@ -67,18 +65,18 @@ namespace KdSoft.EtwLogging
 
         public static FilterSource AddDynamicLineSpans(
             this FilterSource filterSource,
-            IReadOnlyList<cat.LinePositionSpan> lineSpans,
+            IReadOnlyList<cat.LinePositionSpan> linePositionSpans,
             IList<FilterPart> dynamicParts
         ) {
-            Debug.Assert(lineSpans.Count == dynamicParts.Count);
-            for (int indx = 0; indx < lineSpans.Count; indx++) {
-                var lineSpan = lineSpans[indx];
-                var linePositionSpan = new LinePositionSpan {
-                     Start = new LinePosition { Line = lineSpan.Start.Line, Character = lineSpan.Start.Character },
-                     End = new LinePosition { Line = lineSpan.End.Line, Character = lineSpan.End.Character },
+            Debug.Assert(linePositionSpans.Count == dynamicParts.Count);
+            for (int indx = 0; indx < linePositionSpans.Count; indx++) {
+                var linePositionSpan = linePositionSpans[indx];
+                var lineSpan = new LineSpan {
+                     Start = linePositionSpan.Start.Line,
+                     End = linePositionSpan.End.Line,
                      Indent = dynamicParts[indx].Indent
                 };
-                filterSource.DynamicLineSpans.Add(linePositionSpan);
+                filterSource.DynamicLineSpans.Add(lineSpan);
             }
             return filterSource;
         }

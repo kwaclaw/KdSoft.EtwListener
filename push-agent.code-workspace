@@ -21,6 +21,9 @@
     },
     {
       "path": "EtwEvents.Protobuf.Shared"
+    },
+    {
+      "path": "Protos"
     }
   ],
   "launch": {
