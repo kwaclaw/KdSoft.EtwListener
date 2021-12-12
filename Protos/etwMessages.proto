@@ -1,63 +1,20 @@
 syntax = "proto3";
 
 import "google/protobuf/empty.proto";
-import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/any.proto";
 import "google/protobuf/wrappers.proto";
 
 package KdSoft.EtwLogging;
 
-// The request message containing the session name.
-message OpenEtwSession {
-  string name = 1;
-  bool try_attach = 2;
-  google.protobuf.Duration life_time = 3;
-  // provider_settings are ignored when try_attach = true
-  repeated ProviderSetting provider_settings = 4;
-}
-
-message CloseEtwSession {
-  string name = 1;
-}
-
-message SessionNamesResult {
-  repeated string session_names = 1;
-}
-
-message EnableProvidersRequest {
-  string session_name = 1;
-  repeated ProviderSetting provider_settings = 2;
-}
-
 message ProviderSettingsList {
   repeated ProviderSetting provider_settings = 1;
 }
 
 message ProviderSetting {
-    string name = 1;
-    TraceEventLevel level = 2;
-    uint64 match_keywords = 3;
-}
-
-message ProviderSettingResult {
-    string name = 1;
-    bool restarted = 2;
-}
-
-message EnableProvidersResult {
-    repeated ProviderSettingResult results = 1;
-}
-
-message DisableProvidersRequest {
-    string session_name = 1;
-    repeated string provider_names = 2;
-}
-
-message EtwEventRequest {
-    string session_name = 1;
-    int32 batch_size = 2;
-    google.protobuf.Duration max_write_delay = 3;
+  string name = 1;
+  TraceEventLevel level = 2;
+  uint64 match_keywords = 3;
 }
 
 message EtwEvent {
@@ -76,173 +33,154 @@ message EtwEvent {
 }
 
 message EtwEventBatch {
-    repeated EtwEvent events = 1;
-}
-
-message EtwSession {
-    string session_name = 1;
-    bool is_created = 2;
-    bool is_started = 3;
-    bool is_stopped = 4;
-    repeated ProviderSetting enabled_providers = 5;
-}
-
-message SetFilterRequest {
-    string session_name = 1;
-    string filter_template = 2;
-    repeated string filter_parts = 3;
-}
-
-message TestFilterRequest {
-    string filter_template = 1;
-    repeated string filter_parts = 2;
+  repeated EtwEvent events = 1;
 }
 
 message EventSinkProfile {
-    string sink_type  = 1;
-    string name = 2;
-    string version = 3;
-    // JSON representation
-    string options = 4;
-    // JSON representation
-    string credentials = 5;
+  string sink_type  = 1;
+  string name = 2;
+  string version = 3;
+  // JSON representation
+  string options = 4;
+  // JSON representation
+  string credentials = 5;
 }
 
 message EventSinkState {
-    EventSinkProfile profile = 1;
-    string error = 2;
+  EventSinkProfile profile = 1;
+  string error = 2;
 }
 
 message AgentState {
-    string id = 1;
-    string site = 2;
-    string host = 3;
+  string id = 1;
+  string site = 2;
+  string host = 3;
 
-    /// <summary>
-    /// Indicates if the session has started and has not ended yet.
-    /// </summary>
-    bool is_running = 4;
+  /// <summary>
+  /// Indicates if the session has started and has not ended yet.
+  /// </summary>
+  bool is_running = 4;
 
-    /// <summary>
-    /// Indicates if session has started and then stopped.
-    /// Would indicate <c>false</c> if session has not started yet.
-    /// </summary>
-    bool is_stopped = 5;
+  /// <summary>
+  /// Indicates if session has started and then stopped.
+  /// Would indicate <c>false</c> if session has not started yet.
+  /// </summary>
+  bool is_stopped = 5;
 
-    repeated ProviderSetting enabled_providers = 6;
+  repeated ProviderSetting enabled_providers = 6;
 
-    ProcessingState processing_state = 7;
-    EventSinkState event_sink = 8;
+  ProcessingState processing_state = 7;
+  EventSinkState event_sink = 8;
 }
 
 message AgentStates {
-    repeated AgentState agents = 1;
+  repeated AgentState agents = 1;
 }
 
 message FilterPart {
-    string name = 1;
-    string code = 2;
-    int32 indent = 3;
+  string name = 1;
+  string code = 2;
+  int32 indent = 3;
 }
 
 message Filter {
-    int32 template_version = 1;
-    repeated FilterPart filter_parts = 2;
+  int32 template_version = 1;
+  repeated FilterPart filter_parts = 2;
 }
 
 message TextLine {
-    // source text in line
-    string text = 1;
-    // line number
-    int32 line = 2;
+  // source text in line
+  string text = 1;
+  // line number
+  int32 line = 2;
 }
 
 message LineSpan {
-    int32 start = 1;
-    int32 end = 2;
-    int32 indent = 3;
+  int32 start = 1;
+  int32 end = 2;
+  int32 indent = 3;
 }
 
 message FilterSource {
-    int32 template_version = 1;
-    // all text lines of the filter source
-    repeated TextLine source_lines = 2;
-    // for each dynamic (non-template) filter part the line and character position span
-    repeated LineSpan dynamic_line_spans = 3;
+  int32 template_version = 1;
+  // all text lines of the filter source
+  repeated TextLine source_lines = 2;
+  // for each dynamic (non-template) filter part the line and character position span
+  repeated LineSpan dynamic_line_spans = 3;
 }
 
 message ProcessingState {
-    int32 batch_size = 1;
-    int32 max_write_delay_mSecs = 2;
-    FilterSource filter_source = 3;
+  int32 batch_size = 1;
+  int32 max_write_delay_mSecs = 2;
+  FilterSource filter_source = 3;
 }
 
 message EventSessionState {
-    ProcessingState processing_state = 1;
-    repeated ProviderSetting provider_settings = 2;
+  ProcessingState processing_state = 1;
+  repeated ProviderSetting provider_settings = 2;
 }
 
 message ProcessingOptions {
-    int32 batch_size = 1;
-    int32 max_write_delay_mSecs = 2;
-    Filter filter = 3;
+  int32 batch_size = 1;
+  int32 max_write_delay_mSecs = 2;
+  Filter filter = 3;
 }
 
 message EventSessionOptions {
-    ProcessingOptions processing_options = 1;
-    repeated ProviderSetting provider_settings = 2;
+  ProcessingOptions processing_options = 1;
+  repeated ProviderSetting provider_settings = 2;
 }
 
 message LinePosition {
-    int32 line = 1;
-    int32 character = 2;
+  int32 line = 1;
+  int32 character = 2;
 }
 
 message LinePositionSpan {
-    LinePosition start = 1;
-    LinePosition end = 2;
+  LinePosition start = 1;
+  LinePosition end = 2;
 }
 
 message CompileDiagnostic {
-    string id = 1;
-    bool is_warning_as_error = 2;
-    int32 warning_level = 3;
-    CompileDiagnosticSeverity severity = 4;
-    LinePositionSpan line_span = 5;
-    string message = 6;
+  string id = 1;
+  bool is_warning_as_error = 2;
+  int32 warning_level = 3;
+  CompileDiagnosticSeverity severity = 4;
+  LinePositionSpan line_span = 5;
+  string message = 6;
 }
 
 message BuildFilterResult {
-    repeated CompileDiagnostic diagnostics = 1;
-    FilterSource filter_source = 2; 
+  repeated CompileDiagnostic diagnostics = 1;
+  FilterSource filter_source = 2; 
 }
 
 // Note: multiple enums in the same namespace cannot have duplicate value identifiers, so we prefix them;
 //       the C# code generator will remove these prefixes if they match the enum name
 enum TraceEventLevel {
-    //     Always log the event (It also can mean that the provider decides the verbosity)
-    //     You probably should not use it....
-    TraceEventLevel_ALWAYS = 0;
-    //     Events that indicate critical conditions
-    TraceEventLevel_CRITICAL = 1;
-    //     Events that indicate error conditions
-    TraceEventLevel_ERROR = 2;
-    //     Events that indicate warning conditions
-    TraceEventLevel_WARNING = 3;
-    //     Events that indicate information
-    TraceEventLevel_INFORMATIONAL = 4;
-    //     Events that verbose information
-    TraceEventLevel_VERBOSE = 5;
+  //     Always log the event (It also can mean that the provider decides the verbosity)
+  //     You probably should not use it....
+  TraceEventLevel_ALWAYS = 0;
+  //     Events that indicate critical conditions
+  TraceEventLevel_CRITICAL = 1;
+  //     Events that indicate error conditions
+  TraceEventLevel_ERROR = 2;
+  //     Events that indicate warning conditions
+  TraceEventLevel_WARNING = 3;
+  //     Events that indicate information
+  TraceEventLevel_INFORMATIONAL = 4;
+  //     Events that verbose information
+  TraceEventLevel_VERBOSE = 5;
 }
 
 enum CompileDiagnosticSeverity {
-    //     Something that is an issue, as determined by some authority, but is not surfaced
-    //     through normal means. There may be different mechanisms that act on these issues.
-    CompileDiagnosticSeverity_HIDDEN = 0;
-    //     Information that does not indicate a problem (i.e. not prescriptive).
-    CompileDiagnosticSeverity_INFO = 1;
-    //     Something suspicious but allowed.
-    CompileDiagnosticSeverity_WARNING = 2;
-    //     Something not allowed by the rules of the language or other authority.
-    CompileDiagnosticSeverity_ERROR = 3;
+  //     Something that is an issue, as determined by some authority, but is not surfaced
+  //     through normal means. There may be different mechanisms that act on these issues.
+  CompileDiagnosticSeverity_HIDDEN = 0;
+  //     Information that does not indicate a problem (i.e. not prescriptive).
+  CompileDiagnosticSeverity_INFO = 1;
+  //     Something suspicious but allowed.
+  CompileDiagnosticSeverity_WARNING = 2;
+  //     Something not allowed by the rules of the language or other authority.
+  CompileDiagnosticSeverity_ERROR = 3;
 }
