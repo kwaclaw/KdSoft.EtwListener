@@ -351,12 +351,8 @@ namespace KdSoft.EtwEvents.PushAgent
                     await UpdateEventSink(_sessionConfig.SinkProfile!).ConfigureAwait(false);
                 }
                 try {
-                    long sequenceNo = 0;
                     async ValueTask<bool> writeBatch(EtwEventBatch batch) {
-                        bool success = await _sinkHolder.ProcessEventBatch(batch, sequenceNo).ConfigureAwait(false);
-                        if (success) {
-                            sequenceNo += batch.Events.Count;
-                        }
+                        bool success = await _sinkHolder.ProcessEventBatch(batch).ConfigureAwait(false);
                         return success;
                     }
 

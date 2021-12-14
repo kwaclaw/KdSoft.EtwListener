@@ -4,7 +4,6 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using KdSoft.EtwEvents.Client;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
@@ -66,7 +65,7 @@ namespace KdSoft.EtwEvents.EventSinks
             return default;
         }
 
-        WriteModel<BsonDocument> FromEvent(EtwEvent evt, long sequenceNo) {
+        WriteModel<BsonDocument> FromEvent(EtwEvent evt) {
             var filter = _fb.Empty;
 
             var efs = _eventFilterFields;
@@ -100,9 +99,7 @@ namespace KdSoft.EtwEvents.EventSinks
                     payloadDoc.Add(payload.Key, BsonValue.Create(payload.Value));
             }
 
-            //TODO should we ignore sequenceNo?
             var replacement = new BsonDocument()
-                //.Add("SequenceNo", BsonValue.Create(sequenceNo))
                 .Add("Timestamp", new BsonDateTime(evt.TimeStamp.ToDateTime()))
                 .Add("ProviderName", BsonValue.Create(evt.ProviderName))
                 .Add("Channel", BsonValue.Create(evt.Channel))
@@ -139,11 +136,11 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         //TODO maybe use Interlocked and two lists to keep queueing while a bulk write is in process
-        public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
+        public ValueTask<bool> WriteAsync(EtwEvent evt) {
             if (IsDisposed || RunTask.IsCompleted)
                 return new ValueTask<bool>(false);
             try {
-                var writeModel = FromEvent(evt, sequenceNo);
+                var writeModel = FromEvent(evt);
                 _evl.Add(writeModel);
                 return new ValueTask<bool>(true);
             }
@@ -152,11 +149,11 @@ namespace KdSoft.EtwEvents.EventSinks
             }
         }
 
-        public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch, long sequenceNo) {
+        public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
             if (IsDisposed || RunTask.IsCompleted)
                 return new ValueTask<bool>(false);
             try {
-                _evl.AddRange(evtBatch.Events.Select(evt => FromEvent(evt, sequenceNo++)));
+                _evl.AddRange(evtBatch.Events.Select(evt => FromEvent(evt)));
                 return new ValueTask<bool>(true);
             }
             catch (Exception ex) {

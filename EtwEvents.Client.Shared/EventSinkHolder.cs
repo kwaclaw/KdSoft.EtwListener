@@ -196,9 +196,8 @@ namespace KdSoft.EtwEvents.Client
         /// Write a batch of ETW events to each event sink, and flush them afterwards.
         /// </summary>
         /// <param name="evtBatch"></param>
-        /// <param name="sequenceNo"></param>
         /// <returns></returns>
-        public async Task<bool> ProcessEventBatch(EtwEventBatch evtBatch, long sequenceNo) {
+        public async Task<bool> ProcessEventBatch(EtwEventBatch evtBatch) {
             // We do not use a lock here because reference field access is atomic
             // and we do not exactly care which version of the field value we get. 
             var eventSinks = this._eventSinks;
@@ -208,7 +207,7 @@ namespace KdSoft.EtwEvents.Client
             try {
                 int indx = 0;
                 foreach (var entry in eventSinks) {
-                    taskList[indx++] = (entry, entry.Value.WriteAsync(evtBatch, sequenceNo));
+                    taskList[indx++] = (entry, entry.Value.WriteAsync(evtBatch));
                 }
                 result = await CheckEventSinkWriteTasks(taskList, eventSinks.Count).ConfigureAwait(false);
                 if (!result)

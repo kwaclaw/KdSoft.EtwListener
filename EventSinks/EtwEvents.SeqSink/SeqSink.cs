@@ -114,14 +114,13 @@ namespace KdSoft.EtwEvents.EventSinks
 
         // writes a JSON object to the buffer, terminating with a new line
         // see https://github.com/serilog/serilog-formatting-compact
-        void WriteEventJson(EtwEvent evt, long sequenceNo) {
+        void WriteEventJson(EtwEvent evt) {
             if (ExcludeEvent(evt))
                 return;
 
             _jsonWriter.Reset();
             _jsonWriter.WriteStartObject();
 
-            _jsonWriter.WriteNumber("sequenceNo", sequenceNo);
             _jsonWriter.WriteString("providerName", evt.ProviderName);
             _jsonWriter.WriteNumber("channel", evt.Channel);
             _jsonWriter.WriteNumber("@i", evt.Id);
@@ -173,11 +172,11 @@ namespace KdSoft.EtwEvents.EventSinks
             }
         }
 
-        public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
+        public ValueTask<bool> WriteAsync(EtwEvent evt) {
             if (IsDisposed || RunTask.IsCompleted)
                 return new ValueTask<bool>(false);
             try {
-                WriteEventJson(evt, sequenceNo);
+                WriteEventJson(evt);
                 return new ValueTask<bool>(true);
             }
             catch (Exception ex) {
@@ -185,12 +184,12 @@ namespace KdSoft.EtwEvents.EventSinks
             }
         }
 
-        public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch, long sequenceNo) {
+        public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
             if (IsDisposed || RunTask.IsCompleted)
                 return new ValueTask<bool>(false);
             try {
                 foreach (var evt in evtBatch.Events) {
-                    WriteEventJson(evt, sequenceNo++);
+                    WriteEventJson(evt);
                 }
                 return new ValueTask<bool>(true);
             }

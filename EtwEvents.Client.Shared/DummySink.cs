@@ -19,11 +19,11 @@ namespace KdSoft.EtwEvents.Client
             return new ValueTask<bool>(true);
         }
 
-        public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
+        public ValueTask<bool> WriteAsync(EtwEvent evt) {
             return new ValueTask<bool>(true);
         }
 
-        public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch, long sequenceNo) {
+        public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
             return new ValueTask<bool>(true);
         }
     }

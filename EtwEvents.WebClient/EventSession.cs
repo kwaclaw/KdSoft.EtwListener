@@ -16,7 +16,7 @@ namespace KdSoft.EtwEvents.WebClient
         readonly EtwEventRequest _etwRequest;
         readonly EventSinkHolder _eventSinks;
         readonly AggregatingNotifier<Models.TraceSessionStates> _changeNotifier;
-        readonly Channel<(EtwEventBatch, long)> _responseQueue;
+        readonly Channel<EtwEventBatch> _responseQueue;
 
         AsyncServerStreamingCall<EtwEventBatch>? _streamingCall;
 
@@ -34,7 +34,7 @@ namespace KdSoft.EtwEvents.WebClient
             this._eventSinks = eventSinks;
             this._changeNotifier = changeNotifier;
 
-            this._responseQueue = Channel.CreateBounded<(EtwEventBatch, long)>(new BoundedChannelOptions(optionsMonitor.CurrentValue.EventQueueCapacity) {
+            this._responseQueue = Channel.CreateBounded<EtwEventBatch>(new BoundedChannelOptions(optionsMonitor.CurrentValue.EventQueueCapacity) {
                 AllowSynchronousContinuations = true,
                 FullMode = BoundedChannelFullMode.DropOldest,
                 SingleReader = true,
@@ -43,7 +43,6 @@ namespace KdSoft.EtwEvents.WebClient
         }
 
         async Task ProcessResponseStream(CancellationToken cancelToken) {
-            long sequenceNo = 0;
             var streamer = _streamingCall = _etwClient.GetEvents(_etwRequest);
             var responseStream = streamer.ResponseStream;
 
@@ -56,12 +55,11 @@ namespace KdSoft.EtwEvents.WebClient
 
                     var evtBatch = responseStream.Current;
 
-                    var posted = _responseQueue.Writer.TryWrite((evtBatch, sequenceNo));
+                    var posted = _responseQueue.Writer.TryWrite(evtBatch);
                     if (!posted) {
                         //_logger.LogInformation("Could not post trace event {eventId}.", evt.Id);
                         break;
                     }
-                    sequenceNo += evtBatch.Events.Count;
 
                     await _changeNotifier.PostNotification().ConfigureAwait(false);
                 }
@@ -76,8 +74,8 @@ namespace KdSoft.EtwEvents.WebClient
         }
 
         async Task ProcessResponseQueue() {
-            await foreach (var (evtBatch, sequenceNo) in _responseQueue.Reader.ReadAllAsync().ConfigureAwait(false)) {
-                var success = await this._eventSinks.ProcessEventBatch(evtBatch, sequenceNo).ConfigureAwait(false);
+            await foreach (var evtBatch in _responseQueue.Reader.ReadAllAsync().ConfigureAwait(false)) {
+                var success = await this._eventSinks.ProcessEventBatch(evtBatch).ConfigureAwait(false);
                 if (!success) {
                     await _changeNotifier.PostNotification().ConfigureAwait(false);
                 }

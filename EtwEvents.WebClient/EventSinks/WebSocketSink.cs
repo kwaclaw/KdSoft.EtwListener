@@ -89,10 +89,9 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void WriteEventJson(EtwEvent evt, long sequenceNo) {
+        void WriteEventJson(EtwEvent evt) {
             _jsonWriter.WriteStartObject();
 
-            _jsonWriter.WriteNumber("sequenceNo", sequenceNo);
             _jsonWriter.WriteString("providerName", evt.ProviderName);
             _jsonWriter.WriteNumber("channel", evt.Channel);
             _jsonWriter.WriteNumber("id", evt.Id);
@@ -119,7 +118,7 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
             _jsonWriter.WriteEndObject();
         }
 
-        public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
+        public ValueTask<bool> WriteAsync(EtwEvent evt) {
             if (_webSocket.State != WebSocketState.Open)
                 return new ValueTask<bool>(false);
 
@@ -127,12 +126,12 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
                 _startNewMessage = false;
                 _jsonWriter.WriteStartArray();
             }
-            WriteEventJson(evt, sequenceNo);
+            WriteEventJson(evt);
 
             return new ValueTask<bool>(WriteAsync(false));
         }
 
-        public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch, long sequenceNo) {
+        public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
             if (_webSocket.State != WebSocketState.Open)
                 return new ValueTask<bool>(false);
 
@@ -141,7 +140,7 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
                 _jsonWriter.WriteStartArray();
             }
             foreach (var evt in evtBatch.Events) {
-                WriteEventJson(evt, sequenceNo++);
+                WriteEventJson(evt);
             }
 
             return new ValueTask<bool>(WriteAsync(false));

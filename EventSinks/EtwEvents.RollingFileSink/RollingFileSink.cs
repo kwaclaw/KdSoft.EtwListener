@@ -22,7 +22,7 @@ namespace KdSoft.EtwEvents.EventSinks
         readonly ReadOnlyMemory<byte> _newLine = new byte[] { 10 };
         readonly RollingFileFactory _fileFactory;
         readonly ILogger _logger;
-        readonly Channel<(EtwEvent evt, long sequenceNo)> _channel;
+        readonly Channel<EtwEvent> _channel;
 
         int _isDisposed = 0;
 
@@ -31,7 +31,7 @@ namespace KdSoft.EtwEvents.EventSinks
         public RollingFileSink(RollingFileFactory fileFactory, ILogger logger) {
             this._fileFactory = fileFactory;
             this._logger = logger;
-            this._channel = Channel.CreateUnbounded<(EtwEvent evt, long sequenceNo)>(new UnboundedChannelOptions {
+            this._channel = Channel.CreateUnbounded<EtwEvent>(new UnboundedChannelOptions {
                 AllowSynchronousContinuations = true,
                 SingleReader = true,
                 SingleWriter = false
@@ -96,11 +96,10 @@ namespace KdSoft.EtwEvents.EventSinks
 
         // writes a JSON object to the buffer, terminating with a new line
         // see https://github.com/serilog/serilog-formatting-compact
-        void WriteEventJson(EtwEvent evt, long sequenceNo) {
+        void WriteEventJson(EtwEvent evt) {
             _jsonWriter.Reset();
             _jsonWriter.WriteStartObject();
 
-            _jsonWriter.WriteNumber("sequenceNo", sequenceNo);
             _jsonWriter.WriteString("providerName", evt.ProviderName);
             _jsonWriter.WriteNumber("channel", evt.Channel);
             _jsonWriter.WriteNumber("id", evt.Id);
@@ -132,7 +131,7 @@ namespace KdSoft.EtwEvents.EventSinks
             if (IsDisposed || RunTask.IsCompleted)
                 return new ValueTask<bool>(false);
             try {
-                var posted = _channel.Writer.TryWrite((_emptyEvent, 0));
+                var posted = _channel.Writer.TryWrite(_emptyEvent);
                 return new ValueTask<bool>(posted);
             }
             catch (Exception ex) {
@@ -140,11 +139,11 @@ namespace KdSoft.EtwEvents.EventSinks
             }
         }
 
-        public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
+        public ValueTask<bool> WriteAsync(EtwEvent evt) {
             if (IsDisposed || RunTask.IsCompleted)
                 return new ValueTask<bool>(false);
             try {
-                var posted = _channel.Writer.TryWrite((evt, sequenceNo));
+                var posted = _channel.Writer.TryWrite(evt);
                 return new ValueTask<bool>(posted);
             }
             catch (Exception ex) {
@@ -152,13 +151,13 @@ namespace KdSoft.EtwEvents.EventSinks
             }
         }
 
-        public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch, long sequenceNo) {
+        public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
             if (IsDisposed || RunTask.IsCompleted)
                 return new ValueTask<bool>(false);
             try {
                 bool posted = true;
                 foreach (var evt in evtBatch.Events) {
-                    posted = _channel.Writer.TryWrite((evt, sequenceNo++));
+                    posted = _channel.Writer.TryWrite(evt);
                     if (!posted)
                         break;
                 }
@@ -171,10 +170,10 @@ namespace KdSoft.EtwEvents.EventSinks
 
         // returns true if reading is complete
         async Task<bool> ProcessBatchToBuffer() {
-            await foreach (var (evt, sequenceNo) in _channel.Reader.ReadAllAsync().ConfigureAwait(false)) {
+            await foreach (var evt in _channel.Reader.ReadAllAsync().ConfigureAwait(false)) {
                 if (object.ReferenceEquals(evt, _emptyEvent))
                     return false;
-                WriteEventJson(evt, sequenceNo);
+                WriteEventJson(evt);
             }
             // batch is complete, we can write it now to the file
             return true;

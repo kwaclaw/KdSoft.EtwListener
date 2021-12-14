@@ -14,29 +14,25 @@ namespace KdSoft.EtwEvents
         /// <summary>
         /// Task that completes when <see cref="IEventSink"/> is finished/closed or has failed.
         /// </summary>
-        /// <returns><c>true</c> when already disposed, <c>false</c> otherwise.</returns>
         Task RunTask { get; }
 
         /// <summary>
-        /// Writes event asynchronously. This may queue event for batched writing and may return synchronously.
+        /// Writes event asynchronously, but may execute synchronously. The event may be queued for batched writing.
         /// Must not be called concurrently with itself, <see cref="FlushAsync"/> or <see cref="IAsyncDisposable.DisposeAsync"/>.
         /// Must not throw exception before <see cref="ValueTask"/> is returned.
         /// </summary>
         /// <param name="evt">Event to write.</param>
-        /// <param name="sequenceNo">Incrementing sequence number for event.</param>
         /// <returns><c>true</c> if writing was successful (and can continue), <c>false</c> otherwise.</returns>
-        ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo);
+        ValueTask<bool> WriteAsync(EtwEvent evt);
 
         /// <summary>
-        /// Writes events asynchronously. This may queue events for batched writing and may return synchronously.
+        /// Writes batch of events asynchronously, but may execute synchronously. The events may be queued for batched writing.
         /// Must not be called concurrently with itself, <see cref="FlushAsync"/> or <see cref="IAsyncDisposable.DisposeAsync"/>.
         /// Must not throw exception before <see cref="ValueTask"/> is returned.
         /// </summary>
         /// <param name="evts">Events to write.</param>
-        /// <param name="sequenceNo">Starting sequence number for first event. On subsequent calls the
-        /// sequence number will be incremented by the size of the last batch.</param>
         /// <returns><c>true</c> if writing was successful (and can continue), <c>false</c> otherwise.</returns>
-        ValueTask<bool> WriteAsync(EtwEventBatch evtBatch, long sequenceNo);
+        ValueTask<bool> WriteAsync(EtwEventBatch evtBatch);
 
         /// <summary>
         /// Flushes queue, performs pending writes.

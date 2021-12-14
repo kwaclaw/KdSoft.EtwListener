@@ -123,11 +123,10 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         //TODO maybe use Interlocked and two lists to keep queueing while a bulk write is in process
-        public ValueTask<bool> WriteAsync(EtwEvent evt, long sequenceNo) {
+        public ValueTask<bool> WriteAsync(EtwEvent evt) {
             if (IsDisposed || RunTask.IsCompleted)
                 return new ValueTask<bool>(false);
             try {
-                //TODO should we ignore sequenceNo?
                 _evl.Add(_jsonFormatter.Format(evt));
                 return new ValueTask<bool>(true);
             }
@@ -136,11 +135,10 @@ namespace KdSoft.EtwEvents.EventSinks
             }
         }
 
-        public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch, long sequenceNo) {
+        public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
             if (IsDisposed || RunTask.IsCompleted)
                 return new ValueTask<bool>(false);
             try {
-                //TODO should we ignore sequenceNo?
                 _evl.AddRange(evtBatch.Events.Select(evt => _jsonFormatter.Format(evt)));
                 return new ValueTask<bool>(true);
             }
