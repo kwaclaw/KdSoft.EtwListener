@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+import "etwMessages.proto";
+
+package KdSoft.EtwLogging;
+
+service EtwSink {
+  rpc SendEvents (stream EtwEventBatch) returns (EtwEventResponse);
+}
+
+message EtwEventResponse {
+  int32 events_received = 1;
+}

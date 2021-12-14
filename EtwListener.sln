@@ -38,6 +38,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.AgentManager", "E
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.Tests", "EtwEvents.Tests\EtwEvents.Tests.csproj", "{B598139A-86E3-49AB-A3A1-497A60927180}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EtwEvents.gRPCSink", "EventSinks\EtwEvents.gRPCSink\EtwEvents.gRPCSink.csproj", "{ADE18974-95EB-4D85-8317-CC0C806F7ACA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -150,6 +152,14 @@ Global
 		{B598139A-86E3-49AB-A3A1-497A60927180}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B598139A-86E3-49AB-A3A1-497A60927180}.Release|x64.ActiveCfg = Release|Any CPU
 		{B598139A-86E3-49AB-A3A1-497A60927180}.Release|x64.Build.0 = Release|Any CPU
+		{ADE18974-95EB-4D85-8317-CC0C806F7ACA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ADE18974-95EB-4D85-8317-CC0C806F7ACA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ADE18974-95EB-4D85-8317-CC0C806F7ACA}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{ADE18974-95EB-4D85-8317-CC0C806F7ACA}.Debug|x64.Build.0 = Debug|Any CPU
+		{ADE18974-95EB-4D85-8317-CC0C806F7ACA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ADE18974-95EB-4D85-8317-CC0C806F7ACA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ADE18974-95EB-4D85-8317-CC0C806F7ACA}.Release|x64.ActiveCfg = Release|Any CPU
+		{ADE18974-95EB-4D85-8317-CC0C806F7ACA}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -159,6 +169,7 @@ Global
 		{9C69DBCA-6E5A-4F7A-98B3-CD9F7B7FA628} = {89C33CBB-6F1B-431C-AC75-24C9DBD9A3E5}
 		{51636BC6-D747-40CF-8877-5F90C6A96401} = {89C33CBB-6F1B-431C-AC75-24C9DBD9A3E5}
 		{73212ADE-8DFC-4428-8176-B3ADCAF9A8B3} = {89C33CBB-6F1B-431C-AC75-24C9DBD9A3E5}
+		{ADE18974-95EB-4D85-8317-CC0C806F7ACA} = {89C33CBB-6F1B-431C-AC75-24C9DBD9A3E5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {BED8DED3-F3B6-4088-9C5F-4B98EC72BADB}
