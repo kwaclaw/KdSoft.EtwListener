@@ -30,7 +30,7 @@
     <PackageReference Include="KdSoft.Data.Models.Shared" Version="1.1.0" />
     <PackageReference Include="KdSoft.Logging" Version="1.0.1" />
     <PackageReference Include="KdSoft.Utils.Portable" Version="3.6.3" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.Certificate" Version="6.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Certificate" Version="6.0.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="6.0.0">
       <PrivateAssets>all</PrivateAssets>
