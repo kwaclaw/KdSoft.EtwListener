@@ -1,5 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <Import Project="..\eventSink.targets" />
+
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <VersionPrefix>1.1.0</VersionPrefix>
@@ -8,6 +10,7 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <RootNamespace>KdSoft.EtwEvents.EventSinks</RootNamespace>
     <AssemblyName>KdSoft.EtwEvents.ElasticSink</AssemblyName>
+    <SinkName>ElasticSink</SinkName>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,16 +20,5 @@
   <ItemGroup>
     <ProjectReference Include="..\..\EtwEvents.Client.Shared\EtwEvents.Client.Shared.csproj" />
   </ItemGroup>
-
-  <Target Name="CopyToDeploy" AfterTargets="PostBuildEvent">
-    <PropertyGroup>
-      <DeployDirectory>$(SolutionDir)/EventSinks/Deploy/ElasticSink</DeployDirectory>
-    </PropertyGroup>
-    <ItemGroup>
-      <BinFiles Include="$(TargetDir)**/*.*" />
-    </ItemGroup>
-    <RemoveDir Directories="$(DeployDirectory)" />
-    <Copy SourceFiles="@(BinFiles)" DestinationFiles="@(BinFiles->'$(DeployDirectory)/%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
-  </Target>
 
 </Project>
