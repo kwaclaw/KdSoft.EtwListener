@@ -35,7 +35,7 @@ namespace KdSoft.EtwEvents
         ValueTask<bool> WriteAsync(EtwEventBatch evtBatch);
 
         /// <summary>
-        /// Flushes queue, performs pending writes.
+        /// Flushes queue, performs pending writes. Must be called to ensure events have been written, even if the event sink has no buffer.
         /// Must not be called concurrently with itself, <see cref="WriteAsync"/> or <see cref="IAsyncDisposable.DisposeAsync"/>.
         /// Must not throw exception before <see cref="ValueTask"/> is returned.
         /// </summary>
