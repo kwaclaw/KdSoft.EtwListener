@@ -26,7 +26,7 @@ namespace KdSoft.EtwEvents.EventSinks
 
         int _isDisposed = 0;
 
-        public Task RunTask { get; }
+        public Task<bool> RunTask { get; }
 
         public RollingFileSink(RollingFileFactory fileFactory, ILogger logger) {
             this._fileFactory = fileFactory;
@@ -129,42 +129,51 @@ namespace KdSoft.EtwEvents.EventSinks
 
         public ValueTask<bool> FlushAsync() {
             if (IsDisposed || RunTask.IsCompleted)
-                return new ValueTask<bool>(false);
+                return ValueTask.FromResult(false);
             try {
                 var posted = _channel.Writer.TryWrite(_emptyEvent);
-                return new ValueTask<bool>(posted);
+                if (!posted)
+                    _channel.Writer.TryComplete();
+                return ValueTask.FromResult(posted);
             }
             catch (Exception ex) {
-                return ValueTask.FromException<bool>(ex);
+                _channel.Writer.TryComplete(ex);
+                return ValueTask.FromResult(false);
             }
         }
 
         public ValueTask<bool> WriteAsync(EtwEvent evt) {
             if (IsDisposed || RunTask.IsCompleted)
-                return new ValueTask<bool>(false);
+                return ValueTask.FromResult(false);
             try {
                 var posted = _channel.Writer.TryWrite(evt);
-                return new ValueTask<bool>(posted);
+                if (!posted)
+                    _channel.Writer.TryComplete();
+                return ValueTask.FromResult(posted);
             }
             catch (Exception ex) {
-                return ValueTask.FromException<bool>(ex);
+                _channel.Writer.TryComplete(ex);
+                return ValueTask.FromResult(false);
             }
         }
 
         public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
             if (IsDisposed || RunTask.IsCompleted)
-                return new ValueTask<bool>(false);
+                return ValueTask.FromResult(false);
             try {
                 bool posted = true;
                 foreach (var evt in evtBatch.Events) {
                     posted = _channel.Writer.TryWrite(evt);
-                    if (!posted)
+                    if (!posted) {
+                        _channel.Writer.TryComplete();
                         break;
+                    }
                 }
-                return new ValueTask<bool>(posted);
+                return ValueTask.FromResult(posted);
             }
             catch (Exception ex) {
-                return ValueTask.FromException<bool>(ex);
+                _channel.Writer.TryComplete(ex);
+                return ValueTask.FromResult(false);
             }
         }
 
@@ -194,10 +203,24 @@ namespace KdSoft.EtwEvents.EventSinks
         async Task ProcessBatches() {
             bool isCompleted;
             do {
-                // checks rollover conditions and returns appropriate file stream
-                var stream = await _fileFactory.GetCurrentFileStream().ConfigureAwait(false);
-                isCompleted = await ProcessBatchToBuffer().ConfigureAwait(false);
-                await WriteBatchAsync(stream).ConfigureAwait(false);
+                FileStream? stream = null;
+                try {
+                    // checks rollover conditions and returns appropriate file stream
+                    stream = await _fileFactory.GetCurrentFileStream().ConfigureAwait(false);
+                    isCompleted = await ProcessBatchToBuffer().ConfigureAwait(false);
+                }
+                catch (Exception ex) {
+                    isCompleted = true;
+                    _channel.Writer.TryComplete(ex);
+                }
+                try {
+                    if (stream != null)
+                        await WriteBatchAsync(stream).ConfigureAwait(false);
+                }
+                catch (Exception ex) {
+                    isCompleted = true;
+                    _channel.Writer.TryComplete(ex);
+                }
             } while (!isCompleted);
         }
 

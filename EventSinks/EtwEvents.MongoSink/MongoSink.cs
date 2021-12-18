@@ -23,7 +23,7 @@ namespace KdSoft.EtwEvents.EventSinks
 
         int _isDisposed = 0;
 
-        public Task RunTask { get; }
+        public Task<bool> RunTask { get; }
 
         public MongoSink(
             IMongoCollection<BsonDocument> coll,
@@ -123,41 +123,43 @@ namespace KdSoft.EtwEvents.EventSinks
 
         public ValueTask<bool> FlushAsync() {
             if (IsDisposed || RunTask.IsCompleted)
-                return new ValueTask<bool>(false);
+                return ValueTask.FromResult(false);
             if (_evl.Count == 0)
-                return new ValueTask<bool>(true);
+                return ValueTask.FromResult(true);
             try {
                 return new ValueTask<bool>(FlushAsyncInternal());
             }
             catch (Exception ex) {
                 _tcs.TrySetException(ex);
-                return new ValueTask<bool>(false);
+                return ValueTask.FromResult(false);
             }
         }
 
         //TODO maybe use Interlocked and two lists to keep queueing while a bulk write is in process
         public ValueTask<bool> WriteAsync(EtwEvent evt) {
             if (IsDisposed || RunTask.IsCompleted)
-                return new ValueTask<bool>(false);
+                return ValueTask.FromResult(false);
             try {
                 var writeModel = FromEvent(evt);
                 _evl.Add(writeModel);
-                return new ValueTask<bool>(true);
+                return ValueTask.FromResult(true);
             }
             catch (Exception ex) {
-                return ValueTask.FromException<bool>(ex);
+                _tcs.TrySetException(ex);
+                return ValueTask.FromResult(false);
             }
         }
 
         public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
             if (IsDisposed || RunTask.IsCompleted)
-                return new ValueTask<bool>(false);
+                return ValueTask.FromResult(false);
             try {
                 _evl.AddRange(evtBatch.Events.Select(evt => FromEvent(evt)));
-                return new ValueTask<bool>(true);
+                return ValueTask.FromResult(true);
             }
             catch (Exception ex) {
-                return ValueTask.FromException<bool>(ex);
+                _tcs.TrySetException(ex);
+                return ValueTask.FromResult(false);
             }
         }
     }

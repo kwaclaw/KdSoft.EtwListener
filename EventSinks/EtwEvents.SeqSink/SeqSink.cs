@@ -37,7 +37,7 @@ namespace KdSoft.EtwEvents.EventSinks
         TraceEventLevel? _maxTraceEventLevel;
         int _isDisposed = 0;
 
-        public Task RunTask { get; }
+        public Task<bool> RunTask { get; }
 
         public SeqSink(HttpClient http, Uri requestUri, TraceEventLevel? maxLevel, ILogger logger) {
             this._http = http;
@@ -159,42 +159,44 @@ namespace KdSoft.EtwEvents.EventSinks
 
         public ValueTask<bool> FlushAsync() {
             if (IsDisposed || RunTask.IsCompleted)
-                return new ValueTask<bool>(false);
+                return ValueTask.FromResult(false);
             var eventBatch = _bufferWriter.WrittenMemory;
             if (eventBatch.IsEmpty)
-                return new ValueTask<bool>(true);
+                return ValueTask.FromResult(true);
             try {
                 return new ValueTask<bool>(FlushAsyncInternal(eventBatch));
             }
             catch (Exception ex) {
                 _tcs.TrySetException(ex);
-                return new ValueTask<bool>(false);
+                return ValueTask.FromResult(false);
             }
         }
 
         public ValueTask<bool> WriteAsync(EtwEvent evt) {
             if (IsDisposed || RunTask.IsCompleted)
-                return new ValueTask<bool>(false);
+                return ValueTask.FromResult(false);
             try {
                 WriteEventJson(evt);
-                return new ValueTask<bool>(true);
+                return ValueTask.FromResult(true);
             }
             catch (Exception ex) {
-                return ValueTask.FromException<bool>(ex);
+                _tcs.TrySetException(ex);
+                return ValueTask.FromResult(false);
             }
         }
 
         public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
             if (IsDisposed || RunTask.IsCompleted)
-                return new ValueTask<bool>(false);
+                return ValueTask.FromResult(false);
             try {
                 foreach (var evt in evtBatch.Events) {
                     WriteEventJson(evt);
                 }
-                return new ValueTask<bool>(true);
+                return ValueTask.FromResult(true);
             }
             catch (Exception ex) {
-                return ValueTask.FromException<bool>(ex);
+                _tcs.TrySetException(ex);
+                return ValueTask.FromResult(false);
             }
         }
 

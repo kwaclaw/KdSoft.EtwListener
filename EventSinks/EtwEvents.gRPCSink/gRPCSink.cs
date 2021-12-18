@@ -8,17 +8,32 @@ namespace KdSoft.EtwEvents.EventSinks
     {
         readonly AsyncClientStreamingCall<EtwEventBatch, EtwEventResponse> _eventStream;
         readonly ILogger _logger;
+        readonly TaskCompletionSource<bool> _tcs;
+
         readonly EtwEventBatch _pendingBatch;
 
         EtwEventBatch? _currentBatch;
         int _isDisposed = 0;
 
-        public Task RunTask { get; }
+        public Task<bool> RunTask { get; }
 
         public gRPCSink(AsyncClientStreamingCall<EtwEventBatch, EtwEventResponse> eventStream, ILogger logger) {
             this._eventStream = eventStream;
-            this.RunTask = eventStream.ResponseAsync;
             this._logger = logger;
+
+            _tcs = new TaskCompletionSource<bool>();
+            RunTask = _tcs.Task;
+
+            eventStream.ResponseAsync.ContinueWith(res => {
+                if (res.IsFaulted) {
+                    _tcs.TrySetException(res.Exception!);
+                }
+                else if (res.IsCanceled) {
+                    _tcs.TrySetCanceled();
+                }
+                _tcs.TrySetResult(false);
+            });
+
             this._pendingBatch = new EtwEventBatch();
         }
 
@@ -34,7 +49,13 @@ namespace KdSoft.EtwEvents.EventSinks
         public void Dispose() {
             var oldDisposed = Interlocked.CompareExchange(ref _isDisposed, 99, 0);
             if (oldDisposed == 0) {
-                this._eventStream.Dispose();
+                try {
+                    _eventStream.Dispose();
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "Error closing event stream '{eventSink)}'.", nameof(gRPCSink));
+                }
+                _tcs.TrySetResult(true);
             }
         }
 
@@ -51,11 +72,17 @@ namespace KdSoft.EtwEvents.EventSinks
         public async ValueTask<bool> FlushAsync() {
             if (IsDisposed || RunTask.IsCompleted)
                 return false;
-            // if _currentBatch points to _pendingBatch, then send it and clear it
-            var flushBatch = Interlocked.CompareExchange(ref _currentBatch, null, _pendingBatch);
-            if (object.ReferenceEquals(flushBatch, _pendingBatch) && flushBatch.Events.Count > 0) {
-                await this._eventStream.RequestStream.WriteAsync(flushBatch).ConfigureAwait(false);
-                flushBatch.Events.Clear();
+            try {
+                // if _currentBatch points to _pendingBatch, then send it and clear it
+                var flushBatch = Interlocked.CompareExchange(ref _currentBatch, null, _pendingBatch);
+                if (object.ReferenceEquals(flushBatch, _pendingBatch) && flushBatch.Events.Count > 0) {
+                    await this._eventStream.RequestStream.WriteAsync(flushBatch).ConfigureAwait(false);
+                    flushBatch.Events.Clear();
+                }
+            }
+            catch (Exception ex) {
+                _tcs.TrySetException(ex);
+                return false;
             }
             return true;
         }
@@ -67,7 +94,7 @@ namespace KdSoft.EtwEvents.EventSinks
         /// <returns></returns>
         public ValueTask<bool> WriteAsync(EtwEvent evt) {
             if (IsDisposed || RunTask.IsCompleted)
-                return new ValueTask<bool>(false);
+                return ValueTask.FromResult(false);
             try {
                 // if _currentBatch is null, update it to _pendingBatch, otherwise leave it alone
                 var oldBatch = Interlocked.CompareExchange(ref _currentBatch, _pendingBatch, null);
@@ -75,10 +102,11 @@ namespace KdSoft.EtwEvents.EventSinks
                     _currentBatch.Events.Clear();
                 }
                 _currentBatch.Events.Add(evt);
-                return new ValueTask<bool>(true);
+                return ValueTask.FromResult(true);
             }
             catch (Exception ex) {
-                return ValueTask.FromException<bool>(ex);
+                _tcs.TrySetException(ex);
+                return ValueTask.FromResult(false);
             }
         }
 
@@ -90,21 +118,26 @@ namespace KdSoft.EtwEvents.EventSinks
         public async ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
             if (IsDisposed || RunTask.IsCompleted)
                 return false;
-            // if _currentBatch points to _pendingBatch, then clear it and add the new evtBatch
-            // to the end of _pendingBatch, then send _pendingBatch
-            var sendBatch = Interlocked.CompareExchange(ref _currentBatch, null, _pendingBatch);
-            if (object.ReferenceEquals(sendBatch, _pendingBatch)) {
-                sendBatch.Events.AddRange(evtBatch.Events);
-            }
-            else {
-                sendBatch = evtBatch;
-            }
+            try {
+                // if _currentBatch points to _pendingBatch, then clear it and add the new evtBatch
+                // to the end of _pendingBatch, then send _pendingBatch
+                var sendBatch = Interlocked.CompareExchange(ref _currentBatch, null, _pendingBatch);
+                if (object.ReferenceEquals(sendBatch, _pendingBatch)) {
+                    sendBatch.Events.AddRange(evtBatch.Events);
+                }
+                else {
+                    sendBatch = evtBatch;
+                }
 
-            await this._eventStream.RequestStream.WriteAsync(evtBatch).ConfigureAwait(false);
-            if (object.ReferenceEquals(sendBatch, _pendingBatch)) {
-                sendBatch.Events.Clear();
+                await this._eventStream.RequestStream.WriteAsync(evtBatch).ConfigureAwait(false);
+                if (object.ReferenceEquals(sendBatch, _pendingBatch)) {
+                    sendBatch.Events.Clear();
+                }
             }
-
+            catch (Exception ex) {
+                _tcs.TrySetException(ex);
+                return false;
+            }
             return true;
         }
     }
