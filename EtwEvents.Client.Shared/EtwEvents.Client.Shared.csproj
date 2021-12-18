@@ -2,12 +2,10 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>KdSoft.EtwEvents.Client</RootNamespace>
+    <AssemblyName>KdSoft.EtwEvents.Client.Shared</AssemblyName>
     <VersionPrefix>1.1.0</VersionPrefix>
     <LangVersion>Latest</LangVersion>
-    <Nullable>enable</Nullable>
-    <RootNamespace>KdSoft.EtwEvents.Client.Shared</RootNamespace>
-    <AssemblyName>KdSoft.EtwEvents.Client.Shared</AssemblyName>
-    <LangVersion>8.0</LangVersion>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 

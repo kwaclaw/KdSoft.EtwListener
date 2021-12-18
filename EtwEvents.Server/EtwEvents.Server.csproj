@@ -2,11 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>KdSoft.EtwEvents.Server</RootNamespace>
+    <AssemblyName>KdSoft.EtwEvents.Server</AssemblyName>
     <LangVersion>Latest</LangVersion>
     <Nullable>enable</Nullable>
     <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
-    <RootNamespace>KdSoft.EtwEvents.Server</RootNamespace>
-    <AssemblyName>KdSoft.EtwEvents.Server</AssemblyName>
     <UserSecretsId>1a425d07-8c1d-4f88-8c13-21e4525bb8e5</UserSecretsId>
   </PropertyGroup>
 

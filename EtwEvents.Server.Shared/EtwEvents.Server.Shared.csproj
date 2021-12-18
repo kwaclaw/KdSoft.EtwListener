@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>KdSoft.EtwEvents.Server</RootNamespace>
+    <AssemblyName>KdSoft.EtwEvents.Server.Shared</AssemblyName>
     <LangVersion>Latest</LangVersion>
     <Nullable>enable</Nullable>
   </PropertyGroup>
