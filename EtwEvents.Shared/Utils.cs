@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 
-namespace KdSoft.EtwEvents.Client
+namespace KdSoft.EtwEvents
 {
     public static class Utils
     {

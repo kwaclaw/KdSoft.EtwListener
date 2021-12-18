@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\EtwEvents.Protobuf.Shared\EtwEvents.Protobuf.Shared.csproj" />
+    <ProjectReference Include="..\EtwEvents.Shared\EtwEvents.Shared.csproj" />
   </ItemGroup>
 
 </Project>
