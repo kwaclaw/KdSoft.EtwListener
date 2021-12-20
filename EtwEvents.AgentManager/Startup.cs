@@ -205,6 +205,8 @@ namespace KdSoft.EtwEvents.AgentManager
             app.UseEndpoints(endpoints => {
                 endpoints.MapRazorPages();
                 endpoints.MapControllers();
+                //TODO enable when ready
+                //endpoints.MapGrpcService<gRPCSinkService>();
             });
 
             if (env.IsDevelopment()) {
@@ -217,13 +219,6 @@ namespace KdSoft.EtwEvents.AgentManager
                     //spa.UseProxyToSpaDevelopmentServer("http://localhost:41000");
                 });
             }
-
-            //TODO enable when ready
-            //app.UseEndpoints(endpoints => {
-            //    // Communication with gRPC endpoints must be made through a gRPC client.
-            //    // To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909
-            //    endpoints.MapGrpcService<gRPCSinkService>();
-            //});
         }
 
         /// <summary>
