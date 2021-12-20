@@ -6,78 +6,63 @@ using System.Threading;
 using System.Threading.Tasks;
 using KdSoft.EtwLogging;
 using Microsoft.Diagnostics.Tracing;
+using Microsoft.Extensions.Logging;
 
 namespace KdSoft.EtwEvents.Server
 {
     public class EventChannelManager {
+        readonly ILoggerFactory _loggerFactory;
         readonly object _eventChannelLock = new object();
         readonly object _failedEventChannelLock = new object();
-        readonly ArrayPool<(KeyValuePair<string, IEventChannel> channelEntry, ValueTask<bool> task)> _eventChannelTaskPool;
+        readonly ArrayPool<(KeyValuePair<string, EventChannel> channelEntry, ValueTask<bool> task)> _eventChannelTaskPool;
 
-        ImmutableDictionary<string, IEventChannel> _eventChannels;
-        ImmutableDictionary<string, IEventChannel> _failedEventChannels;
+        ImmutableDictionary<string, EventChannel> _eventChannels;
+        ImmutableDictionary<string, EventChannel> _failedEventChannels;
         CancellationTokenSource? _stoppingTokenSource;
 
-        public IImmutableDictionary<string, IEventChannel> ActiveEventChannels => _eventChannels;
-        public IImmutableDictionary<string, IEventChannel> FailedEventChannels => _failedEventChannels;
+        public IImmutableDictionary<string, EventChannel> ActiveEventChannels => _eventChannels;
+        public IImmutableDictionary<string, EventChannel> FailedEventChannels => _failedEventChannels;
 
-        public EventChannelManager() {
-            this._eventChannels = ImmutableDictionary<string, IEventChannel>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
-            this._failedEventChannels = ImmutableDictionary<string, IEventChannel>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
-            this._eventChannelTaskPool = ArrayPool<(KeyValuePair<string, IEventChannel>, ValueTask<bool>)>.Create();
+        public EventChannelManager(ILoggerFactory loggerFactory) {
+            this._loggerFactory = loggerFactory;
+            this._eventChannels = ImmutableDictionary<string, EventChannel>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
+            this._failedEventChannels = ImmutableDictionary<string, EventChannel>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
+            this._eventChannelTaskPool = ArrayPool<(KeyValuePair<string, EventChannel>, ValueTask<bool>)>.Create();
         }
 
-        public void AddTransient(string name, IEventSink sink) {
-            IEventChannel channel;
-            lock (_eventChannelLock)
+        /// <summary>
+        /// Adds new <see cref="EventChannel"/> to set of active channels.
+        /// </summary>
+        /// <typeparam name="T">(Sub)Type of EventChannel.</typeparam>
+        /// <param name="name">Name of EventChannel.</param>
+        /// <param name="sink">Event sink that the channel has to use.</param>
+        /// <param name="createChannel">Callback to create a new EventChannel instance, or clone from an existing one.</param>
+        /// <returns>Newly added EventChannel.</returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public T AddChannel<T>(string name, IEventSink sink, Func<IEventSink, T?, T> createChannel) where T: EventChannel {
+            T newChannel;
+            lock (_eventChannelLock) {
+                if (_eventChannels.ContainsKey(name)) {
+                    throw new InvalidOperationException($"Event sink {name} already exists.");
+                }
                 lock (_failedEventChannelLock) {
-                    if (_failedEventChannels.TryGetValue(name, out var failedChannel)) {
-                        channel = failedChannel.Clone(sink);
+                    if (_failedEventChannels.TryGetValue(name, out var eventChannel)) {
+                        if (eventChannel.GetType() != typeof(T))
+                            eventChannel = null;
                     }
-                    var channel = new
+                    newChannel = createChannel(sink, (T?)eventChannel);
+                    _failedEventChannels.Remove(name);
+                    _eventChannels = _eventChannels.Add(name, newChannel);
+                }
+            }
+            return newChannel;
         }
 
-            /// <summary>
-            /// Adds new <see cref="IEventChannel"/> to processing loop. 
-            /// </summary>
-            /// <param name="name">Name associated with <see cref="IEventChannel">.</param>
-            /// <param name="channel">New <see cref="IEventChannel"></see> to add.</param>
-            /// <remarks>The event sink must have been initialized already!.</remarks>
-            public void AddEventChannel(string name, IEventChannel channel) {
-            // We use a lock here to prevent race conditions, so that
-            // if two concurrent updates happen, none will get lost.
-            lock (_eventChannelLock) {
-                this._eventChannels = this._eventChannels.Add(name, channel);
-            }
-        }
+        //TODO still need to start processing on the new channel, and need to set up failure/closing handling
+        // Remove: means remove channel and close event sink
+        // Channel failure means: remove channel, close/dispose event sink
+        // Event sink RunTask completion means: remove channel, close/dispose event sink if necessary
 
-        /// <summary>
-        /// Adds new <see cref="IEventChannel"/> to processing loop. 
-        /// </summary>
-        /// <param name="channelEntries">New named <see cref="IEventChannel">event sinks</see> to add.</param>
-        /// <remarks>The event sinks must have been initialized already!.</remarks>
-        public void AddEventChannels(IEnumerable<KeyValuePair<string, IEventChannel>> channelEntries) {
-            // We use a lock here to prevent race conditions, so that
-            // if two concurrent updates happen, none will get lost.
-            lock (_eventChannelLock) {
-                this._eventChannels = this._eventChannels.AddRange(channelEntries);
-            }
-        }
-
-        /// <summary>
-        /// Removes <see cref="IEventChannel"/> instance by name from processing loop.
-        /// </summary>
-        /// <param name="name">Name of <see cref="IEventChannel"/> instance.</param>
-        /// <returns><c>true></c> if event channel was found and removed, <c>false</c> otherwise.</returns>
-        public bool DeleteEventChannel(string name) {
-            // We use a lock here to prevent race conditions, so that
-            // if two concurrent updates happen, none will get lost.
-            lock (_eventChannelLock) {
-                var oldEventChannels = this._eventChannels;
-                this._eventChannels = oldEventChannels.Remove(name);
-                return !object.ReferenceEquals(oldEventChannels, this._eventChannels);
-            }
-        }
 
         /// <summary>
         /// Removes <see cref="IEventChannel"/> instance by name from processing loop.
@@ -85,52 +70,16 @@ namespace KdSoft.EtwEvents.Server
         /// <param name="name">Name of <see cref="IEventChannel"/>.</param>
         /// <returns>The <see cref="IEventChannel"/> instance that was removed, or <c>null</c> if it was not found.</returns>
         /// <remarks>It is the responsibility of the caller to dispose the <see cref="IEventChannel"/> instance!</remarks>
-        public IEventChannel? RemoveEventChannel(string name) {
+        public EventChannel? RemoveChannel(string name) {
             // We use a lock here to prevent race conditions, so that
             // if two concurrent updates happen, none will get lost.
-            IEventChannel? result = null;
+            EventChannel? result = null;
             lock (_eventChannelLock) {
                 var oldEventChannels = this._eventChannels;
                 if (oldEventChannels.TryGetValue(name, out result))
                     this._eventChannels = oldEventChannels.Remove(name);
             }
             return result;
-        }
-
-        /// <summary>
-        /// Removes <see cref="IEventChannel"/> instances by name from processing loop.
-        /// </summary>
-        /// <param name="names">Names of <see cref="IEventChannel"/> instances to remove.</param>
-        public void DeleteEventChannels(IEnumerable<string> names) {
-            // We use a lock here to prevent race conditions, so that
-            // if two concurrent updates happen, none will get lost.
-            lock (_eventChannelLock) {
-                var oldEventChannels = this._eventChannels;
-                this._eventChannels = oldEventChannels.RemoveRange(names);
-            }
-        }
-
-        /// <summary>
-        /// Removes <see cref="IEventChannel"/> instances from processing loop.
-        /// </summary>
-        /// <param name="names">Names of <see cref="IEventChannel">event sinks</see>/to remove.</param>
-        /// <returns>The <see cref="IEventChannel"/> instances that were removed, or an empty collection if none were found.</returns>
-        /// <remarks>It is the responsibility of the caller to dispose the <see cref="IEventChannel"/> instances!</remarks>
-        public IEnumerable<IEventChannel> RemoveEventChannels(IEnumerable<string> names) {
-            if (names == null)
-                throw new ArgumentNullException(nameof(names));
-            // We use a lock here to prevent race conditions, so that
-            // if two concurrent updates happen, none will get lost.
-            var oldChannels = new List<IEventChannel>();
-            lock (_eventChannelLock) {
-                var oldEventChannels = this._eventChannels;
-                foreach (var name in names) {
-                    if (oldEventChannels.TryGetValue(name, out var oldSink))
-                        oldChannels.Add(oldSink);
-                }
-                this._eventChannels = oldEventChannels.RemoveRange(names);
-            }
-            return oldChannels;
         }
 
         /// <summary>
@@ -155,52 +104,32 @@ namespace KdSoft.EtwEvents.Server
             return oldChannels;
         }
 
-        public (IImmutableDictionary<string, IEventChannel> active, IImmutableDictionary<string, (string, Exception)> failed) ClearEventChannels() {
+        public (IImmutableDictionary<string, EventChannel> active, IImmutableDictionary<string, EventChannel> failed) ClearEventChannels() {
             lock (_eventChannelLock) {
                 var active = this._eventChannels;
                 var failed = this._failedEventChannels;
-                this._eventChannels = ImmutableDictionary<string, IEventChannel>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
-                this._failedEventChannels = ImmutableDictionary<string, (string, Exception)>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
+                this._eventChannels = ImmutableDictionary<string, EventChannel>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
+                this._failedEventChannels = ImmutableDictionary<string, EventChannel>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
                 return (active, failed);
             }
         }
 
         // Note: Disposes of IEventSinkChannel instance
-        public async Task<bool> CloseEventChannel(string name, IEventChannel channel) {
-            bool removed = DeleteEventChannel(name);
+        public async Task<bool> CloseEventChannel(string name, EventChannel channel) {
+            var oldChannel = RemoveChannel(name);
             // must not throw!
             await channel.DisposeAsync().ConfigureAwait(false);
-            return removed;
+            return object.ReferenceEquals(oldChannel, channel);
         }
 
         // Note: Disposes of failed IEventSinkChannel instance
-        public async Task HandleFailedEventChannel(string name, IEventChannel channel, Exception ex) {
+        public async Task HandleFailedEventChannel(string name, EventChannel channel, Exception ex) {
             var removed = await CloseEventChannel(name, channel).ConfigureAwait(false);
             if (removed) {
-                var failedType = channel.GetType().Name;
                 lock (_failedEventChannelLock) {
-                    this._failedEventChannels = this._failedEventChannels.SetItem(name, (failedType, ex));
+                    this._failedEventChannels = this._failedEventChannels.SetItem(name, channel);
                 }
             }
-        }
-
-        async Task<bool> CheckEventSinkWriteTasks((KeyValuePair<string, IEventChannel> sinkEntry, ValueTask<bool> task)[] taskList, int taskCount) {
-            var result = true;
-            for (int indx = 0; indx < taskCount; indx++) {
-                var (sinkEntry, task) = taskList[indx];
-                try {
-                    var success = await task.ConfigureAwait(false);
-                    // we assume that the IEventSink.RunTask is now complete and the event sink will be closed
-                    if (!success) {
-                        result = false;
-                    }
-                }
-                catch (Exception ex) {
-                    await HandleFailedEventChannel(sinkEntry.Key, sinkEntry.Value, ex).ConfigureAwait(false);
-                    result = false;
-                }
-            }
-            return result;
         }
 
         public void PostEvent(TraceEvent evt) {
