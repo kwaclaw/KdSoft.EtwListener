@@ -32,7 +32,7 @@ namespace KdSoft.EtwEvents.Server
             this._lastWrittenMSecs = Environment.TickCount;
         }
 
-        public TransientEventChannel(
+        TransientEventChannel(
             IEventSink sink,
             ILogger logger,
             int batchSize = 100,
@@ -68,7 +68,11 @@ namespace KdSoft.EtwEvents.Server
             }
         }
 
-        public override async Task ProcessBatches(CancellationToken stoppingToken) {
+        /// <summary>
+        /// Processes events written to the channel.
+        /// </summary>
+        /// <param name="stoppingToken">CancellationToken to use for stopping the channel.</param>
+        protected override async Task ProcessBatches(CancellationToken stoppingToken) {
             bool isCompleted;
 
             using (_timer = new Timer(TimerCallback)) {
@@ -111,9 +115,30 @@ namespace KdSoft.EtwEvents.Server
 
             }
             _timer = null;
+
+            await _sink.RunTask.ConfigureAwait(false);
         }
 
-        public override EventChannel Clone(IEventSink sink, int? batchSize = null, int? maxWriteDelayMSecs = null) {
+        Task _runTask;
+        public override Task RunTask => _runTask;
+
+        public override async ValueTask DisposeAsync() {
+            try {
+                _channel.Writer.TryComplete();
+                await _channel.Reader.Completion.ConfigureAwait(false);
+                await base.DisposeAsync().ConfigureAwait(false);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error closing event channel.");
+            }
+        }
+
+        public override EventChannel Clone(
+            IEventSink sink,
+            CancellationToken stoppingToken,
+            int? batchSize = null,
+            int? maxWriteDelayMSecs = null
+        ) {
             var result = new TransientEventChannel(
                 sink,
                 this._logger,
@@ -122,6 +147,19 @@ namespace KdSoft.EtwEvents.Server
                 this._channel,
                 this._etwEventPool
             );
+            result._runTask = result.ProcessBatches(stoppingToken);
+            return result;
+        }
+
+        public static TransientEventChannel Start(
+            IEventSink sink,
+            ILogger logger,
+            CancellationToken stoppingToken,
+            int batchSize = 100,
+            int maxWriteDelayMSecs = 400
+        ) {
+            var result = new TransientEventChannel(sink, logger, batchSize, maxWriteDelayMSecs);
+            result._runTask = result.ProcessBatches(stoppingToken);
             return result;
         }
     }

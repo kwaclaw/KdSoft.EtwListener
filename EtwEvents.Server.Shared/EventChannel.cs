@@ -15,7 +15,7 @@ namespace KdSoft.EtwEvents.Server
         protected int _maxWriteDelayMSecs;
         protected Timer? _timer;
 
-        public EventChannel(
+        protected EventChannel(
             IEventSink sink,
             ILogger logger,
             int batchSize,
@@ -39,7 +39,10 @@ namespace KdSoft.EtwEvents.Server
             return result;
         }
 
+        protected abstract Task ProcessBatches(CancellationToken stoppingToken);
+
         public virtual ValueTask DisposeAsync() {
+            _timer?.Dispose();
             return _sink.DisposeAsync();
         }
 
@@ -64,7 +67,7 @@ namespace KdSoft.EtwEvents.Server
         }
 
         public abstract void PostEvent(TraceEvent evt);
-        public abstract Task ProcessBatches(CancellationToken stoppingToken);
-        public abstract EventChannel Clone(IEventSink sink, int? batchSize = null, int? maxWriteDelayMSecs = null);
+        public abstract Task RunTask { get; }  // set to return value of ProcessBatches
+        public abstract EventChannel Clone(IEventSink sink, CancellationToken stoppingToken, int? batchSize = null, int? maxWriteDelayMSecs = null);
     }
 }

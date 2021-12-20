@@ -39,7 +39,7 @@ namespace KdSoft.EtwEvents.Server
             this._lastWrittenMSecs = Environment.TickCount;
         }
 
-        public PersistentEventChannel(
+        PersistentEventChannel(
             IEventSink sink,
             ILogger logger,
             string filePath,
@@ -102,7 +102,7 @@ namespace KdSoft.EtwEvents.Server
             }
         }
 
-        public override async Task ProcessBatches(CancellationToken stoppingToken) {
+        protected override async Task ProcessBatches(CancellationToken stoppingToken) {
             await Task.Yield();
 
             using var reader = _channel.GetNewReader();
@@ -137,15 +137,38 @@ namespace KdSoft.EtwEvents.Server
                             reader.Truncate();
                             await _channel.CommitAsync(default).ConfigureAwait(false);
                         }
+                        else { // event sink failed or closed
+                            break;
+                        }
                     }
 
                 } while (!stoppingToken.IsCancellationRequested);
 
             }
             _timer = null;
+
+            await _sink.RunTask.ConfigureAwait(false);
         }
 
-        public override EventChannel Clone(IEventSink sink, int? batchSize = null, int? maxWriteDelayMSecs = null) {
+        Task _runTask;
+        public override Task RunTask => _runTask;
+
+        public override async ValueTask DisposeAsync() {
+            try {
+                _channel.Dispose();
+                await base.DisposeAsync().ConfigureAwait(false);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error closing event channel.");
+            }
+        }
+
+        public override EventChannel Clone(
+            IEventSink sink,
+            CancellationToken stoppingToken,
+            int? batchSize = null,
+            int? maxWriteDelayMSecs = null
+        ) {
             var result = new PersistentEventChannel(
                 sink,
                 this._logger,
@@ -155,6 +178,20 @@ namespace KdSoft.EtwEvents.Server
                 this._etwEventPool,
                 this._bufferWriter
             );
+            result._runTask = result.ProcessBatches(stoppingToken);
+            return result;
+        }
+
+        public static PersistentEventChannel Start(
+            IEventSink sink,
+            ILogger logger,
+            CancellationToken stoppingToken,
+            string filePath,
+            int batchSize = 100,
+            int maxWriteDelayMSecs = 400
+        ) {
+            var result = new PersistentEventChannel(sink, logger, filePath, batchSize, maxWriteDelayMSecs);
+            result._runTask = result.ProcessBatches(stoppingToken);
             return result;
         }
     }
