@@ -44,6 +44,13 @@ message EventSinkProfile {
   string options = 4;
   // JSON representation
   string credentials = 5;
+  bool persistent_channel = 6;
+  uint32 batch_size = 7;
+  uint32 max_write_delay_mSecs = 8;
+}
+
+message EventSinkProfiles {
+  repeated EventSinkProfile profiles = 1;
 }
 
 message EventSinkState {
@@ -70,7 +77,7 @@ message AgentState {
   repeated ProviderSetting enabled_providers = 6;
 
   ProcessingState processing_state = 7;
-  EventSinkState event_sink = 8;
+  repeated EventSinkState event_sinks = 8;
 }
 
 message AgentStates {
@@ -110,8 +117,6 @@ message FilterSource {
 }
 
 message ProcessingState {
-  int32 batch_size = 1;
-  int32 max_write_delay_mSecs = 2;
   FilterSource filter_source = 3;
 }
 
@@ -121,8 +126,6 @@ message EventSessionState {
 }
 
 message ProcessingOptions {
-  int32 batch_size = 1;
-  int32 max_write_delay_mSecs = 2;
   Filter filter = 3;
 }
 

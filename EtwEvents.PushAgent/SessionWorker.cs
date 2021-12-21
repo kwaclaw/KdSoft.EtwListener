@@ -8,7 +8,6 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Protobuf.Collections;
-using KdSoft.EtwEvents.Client;
 using KdSoft.EtwEvents.Server;
 using KdSoft.EtwLogging;
 using Microsoft.CodeAnalysis;
@@ -30,17 +29,13 @@ namespace KdSoft.EtwEvents.PushAgent
         readonly ILoggerFactory _loggerFactory;
 
         readonly ILogger<SessionWorker> _logger;
-        readonly EventSinkHolder _sinkHolder;
+        readonly EventProcessor _eventProcessor;
         readonly JsonSerializerOptions _jsonOptions;
 
         public SessionConfig SessionConfig => _sessionConfig;
 
         RealTimeTraceSession? _session;
         public RealTimeTraceSession? Session => _session;
-
-        PersistentEventProcessor? _processor;
-
-        public Exception? EventSinkError => _sinkHolder.FailedEventSinks.FirstOrDefault().Value.error;
 
         public SessionWorker(
             SessionConfig sessionConfig,
@@ -56,7 +51,7 @@ namespace KdSoft.EtwEvents.PushAgent
             this._loggerFactory = loggerFactory;
 
             _logger = loggerFactory.CreateLogger<SessionWorker>();
-            _sinkHolder = new EventSinkHolder();
+            _eventProcessor = new EventProcessor();
             _jsonOptions = new JsonSerializerOptions {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                 AllowTrailingCommas = true,
@@ -229,12 +224,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 ses.SetFilter(null, _config);
             }
 
-            var oldBatchSize = _processor?.ChangeBatchSize(options.BatchSize) ?? -1;
-            var oldMaxWriteDelay = _processor?.ChangeWriteDelay(options.MaxWriteDelayMSecs) ?? -1;
-
             var processingState = new ProcessingState {
-                BatchSize = options.BatchSize,
-                MaxWriteDelayMSecs = options.MaxWriteDelayMSecs,
                 FilterSource = result.FilterSource,
             };
             bool saveFilterSource = result.Diagnostics.Count == 0;  // also true when clearing filter
@@ -245,6 +235,9 @@ namespace KdSoft.EtwEvents.PushAgent
         #endregion
 
         #region Event Sink
+
+        public IImmutableDictionary<string, EventChannel> ActiveEventChannels => _eventProcessor.ActiveEventChannels;
+        public IImmutableDictionary<string, EventChannel> FailedEventChannels => _eventProcessor.FailedEventChannels;
 
         async Task<IEventSinkFactory?> LoadSinkFactory(string sinkType, string version) {
             // One can initiate unloading of the CollectibleAssemblyLoadContext by either calling its Unload method
@@ -268,42 +261,50 @@ namespace KdSoft.EtwEvents.PushAgent
             return await sinkFactory.Create(sinkProfile.Options, sinkProfile.Credentials, logger).ConfigureAwait(false);
         }
 
-        Task ConfigureEventSinkClosure(string name, IEventSink sink) {
-            return sink.RunTask.ContinueWith(async rt => {
-                if (rt.Exception != null) {
-                    await _sinkHolder.HandleFailedEventSink(name, sink, rt.Exception).ConfigureAwait(false);
+        public async Task<bool> CloseEventChannel(string name) {
+            if (_eventProcessor.ActiveEventChannels.TryGetValue(name, out var channel)) {
+                await channel.DisposeAsync().ConfigureAwait(false);
+                return true;
+            }
+            _sessionConfig.DeleteSinkProfile(name);
+            return false;
+        }
+
+        public async Task UpdateEventChannel(EventSinkProfile sinkProfile) {
+            if (_eventProcessor.ActiveEventChannels.TryGetValue(sinkProfile.Name, out var channel)) {
+                var batchSize = sinkProfile.BatchSize == 0 ? 100 : sinkProfile.BatchSize;
+                var maxWriteDelayMSecs = sinkProfile.MaxWriteDelayMSecs == 0 ? 400 : sinkProfile.MaxWriteDelayMSecs;
+                channel.ChangeBatchSize(batchSize);
+                channel.ChangeWriteDelay(maxWriteDelayMSecs);
+                return;
+            }
+
+            EventChannel CreateChannel(IEventSink eventSink) {
+                var batchSize = sinkProfile.BatchSize == 0 ? 100 : sinkProfile.BatchSize;
+                var maxWriteDelayMSecs = sinkProfile.MaxWriteDelayMSecs == 0 ? 400 : sinkProfile.MaxWriteDelayMSecs;
+
+                if (sinkProfile.PersistentChannel) {
+                    var persistentLogger = _loggerFactory.CreateLogger<PersistentEventChannel>();
+                    //TODO how to determine filePath based on event sink type, name and _eventQueueOptions.Value.FilePath/Directory
+                    return PersistentEventChannel.Create(eventSink, persistentLogger, _eventQueueOptions.Value.FilePath, batchSize, maxWriteDelayMSecs);
                 }
                 else {
-                    await _sinkHolder.CloseEventSink(name, sink).ConfigureAwait(false);
-                }
-            }, TaskScheduler.Default);
-        }
-
-        async Task CloseEventSinks() {
-            var (activeSinks, failedSinks) = _sinkHolder.ClearEventSinks();
-            var disposeEntries = activeSinks.Select(sink => (sink.Key, _sinkHolder.CloseEventSink(sink.Key, sink.Value))).ToArray();
-            foreach (var disposeEntry in disposeEntries) {
-                try {
-                    await disposeEntry.Item2.ConfigureAwait(false);
-                }
-                catch (Exception ex) {
-                    _logger.LogError(ex, "Error closing event sink '{eventSink}'.", disposeEntry.Key);
+                    var transientLogger = _loggerFactory.CreateLogger<TransientEventChannel>();
+                    return TransientEventChannel.Create(eventSink, transientLogger, batchSize, maxWriteDelayMSecs);
                 }
             }
-        }
 
-        public async Task UpdateEventSink(EventSinkProfile sinkProfile) {
-            // since we only have one event sink we can close them all
-            await CloseEventSinks().ConfigureAwait(false);
-
+            EventChannel? newChannel = null;
             var sink = await CreateEventSink(sinkProfile).ConfigureAwait(false);
             try {
-                _sinkHolder.AddEventSink(sinkProfile.Name, sink);
-                var closureTask = ConfigureEventSinkClosure(sinkProfile.Name, sink);
+                newChannel = _eventProcessor.AddChannel(sinkProfile.Name, sink, CreateChannel);
                 _sessionConfig.SaveSinkProfile(sinkProfile);
             }
             catch (Exception ex) {
                 await sink.DisposeAsync().ConfigureAwait(false);
+                if (newChannel != null) {
+                    await newChannel.DisposeAsync().ConfigureAwait(false);
+                }
                 _logger.LogError(ex, "Error updating event sink '{eventSink}'.", sinkProfile.Name);
                 throw;
             }
@@ -347,31 +348,13 @@ namespace KdSoft.EtwEvents.PushAgent
                     session.EnableProvider(setting);
                 }
 
-                if (_sessionConfig.SinkProfileAvailable) {
-                    await UpdateEventSink(_sessionConfig.SinkProfile!).ConfigureAwait(false);
+                foreach (var profile in _sessionConfig.SinkProfiles) {
+                    await UpdateEventChannel(profile).ConfigureAwait(false);
                 }
-                try {
-                    async ValueTask<bool> writeBatch(EtwEventBatch batch) {
-                        bool success = await _sinkHolder.ProcessEventBatch(batch).ConfigureAwait(false);
-                        return success;
-                    }
 
-                    var processorLogger = _loggerFactory.CreateLogger<PersistentEventProcessor>();
-                    using var processor = new PersistentEventProcessor(
-                        writeBatch,
-                        _eventQueueOptions.Value.FilePath,
-                        processorLogger,
-                        _sessionConfig.State.ProcessingState?.BatchSize ?? 100,
-                        _sessionConfig.State.ProcessingState?.MaxWriteDelayMSecs ?? 400
-                    );
-                    this._processor = processor;
-                    _logger.LogInformation("SessionWorker started.");
-                    await processor.Process(session, stoppingToken).ConfigureAwait(false);
-                }
-                finally {
-                    this._processor = null;
-                    await CloseEventSinks().ConfigureAwait(false);
-                }
+                var processingTask = _eventProcessor.Process(session, stoppingToken);
+                _logger.LogInformation("SessionWorker started.");
+                await processingTask.ConfigureAwait(false);
             }
             catch (OperationCanceledException) {
                 _logger.LogInformation("SessionWorker stopped.");

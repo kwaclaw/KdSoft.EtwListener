@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Net;
@@ -12,6 +13,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Protobuf;
+using KdSoft.EtwEvents.Server;
 using KdSoft.EtwLogging;
 using LaunchDarkly.EventSource;
 using Microsoft.Extensions.DependencyInjection;
@@ -139,8 +141,6 @@ namespace KdSoft.EtwEvents.PushAgent
                     if (worker == null) {
                         filterResult = SessionWorker.TestFilter(processingOptions.Filter ?? new Filter());
                         var processingState = new ProcessingState {
-                            BatchSize = processingOptions.BatchSize,
-                            MaxWriteDelayMSecs = processingOptions.MaxWriteDelayMSecs,
                             FilterSource = filterResult.FilterSource,
                         };
                         bool saveFilterSource = filterResult.Diagnostics.Count == 0; // also true when clearing filter
@@ -167,7 +167,19 @@ namespace KdSoft.EtwEvents.PushAgent
                         _sessionConfig.SaveSinkProfile(sinkProfile);
                     }
                     else {
-                        await worker.UpdateEventSink(sinkProfile).ConfigureAwait(false);
+                        await worker.UpdateEventChannel(sinkProfile).ConfigureAwait(false);
+                    }
+                    await SendStateUpdate().ConfigureAwait(false);
+                    break;
+                case "CloseEventSink":
+                    var sinkName = sse.Data;
+                    if (sinkName == null)
+                        return;
+                    if (worker == null) {
+                        _sessionConfig.DeleteSinkProfile(sinkName);
+                    }
+                    else {
+                        await worker.CloseEventChannel(sinkName).ConfigureAwait(false);
                     }
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
@@ -197,15 +209,34 @@ namespace KdSoft.EtwEvents.PushAgent
             return PostMessage(path, httpContent);
         }
 
+        EventSinkState[] GetEventSinkStates() {
+            var profiles = _sessionConfig.SinkProfiles;
+            var result = new EventSinkState[profiles.Count];
+            var failedChannels = SessionWorker?.FailedEventChannels ?? ImmutableDictionary<string, EventChannel>.Empty;
+
+            for (int indx = 0; indx < profiles.Count; indx++) {
+                var profile = profiles[indx];
+                Exception? sinkError = null;
+                if (failedChannels.TryGetValue(profile.Name, out var failed)) {
+                    sinkError = failed.RunTask?.Exception;
+                }
+                var state = new EventSinkState { Profile = profile };
+                if (sinkError != null)
+                    state.Error = sinkError.GetBaseException().Message;
+                result[indx] = state;
+            }
+            return result;
+        }
+
         Task SendStateUpdate() {
             var ses = SessionWorker?.Session;
             ImmutableList<ProviderSetting> enabledProviders;
-            var eventSinkState = new EventSinkState { Profile = _sessionConfig.SinkProfile };
+
+            var eventSinkStates = GetEventSinkStates();
 
             var isRunning = _sessionWorkerAvailable != 0;
             if (isRunning && SessionWorker != null) {
                 enabledProviders = ses?.EnabledProviders.ToImmutableList() ?? ImmutableList<EtwLogging.ProviderSetting>.Empty;
-                eventSinkState.Error = SessionWorker.EventSinkError?.Message ?? string.Empty;
             }
             else {
                 enabledProviders = _sessionConfig.State.ProviderSettings.ToImmutableList();
@@ -227,7 +258,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 Site = clientCert?.GetNameInfo(X509NameType.SimpleName, false) ?? "<Undefined>",
                 IsRunning = isRunning,
                 IsStopped = !isRunning,
-                EventSink = eventSinkState,
+                EventSinks = { eventSinkStates },
                 ProcessingState = processingState,
             };
             return PostProtoMessage("Agent/UpdateState", state);
@@ -346,7 +377,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 return false;
             await oldWorker.StopAsync(cancelToken).ConfigureAwait(false);
 
-            // the continuation of oldWorker.ExecuteTask with clean up the scope
+            // the continuation of oldWorker.ExecuteTask will clean up the scope
             return true;
         }
 

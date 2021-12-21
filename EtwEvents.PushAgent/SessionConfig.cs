@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Google.Protobuf;
+using Google.Protobuf.Collections;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -15,7 +16,6 @@ namespace KdSoft.EtwEvents.PushAgent
         readonly JsonFormatter _jsonFormatter;
 
         bool _stateAvailable;
-        bool _sinkProfileAvailable;
 
         public SessionConfig(HostBuilderContext context, ILogger<SessionConfig> logger) {
             this._context = context;
@@ -24,23 +24,18 @@ namespace KdSoft.EtwEvents.PushAgent
             _jsonFormatter = new JsonFormatter(jsonSettings);
 
             LoadSessionState();
-            LoadSinkProfile();
+            LoadSinkProfiles();
         }
 
         public JsonFormatter JsonFormatter => _jsonFormatter;
 
+        #region SessionState
+
+        string EventSessionStatePath => Path.Combine(_context.HostingEnvironment.ContentRootPath, "eventSession.json");
+
         EventSessionState _sessionState = new();
         public EventSessionState State => _sessionState;
         public bool StateAvailable => _stateAvailable;
-
-        EventSinkProfile? _sinkProfile;
-        public EventSinkProfile? SinkProfile => _sinkProfile;
-        public bool SinkProfileAvailable => _sinkProfileAvailable;
-
-        #region Load and Save Options
-
-        string EventSessionStatePath => Path.Combine(_context.HostingEnvironment.ContentRootPath, "eventSession.json");
-        string EventSinkOptionsPath => Path.Combine(_context.HostingEnvironment.ContentRootPath, "eventSink.json");
 
         public bool LoadSessionState() {
             try {
@@ -73,35 +68,60 @@ namespace KdSoft.EtwEvents.PushAgent
             }
         }
 
-        public bool LoadSinkProfile() {
+        #endregion
+
+        #region EventSinkProfile
+
+        string EventSinkOptionsPath => Path.Combine(_context.HostingEnvironment.ContentRootPath, "eventSink.json");
+
+        List<EventSinkProfile> _sinkProfiles = new List<EventSinkProfile>();
+        public IReadOnlyList<EventSinkProfile> SinkProfiles => _sinkProfiles;
+
+        public bool LoadSinkProfiles() {
             try {
                 var sinkOptionsJson = File.ReadAllText(EventSinkOptionsPath);
-                _sinkProfile = string.IsNullOrWhiteSpace(sinkOptionsJson)
-                    ? new EventSinkProfile()
-                    : EventSinkProfile.Parser.ParseJson(sinkOptionsJson);
-                _sinkProfileAvailable = true;
+                _sinkProfiles = string.IsNullOrWhiteSpace(sinkOptionsJson)
+                    ? new List<EventSinkProfile>()
+                    : new List<EventSinkProfile>(EventSinkProfiles.Parser.ParseJson(sinkOptionsJson).Profiles);
                 return true;
             }
             catch (Exception ex) {
-                _sinkProfile = new EventSinkProfile();
+                _sinkProfiles = new List<EventSinkProfile>();
                 _logger.LogError(ex, "Error loading event sink options.");
-                _sinkProfileAvailable = false;
                 return false;
             }
         }
 
-        public bool SaveSinkProfile(EventSinkProfile profile) {
+        public bool SaveSinkProfiles(IList<EventSinkProfile> profiles) {
             try {
-                var json = _jsonFormatter.Format(profile);
+                var json = _jsonFormatter.Format(new EventSinkProfiles { Profiles = { profiles } });
                 File.WriteAllText(EventSinkOptionsPath, json);
-                _sinkProfile = profile;
-                _sinkProfileAvailable = true;
+                _sinkProfiles = new List<EventSinkProfile>(profiles);
                 return true;
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Error saving event sink options.");
                 return false;
             }
+        }
+
+        public bool SaveSinkProfile(EventSinkProfile profile) {
+            var profileIndex = _sinkProfiles.FindIndex(p => string.Equals(p.Name, profile.Name, StringComparison.CurrentCultureIgnoreCase));
+            if (profileIndex >= 0) {
+                _sinkProfiles[profileIndex] = profile;
+            }
+            else {
+                _sinkProfiles.Add(profile);
+            }
+            return SaveSinkProfiles(_sinkProfiles);
+        }
+
+        public bool DeleteSinkProfile(string profileName) {
+            var profileIndex = _sinkProfiles.FindIndex(p => string.Equals(p.Name, profileName, StringComparison.CurrentCultureIgnoreCase));
+            if (profileIndex >= 0) {
+                _sinkProfiles.RemoveAt(profileIndex);
+            }
+            return SaveSinkProfiles(_sinkProfiles);
         }
 
         #endregion
@@ -121,8 +141,6 @@ namespace KdSoft.EtwEvents.PushAgent
 
         public bool SaveProcessingState(ProcessingState state, bool updateFilterSource) {
             LoadSessionState();
-            _sessionState.ProcessingState.BatchSize = state.BatchSize;
-            _sessionState.ProcessingState.MaxWriteDelayMSecs = state.MaxWriteDelayMSecs;
             if (updateFilterSource) {
                 _sessionState.ProcessingState.FilterSource = state.FilterSource;
             }
