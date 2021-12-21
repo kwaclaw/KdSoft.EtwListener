@@ -217,8 +217,6 @@ namespace KdSoft.EtwEvents.AgentManager
                 ? new Filter()  // we are clearing the filter
                 : FilterHelper.MergeFilterTemplate(dynamicParts); // WE are supplying the filter template
             var processingOptions = new ProcessingOptions {
-                BatchSize = optionsObj.GetProperty("batchSize").GetInt32(),
-                MaxWriteDelayMSecs = optionsObj.GetProperty("maxWriteDelayMSecs").GetInt32(),
                 Filter = filter
             };
             var json = _jsonFormatter.Format(processingOptions);

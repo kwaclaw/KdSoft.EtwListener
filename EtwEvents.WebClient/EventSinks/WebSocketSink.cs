@@ -23,7 +23,7 @@ namespace KdSoft.EtwEvents.WebClient.EventSinks
         CancellationToken _cancelToken;
 
         Task<bool> _receiveTask = Task.FromResult(false);
-        public Task RunTask => _receiveTask;
+        public Task<bool> RunTask => _receiveTask;
 
         public WebSocketSink(WebSocket webSocket) {
             this._webSocket = webSocket;

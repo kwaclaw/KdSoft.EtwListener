@@ -17,7 +17,7 @@ using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
-using shared = KdSoft.EtwEvents.Client;
+using shared = KdSoft.EtwEvents;
 
 namespace KdSoft.EtwEvents.WebClient
 {
@@ -108,8 +108,8 @@ namespace KdSoft.EtwEvents.WebClient
         async Task<IEventSink> CreateEventSink(EventSinkProfile request, EventSinkHolder holder) {
             IEventSink result;
             switch (request.SinkType) {
-                case nameof(DummySink):
-                    result = new DummySink();
+                case nameof(NullSink):
+                    result = new NullSink();
                     break;
                 default:
                     var factory = _evtSinkService.LoadEventSinkFactory(request.SinkType);
