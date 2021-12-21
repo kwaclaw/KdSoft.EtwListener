@@ -12,15 +12,15 @@ namespace KdSoft.EtwEvents.Server
         protected readonly IEventSink _sink;
         protected readonly ILogger _logger;
 
-        protected int _batchSize;
-        protected int _maxWriteDelayMSecs;
+        protected uint _batchSize;
+        protected uint _maxWriteDelayMSecs;
         protected Timer? _timer;
 
         protected EventChannel(
             IEventSink sink,
             ILogger logger,
-            int batchSize,
-            int maxWriteDelayMSecs
+            uint batchSize,
+            uint maxWriteDelayMSecs
         ) {
             this._sink = sink;
             this._logger = logger;
@@ -51,7 +51,7 @@ namespace KdSoft.EtwEvents.Server
         /// </summary>
         /// <param name="newBatchSize">New batch size.</param>
         /// <returns>Old batch size.</returns>
-        public virtual int ChangeBatchSize(int newBatchSize) {
+        public virtual uint ChangeBatchSize(uint newBatchSize) {
             return Interlocked.Exchange(ref _batchSize, newBatchSize);
         }
 
@@ -60,7 +60,7 @@ namespace KdSoft.EtwEvents.Server
         /// </summary>
         /// <param name="newWriteDelayMSecs">New write delay in milliseconds.</param>
         /// <returns>Old write delay.</returns>
-        public virtual int ChangeWriteDelay(int newWriteDelayMSecs) {
+        public virtual uint ChangeWriteDelay(uint newWriteDelayMSecs) {
             var oldDelay = Interlocked.Exchange(ref _maxWriteDelayMSecs, newWriteDelayMSecs);
             _timer?.Change(newWriteDelayMSecs, newWriteDelayMSecs);
             return oldDelay;

@@ -93,7 +93,7 @@ namespace KdSoft.EtwEvents.Server
         }
 
         public async Task Process(RealTimeTraceSession session, CancellationToken stoppingToken) {
-            // we link _stoppingTokenSource to this stoppingToken so that it cancles all channels as well
+            // we link _stoppingTokenSource to this stoppingToken so that it cancels all event channels as well
             var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
             var oldCts = Interlocked.Exchange(ref _stoppingTokenSource, cts);
             if (oldCts != null) {
@@ -124,6 +124,5 @@ namespace KdSoft.EtwEvents.Server
             //TODO tell the active channels to stop processing - need access to their CancellationTokenSource, or need to dispose them
             await Task.WhenAll(activeRunTasks).ConfigureAwait(false);
         }
-
     }
 }

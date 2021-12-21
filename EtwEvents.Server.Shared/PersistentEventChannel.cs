@@ -22,17 +22,17 @@ namespace KdSoft.EtwEvents.Server
         static readonly ReadOnlyMemory<byte> _batchSentinel = new byte[4] { 0, 0, 0, 0 };
 
         int _lastWrittenMSecs;
-        int _batchCounter;
+        uint _batchCounter;
 
         PersistentEventChannel(
             IEventSink sink,
             ILogger logger,
             string filePath,
-            int batchSize = 100,
-            int maxWriteDelayMSecs = 400
+            uint batchSize = 100,
+            uint maxWriteDelayMSecs = 400
         ) : base(sink, logger, batchSize, maxWriteDelayMSecs) {
             this._channel = new FasterChannel(filePath);
-            this._etwEventPool = new DefaultObjectPool<EtwEvent>(new DefaultPooledObjectPolicy<EtwEvent>(), batchSize);
+            this._etwEventPool = new DefaultObjectPool<EtwEvent>(new DefaultPooledObjectPolicy<EtwEvent>(), (int)batchSize);
             this._bufferWriter = new ArrayBufferWriter<byte>(1024);
             this._lastWrittenMSecs = Environment.TickCount;
         }
@@ -149,8 +149,8 @@ namespace KdSoft.EtwEvents.Server
             IEventSink sink,
             ILogger logger,
             string filePath,
-            int batchSize = 100,
-            int maxWriteDelayMSecs = 400
+            uint batchSize = 100,
+            uint maxWriteDelayMSecs = 400
         ) {
             var result = new PersistentEventChannel(sink, logger, filePath, batchSize, maxWriteDelayMSecs);
             return result;

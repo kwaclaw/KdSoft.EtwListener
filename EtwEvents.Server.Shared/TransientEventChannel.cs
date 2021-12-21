@@ -22,15 +22,15 @@ namespace KdSoft.EtwEvents.Server
         TransientEventChannel(
             IEventSink sink,
             ILogger logger,
-            int batchSize = 100,
-            int maxWriteDelayMSecs = 400
+            uint batchSize = 100,
+            uint maxWriteDelayMSecs = 400
         ): base(sink, logger, batchSize, maxWriteDelayMSecs) {
             this._channel = Channel.CreateUnbounded<EtwEvent>(new UnboundedChannelOptions {
                 AllowSynchronousContinuations = true,
                 SingleReader = true,
                 SingleWriter = false
             });
-            this._etwEventPool = new DefaultObjectPool<EtwEvent>(new DefaultPooledObjectPolicy<EtwEvent>(), batchSize);
+            this._etwEventPool = new DefaultObjectPool<EtwEvent>(new DefaultPooledObjectPolicy<EtwEvent>(), (int)batchSize);
             this._lastWrittenMSecs = Environment.TickCount;
         }
 
@@ -120,8 +120,8 @@ namespace KdSoft.EtwEvents.Server
         public static TransientEventChannel Create(
             IEventSink sink,
             ILogger logger,
-            int batchSize = 100,
-            int maxWriteDelayMSecs = 400
+            uint batchSize = 100,
+            uint maxWriteDelayMSecs = 400
         ) {
             var result = new TransientEventChannel(sink, logger, batchSize, maxWriteDelayMSecs);
             return result;
