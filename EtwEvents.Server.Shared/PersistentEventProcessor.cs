@@ -13,7 +13,6 @@ namespace KdSoft.EtwEvents.Server
 {
     public class PersistentEventProcessor: IDisposable
     {
-        readonly WriteBatchAsync _writeBatchAsync;
         readonly ObjectPool<EtwEvent> _etwEventPool;
         readonly ArrayBufferWriter<byte> _bufferWriter;
         readonly FasterChannel _channel;
@@ -30,13 +29,11 @@ namespace KdSoft.EtwEvents.Server
         Timer? _timer;
 
         public PersistentEventProcessor(
-            WriteBatchAsync writeBatchAsync,
             string filePath,
             ILogger logger,
             int batchSize = 100,
             int maxWriteDelayMSecs = 400
         ) {
-            this._writeBatchAsync = writeBatchAsync;
             this._logger = logger;
             this._batchSize = batchSize;
             this._maxWriteDelayMSecs = maxWriteDelayMSecs;
@@ -44,6 +41,10 @@ namespace KdSoft.EtwEvents.Server
             this._etwEventPool = new DefaultObjectPool<EtwEvent>(new DefaultPooledObjectPolicy<EtwEvent>(), batchSize);
             this._bufferWriter = new ArrayBufferWriter<byte>(1024);
             this._lastWrittenMSecs = Environment.TickCount;
+        }
+
+        protected virtual ValueTask<bool> WriteBatchAsync(EtwEventBatch batch) {
+            return ValueTask.FromResult(true);
         }
 
         void PostEvent(tracing.TraceEvent evt) {
@@ -123,7 +124,7 @@ namespace KdSoft.EtwEvents.Server
 
                 if (batch.Events.Count > 0) {
                     _logger.LogInformation("Received batch with {eventCount} events.", batch.Events.Count);
-                    bool success = await _writeBatchAsync(batch).ConfigureAwait(false);
+                    bool success = await WriteBatchAsync(batch).ConfigureAwait(false);
                     if (success) {
                         reader.Truncate();
                         await _channel.CommitAsync(default).ConfigureAwait(false);
