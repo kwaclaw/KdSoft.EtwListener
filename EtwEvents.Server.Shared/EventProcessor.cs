@@ -1,21 +1,129 @@
-﻿using System.Threading;
+using System;
+using System.Buffers;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Diagnostics.Tracing;
 
 namespace KdSoft.EtwEvents.Server
 {
-    public class EventProcessor
-    {
-        readonly EventChannelManager _channelHolder;
+    public class EventProcessor {
+        readonly object _eventChannelLock = new object();
 
-        public EventProcessor(EventChannelManager channelHolder) {
-            this._channelHolder = channelHolder;
+        ImmutableDictionary<string, EventChannel> _eventChannels;
+        ImmutableDictionary<string, EventChannel> _failedEventChannels;
+        CancellationTokenSource _stoppingTokenSource;
+        bool _stopping;
+        bool _running;
+
+        public IImmutableDictionary<string, EventChannel> ActiveEventChannels => _eventChannels;
+        public IImmutableDictionary<string, EventChannel> FailedEventChannels => _failedEventChannels;
+
+        public EventProcessor() {
+            this._eventChannels = ImmutableDictionary<string, EventChannel>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
+            this._failedEventChannels = ImmutableDictionary<string, EventChannel>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
+            _stoppingTokenSource = new CancellationTokenSource();
+        }
+
+        bool TryStartChannel(string name, EventChannel channel, CancellationToken stopToken) {
+            var result = channel.RunTask == null;
+            if (!result)
+                return result;
+
+            void HandleRunTaskCompletion(Task runTask) {
+                lock (_eventChannelLock) {
+                    _eventChannels = _eventChannels.Remove(name);
+                    if (runTask.IsFaulted && runTask.Exception != null) {
+                        _failedEventChannels = _failedEventChannels.SetItem(name, channel);
+                    }
+                }
+            }
+            channel.StartProcessing(HandleRunTaskCompletion, stopToken);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Creates new <see cref="EventChannel"/> for event sink and adds it to set of active channels.
+        /// </summary>
+        /// <typeparam name="T">(Sub)Type of EventChannel.</typeparam>
+        /// <param name="name">Name of EventChannel.</param>
+        /// <param name="sink">Event sink that the channel has to use.</param>
+        /// <param name="createChannel">Callback to create a new EventChannel instance.</param>
+        /// <returns>Newly added EventChannel.</returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        /// <remarks>To remove an event channel, simply dispose it.</remarks>
+        public T AddChannel<T>(string name, IEventSink sink, Func<IEventSink, T> createChannel) where T: EventChannel {
+            T newChannel;
+            lock (_eventChannelLock) {
+                if (_stopping) {
+                    throw new InvalidOperationException($"Event channel {name} is stopping.");
+                }
+                if (_eventChannels.ContainsKey(name)) {
+                    throw new InvalidOperationException($"Event sink {name} already exists.");
+                }
+
+                newChannel = createChannel(sink);
+                if (_running)
+                    TryStartChannel(name, newChannel, _stoppingTokenSource.Token);
+
+                _failedEventChannels = _failedEventChannels.Remove(name);
+                _eventChannels = _eventChannels.Add(name, newChannel);
+            }
+            return newChannel;
+        }
+
+        //public (IImmutableDictionary<string, EventChannel> active, IImmutableDictionary<string, EventChannel> failed) ClearEventChannels() {
+        //    lock (_eventChannelLock) {
+        //        var active = this._eventChannels;
+        //        var failed = this._failedEventChannels;
+        //        this._eventChannels = ImmutableDictionary<string, EventChannel>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
+        //        this._failedEventChannels = ImmutableDictionary<string, EventChannel>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
+        //        return (active, failed);
+        //    }
+        //}
+
+        public void PostEvent(TraceEvent evt) {
+            var eventChannels = this._eventChannels;
+            foreach (var entry in eventChannels) {
+                entry.Value.PostEvent(evt);
+            }
         }
 
         public async Task Process(RealTimeTraceSession session, CancellationToken stoppingToken) {
-            _channelHolder.StartProcessing(stoppingToken);
-            await session.StartEvents(_channelHolder.PostEvent, stoppingToken).ConfigureAwait(false);
+            // we link _stoppingTokenSource to this stoppingToken so that it cancles all channels as well
+            var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+            var oldCts = Interlocked.Exchange(ref _stoppingTokenSource, cts);
+            if (oldCts != null) {
+                oldCts.Cancel();
+                oldCts.Dispose();
+            }
+
+            // start initial channels
+            ImmutableDictionary<string, EventChannel> initialChannels;
+            lock (_eventChannelLock) {
+                _running = true;
+                initialChannels = _eventChannels;
+            }
+            foreach (var entry in initialChannels) {
+                TryStartChannel(entry.Key, entry.Value, cts.Token);
+            }
+
+            await session.StartEvents(PostEvent, cts.Token).ConfigureAwait(false);
+
             // no more events will be posted, wait for channels to complete
-            await _channelHolder.StopProcessing().ConfigureAwait(false);
+            ImmutableDictionary<string, EventChannel> activeChannels;
+            // do not allow more channels to be added
+            lock (_eventChannelLock) {
+                _stopping = true;
+                activeChannels = _eventChannels;
+            }
+            var activeRunTasks = activeChannels.Select(ac => ac.Value.RunTask!).Where(rt => rt != null);
+            //TODO tell the active channels to stop processing - need access to their CancellationTokenSource, or need to dispose them
+            await Task.WhenAll(activeRunTasks).ConfigureAwait(false);
         }
+
     }
 }

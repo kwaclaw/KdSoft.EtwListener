@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using KdSoft.EtwLogging;
 using Microsoft.Diagnostics.Tracing;
@@ -34,7 +35,6 @@ namespace KdSoft.EtwEvents.Server
                 // we assume that the IEventSink.RunTask is now complete and the event sink will be closed
                 return result;
             }
-
             result = await _sink.FlushAsync().ConfigureAwait(false);
             return result;
         }
@@ -67,7 +67,15 @@ namespace KdSoft.EtwEvents.Server
         }
 
         public abstract void PostEvent(TraceEvent evt);
-        public abstract Task RunTask { get; }  // set to return value of ProcessBatches
-        public abstract EventChannel Clone(IEventSink sink, CancellationToken stoppingToken, int? batchSize = null, int? maxWriteDelayMSecs = null);
+
+        public Task? RunTask { get; private set; }
+
+        public void StartProcessing(Action<Task> continuation, CancellationToken stoppingToken) {
+            if (RunTask != null) {
+                throw new InvalidOperationException("Already processing");
+            }
+            var runTask = ProcessBatches(stoppingToken);
+            this.RunTask = runTask.ContinueWith(continuation);
+        }
     }
 }

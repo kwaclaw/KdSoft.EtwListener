@@ -27,21 +27,6 @@ namespace KdSoft.EtwEvents.Server
         PersistentEventChannel(
             IEventSink sink,
             ILogger logger,
-            int batchSize,
-            int maxWriteDelayMSecs,
-            FasterChannel channel,
-            ObjectPool<EtwEvent> etwEventPool,
-            ArrayBufferWriter<byte> bufferWriter
-        ) : base(sink, logger, batchSize, maxWriteDelayMSecs) {
-            this._channel = channel;
-            this._etwEventPool = etwEventPool;
-            this._bufferWriter = bufferWriter;
-            this._lastWrittenMSecs = Environment.TickCount;
-        }
-
-        PersistentEventChannel(
-            IEventSink sink,
-            ILogger logger,
             string filePath,
             int batchSize = 100,
             int maxWriteDelayMSecs = 400
@@ -150,9 +135,6 @@ namespace KdSoft.EtwEvents.Server
             await _sink.RunTask.ConfigureAwait(false);
         }
 
-        Task _runTask;
-        public override Task RunTask => _runTask;
-
         public override async ValueTask DisposeAsync() {
             try {
                 _channel.Dispose();
@@ -163,35 +145,14 @@ namespace KdSoft.EtwEvents.Server
             }
         }
 
-        public override EventChannel Clone(
-            IEventSink sink,
-            CancellationToken stoppingToken,
-            int? batchSize = null,
-            int? maxWriteDelayMSecs = null
-        ) {
-            var result = new PersistentEventChannel(
-                sink,
-                this._logger,
-                batchSize ?? this._batchSize,
-                maxWriteDelayMSecs ?? this._maxWriteDelayMSecs,
-                this._channel,
-                this._etwEventPool,
-                this._bufferWriter
-            );
-            result._runTask = result.ProcessBatches(stoppingToken);
-            return result;
-        }
-
-        public static PersistentEventChannel Start(
+        public static PersistentEventChannel Create(
             IEventSink sink,
             ILogger logger,
-            CancellationToken stoppingToken,
             string filePath,
             int batchSize = 100,
             int maxWriteDelayMSecs = 400
         ) {
             var result = new PersistentEventChannel(sink, logger, filePath, batchSize, maxWriteDelayMSecs);
-            result._runTask = result.ProcessBatches(stoppingToken);
             return result;
         }
     }

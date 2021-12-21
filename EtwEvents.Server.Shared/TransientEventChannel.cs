@@ -22,19 +22,6 @@ namespace KdSoft.EtwEvents.Server
         TransientEventChannel(
             IEventSink sink,
             ILogger logger,
-            int batchSize,
-            int maxWriteDelayMSecs,
-            Channel<EtwEvent> channel,
-            ObjectPool<EtwEvent> etwEventPool
-        ): base(sink, logger, batchSize, maxWriteDelayMSecs) {
-            this._channel = channel;
-            this._etwEventPool = etwEventPool;
-            this._lastWrittenMSecs = Environment.TickCount;
-        }
-
-        TransientEventChannel(
-            IEventSink sink,
-            ILogger logger,
             int batchSize = 100,
             int maxWriteDelayMSecs = 400
         ): base(sink, logger, batchSize, maxWriteDelayMSecs) {
@@ -119,9 +106,6 @@ namespace KdSoft.EtwEvents.Server
             await _sink.RunTask.ConfigureAwait(false);
         }
 
-        Task _runTask;
-        public override Task RunTask => _runTask;
-
         public override async ValueTask DisposeAsync() {
             try {
                 _channel.Writer.TryComplete();
@@ -133,33 +117,13 @@ namespace KdSoft.EtwEvents.Server
             }
         }
 
-        public override EventChannel Clone(
-            IEventSink sink,
-            CancellationToken stoppingToken,
-            int? batchSize = null,
-            int? maxWriteDelayMSecs = null
-        ) {
-            var result = new TransientEventChannel(
-                sink,
-                this._logger,
-                batchSize ?? this._batchSize,
-                maxWriteDelayMSecs ?? this._maxWriteDelayMSecs,
-                this._channel,
-                this._etwEventPool
-            );
-            result._runTask = result.ProcessBatches(stoppingToken);
-            return result;
-        }
-
-        public static TransientEventChannel Start(
+        public static TransientEventChannel Create(
             IEventSink sink,
             ILogger logger,
-            CancellationToken stoppingToken,
             int batchSize = 100,
             int maxWriteDelayMSecs = 400
         ) {
             var result = new TransientEventChannel(sink, logger, batchSize, maxWriteDelayMSecs);
-            result._runTask = result.ProcessBatches(stoppingToken);
             return result;
         }
     }
