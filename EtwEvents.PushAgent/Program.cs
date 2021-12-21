@@ -56,7 +56,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     services.Configure<EventQueueOptions>(opts => {
                         hostContext.Configuration.GetSection("EventQueue").Bind(opts);
                         // make sure opts.LogPath is an absolute path
-                        opts.FilePath = Path.Combine(hostContext.HostingEnvironment.ContentRootPath, opts.FilePath);
+                        opts.BaseDirectory = Path.Combine(hostContext.HostingEnvironment.ContentRootPath, opts.BaseDirectory);
                     });
                     services.AddSingleton<SessionConfig>();
                     services.AddSingleton(provider => {

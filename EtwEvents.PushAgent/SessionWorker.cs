@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -285,8 +286,11 @@ namespace KdSoft.EtwEvents.PushAgent
 
                 if (sinkProfile.PersistentChannel) {
                     var persistentLogger = _loggerFactory.CreateLogger<PersistentEventChannel>();
-                    //TODO how to determine filePath based on event sink type, name and _eventQueueOptions.Value.FilePath/Directory
-                    return PersistentEventChannel.Create(eventSink, persistentLogger, _eventQueueOptions.Value.FilePath, batchSize, maxWriteDelayMSecs);
+                    // EventQueue subdirectory is named after sink profile's name
+                    var eventQeueDir = Path.Combine(_eventQueueOptions.Value.BaseDirectory, sinkProfile.Name);
+                    Directory.CreateDirectory(eventQeueDir);  // make sure it exists
+                    var filePath = Path.Combine(eventQeueDir, _eventQueueOptions.Value.FileName);
+                    return PersistentEventChannel.Create(eventSink, persistentLogger, filePath, batchSize, maxWriteDelayMSecs);
                 }
                 else {
                     var transientLogger = _loggerFactory.CreateLogger<TransientEventChannel>();
