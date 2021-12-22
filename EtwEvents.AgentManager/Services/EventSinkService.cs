@@ -43,12 +43,20 @@ namespace KdSoft.EtwEvents.AgentManager.Services
 
             var assemblyPaths = new List<string>(_runtimeAssemblyPaths);
             assemblyPaths.Add(typeof(IEventSinkFactory).Assembly.Location);
+            assemblyPaths.Add(typeof(global::Google.Protobuf.MessageParser).Assembly.Location);
+            assemblyPaths.Add(typeof(global::Grpc.Core.ClientBase).Assembly.Location);
             foreach (var evtSinkDir in evtSinkDirectories) {
                 var evtSinkFile = evtSinkDir.GetFiles(SinkAssemblyFilter).FirstOrDefault();
                 if (evtSinkFile != null) {
                     assemblyPaths.Add(evtSinkFile.FullName);
                 }
             }
+            //foreach (var evtSinkDir in evtSinkDirectories) {
+            //    var evtSinkFiles = evtSinkDir.GetFiles("*.dll");
+            //    foreach (var evtSinkFile in evtSinkFiles) {
+            //        assemblyPaths.Add(evtSinkFile.FullName);
+            //    }
+            //}
 
             // Create PathAssemblyResolver that can resolve assemblies using the created list.
             var resolver = new PathAssemblyResolver(assemblyPaths);
