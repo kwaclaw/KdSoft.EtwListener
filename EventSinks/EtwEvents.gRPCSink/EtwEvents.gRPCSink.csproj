@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <Import Project="..\eventSink.targets" />
   
@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\EtwEvents.Client.Shared\EtwEvents.Client.Shared.csproj" />
+    <ProjectReference Include="..\..\EtwEvents.Shared\EtwEvents.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

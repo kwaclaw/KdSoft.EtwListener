@@ -12,9 +12,9 @@
     <AssemblyName>KdSoft.EtwEvents.SeqSink</AssemblyName>
     <SinkName>SeqSink</SinkName>
   </PropertyGroup>
- 
+  
   <ItemGroup>
-    <ProjectReference Include="..\..\EtwEvents.Client.Shared\EtwEvents.Client.Shared.csproj" />
+    <ProjectReference Include="..\..\EtwEvents.Shared\EtwEvents.Shared.csproj" />
   </ItemGroup>
 
 </Project>

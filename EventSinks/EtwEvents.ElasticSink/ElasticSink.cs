@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Elasticsearch.Net;
 using Google.Protobuf;
-using KdSoft.EtwEvents.Client;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Logging;
 

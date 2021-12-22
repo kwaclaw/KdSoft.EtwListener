@@ -1,13 +1,8 @@
-﻿using System;
-using System.IO;
-using System.Net.Security;
+﻿using System.Net.Security;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
-using System.Threading.Tasks;
-using Grpc.Core;
 using Grpc.Net.Client;
-using KdSoft.EtwEvents.Client;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Schema.Generation;
 using static KdSoft.EtwLogging.EtwSink;

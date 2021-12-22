@@ -3,7 +3,6 @@ using System.IO;
 using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
-using KdSoft.EtwEvents.Client;
 using Microsoft.Extensions.Logging;
 
 namespace KdSoft.EtwEvents.EventSinks

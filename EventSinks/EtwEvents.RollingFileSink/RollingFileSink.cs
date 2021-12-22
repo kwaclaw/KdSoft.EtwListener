@@ -5,7 +5,6 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using KdSoft.EtwEvents.Client;
 using KdSoft.EtwLogging;
 using KdSoft.Utils;
 using Microsoft.Extensions.Logging;
