@@ -7,9 +7,9 @@ import './etw-app-side-bar.js';
 import './provider-config.js';
 import './filter-edit.js';
 import './event-sink-config.js';
-import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
+import tailwindStyles from '../styles/tailwind-styles.js';
 import gridStyles from '../styles/kdsoft-grid-styles.js';
 import * as utils from '../js/utils.js';
 

@@ -2,8 +2,8 @@ import { html } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { LitMvvmElement, css } from '@kdsoft/lit-mvvm';
 import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
-import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
+import tailwindStyles from '../styles/tailwind-styles.js';
 
 function comparePos(pos1, pos2) {
   if (pos1.line < pos2.line) return -1;

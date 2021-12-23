@@ -3,11 +3,11 @@ import { observable } from '@nx-js/observer-util/dist/es.es6.js';
 import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
 import { LitMvvmElement, css } from '@kdsoft/lit-mvvm';
 import { KdSoftDropdownModel, KdSoftDropdownChecklistConnector } from '@kdsoft/lit-mvvm-components';
-import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
 import '@kdsoft/lit-mvvm-components/kdsoft-dropdown.js';
 import '@kdsoft/lit-mvvm-components/kdsoft-checklist.js';
+import tailwindStyles from '../styles/tailwind-styles.js';
 import * as utils from '../js/utils.js';
 
 class ProviderConfig extends LitMvvmElement {
@@ -143,7 +143,7 @@ class ProviderConfig extends LitMvvmElement {
     // Note: number inputs can be sized by setting their max value
 
     return html`
-      <article class="bg-gray-100 p-2" @change=${this._fieldChange}>
+      <form class="bg-gray-100 p-2" @change=${this._fieldChange}>
         <div class="border-l-2 ${borderColor}">
           <header class="flex items-center justify-start pl-1 cursor-pointer select-none relative">
               <input name="name" type="text"
@@ -176,7 +176,7 @@ class ProviderConfig extends LitMvvmElement {
             </div>
           </div>
         </div>
-      </article>
+      </form>
     `;
   }
 }

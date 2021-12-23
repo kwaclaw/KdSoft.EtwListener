@@ -10,15 +10,13 @@ export default css`
 
 @keyframes spinner {
   0% {
-    color:var(--txt-color, rgb(160, 174, 192));
+      color:var(--txt-color, rgb(160, 174, 192));
   }
-
   33% {
-    color: red;
+      color: red;
   }
-
   66% {
-    color: yellow;
+      color: yellow;
   }
 }
 

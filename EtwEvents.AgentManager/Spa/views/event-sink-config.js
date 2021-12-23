@@ -1,13 +1,13 @@
 ﻿import { observable, observe, unobserve, raw } from '@nx-js/observer-util/dist/es.es6.js';
 import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
 import { LitMvvmElement, html, nothing, css } from '@kdsoft/lit-mvvm';
-import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
 import {
   KdSoftDropdownModel,
   KdSoftDropdownChecklistConnector,
 } from '@kdsoft/lit-mvvm-components';
+import tailwindStyles from '../styles/tailwind-styles.js';
 import EventSinkProfile from '../js/eventSinkProfile.js';
 import * as utils from '../js/utils.js';
 
