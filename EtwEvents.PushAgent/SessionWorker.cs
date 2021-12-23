@@ -352,8 +352,8 @@ namespace KdSoft.EtwEvents.PushAgent
                     session.EnableProvider(setting);
                 }
 
-                foreach (var profile in _sessionConfig.SinkProfiles) {
-                    await UpdateEventChannel(profile).ConfigureAwait(false);
+                foreach (var profileEntry in _sessionConfig.SinkProfiles) {
+                    await UpdateEventChannel(profileEntry.Value).ConfigureAwait(false);
                 }
 
                 var processingTask = _eventProcessor.Process(session, stoppingToken);

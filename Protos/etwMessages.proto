@@ -50,7 +50,7 @@ message EventSinkProfile {
 }
 
 message EventSinkProfiles {
-  repeated EventSinkProfile profiles = 1;
+  map<string, EventSinkProfile> profiles = 1;
 }
 
 message EventSinkState {
@@ -77,7 +77,7 @@ message AgentState {
   repeated ProviderSetting enabled_providers = 6;
 
   ProcessingState processing_state = 7;
-  repeated EventSinkState event_sinks = 8;
+  map<string, EventSinkState> event_sinks = 8;
 }
 
 message AgentStates {

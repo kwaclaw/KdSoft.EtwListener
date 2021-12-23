@@ -74,29 +74,29 @@ namespace KdSoft.EtwEvents.PushAgent
 
         string EventSinkOptionsPath => Path.Combine(_context.HostingEnvironment.ContentRootPath, "eventSink.json");
 
-        List<EventSinkProfile> _sinkProfiles = new List<EventSinkProfile>();
-        public IReadOnlyList<EventSinkProfile> SinkProfiles => _sinkProfiles;
+        Dictionary<string, EventSinkProfile> _sinkProfiles = new Dictionary<string, EventSinkProfile>(StringComparer.CurrentCultureIgnoreCase);
+        public IReadOnlyDictionary<string, EventSinkProfile> SinkProfiles => _sinkProfiles;
 
         public bool LoadSinkProfiles() {
             try {
                 var sinkOptionsJson = File.ReadAllText(EventSinkOptionsPath);
                 _sinkProfiles = string.IsNullOrWhiteSpace(sinkOptionsJson)
-                    ? new List<EventSinkProfile>()
-                    : new List<EventSinkProfile>(EventSinkProfiles.Parser.ParseJson(sinkOptionsJson).Profiles);
+                    ? new Dictionary<string, EventSinkProfile>(StringComparer.CurrentCultureIgnoreCase)
+                    : new Dictionary<string, EventSinkProfile>(EventSinkProfiles.Parser.ParseJson(sinkOptionsJson).Profiles, StringComparer.CurrentCultureIgnoreCase);
                 return true;
             }
             catch (Exception ex) {
-                _sinkProfiles = new List<EventSinkProfile>();
+                _sinkProfiles = new Dictionary<string, EventSinkProfile>(StringComparer.CurrentCultureIgnoreCase);
                 _logger.LogError(ex, "Error loading event sink options.");
                 return false;
             }
         }
 
-        public bool SaveSinkProfiles(IList<EventSinkProfile> profiles) {
+        public bool SaveSinkProfiles(IDictionary<string, EventSinkProfile> profiles) {
             try {
                 var json = _jsonFormatter.Format(new EventSinkProfiles { Profiles = { profiles } });
                 File.WriteAllText(EventSinkOptionsPath, json);
-                _sinkProfiles = new List<EventSinkProfile>(profiles);
+                _sinkProfiles = new Dictionary<string, EventSinkProfile>(profiles, StringComparer.CurrentCultureIgnoreCase);
                 return true;
             }
             catch (Exception ex) {
@@ -106,22 +106,15 @@ namespace KdSoft.EtwEvents.PushAgent
         }
 
         public bool SaveSinkProfile(EventSinkProfile profile) {
-            var profileIndex = _sinkProfiles.FindIndex(p => string.Equals(p.Name, profile.Name, StringComparison.CurrentCultureIgnoreCase));
-            if (profileIndex >= 0) {
-                _sinkProfiles[profileIndex] = profile;
-            }
-            else {
-                _sinkProfiles.Add(profile);
-            }
+            _sinkProfiles[profile.Name] = profile;
             return SaveSinkProfiles(_sinkProfiles);
         }
 
         public bool DeleteSinkProfile(string profileName) {
-            var profileIndex = _sinkProfiles.FindIndex(p => string.Equals(p.Name, profileName, StringComparison.CurrentCultureIgnoreCase));
-            if (profileIndex >= 0) {
-                _sinkProfiles.RemoveAt(profileIndex);
-            }
-            return SaveSinkProfiles(_sinkProfiles);
+            if (_sinkProfiles.Remove(profileName))
+                return SaveSinkProfiles(_sinkProfiles);
+            else
+                return false;
         }
 
         #endregion

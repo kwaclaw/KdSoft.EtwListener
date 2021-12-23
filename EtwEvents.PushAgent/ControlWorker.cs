@@ -209,21 +209,21 @@ namespace KdSoft.EtwEvents.PushAgent
             return PostMessage(path, httpContent);
         }
 
-        EventSinkState[] GetEventSinkStates() {
+        Dictionary<string, EventSinkState> GetEventSinkStates() {
             var profiles = _sessionConfig.SinkProfiles;
-            var result = new EventSinkState[profiles.Count];
+            var result = new Dictionary<string, EventSinkState>();
             var failedChannels = SessionWorker?.FailedEventChannels ?? ImmutableDictionary<string, EventChannel>.Empty;
 
-            for (int indx = 0; indx < profiles.Count; indx++) {
-                var profile = profiles[indx];
+            foreach (var profileEntry in profiles) {
                 Exception? sinkError = null;
+                var profile = profileEntry.Value;
                 if (failedChannels.TryGetValue(profile.Name, out var failed)) {
                     sinkError = failed.RunTask?.Exception;
                 }
                 var state = new EventSinkState { Profile = profile };
                 if (sinkError != null)
                     state.Error = sinkError.GetBaseException().Message;
-                result[indx] = state;
+                result[profile.Name] = state;
             }
             return result;
         }
