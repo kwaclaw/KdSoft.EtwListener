@@ -1,12 +1,8 @@
-﻿import { observable, observe, unobserve, raw } from '@nx-js/observer-util/dist/es.es6.js';
+﻿import { observable } from '@nx-js/observer-util/dist/es.es6.js';
 import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
 import { LitMvvmElement, html, nothing, css } from '@kdsoft/lit-mvvm';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
-import {
-  KdSoftDropdownModel,
-  KdSoftDropdownChecklistConnector,
-} from '@kdsoft/lit-mvvm-components';
 import tailwindStyles from '../styles/tailwind-styles.js';
 import EventSinkProfile from '../js/eventSinkProfile.js';
 import * as utils from '../js/utils.js';
@@ -37,16 +33,32 @@ class EventSinkConfig extends LitMvvmElement {
     this.scheduler = new Queue(priorities.HIGH);
     // for "nothing" to work we need to render raw(this.sinkTypeTemplateHolder.value)
     this.sinkTypeTemplateHolder = observable({ tag: nothing });
-    this.dropDownModel = observable(new KdSoftDropdownModel());
-    this.checklistConnector = new KdSoftDropdownChecklistConnector(
-      () => this.renderRoot.getElementById('sinktype-ddown'),
-      () => this.renderRoot.getElementById('sinktype-list'),
-      listModel => {
-        const item = listModel.firstSelectedEntry?.item;
-        if (item) return `${item.sinkType} (${item.version})`;
-        return '';
-      }
-    );
+  }
+
+  expand() {
+    const oldExpanded = this.model.expanded;
+    // send event to parent to collapse other providers
+    if (!oldExpanded) {
+      const evt = new CustomEvent('beforeExpand', {
+        // composed allows bubbling beyond shadow root
+        bubbles: true, composed: true, cancelable: true, detail: { model: this.model }
+      });
+      this.dispatchEvent(evt);
+    }
+    this.model.expanded = !oldExpanded;
+  }
+
+  _expandClicked(e) {
+    this.expand();
+  }
+
+  _deleteClicked(e) {
+    // send event to parent to remove from list
+    const evt = new CustomEvent('delete', {
+      // composed allows bubbling beyond shadow root
+      bubbles: true, composed: true, cancelable: true, detail: { model: this.model }
+    });
+    this.dispatchEvent(evt);
   }
 
   _profileChange(e) {
@@ -89,20 +101,12 @@ class EventSinkConfig extends LitMvvmElement {
     return this.renderRoot.querySelector('#form-content form').reportValidity();
   }
 
-  async _loadConfigComponent(sinkInfo, sinkProfile) {
-    if (sinkInfo) {
+  async _loadConfigComponent(model) {
+    if (model) {
       try {
-        const configFormTemplate = await loadSinkDefinitionTemplate(sinkInfo);
-        const configModel = await loadSinkDefinitionModel(sinkInfo);
-
-        if (sinkProfile && sinkProfile.sinkType === sinkInfo.sinkType && sinkProfile.version === sinkInfo.version) {
-          utils.setTargetProperties(configModel, sinkProfile);
-        } else {
-          sinkProfile = new EventSinkProfile('Default', sinkInfo.sinkType, sinkInfo.version);
-          utils.setTargetProperties(sinkProfile, configModel);
-          this.model.sinkProfile = sinkProfile;
-        }
-
+        const configFormTemplate = await loadSinkDefinitionTemplate(model);
+        const configModel = await loadSinkDefinitionModel(model);
+        utils.setTargetProperties(configModel, model.profile);
         this.sinkTypeTemplateHolder.tag = configFormTemplate(configModel);
       } catch (error) {
         // for "nothing" to work we need to render raw(this.sinkTypeTemplateHolder.value)
@@ -115,16 +119,16 @@ class EventSinkConfig extends LitMvvmElement {
   }
 
   _export() {
-    if (!this.model.sinkProfile) return;
+    if (!this.model.profile) return;
 
-    const profileString = JSON.stringify(this.model.sinkProfile, null, 2);
+    const profileString = JSON.stringify(this.model.profile, null, 2);
     const profileURL = `data:text/plain,${profileString}`;
 
     const a = document.createElement('a');
     try {
       a.style.display = 'none';
       a.href = profileURL;
-      a.download = `${this.model.sinkProfile.name}.json`;
+      a.download = `${this.model.profile.name}.json`;
       document.body.appendChild(a);
       a.click();
     } finally {
@@ -139,15 +143,7 @@ class EventSinkConfig extends LitMvvmElement {
   }
 
   firstRendered() {
-    if (this._eventSinkObserver) {
-      unobserve(this._eventSinkObserver);
-    }
-    this._eventSinkObserver = observe(() => {
-      // need to read observed properties synchronously!
-      const selectedSinkInfoEntry = this.model.sinkInfoCheckListModel.firstSelectedEntry;
-      const sinkProfile = this.model.sinkProfile;
-      this._loadConfigComponent(selectedSinkInfoEntry?.item, sinkProfile);
-    });
+    this._loadConfigComponent(this.model);
   }
 
   static get styles() {
@@ -199,52 +195,60 @@ class EventSinkConfig extends LitMvvmElement {
         #ok-cancel-buttons {
           margin-top: auto;
         }
+
+        #processing-vars {
+          display: grid;
+          grid-template-columns: auto auto;
+          background: rgba(255,255,255,0.3);
+          row-gap: 5px;
+          column-gap: 10px;
+          margin-bottom: 10px;
+        }
       `,
     ];
   }
 
   render() {
+    const profile = this.model.profile;
+    const expanded = this.model.expanded || false;
+    const borderColor = expanded ? 'border-indigo-500' : 'border-transparent';
+    const timesClasses = 'text-gray-600 fas fa-lg fa-times';
+    const chevronClasses = expanded
+      ? 'text-indigo-500 fas fa-lg  fa-chevron-circle-up'
+      : 'text-gray-600 fas fa-lg fa-chevron-circle-down';
+    const errorClasses = this.model.error ? 'border-red-500 focus:outline-none focus:border-red-700' : '';
+
     const result = html`
       <form>
-        <div id="form-header">
-          <label for="sinktype-ddown">Event Sink Type</label>
-          <kdsoft-dropdown id="sinktype-ddown" class="py-0"
-            .model=${this.dropDownModel} .connector=${this.checklistConnector}>
-            <kdsoft-checklist
-              id="sinktype-list" 
-              class="text-black" 
-              .model=${this.model.sinkInfoCheckListModel}
-              .getItemTemplate=${item => html`<div class="flex w-full"><span class="mr-1">${item.sinkType}</span><span class="ml-auto">(${item.version})</span></div>`}
-              required>
-            </kdsoft-checklist>
-          </kdsoft-dropdown>
-          <label for="sinktype-ddown">Profile Name</label>
-          <input id="sinkProfileName" name="name" type="text" @change=${this._profileChange} .value=${this.model.sinkProfile?.name} />
-        </div>
+        <div class="border-l-2 ${borderColor}">
+          <header class="flex items-center justify-start pl-1 cursor-pointer select-none relative ${errorClasses}">
+            <span>${profile.name} - ${profile.sinkType}</span>
+            <span class="${timesClasses} ml-auto mr-2" @click=${this._deleteClicked}></span>
+            <span class="${chevronClasses}" @click=${this._expandClicked}></span>
+          </header>
 
-        <div id="form-content">
-          ${this.sinkTypeTemplateHolder.tag}
-        </div>
+          <div id="form-header" class="mt-2 relative" ?hidden=${!expanded}>
+            <pre ?hidden=${!this.model.error}><textarea 
+              class="my-2 w-full border-2 border-red-500 focus:outline-none focus:border-red-700"
+            >${this.model.error}</textarea></pre>
 
-        <hr class="mb-4" />
-        <div id="ok-cancel-buttons" class="flex flex-wrap mt-2 bt-1">
-          <button type="button" class="py-1 px-2" @click=${this._export} title="Export">
-            <i class="fas fa-lg fa-file-export text-gray-600"></i>
-          </button>
-          <button type="button" class="py-1 px-2 ml-auto" @click=${this._apply} title="Apply">
-            <i class="fas fa-lg fa-check text-green-500"></i>
-          </button>
-          <button type="button" class="py-1 px-2" @click=${this._cancel} title="Reset to Current" autofocus>
-            <i class="fas fa-lg fa-times text-red-500"></i>
-          </button>
+            <div id="processing-vars" @change=${this._profileChange}>
+              <label for="batchSize">Batch Size</label>
+              <input type="number" id="batchSize" name="batchSize" .value=${profile.batchSize} />
+              <label for="maxWriteDelayMSecs">Max Write Delay (msecs)</label>
+              <input type="number" id="maxWriteDelayMSecs" name="maxWriteDelayMSecs" value=${profile.maxWriteDelayMSecs} />
+              <label for="persistentChannel">Persistent Buffer</label>
+              <input type="checkbox" id="persistentChannel" name="persistentChannel" value=${profile.persistentChannel} />
+            </div>
+          </div>
+          <div id="form-content">
+            ${this.sinkTypeTemplateHolder.tag}
+          </div>
+
         </div>
       </form>
     `;
     return result;
-  }
-
-  rendered() {
-    this.checklistConnector.reconnectDropdownSlot();
   }
 }
 

@@ -1,17 +1,27 @@
 /* global i18n */
 
 import { html, nothing } from 'lit';
-import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
+import { repeat } from 'lit/directives/repeat.js';
 import { LitMvvmElement, css } from '@kdsoft/lit-mvvm';
+import { observable } from '@nx-js/observer-util/dist/es.es6.js';
+import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
+import dialogPolyfill from 'dialog-polyfill';
 import './etw-app-side-bar.js';
 import './provider-config.js';
 import './filter-edit.js';
 import './event-sink-config.js';
+import {
+  KdSoftDropdownModel,
+  KdSoftDropdownChecklistConnector,
+} from '@kdsoft/lit-mvvm-components';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
 import gridStyles from '../styles/kdsoft-grid-styles.js';
+import dialogStyles from '../styles/dialog-polyfill-styles.js';
 import * as utils from '../js/utils.js';
+
+const dialogClass = utils.html5DialogSupported ? '' : 'fixed';
 
 function formDoneHandler(e) {
   if (e.target.localName === 'event-sink-config') {
@@ -33,6 +43,17 @@ class EtwAgent extends LitMvvmElement {
     // this.model = new EtwAppModel(); --
 
     this._formDoneHandler = formDoneHandler.bind(this);
+
+    this.eventSinkDropDownModel = observable(new KdSoftDropdownModel());
+    this.eventSinkChecklistConnector = new KdSoftDropdownChecklistConnector(
+      () => this.renderRoot.getElementById('sinktype-ddown'),
+      () => this.renderRoot.getElementById('sinktype-list'),
+      listModel => {
+        const item = listModel.firstSelectedEntry?.item;
+        if (item) return `${item.sinkType} (${item.version})`;
+        return '';
+      }
+    );
   }
 
   //#region Providers
@@ -95,6 +116,49 @@ class EtwAgent extends LitMvvmElement {
 
   //#endregion
 
+  //#region Event Sinks
+
+  _addEventSinkClick() {
+    const dlg = this.renderRoot.getElementById('dlg-add-event-sink');
+    dlg.querySelector('form').reset();
+    dlg.querySelector('#sinktype-list').model.unselectAll();
+    dlg.showModal();
+  }
+
+  _okAddEventSinkClick(e) {
+    const form = e.currentTarget.closest('form');
+    const sinkname = form.querySelector('#sink-name');
+    const sinklist = form.querySelector('#sinktype-list');
+    const selectedSinkInfo = sinklist.model.firstSelectedEntry?.item;
+    sinklist._internals.setValidity({ valueMissing: !selectedSinkInfo }, 'Sink type must be selected.');
+    if (!form.reportValidity()) return;
+
+    this.model.addEventSink(sinkname.value, selectedSinkInfo);
+
+    form.parentElement.close();
+  }
+
+  _cancelAddEventSinkClick(e) {
+    const dlg = e.currentTarget.closest('dialog');
+    dlg.close();
+  }
+
+  _deleteEventSinkClick(e) {
+    const model = e.currentTarget.model;
+    this.model.deleteEventSink(model.profile.name);
+  }
+
+  _eventSinkBeforeExpand() {
+    const activeAgentState = this.model.activeAgentState;
+    if (!activeAgentState) return;
+
+    Object.entries(activeAgentState.eventSinks).forEach(es => {
+      es[1].expanded = false;
+    });
+  }
+
+  //#endregion
+
   //#region overrides
 
   /* eslint-disable indent, no-else-return */
@@ -124,6 +188,7 @@ class EtwAgent extends LitMvvmElement {
       checkboxStyles,
       fontAwesomeStyles,
       gridStyles,
+      utils.html5DialogSupported ? dialogStyles : css``,
       css`
         :host {
           display: block;
@@ -166,26 +231,29 @@ class EtwAgent extends LitMvvmElement {
           margin: 10px;
         }
 
-        #processingVars {
-          display: grid;
-          grid-template-columns: auto auto;
-          background: rgba(255,255,255,0.3);
-          row-gap: 5px;
-          column-gap: 10px;
-          margin-bottom: 10px;
+        #sinktype-ddown {
+          min-width: 12rem;
         }
 
         event-sink-config {
           margin: 10px;
         }
+
+        #dlg-add-event-sink form {
+          display: grid;
+          grid-template-columns: auto auto;
+          background: rgba(255,255,255,0.3);
+          row-gap: 5px;
+          column-gap: 10px;
+        }
       `
     ];
   }
 
-  rendered() {
-    const eventSinkForm = this.renderRoot.getElementById('event-sink');
-    if (eventSinkForm) {
-      this._addFormHandlers(eventSinkForm);
+  firstRendered() {
+    const eventSinkDlg = this.renderRoot.getElementById('dlg-add-event-sink');
+    if (!utils.html5DialogSupported) {
+      dialogPolyfill.registerDialog(eventSinkDlg);
     }
   }
 
@@ -226,18 +294,12 @@ class EtwAgent extends LitMvvmElement {
                   <span class="font-semibold ${this.model.processingModified ? 'italic text-red-500' : ''}">Processing</span>
                 </div>
                 <div id="processingEdit">
-                  <div id="processingVars">
-                    <label for="batchSize">Batch Size</label>
-                    <input type="number" id="batchSize" name="batchSize" .value=${processingModel.batchSize} />
-                    <label for="maxWriteDelayMSecs">Max Write Delay (msecs)</label>
-                    <input type="number" id="maxWriteDelayMSecs" name="maxWriteDelayMSecs" .value=${processingModel.maxWriteDelayMSecs} />
-                  </div>
                   <label for="filterEdit">Filter</label>
                   <filter-edit id="filterEdit" class="p-2" .model=${processingModel.filter}></filter-edit>
                   <hr class="my-3" />
                   <div class="flex flex-wrap mt-2 bt-1">
                     <button type="button" class="py-1 px-2" @click=${this._testFilterClick} title="Test">
-                      <i class="fas fa-lg fa-stethoscope" style="color:orange"></i>
+                      <i class="fas fa-lg fa-vial" style="color:orange"></i>
                     </button>
                     <button type="button" class="py-1 px-2" @click=${this._clearFilterClick} title="Clear">
                       <i class="fas fa-lg fa-ban text-gray-500"></i>
@@ -252,19 +314,68 @@ class EtwAgent extends LitMvvmElement {
                 </div>
               </form> 
 
-              <form id="event-sink" class="max-w-full border">
+              <form id="event-sinks" class="max-w-full border">
                 <div class="flex my-2 pr-2">
-                  <span class="font-semibold ${this.model.eventSinkModified ? 'italic text-red-500' : ''}">Event Sink</span>
+                  <span class="font-semibold ${this.model.eventSinksModified ? 'italic text-red-500' : ''}">Event Sinks</span>
+                  <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
+                    @click=${this._addEventSinkClick}>
+                  </span>
                 </div>
-                <pre ?hidden=${!this.model.eventSinkError}><textarea 
-                    class="my-2 w-full border-2 border-red-500 focus:outline-none focus:border-red-700"
-                  >${this.model.eventSinkError}</textarea></pre>
-                <event-sink-config .model=${activeAgentState.sinkConfigModel}></event-sink-config>
+
+                ${repeat(
+                  Object.entries(activeAgentState.eventSinks),
+                  entry => entry[0],
+                  entry => html`
+                    <event-sink-config
+                      .model=${entry[1]}
+                      @beforeExpand=${this._eventSinkBeforeExpand}
+                      @delete=${this._deleteEventSinkClick}>
+                    </event-sink-config>
+                  `
+                )}
+                <hr class="my-3" />
+                <div id="ok-cancel-buttons" class="flex flex-wrap mt-2 bt-1">
+                  <button type="button" class="py-1 px-2" @click=${this._exportEventSinkClick} title="Export">
+                    <i class="fas fa-lg fa-file-export text-gray-600"></i>
+                  </button>
+                  <button type="button" class="py-1 px-2 ml-auto" @click=${this._applyEventSinkClick} title="Apply">
+                    <i class="fas fa-lg fa-check text-green-500"></i>
+                  </button>
+                  <button type="button" class="py-1 px-2" @click=${this._resetEventSinkClick} title="Reset to Current" autofocus>
+                    <i class="fas fa-lg fa-times text-red-500"></i>
+                  </button>
+                </div>
               </form>
             `
           : nothing
         }
       </div>
+
+      <dialog id="dlg-add-event-sink" class="${dialogClass}">
+        <form name="add-event-sink">
+          <label for="sinktype-ddown">Name</label>
+          <input id="sink-name" name="name" type="text" required />
+          <label for="sinktype-ddown">Sink Type</label>
+          <kdsoft-checklist
+            id="sinktype-list" 
+            class="text-black" 
+            .model=${this.model.sinkInfoCheckListModel}
+            .getItemTemplate=${item => html`<div class="flex w-full"><span class="mr-1">${item.sinkType}</span><span class="ml-auto">(${item.version})</span></div>`}
+            .attachInternals=${true}
+            required
+            tabindex=-1>
+          </kdsoft-checklist>
+          <span></span>
+          <div class="flex flex-wrap ml-auto mt-2 bt-1">
+            <button type="button" class="py-1 px-2 ml-auto" @click=${this._okAddEventSinkClick} title="Add">
+              <i class="fas fa-lg fa-check text-green-500"></i>
+            </button>
+            <button type="button" class="py-1 px-2" @click=${this._cancelAddEventSinkClick} title="Cancel">
+              <i class="fas fa-lg fa-times text-red-500"></i>
+            </button>
+          </div>
+        </form>
+      </dialog>
     `;
   }
 

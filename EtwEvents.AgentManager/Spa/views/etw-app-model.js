@@ -2,12 +2,11 @@
 
 import { observable, observe, raw } from '@nx-js/observer-util/dist/es.es6.js';
 import { KdSoftChecklistModel } from '@kdsoft/lit-mvvm-components';
-import EventSinkConfigModel from './event-sink-config-model.js';
+import EventSinkProfile from '../js/eventSinkProfile.js';
 import RingBuffer from '../js/ringBuffer.js';
 import * as utils from '../js/utils.js';
 import FetchHelper from '../js/fetchHelper.js';
 import AgentState from '../js/agentState.js';
-import ProcessingOptions from '../js/processingOptions.js';
 import ProcessingModel from './processing-model.js';
 
 const traceLevelList = () => [
@@ -36,7 +35,7 @@ function _enhanceProviderState(provider) {
 }
 
 // adds view models and view related methods to agent state, agentState must be observable
-function _enhanceAgentState(agentState, eventSinkInfos) {
+function _enhanceAgentState(agentState) {
   for (const provider of agentState.enabledProviders) {
     _enhanceProviderState(provider);
   }
@@ -59,10 +58,6 @@ function _enhanceAgentState(agentState, eventSinkInfos) {
     agentState.processingModel = new ProcessingModel(agentState.processingState);
   } else {
     agentState.processingModel.refresh(agentState.processingState);
-  }
-
-  if (!(agentState.sinkConfigModel instanceof EventSinkConfigModel)) {
-    agentState.sinkConfigModel = new EventSinkConfigModel(eventSinkInfos, agentState);
   }
 
   return agentState;
@@ -98,11 +93,12 @@ function _updateAgentsList(agentsList, agentsMap) {
   }
 }
 
-function _convertEventSinkProfile(agentState) {
-  const sinkProfile = agentState.eventSink.profile;
-  sinkProfile.options = JSON.parse(sinkProfile.options);
-  sinkProfile.credentials = JSON.parse(sinkProfile.credentials);
-  return sinkProfile;
+function _convertEventSinkProfiles(agentState) {
+  for (const [name, sinkState] of Object.entries(agentState.eventSinks)) {
+    const sinkProfile = sinkState.profile;
+    sinkProfile.options = JSON.parse(sinkProfile.options);
+    sinkProfile.credentials = JSON.parse(sinkProfile.credentials);
+  }
 }
 
 function _updateAgentsMap(agentsMap, agentStates) {
@@ -111,7 +107,7 @@ function _updateAgentsMap(agentsMap, agentStates) {
   // agentStates have unique ids (case-insensitive) - //TODO server culture vs local culture?
   for (const state of (agentStates || [])) {
     // convert eventSinkProfile.options/credentials from a JSON string to a JSON object
-    _convertEventSinkProfile(state);
+    _convertEventSinkProfiles(state);
 
     const agentId = state.id.toLowerCase();
     let entry = agentsMap.get(agentId);
@@ -153,12 +149,12 @@ function _resetProcessing(agentEntry) {
   filterEditModel.reset();
 }
 
-function _resetEventSink(agentEntry) {
+function _resetEventSinks(agentEntry) {
   const currentState = agentEntry.current;
   if (currentState) {
-    agentEntry.state.eventSink = utils.clone(currentState.eventSink);
+    agentEntry.state.eventSinks = utils.clone(currentState.eventSinks);
   } else {
-    agentEntry.state.eventSink = {};
+    agentEntry.state.eventSinks = {};
   }
 }
 
@@ -197,10 +193,20 @@ class EtwAppModel {
           configViewUrl: `../eventSinks/${si.configViewUrl}`,
           configModelUrl: `../eventSinks/${si.configModelUrl}`
         }));
-        observableThis.eventSinkInfos = mappedSinkInfos;
+        // let's not replace eventSinkInfos, let's update its contents instead,
+        // so that sinkInfoCheckListModel can observe its changes
+        const esis = observableThis.eventSinkInfos;
+        esis.splice(0, esis.length, ...mappedSinkInfos);
         return observableThis.getAgentStates();
       })
       .catch(error => window.etwApp.defaultHandleError(error));
+
+    this.sinkInfoCheckListModel = new KdSoftChecklistModel(
+      observableThis.eventSinkInfos,
+      observableThis.eventSinkInfos.length ? [0] : [],
+      false,
+      item => item.sinkType
+    );
 
     const es = new EventSource('Manager/GetAgentStates');
     es.onmessage = e => {
@@ -209,7 +215,7 @@ class EtwAppModel {
       _updateAgentsMap(this._agentsMap, st.agents);
       _updateAgentsList(observableThis.agents, this._agentsMap);
     };
-    es.onerror = (e) => {
+    es.onerror = e => {
       console.error('GetAgentStates event source error.');
     };
 
@@ -245,7 +251,7 @@ class EtwAppModel {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return null;
 
-    activeEntry.state = _enhanceAgentState(activeEntry.state, this.eventSinkInfos);
+    activeEntry.state = _enhanceAgentState(activeEntry.state);
     return activeEntry.state;
   }
 
@@ -385,34 +391,55 @@ class EtwAppModel {
 
   //#region EventSink
 
-  updateEventSink() {
+  updateEventSinks() {
     const agentState = this.activeAgentState;
     if (!agentState) return;
 
-    const sinkConfigModel = agentState.sinkConfigModel;
-    this.fetcher.postJson('UpdateEventSink', { agentId: agentState.id }, sinkConfigModel.sinkProfile)
+    const sinkProfiles = Object.entries(agentState.eventSinks).map(es => es[1]);
+
+    this.fetcher.postJson('UpdateEventSinks', { agentId: agentState.id }, sinkProfiles)
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
-  resetEventSink() {
+  resetEventSinks() {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return;
-    _resetEventSink(activeEntry);
+    _resetEventSinks(activeEntry);
   }
 
-  get eventSinkModified() {
+  get eventSinksModified() {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return false;
-    const currSink = activeEntry.current?.eventSink;
-    const stateSink = activeEntry.state.eventSink;
-    return !utils.targetEquals(currSink, stateSink);
+    const currSinks = activeEntry.current?.eventSinks;
+    const stateSinks = activeEntry.state.eventSinks;
+    return !utils.targetEquals(currSinks, stateSinks);
   }
 
-  get eventSinkError() {
-    const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
-    if (!activeEntry) return false;
-    return activeEntry.current?.eventSink.error;
+  addEventSink(name, sinkInfo) {
+    const agentState = this.activeAgentState;
+    if (!agentState) return;
+
+    const profile = new EventSinkProfile(name, sinkInfo.sinkType, sinkInfo.version);
+    agentState.eventSinks[name] = {
+      profile,
+      error: null,
+      configViewUrl: sinkInfo.configViewUrl,
+      configModelUrl: sinkInfo.configModelUrl
+    };
   }
+
+  deleteEventSink(name) {
+    const agentState = this.activeAgentState;
+    if (!agentState) return;
+
+    delete agentState.eventSinks[name];
+  }
+
+  // get eventSinkError() {
+  //   const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
+  //   if (!activeEntry) return false;
+  //   return '';  //activeEntry.current?.eventSink.error;
+  // }
 
   //#endregion
 
