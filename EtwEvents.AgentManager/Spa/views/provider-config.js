@@ -6,8 +6,8 @@ import { KdSoftDropdownModel, KdSoftDropdownChecklistConnector } from '@kdsoft/l
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
 import '@kdsoft/lit-mvvm-components/kdsoft-dropdown.js';
-import '@kdsoft/lit-mvvm-components/kdsoft-checklist.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
+import '../components/etw-checklist.js';
 import * as utils from '../js/utils.js';
 
 class ProviderConfig extends LitMvvmElement {
@@ -104,7 +104,7 @@ class ProviderConfig extends LitMvvmElement {
           width: auto;
         }
 
-        kdsoft-checklist {
+        etw-checklist {
           min-width: 200px;
         }
 
@@ -160,12 +160,12 @@ class ProviderConfig extends LitMvvmElement {
                 <label class="text-gray-600" for="level">Level</label>
                 <kdsoft-dropdown id="traceLevel" class="py-0"
                   .model=${this.levelDropDownModel} .connector=${this.levelChecklistConnector}>
-                  <kdsoft-checklist
+                  <etw-checklist
                     id="traceLevelList"
                     class="text-black"
                     .model=${this.model.levelChecklistModel}
                     .getItemTemplate=${item => html`${item.name}`}>
-                  </kdsoft-checklist>
+                  </etw-checklist>
                 </kdsoft-dropdown>
               </fieldset>
               <fieldset>

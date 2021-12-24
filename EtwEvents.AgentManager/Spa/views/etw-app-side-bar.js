@@ -11,6 +11,7 @@ import tailwindStyles from '../styles/tailwind-styles.js';
 import spinnerStyles from '../styles/spinner-styles.js';
 import appStyles from '../styles/etw-app-styles.js';
 import dialogStyles from '../styles/dialog-polyfill-styles.js';
+import '../components/etw-checklist.js';
 import * as utils from '../js/utils.js';
 import AgentState from '../js/agentState.js';
 import EventProvider from '../js/eventProvider.js';
@@ -187,31 +188,6 @@ class EtwAppSideBar extends LitMvvmElement {
           font-family: Candara;
         }
 
-        #dlg-config {
-          width: 800px;
-          min-height: 400px;
-          height: 500px;
-          max-height: 600px;
-        }
-        
-        #dlg-filter {
-          width: 80ch;
-        }
-
-        #dlg-event-sink {
-          width: 800px;
-          min-height: 400px;
-          /* height: 500px; */
-          max-height: 800px;
-        }
-
-        #dlg-event-sink-chooser {
-          color: inherit;
-          background-color: #718096;
-          left: unset;
-          margin: 0;
-        }
-
         /* the item template for the checklist contains a part we can select */ 
         #agents::part(content) {
           display: grid;
@@ -301,11 +277,11 @@ class EtwAppSideBar extends LitMvvmElement {
           <!-- </div> -->
         </div>
 
-        <kdsoft-checklist id="agents" class="text-black"
+        <etw-checklist id="agents" class="text-black"
           .model=${this.agentChecklistModel}
           .scheduler=${this.scheduler}
           .getItemTemplate=${entry => this.getAgentTemplate(entry)}
-        ></kdsoft-checklist>
+        ><etw-checklist>
 
       </nav>
     `;

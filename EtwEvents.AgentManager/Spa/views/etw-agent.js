@@ -6,10 +6,6 @@ import { LitMvvmElement, css } from '@kdsoft/lit-mvvm';
 import { observable } from '@nx-js/observer-util/dist/es.es6.js';
 import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
 import dialogPolyfill from 'dialog-polyfill';
-import './etw-app-side-bar.js';
-import './provider-config.js';
-import './filter-edit.js';
-import './event-sink-config.js';
 import {
   KdSoftDropdownModel,
   KdSoftDropdownChecklistConnector,
@@ -19,6 +15,11 @@ import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/cs
 import tailwindStyles from '../styles/tailwind-styles.js';
 import gridStyles from '../styles/kdsoft-grid-styles.js';
 import dialogStyles from '../styles/dialog-polyfill-styles.js';
+import '../components/etw-checklist.js';
+import './etw-app-side-bar.js';
+import './provider-config.js';
+import './filter-edit.js';
+import './event-sink-config.js';
 import * as utils from '../js/utils.js';
 
 const dialogClass = utils.html5DialogSupported ? '' : 'fixed';
@@ -356,7 +357,7 @@ class EtwAgent extends LitMvvmElement {
           <label for="sinktype-ddown">Name</label>
           <input id="sink-name" name="name" type="text" required />
           <label for="sinktype-ddown">Sink Type</label>
-          <kdsoft-checklist
+          <etw-checklist
             id="sinktype-list" 
             class="text-black" 
             .model=${this.model.sinkInfoCheckListModel}
@@ -364,7 +365,7 @@ class EtwAgent extends LitMvvmElement {
             .attachInternals=${true}
             required
             tabindex=-1>
-          </kdsoft-checklist>
+          </etw-checklist>
           <span></span>
           <div class="flex flex-wrap ml-auto mt-2 bt-1">
             <button type="button" class="py-1 px-2 ml-auto" @click=${this._okAddEventSinkClick} title="Add">
