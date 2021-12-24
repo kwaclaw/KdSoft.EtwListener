@@ -281,7 +281,7 @@ class EtwAppSideBar extends LitMvvmElement {
           .model=${this.agentChecklistModel}
           .scheduler=${this.scheduler}
           .getItemTemplate=${entry => this.getAgentTemplate(entry)}
-        ><etw-checklist>
+        ></etw-checklist>
 
       </nav>
     `;

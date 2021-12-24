@@ -20,6 +20,7 @@ class EtwApp extends LitMvvmElement {
     // we must assign the model *after* the scheduler, or assign it externally
     // this.model = new EtwAppModel(); --
 
+    this.sideBarWidth = '24rem';
     window.etwApp = this;
   }
 
@@ -65,8 +66,9 @@ class EtwApp extends LitMvvmElement {
 
   _sidebarSizeChange(e) {
     if (this._gridContainerEl) {
-      const newColumnsStyle = `${e.x}px 4px 1fr`;
-      this._gridContainerEl.style.gridTemplateColumns = newColumnsStyle;
+      this.sideBarWidth = `${e.x}px`;
+      //trigger a re-render so that the CSS variable gets updated
+      this.model.__changeCount += 1;
     }
   }
 
@@ -210,7 +212,7 @@ class EtwApp extends LitMvvmElement {
         }
 
         #container.sidebar-expanded {
-          grid-template-columns: 30% 4px 1fr;
+          grid-template-columns: var(--side-bar-width) 4px 1fr;
         }
 
         #sidebar {
@@ -227,6 +229,11 @@ class EtwApp extends LitMvvmElement {
           border-right: solid gray 1px;
           height: 100%;
           cursor: e-resize;
+        }
+
+        #main {
+          grid-column: 3;
+          grid-row: 1/2;
         }
 
         footer {
@@ -282,23 +289,24 @@ class EtwApp extends LitMvvmElement {
           overflow: scroll;
           white-space: pre;
         }
-
-        form {
-          min-width:400px;
-        }
       `
     ];
   }
 
   render() {
     return html`
+      <style>
+        :host {
+          --side-bar-width: ${this.sideBarWidth};
+        }
+      </style>
       <div id="container" class="sidebar-expanded">
 
         <etw-app-side-bar id="sidebar" .model=${this.model} aria-expanded="true"></etw-app-side-bar>
 
         <div id="sidebar-resize" @pointerdown=${this._sidebarSizeDown} @pointerup=${this._sidebarSizeUp}></div>
 
-        <etw-agent .model=${this.model}></etw-agent>
+        <etw-agent id="main" .model=${this.model}></etw-agent>
 
         <footer>
           ${(!this.model.showLastError && !this.model.showErrors)
