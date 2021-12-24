@@ -52,7 +52,7 @@
         "dest": "styles/assets"
       },
       "tailwindcss": {
-        "content": ["./views/**/*.{html,js}"],
+        "content": ["./views/**/*.{html,js}", "./eventSinks/**/*.{html,js}"],
         "theme": {},
         "variants": {},
         "plugins": [

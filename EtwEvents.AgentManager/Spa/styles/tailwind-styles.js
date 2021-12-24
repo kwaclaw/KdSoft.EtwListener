@@ -421,6 +421,9 @@ Ensure the default browser behavior of the \`hidden\` attribute.
     max-width: 1536px;
   }
 }
+.invisible {
+  visibility: hidden;
+}
 .static {
   position: static;
 }
@@ -458,6 +461,9 @@ Ensure the default browser behavior of the \`hidden\` attribute.
 }
 .mr-2 {
   margin-right: 0.5rem;
+}
+.mb-5 {
+  margin-bottom: 1.25rem;
 }
 .flex {
   display: flex;

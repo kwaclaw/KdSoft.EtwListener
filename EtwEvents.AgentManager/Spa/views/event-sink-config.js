@@ -219,15 +219,15 @@ class EventSinkConfig extends LitMvvmElement {
     const errorClasses = this.model.error ? 'border-red-500 focus:outline-none focus:border-red-700' : '';
 
     const result = html`
-      <form>
-        <div class="border-l-2 ${borderColor}">
-          <header class="flex items-center justify-start pl-1 cursor-pointer select-none relative ${errorClasses}">
-            <span>${profile.name} - ${profile.sinkType}</span>
-            <span class="${timesClasses} ml-auto mr-2" @click=${this._deleteClicked}></span>
-            <span class="${chevronClasses}" @click=${this._expandClicked}></span>
-          </header>
+      <div class="border-l-2 ${borderColor}">
+        <header class="flex items-center justify-start pl-1 cursor-pointer select-none relative ${errorClasses}">
+          <span>${profile.name} - ${profile.sinkType}</span>
+          <span class="${timesClasses} ml-auto mr-2" @click=${this._deleteClicked}></span>
+          <span class="${chevronClasses}" @click=${this._expandClicked}></span>
+        </header>
 
-          <div id="form-header" class="mt-2 relative" ?hidden=${!expanded}>
+        <form class="mt-2 relative" ?hidden=${!expanded}>
+          <div id="form-header">
             <pre ?hidden=${!this.model.error}><textarea 
               class="my-2 w-full border-2 border-red-500 focus:outline-none focus:border-red-700"
             >${this.model.error}</textarea></pre>
@@ -244,9 +244,8 @@ class EventSinkConfig extends LitMvvmElement {
           <div id="form-content">
             ${this.sinkTypeTemplateHolder.tag}
           </div>
-
-        </div>
-      </form>
+        </form>
+      </div>
     `;
     return result;
   }
