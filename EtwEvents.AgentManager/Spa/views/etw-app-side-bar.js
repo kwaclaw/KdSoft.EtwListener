@@ -104,7 +104,6 @@ class EtwAppSideBar extends LitMvvmElement {
     return !!this.model;
   }
 
-  // called at most once every time after connectedCallback was executed
   beforeFirstRender() {
     this.appTitle = this.getAttribute('appTitle');
     if (!this.agentChecklistModel) {
@@ -126,6 +125,7 @@ class EtwAppSideBar extends LitMvvmElement {
     }
   }
 
+  // called at most once every time after connectedCallback was executed
   firstRendered() {
     //
   }

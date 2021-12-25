@@ -20,7 +20,6 @@ class EtwApp extends LitMvvmElement {
     // we must assign the model *after* the scheduler, or assign it externally
     // this.model = new EtwAppModel(); --
 
-    this.sideBarWidth = '24rem';
     window.etwApp = this;
   }
 
@@ -31,7 +30,7 @@ class EtwApp extends LitMvvmElement {
           /* An attribute value changed on the element in mutation.target; the attribute name is in
              mutation.attributeName and its previous value is in mutation.oldValue */
           if (mutation.attributeName === 'aria-expanded') {
-            this._sidebarExpandedChanged(mutation.oldValue);
+            this._sidebarCollapsedChanged(mutation.oldValue);
           }
           break;
         default:
@@ -42,20 +41,20 @@ class EtwApp extends LitMvvmElement {
 
   //#region sidebar
 
-  _sidebarExpandedChanged(oldValue) {
+  _sidebarCollapsedChanged(oldValue) {
     const cntr = this.renderRoot.getElementById('container');
     // remove resize style, as it would interfere with collapsing/expanding
     cntr.style.gridTemplateColumns = '';
-    const wasExpanded = !!oldValue;
-    if (wasExpanded) cntr.classList.remove('sidebar-expanded');
-    else cntr.classList.add('sidebar-expanded');
+    const wasCollapsed = !!oldValue;
+    if (wasCollapsed) cntr.classList.remove('sidebar-collapsed');
+    else cntr.classList.add('sidebar-collapsed');
   }
 
   _sidebarSizeDown(e) {
     if (e.buttons !== 1) return;
 
-    this._gridContainerEl = this.renderRoot.querySelector('#container.sidebar-expanded');
-    if (!this._gridContainerEl) return;
+    this._gridContainerEl = this.renderRoot.querySelector('#container');
+    if (this._gridContainerEl.classList.contains('sidebar-collapsed')) return;
 
     //disable expand/collapse transition for resizing
     this._gridContainerEl.style.transition = 'none';
@@ -66,9 +65,7 @@ class EtwApp extends LitMvvmElement {
 
   _sidebarSizeChange(e) {
     if (this._gridContainerEl) {
-      this.sideBarWidth = `${e.x}px`;
-      //trigger a re-render so that the CSS variable gets updated
-      this.model.__changeCount += 1;
+      this.model.sideBarWidth = `${e.x}px`;
     }
   }
 
@@ -106,8 +103,20 @@ class EtwApp extends LitMvvmElement {
     const dy = e.offsetY;
     if (e.y === 0 || dy === 0) return;
 
-    const newHeightStyle = `${h - dy}px`;
-    this._errorResizeEl.style.height = newHeightStyle;
+    let height = h - dy;
+    if (height < 0) height = 0;
+
+    // we don't want to trigger scroll bars on the container
+    const el = e.currentTarget.parentElement.parentElement;
+    const overHeight = el.scrollHeight - el.offsetHeight;
+    if (overHeight > 0) {
+      height = this.model.lastErrorHeight - overHeight;
+    }
+    this.model.lastErrorHeight = height;
+
+    this.model.errorHeight = `${height}px`;
+    //  const newHeightStyle = `${h - dy}px`;
+    //  this._errorResizeEl.style.height = newHeightStyle;
   }
 
   _errSizeUp(e) {
@@ -149,6 +158,11 @@ class EtwApp extends LitMvvmElement {
     return !!this.model;
   }
 
+  beforeFirstRender() {
+    this.model.sideBarWidth = '24rem';
+    this.model.errorHeight = '2rem';
+  }
+
   // called at most once every time after connectedCallback was executed
   firstRendered() {
     this.appTitle = this.getAttribute('appTitle');
@@ -163,7 +177,7 @@ class EtwApp extends LitMvvmElement {
   rendered() {
     let newHeightStyle = null;
     if (this.model.showErrors) {
-      newHeightStyle = `${300}px`;
+      newHeightStyle = this.model.errorHeight;
     } else if (this.model.showLastError) {
       // Calculate the height of the first row in errors, and resize the errors
       // container to show just that row, as it contains the most recent error.
@@ -185,8 +199,7 @@ class EtwApp extends LitMvvmElement {
     }
 
     if (newHeightStyle) {
-      const errContainer = this.renderRoot.getElementById('error-resizable');
-      errContainer.style.height = newHeightStyle;
+      this.model.errorHeight = newHeightStyle;
     }
   }
 
@@ -206,13 +219,13 @@ class EtwApp extends LitMvvmElement {
           position: relative;
           height: 100%;
           display: grid;
-          grid-template-columns: 0px 0px 1fr;
+          grid-template-columns: var(--side-bar-width) 4px 1fr;
           grid-template-rows: 1fr auto;
           transition: grid-template-columns var(--trans-time, 300ms) ease;
         }
 
-        #container.sidebar-expanded {
-          grid-template-columns: var(--side-bar-width) 4px 1fr;
+        #container.sidebar-collapsed {
+          grid-template-columns: 2rem 0px 1fr;
         }
 
         #sidebar {
@@ -242,7 +255,7 @@ class EtwApp extends LitMvvmElement {
         }
 
         #error-resize {
-          height: 3px;
+          height: 4px;
           border-top: solid gray 1px;
           border-bottom: solid gray 1px;
           width: 100%;
@@ -251,6 +264,7 @@ class EtwApp extends LitMvvmElement {
 
         #error-resizable {
           position: relative;
+          height: var(--error-height, 0px);
         }
 
         #error-grid {
@@ -297,10 +311,11 @@ class EtwApp extends LitMvvmElement {
     return html`
       <style>
         :host {
-          --side-bar-width: ${this.sideBarWidth};
+          --side-bar-width: ${this.model.sideBarWidth};
+          --error-height: ${this.model.errorHeight};
         }
       </style>
-      <div id="container" class="sidebar-expanded">
+      <div id="container">
 
         <etw-app-side-bar id="sidebar" .model=${this.model} aria-expanded="true"></etw-app-side-bar>
 
