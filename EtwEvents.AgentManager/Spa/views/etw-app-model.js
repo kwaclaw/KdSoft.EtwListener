@@ -395,8 +395,7 @@ class EtwAppModel {
     const agentState = this.activeAgentState;
     if (!agentState) return;
 
-    const sinkProfiles = Object.entries(agentState.eventSinks).map(es => es[1]);
-
+    const sinkProfiles = Object.entries(agentState.eventSinks).map(es => es[1].profile);
     this.fetcher.postJson('UpdateEventSinks', { agentId: agentState.id }, sinkProfiles)
       .catch(error => window.etwApp.defaultHandleError(error));
   }

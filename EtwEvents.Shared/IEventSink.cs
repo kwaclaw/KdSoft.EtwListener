@@ -18,9 +18,6 @@ namespace KdSoft.EtwEvents
         /// </summary>
         Task<bool> RunTask { get; }
 
-        //TODO If WriteAsync or FlushAsync have an exception in their implementation they must return false and
-        //     trigger RunTask to complete throwing the very same exception
-
         /// <summary>
         /// Writes event asynchronously, but may execute synchronously. The event may be queued for batched writing.
         /// Must not be called concurrently with itself, <see cref="FlushAsync"/> or <see cref="IAsyncDisposable.DisposeAsync"/>.

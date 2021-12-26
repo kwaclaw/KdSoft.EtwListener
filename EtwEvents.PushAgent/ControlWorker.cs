@@ -159,15 +159,17 @@ namespace KdSoft.EtwEvents.PushAgent
                     filterResult = SessionWorker.TestFilter(filter);
                     await PostProtoMessage($"Agent/TestFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
                     break;
-                case "UpdateEventSink":
-                    var sinkProfile = string.IsNullOrEmpty(sse.Data) ? null : EventSinkProfile.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
-                    if (sinkProfile == null)
+                case "UpdateEventSinks":
+                    var sinkProfilesHolder = string.IsNullOrEmpty(sse.Data)
+                        ? null
+                        : EventSinkProfiles.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
+                    if (sinkProfilesHolder == null || sinkProfilesHolder.Profiles == null)
                         return;
                     if (worker == null) {
-                        _sessionConfig.SaveSinkProfile(sinkProfile);
+                        _sessionConfig.SaveSinkProfiles(sinkProfilesHolder.Profiles);
                     }
                     else {
-                        await worker.UpdateEventChannel(sinkProfile).ConfigureAwait(false);
+                        await worker.UpdateEventChannels(sinkProfilesHolder.Profiles).ConfigureAwait(false);
                     }
                     await SendStateUpdate().ConfigureAwait(false);
                     break;

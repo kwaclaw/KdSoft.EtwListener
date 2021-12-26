@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Protobuf.Collections;
@@ -271,13 +272,41 @@ namespace KdSoft.EtwEvents.PushAgent
             return false;
         }
 
+        static readonly Regex StripWhiteSpace = new Regex(@"\s(?=([^""]* ""[^""]*"")*[^""]*$)", RegexOptions.Compiled | RegexOptions.Multiline);
+
+        // compare EventSinkProfiles, but ignore BatchSize and MaxWriteDelayMSecs
+        bool ProfilesMatch(EventSinkProfile xProfile, EventSinkProfile yProfile) {
+            if (xProfile.PersistentChannel != yProfile.PersistentChannel)
+                return false;
+            // we try to compare JSON based settings by removing redundant whitespace
+            var xOptions = StripWhiteSpace.Replace(xProfile.Options, "");
+            var yOptions = StripWhiteSpace.Replace(yProfile.Options, "");
+            if (xOptions != yOptions)
+                return false;
+            var xCredentials = StripWhiteSpace.Replace(xProfile.Credentials, "");
+            var yCredentials = StripWhiteSpace.Replace(yProfile.Credentials, "");
+            return xCredentials == yCredentials;
+        }
+
+        /// <summary>
+        /// Updates or re-created EventChannel based on an <see cref="EventSinkProfile"/>.
+        /// </summary>
+        /// <param name="sinkProfile"></param>
         public async Task UpdateEventChannel(EventSinkProfile sinkProfile) {
             if (_eventProcessor.ActiveEventChannels.TryGetValue(sinkProfile.Name, out var channel)) {
-                var batchSize = sinkProfile.BatchSize == 0 ? 100 : sinkProfile.BatchSize;
-                var maxWriteDelayMSecs = sinkProfile.MaxWriteDelayMSecs == 0 ? 400 : sinkProfile.MaxWriteDelayMSecs;
-                channel.ChangeBatchSize(batchSize);
-                channel.ChangeWriteDelay(maxWriteDelayMSecs);
-                return;
+                // the only settings we can update on a running channel/EventSink are BatchSize and MaxWriteDelayMSecs
+                if (ProfilesMatch(sinkProfile, _sessionConfig.SinkProfiles[sinkProfile.Name])) {
+                    var batchSize = sinkProfile.BatchSize == 0 ? 100 : sinkProfile.BatchSize;
+                    var maxWriteDelayMSecs = sinkProfile.MaxWriteDelayMSecs == 0 ? 400 : sinkProfile.MaxWriteDelayMSecs;
+                    channel.ChangeBatchSize(batchSize);
+                    channel.ChangeWriteDelay(maxWriteDelayMSecs);
+                    _sessionConfig.SaveSinkProfile(sinkProfile);
+                    return;
+                }
+                else {
+                    // the channel is active, but we need to re-create it as it does not match the new profile
+                    await channel.DisposeAsync().ConfigureAwait(false);
+                }
             }
 
             EventChannel CreateChannel(IEventSink eventSink) {
@@ -311,6 +340,17 @@ namespace KdSoft.EtwEvents.PushAgent
                 }
                 _logger.LogError(ex, "Error updating event sink '{eventSink}'.", sinkProfile.Name);
                 throw;
+            }
+        }
+
+        public async Task UpdateEventChannels(IDictionary<string, EventSinkProfile> sinkProfiles) {
+            var confNames = _sessionConfig.SinkProfiles.Keys.ToImmutableHashSet(StringComparer.CurrentCultureIgnoreCase);
+            var namesToRemove = confNames.Except(sinkProfiles.Keys);
+            foreach (var toRemove in namesToRemove) {
+                await CloseEventChannel(toRemove).ConfigureAwait(false);
+            }
+            foreach (var profileEntry in sinkProfiles) {
+                await UpdateEventChannel(profileEntry.Value).ConfigureAwait(false);
             }
         }
 

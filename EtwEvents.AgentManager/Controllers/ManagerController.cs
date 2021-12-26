@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Net;
@@ -224,21 +225,39 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         [HttpPost]
-        public IActionResult UpdateEventSink(string agentId, [FromBody] JsonNode eventSinkProfile) {
-            // The Credentials and Options properties need to be converted back to JSON
-
+        public IActionResult UpdateEventSinks(string agentId, [FromBody] JsonArray eventSinkProfiles) {
             var jsonSettings = _jsonOptions.Value.JsonSerializerOptions;
 
-            var opts = eventSinkProfile["options"];
-            var optsString = opts?.ToJsonString(jsonSettings);
-            eventSinkProfile["options"] = optsString;
+            var profilesHolder = new List<JsonNode>();
+            // The credentials and options properties need to be converted back to JSON
+            foreach (var eventSinkProfile in eventSinkProfiles) {
+                if (eventSinkProfile == null)
+                    continue;
 
-            var creds = eventSinkProfile["credentials"];
-            var credsString = creds?.ToJsonString();
-            eventSinkProfile["credentials"] = credsString;
+                var opts = eventSinkProfile["options"];
+                var optsString = opts?.ToJsonString(jsonSettings);
+                eventSinkProfile["options"] = optsString;
 
-            var profileJson = eventSinkProfile.ToJsonString(jsonSettings);
-            return PostAgent(agentId, "UpdateEventSink", profileJson ?? "");
+                var creds = eventSinkProfile["credentials"];
+                var credsString = creds?.ToJsonString();
+                eventSinkProfile["credentials"] = credsString;
+
+                profilesHolder.Add(eventSinkProfile);
+            }
+
+            // build EventSinkProfiles message (protobuf)
+            var profilesMessage = new JsonObject();
+            var profiles = new JsonObject();
+            profilesMessage["profiles"] = profiles;
+
+            // a JsonArray owns its nodes, so we must first remove them before we can add them to the JsonObject
+            eventSinkProfiles.Clear();
+            foreach (var eventSinkProfile in profilesHolder) {
+                profiles[(string?)eventSinkProfile["name"] ?? "unknown"] = eventSinkProfile;
+            }
+
+            var profilesMessageJson = profilesMessage.ToJsonString(jsonSettings);
+            return PostAgent(agentId, "UpdateEventSinks", profilesMessageJson ?? "");
         }
 
         #endregion
