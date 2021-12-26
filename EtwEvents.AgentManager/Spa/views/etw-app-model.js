@@ -35,7 +35,7 @@ function _enhanceProviderState(provider) {
 }
 
 // adds view models and view related methods to agent state, agentState must be observable
-function _enhanceAgentState(agentState) {
+function _enhanceAgentState(agentState, eventSinkInfos) {
   for (const provider of agentState.enabledProviders) {
     _enhanceProviderState(provider);
   }
@@ -58,6 +58,15 @@ function _enhanceAgentState(agentState) {
     agentState.processingModel = new ProcessingModel(agentState.processingState);
   } else {
     agentState.processingModel.refresh(agentState.processingState);
+  }
+
+  for (const sinkStateEntry of Object.entries(agentState.eventSinks)) {
+    const sinkState = sinkStateEntry[1];
+    const sinkInfo = eventSinkInfos.find(si => si.sinkType == sinkState.profile.sinkType && si.version == sinkState.profile.version);
+    if (sinkInfo) {
+      sinkState.configViewUrl = sinkInfo.configViewUrl;
+      sinkState.configModelUrl = sinkInfo.configModelUrl;
+    }
   }
 
   return agentState;
@@ -251,7 +260,7 @@ class EtwAppModel {
     const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
     if (!activeEntry) return null;
 
-    activeEntry.state = _enhanceAgentState(activeEntry.state);
+    activeEntry.state = _enhanceAgentState(activeEntry.state, this.eventSinkInfos);
     return activeEntry.state;
   }
 
