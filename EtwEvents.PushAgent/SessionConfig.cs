@@ -72,7 +72,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
         #region EventSinkProfile
 
-        string EventSinkOptionsPath => Path.Combine(_context.HostingEnvironment.ContentRootPath, "eventSink.json");
+        string EventSinkOptionsPath => Path.Combine(_context.HostingEnvironment.ContentRootPath, "eventSinks.json");
 
         Dictionary<string, EventSinkProfile> _sinkProfiles = new Dictionary<string, EventSinkProfile>(StringComparer.CurrentCultureIgnoreCase);
         public IReadOnlyDictionary<string, EventSinkProfile> SinkProfiles => _sinkProfiles;

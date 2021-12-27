@@ -19,7 +19,7 @@
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>
-    <Content Update="eventSession.json;eventSink.json">
+    <Content Update="eventSession.json;eventSinks.json">
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>

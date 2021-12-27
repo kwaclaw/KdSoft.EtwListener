@@ -1,0 +1,1 @@
+{ "profiles": { "Default": { "sinkType": "RollingFileSink", "name": "Default", "version": "1.1.0.0", "options": "{\"fileNameFormat\":\"app-{0:yyyy-MM-dd}\",\"directory\":\"logs\",\"fileExtension\":\".log\",\"maxFileCount\":11}", "credentials": "{}", "persistentChannel": false, "batchSize": 48, "maxWriteDelayMSecs": 383 } } }
