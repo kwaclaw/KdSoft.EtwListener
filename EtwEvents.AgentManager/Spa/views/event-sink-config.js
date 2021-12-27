@@ -84,7 +84,7 @@ class EventSinkConfig extends LitMvvmElement {
     return !!this.model;
   }
 
-  firstRendered() {
+  beforeFirstRender() {
     this._loadConfigComponent(this.model);
   }
 
@@ -110,10 +110,11 @@ class EventSinkConfig extends LitMvvmElement {
         #form-header {
           display: grid;
           grid-template-columns: auto auto;
-          background: rgba(255,255,255,0.3);
           row-gap: 5px;
           column-gap: 10px;
           margin-bottom: 15px;
+          padding-left: 5px;
+          background: rgba(255,255,255,0.3);
         }
 
         #form-content {
@@ -134,14 +135,9 @@ class EventSinkConfig extends LitMvvmElement {
           border-width: 1px;
         }
 
-        #ok-cancel-buttons {
-          margin-top: auto;
-        }
-
         #processing-vars {
           display: grid;
           grid-template-columns: auto auto;
-          background: rgba(255,255,255,0.3);
           row-gap: 5px;
           column-gap: 10px;
           margin-bottom: 10px;
@@ -162,13 +158,13 @@ class EventSinkConfig extends LitMvvmElement {
 
     const result = html`
       <div class="border-l-2 ${borderColor}">
-        <header class="flex items-center justify-start pl-1 cursor-pointer select-none relative ${errorClasses}">
+        <header class="flex items-center justify-start pl-1 py-2 cursor-pointer select-none relative ${errorClasses}">
           <span>${profile.name} - ${profile.sinkType}</span>
           <span class="${timesClasses} ml-auto mr-2" @click=${this._deleteClicked}></span>
           <span class="${chevronClasses}" @click=${this._expandClicked}></span>
         </header>
 
-        <form class="mt-2 relative" ?hidden=${!expanded}>
+        <form class="relative" ?hidden=${!expanded}>
           <div id="form-header">
             <pre ?hidden=${!this.model.error}><textarea 
               class="my-2 w-full border-2 border-red-500 focus:outline-none focus:border-red-700"

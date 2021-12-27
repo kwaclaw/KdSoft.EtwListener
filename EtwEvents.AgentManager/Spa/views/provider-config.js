@@ -143,7 +143,7 @@ class ProviderConfig extends LitMvvmElement {
     // Note: number inputs can be sized by setting their max value
 
     return html`
-      <form class="bg-gray-100 p-2" @change=${this._fieldChange}>
+      <form class="bg-gray-300 p-2" @change=${this._fieldChange}>
         <div class="border-l-2 ${borderColor}">
           <header class="flex items-center justify-start pl-1 cursor-pointer select-none relative">
               <input name="name" type="text"

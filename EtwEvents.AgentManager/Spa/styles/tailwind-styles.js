@@ -462,6 +462,9 @@ Ensure the default browser behavior of the \`hidden\` attribute.
 .mr-2 {
   margin-right: 0.5rem;
 }
+.mt-1 {
+  margin-top: 0.25rem;
+}
 .mb-5 {
   margin-bottom: 1.25rem;
 }
@@ -549,9 +552,9 @@ Ensure the default browser behavior of the \`hidden\` attribute.
   --tw-bg-opacity: 1;
   background-color: rgb(31 41 55 / var(--tw-bg-opacity));
 }
-.bg-gray-100 {
+.bg-gray-300 {
   --tw-bg-opacity: 1;
-  background-color: rgb(243 244 246 / var(--tw-bg-opacity));
+  background-color: rgb(209 213 219 / var(--tw-bg-opacity));
 }
 .p-2 {
   padding: 0.5rem;
@@ -566,6 +569,10 @@ Ensure the default browser behavior of the \`hidden\` attribute.
 .px-2 {
   padding-left: 0.5rem;
   padding-right: 0.5rem;
+}
+.py-2 {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
 }
 .py-0 {
   padding-top: 0px;

@@ -245,7 +245,8 @@ class EtwAgent extends LitMvvmElement {
         }
 
         event-sink-config {
-          margin: 10px;
+          margin-top: 10px;
+          margin-bottom: 10px;
         }
 
         #dlg-add-event-sink form {
@@ -281,7 +282,7 @@ class EtwAgent extends LitMvvmElement {
                   </span>
                 </div>
                 ${activeAgentState.enabledProviders.map(provider => html`
-                  <provider-config
+                  <provider-config class="my-3"
                     .model=${provider}
                     @beforeExpand=${this._providerBeforeExpand}
                     @delete=${this._deleteProviderClick}>
@@ -335,7 +336,7 @@ class EtwAgent extends LitMvvmElement {
                   Object.entries(activeAgentState.eventSinks),
                   entry => entry[0],
                   entry => html`
-                    <event-sink-config
+                    <event-sink-config class="bg-gray-300 px-2 my-3"
                       .model=${entry[1]}
                       @beforeExpand=${this._eventSinkBeforeExpand}
                       @delete=${this._deleteEventSinkClick}>
