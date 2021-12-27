@@ -443,12 +443,6 @@ class EtwAppModel {
     delete agentState.eventSinks[name];
   }
 
-  // get eventSinkError() {
-  //   const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
-  //   if (!activeEntry) return false;
-  //   return '';  //activeEntry.current?.eventSink.error;
-  // }
-
   //#endregion
 
   resetAll() {

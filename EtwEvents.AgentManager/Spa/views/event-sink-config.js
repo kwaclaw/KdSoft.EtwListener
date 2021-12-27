@@ -4,16 +4,7 @@ import { LitMvvmElement, html, nothing, css } from '@kdsoft/lit-mvvm';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
-import EventSinkProfile from '../js/eventSinkProfile.js';
 import * as utils from '../js/utils.js';
-
-/* Event Sink UI
-   - should reflect configuration stored in PushAgent's eventSink.json, passed as EventSinkState
-   - should allow editing details
-   - should allow to change the event sink type - which will trigger a different UI
-     if another type is selected - so the type should be in the header with a dropdown
-   - changing the dropdown selection will change the UI in the body
-*/
 
 async function loadSinkDefinitionTemplate(sinkInfo) {
   const elementModule = await import(/* @vite-ignore */sinkInfo.configViewUrl);
@@ -61,40 +52,9 @@ class EventSinkConfig extends LitMvvmElement {
     this.dispatchEvent(evt);
   }
 
-  _profileChange(e) {
+  _fieldChange(e) {
     e.stopPropagation();
-    this.model.sinkProfile[e.target.name] = utils.getFieldValue(e.target);
-  }
-
-  _cancel() {
-    const container = this.renderRoot.getElementById('form-content');
-    const configElement = container.children[0];
-
-    const evt = new CustomEvent('kdsoft-done', {
-      // composed allows bubbling beyond shadow root
-      bubbles: true, composed: true, cancelable: true, detail: { model: configElement?.model, canceled: true }
-    });
-    this.dispatchEvent(evt);
-  }
-
-  _apply(e) {
-    const container = this.renderRoot.getElementById('form-content');
-    const configElement = container.children[0];
-    if (!configElement || !configElement.isValid()) return;
-
-    const nameField = this.renderRoot.getElementById('sinkProfileName');
-    const selectedSinkInfoEntry = this.model.sinkInfoCheckListModel.firstSelectedEntry;
-    const selectedSinkInfo = selectedSinkInfoEntry?.item;
-    const sinkProfile = new EventSinkProfile(nameField.value, selectedSinkInfo.sinkType, selectedSinkInfo.version);
-    Object.assign(sinkProfile, configElement.model);
-
-    this.model.sinkProfile = sinkProfile;
-
-    const evt = new CustomEvent('kdsoft-done', {
-      // composed allows bubbling beyond shadow root
-      bubbles: true, composed: true, cancelable: true, detail: { model: this.model, canceled: false }
-    });
-    this.dispatchEvent(evt);
+    this.model.profile[e.target.name] = utils.getFieldValue(e.target);
   }
 
   _isValid() {
@@ -115,24 +75,6 @@ class EventSinkConfig extends LitMvvmElement {
       }
     } else {
       this.sinkTypeTemplateHolder.tag = nothing;
-    }
-  }
-
-  _export() {
-    if (!this.model.profile) return;
-
-    const profileString = JSON.stringify(this.model.profile, null, 2);
-    const profileURL = `data:text/plain,${profileString}`;
-
-    const a = document.createElement('a');
-    try {
-      a.style.display = 'none';
-      a.href = profileURL;
-      a.download = `${this.model.profile.name}.json`;
-      document.body.appendChild(a);
-      a.click();
-    } finally {
-      document.body.removeChild(a);
     }
   }
 
@@ -232,13 +174,13 @@ class EventSinkConfig extends LitMvvmElement {
               class="my-2 w-full border-2 border-red-500 focus:outline-none focus:border-red-700"
             >${this.model.error}</textarea></pre>
 
-            <div id="processing-vars" @change=${this._profileChange}>
+            <div id="processing-vars" @change=${this._fieldChange}>
               <label for="batchSize">Batch Size</label>
               <input type="number" id="batchSize" name="batchSize" .value=${profile.batchSize} />
               <label for="maxWriteDelayMSecs">Max Write Delay (msecs)</label>
-              <input type="number" id="maxWriteDelayMSecs" name="maxWriteDelayMSecs" value=${profile.maxWriteDelayMSecs} />
+              <input type="number" id="maxWriteDelayMSecs" name="maxWriteDelayMSecs" .value=${profile.maxWriteDelayMSecs} />
               <label for="persistentChannel">Persistent Buffer</label>
-              <input type="checkbox" id="persistentChannel" name="persistentChannel" value=${profile.persistentChannel} />
+              <input type="checkbox" id="persistentChannel" name="persistentChannel" .checked=${profile.persistentChannel} />
             </div>
           </div>
           <div id="form-content">

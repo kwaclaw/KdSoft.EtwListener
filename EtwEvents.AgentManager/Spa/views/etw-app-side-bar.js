@@ -47,6 +47,7 @@ class EtwAppSideBar extends LitMvvmElement {
 
     const exportObject = new AgentState();
     utils.setTargetProperties(exportObject, agentState);
+
     // fix up enabled providers to exclude extra properties
     const enabledProviders = [];
     for (const provider of agentState.enabledProviders) {
@@ -55,6 +56,14 @@ class EtwAppSideBar extends LitMvvmElement {
       enabledProviders.push(exportProvider);
     }
     exportObject.enabledProviders = enabledProviders;
+
+    for (const entry of Object.entries(agentState.eventSinks)) {
+      const sinkState = entry[1];
+      delete sinkState.error;
+      delete sinkState.configViewUrl;
+      delete sinkState.configModelUrl;
+      delete sinkState.expanded;
+    }
 
     const exportString = JSON.stringify(exportObject, null, 2);
     const exportURL = `data:text/plain,${exportString}`;
