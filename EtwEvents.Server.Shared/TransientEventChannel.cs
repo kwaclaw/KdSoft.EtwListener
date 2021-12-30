@@ -18,6 +18,7 @@ namespace KdSoft.EtwEvents.Server
         static readonly EtwEvent _emptyEvent = new();
 
         int _lastWrittenMSecs;
+        CancellationTokenSource? _stoppingTokenSource;
 
         TransientEventChannel(
             IEventSink sink,
@@ -36,6 +37,9 @@ namespace KdSoft.EtwEvents.Server
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override void PostEvent(TraceEvent evt) {
+            if (_stoppingTokenSource?.Token.IsCancellationRequested ?? false) {
+                _channel.Writer.TryComplete();
+            }
             var etwEvent = _etwEventPool.Get();
             var posted = _channel.Writer.TryWrite(etwEvent.SetTraceEvent(evt));
             if (!posted)
@@ -60,6 +64,14 @@ namespace KdSoft.EtwEvents.Server
         /// </summary>
         /// <param name="stoppingToken">CancellationToken to use for stopping the channel.</param>
         protected override async Task ProcessBatches(CancellationToken stoppingToken) {
+            var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+            var oldCts = Interlocked.CompareExchange(ref _stoppingTokenSource, cts, null);
+            if (oldCts != null) {
+                cts.Cancel();
+                cts.Dispose();
+                throw new InvalidOperationException("Channel already stopped.");
+            }
+
             bool isCompleted;
 
             using (_timer = new Timer(TimerCallback)) {
@@ -69,7 +81,7 @@ namespace KdSoft.EtwEvents.Server
                     var batch = new EtwEventBatch();
 
                     try {
-                        await foreach (var evt in _channel.Reader.ReadAllAsync(stoppingToken).ConfigureAwait(false)) {
+                        await foreach (var evt in _channel.Reader.ReadAllAsync(cts.Token).ConfigureAwait(false)) {
                             // _emptyEvent instance indicates we should write the batch even if incomplete
                             if (ReferenceEquals(_emptyEvent, evt)) {
                                 if (batch.Events.Count == 0)
@@ -98,7 +110,7 @@ namespace KdSoft.EtwEvents.Server
                         }
                     }
 
-                } while (!isCompleted && !stoppingToken.IsCancellationRequested);
+                } while (!isCompleted && !cts.Token.IsCancellationRequested);
 
             }
             _timer = null;
@@ -108,12 +120,21 @@ namespace KdSoft.EtwEvents.Server
 
         public override async ValueTask DisposeAsync() {
             try {
-                _channel.Writer.TryComplete();
+                var cts = _stoppingTokenSource;
+                if (cts != null) {
+                    cts.Cancel();
+                    cts.Dispose();
+                }
                 await _channel.Reader.Completion.ConfigureAwait(false);
-                await base.DisposeAsync().ConfigureAwait(false);
+                var runTask = this.RunTask;
+                if (runTask != null)
+                    await runTask.ConfigureAwait(false);
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Error closing event channel.");
+            }
+            finally {
+                await base.DisposeAsync().ConfigureAwait(false);
             }
         }
 

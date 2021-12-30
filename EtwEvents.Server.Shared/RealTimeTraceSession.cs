@@ -128,7 +128,9 @@ namespace KdSoft.EtwEvents.Server
             void handleEvent(TraceEvent evt) {
                 try {
                     if (cancelToken.IsCancellationRequested) {
-                        Instance.Source.Dispose();
+                        var inst = _instance;
+                        if (inst != null)
+                            inst.Source.Dispose();
                         return;
                     }
                     if (TplActivities.TplEventSourceGuid.Equals(evt.ProviderGuid))

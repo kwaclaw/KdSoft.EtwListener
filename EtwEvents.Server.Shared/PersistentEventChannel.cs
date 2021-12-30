@@ -23,6 +23,7 @@ namespace KdSoft.EtwEvents.Server
 
         int _lastWrittenMSecs;
         uint _batchCounter;
+        CancellationTokenSource? _stoppingTokenSource;
 
         PersistentEventChannel(
             IEventSink sink,
@@ -38,10 +39,13 @@ namespace KdSoft.EtwEvents.Server
         }
 
         public override void PostEvent(tracing.TraceEvent evt) {
+            if (_stoppingTokenSource?.Token.IsCancellationRequested ?? false) {
+                return;
+            }
+
             var etwEvent = _etwEventPool.Get();
             try {
                 etwEvent.SetTraceEvent(evt);
-
                 _bufferWriter.Clear();
                 etwEvent.WriteTo(_bufferWriter);
             }
@@ -88,6 +92,14 @@ namespace KdSoft.EtwEvents.Server
         }
 
         protected override async Task ProcessBatches(CancellationToken stoppingToken) {
+            var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+            var oldCts = Interlocked.CompareExchange(ref _stoppingTokenSource, cts, null);
+            if (oldCts != null) {
+                cts.Cancel();
+                cts.Dispose();
+                throw new InvalidOperationException("Channel already stopped.");
+            }
+
             await Task.Yield();
 
             using var reader = _channel.GetNewReader();
@@ -99,7 +111,7 @@ namespace KdSoft.EtwEvents.Server
 
                     //TODO this does not update the _nextAddress field in reader!, but it works without NullReferenceExceptions in TryEnqueue
                     //await foreach (var (owner, length, _, _) in reader.GetAsyncEnumerable(stoppingToken).ConfigureAwait(false)) {
-                    await foreach (var (owner, length) in reader.ReadAllAsync(stoppingToken).ConfigureAwait(false)) {
+                    await foreach (var (owner, length) in reader.ReadAllAsync(cts.Token).ConfigureAwait(false)) {
                         using (owner) {
                             var byteSequence = new ReadOnlySequence<byte>(owner.Memory).Slice(0, length);
 
@@ -127,7 +139,7 @@ namespace KdSoft.EtwEvents.Server
                         }
                     }
 
-                } while (!stoppingToken.IsCancellationRequested);
+                } while (!cts.Token.IsCancellationRequested);
 
             }
             _timer = null;
@@ -137,11 +149,21 @@ namespace KdSoft.EtwEvents.Server
 
         public override async ValueTask DisposeAsync() {
             try {
+                var cts = _stoppingTokenSource;
+                if (cts != null) {
+                    cts.Cancel();
+                    cts.Dispose();
+                }
+                var runTask = this.RunTask;
+                if (runTask != null)
+                    await runTask.ConfigureAwait(false);
                 _channel.Dispose();
-                await base.DisposeAsync().ConfigureAwait(false);
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Error closing event channel.");
+            }
+            finally {
+                await base.DisposeAsync().ConfigureAwait(false);
             }
         }
 
