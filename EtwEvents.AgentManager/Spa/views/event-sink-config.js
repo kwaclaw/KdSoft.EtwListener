@@ -117,6 +117,10 @@ class EventSinkConfig extends LitMvvmElement {
           background: rgba(255,255,255,0.3);
         }
 
+        #form-header>pre {
+          grid-column: 1/-1;
+        }
+
         #form-content {
           position: relative;
           display: flex;
@@ -155,11 +159,12 @@ class EventSinkConfig extends LitMvvmElement {
       ? 'text-indigo-500 fas fa-lg  fa-chevron-circle-up'
       : 'text-gray-600 fas fa-lg fa-chevron-circle-down';
     const errorClasses = this.model.error ? 'border-red-500 focus:outline-none focus:border-red-700' : '';
+    const titleClasses = this.model.error ? 'text-red-600' : (expanded ? 'text-indigo-500' : '');
 
     const result = html`
       <div class="border-l-2 ${borderColor}">
         <header class="flex items-center justify-start pl-1 py-2 cursor-pointer select-none relative ${errorClasses}">
-          <span>${profile.name} - ${profile.sinkType}</span>
+          <span class="${titleClasses}">${profile.name} - ${profile.sinkType}</span>
           <span class="${timesClasses} ml-auto mr-2" @click=${this._deleteClicked}></span>
           <span class="${chevronClasses}" @click=${this._expandClicked}></span>
         </header>
