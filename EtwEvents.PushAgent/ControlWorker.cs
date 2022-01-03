@@ -78,9 +78,7 @@ namespace KdSoft.EtwEvents.PushAgent
                         return;
                     }
                     var started = await StartSessionWorker(default).ConfigureAwait(false);
-                    if (started) {
-                        await SendStateUpdate().ConfigureAwait(false);
-                    }
+                    await SendStateUpdate().ConfigureAwait(false);
                     return;
                 case "Stop":
                     if (_sessionWorkerAvailable == 0) {
@@ -106,9 +104,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     break;
                 case "Stop":
                     var stopped = await StopSessionWorker(default).ConfigureAwait(false);
-                    if (stopped) {
-                        await SendStateUpdate().ConfigureAwait(false);
-                    }
+                    await SendStateUpdate().ConfigureAwait(false);
                     break;
                 case "SetEmptyFilter":
                     var emptyFilter = string.IsNullOrEmpty(sse.Data) ? null : Filter.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
@@ -337,7 +333,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     return false;
                 }
 
-                // if we executing worker Task ends on its own (error?), clean up and update state
+                // if the executing worker Task ends on its own (error?), clean up and update state
                 _ = sessionWorker.ExecuteTask
                     .ContinueWith(swt => {
                         Interlocked.Exchange(ref _sessionWorkerAvailable, 0);
