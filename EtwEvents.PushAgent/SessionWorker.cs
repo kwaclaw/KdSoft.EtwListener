@@ -330,8 +330,10 @@ namespace KdSoft.EtwEvents.PushAgent
                 _sessionConfig.SaveSinkProfile(sinkProfile);
             }
             catch (Exception ex) {
-                await sink.DisposeAsync().ConfigureAwait(false);
-                if (newChannel != null) {
+                if (newChannel == null) {
+                    await sink.DisposeAsync().ConfigureAwait(false);
+                }
+                else {
                     await newChannel.DisposeAsync().ConfigureAwait(false);
                 }
                 _logger.LogError(ex, "Error updating event sink '{eventSink}'.", sinkProfile.Name);
@@ -352,6 +354,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
         #endregion
 
+        // Note: the stoppingToken gets cancelled by calling BackgroundService.StopAsync() or BackgroundService.Dispose()
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
             try {
                 if (!_sessionConfig.StateAvailable) {
@@ -402,11 +405,9 @@ namespace KdSoft.EtwEvents.PushAgent
             catch (Exception ex) {
                 _logger.LogError(ex, "Session failure.");
             }
-        }
-
-        public override void Dispose() {
-            base.Dispose();
-            _session?.Dispose();
+            finally {
+                await _eventProcessor.DisposeAsync().ConfigureAwait(false);
+            }
         }
     }
 }
