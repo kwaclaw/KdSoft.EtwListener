@@ -124,13 +124,14 @@ namespace KdSoft.EtwEvents.Server
                 throw new InvalidOperationException("A real time trace event session cannot be re-started!");
             }
 
+            cancelToken.Register(() => {
+                Dispose();
+            });
+
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             void handleEvent(TraceEvent evt) {
                 try {
                     if (cancelToken.IsCancellationRequested) {
-                        var inst = _instance;
-                        if (inst != null)
-                            inst.Source.Dispose();
                         return;
                     }
                     if (TplActivities.TplEventSourceGuid.Equals(evt.ProviderGuid))
