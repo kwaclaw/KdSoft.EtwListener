@@ -103,10 +103,9 @@ namespace KdSoft.EtwEvents.Server
 
             await Task.Yield();
 
-            using var reader = _channel.GetNewReader();
-
-            using (_timer = new Timer(TimerCallback)) {
-
+            _timer = new Timer(TimerCallback);
+            try {
+                using var reader = _channel.GetNewReader();
                 do {
                     var batch = new EtwEventBatch();
 
@@ -141,30 +140,33 @@ namespace KdSoft.EtwEvents.Server
                     }
 
                 } while (!cts.Token.IsCancellationRequested);
-
             }
-            _timer = null;
-
-            await _sink.RunTask.ConfigureAwait(false);
+            finally {
+                await base.DisposeAsync().ConfigureAwait(false);
+                await _sink.RunTask.ConfigureAwait(false);
+            }
         }
 
         public override async ValueTask DisposeAsync() {
+            var cts = _stoppingTokenSource;
             try {
-                var cts = _stoppingTokenSource;
                 if (cts != null) {
                     cts.Cancel();
-                    cts.Dispose();
                 }
+
                 var runTask = this.RunTask;
                 if (runTask != null)
                     await runTask.ConfigureAwait(false);
+
                 _channel.Dispose();
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Error closing event channel.");
             }
             finally {
-                await base.DisposeAsync().ConfigureAwait(false);
+                if (cts != null) {
+                    cts.Dispose();
+                }
             }
         }
 

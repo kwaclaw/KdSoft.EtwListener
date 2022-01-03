@@ -74,7 +74,11 @@ namespace KdSoft.EtwEvents.Server
         }
 
         public virtual ValueTask DisposeAsync() {
-            _timer?.Dispose();
+            var tm = _timer;
+            if (tm != null) {
+                _timer = null;
+                tm.Dispose();
+            }
             return _sink.DisposeAsync();
         }
     }

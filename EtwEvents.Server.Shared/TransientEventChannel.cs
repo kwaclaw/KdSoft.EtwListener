@@ -39,6 +39,7 @@ namespace KdSoft.EtwEvents.Server
         public override void PostEvent(TraceEvent evt) {
             if (_stoppingTokenSource?.Token.IsCancellationRequested ?? false) {
                 _channel.Writer.TryComplete();
+                return;
             }
             var etwEvent = _etwEventPool.Get();
             var posted = _channel.Writer.TryWrite(etwEvent.SetTraceEvent(evt));
@@ -72,10 +73,13 @@ namespace KdSoft.EtwEvents.Server
                 throw new InvalidOperationException("Channel already stopped.");
             }
 
-            bool isCompleted;
+            cts.Token.Register(() => {
+                _channel.Writer.TryComplete();
+            });
 
-            using (_timer = new Timer(TimerCallback)) {
-
+            _timer = new Timer(TimerCallback);
+            try {
+                bool isCompleted;
                 do {
                     isCompleted = true;
                     var batch = new EtwEventBatch();
@@ -112,21 +116,22 @@ namespace KdSoft.EtwEvents.Server
                     }
 
                 } while (!isCompleted && !cts.Token.IsCancellationRequested);
-
             }
-            _timer = null;
-
-            await _sink.RunTask.ConfigureAwait(false);
+            finally {
+                await base.DisposeAsync().ConfigureAwait(false);
+                await _sink.RunTask.ConfigureAwait(false);
+            }
         }
 
         public override async ValueTask DisposeAsync() {
+            var cts = _stoppingTokenSource;
             try {
-                var cts = _stoppingTokenSource;
                 if (cts != null) {
                     cts.Cancel();
-                    cts.Dispose();
                 }
+
                 await _channel.Reader.Completion.ConfigureAwait(false);
+
                 var runTask = this.RunTask;
                 if (runTask != null)
                     await runTask.ConfigureAwait(false);
@@ -135,7 +140,9 @@ namespace KdSoft.EtwEvents.Server
                 _logger.LogError(ex, "Error closing event channel.");
             }
             finally {
-                await base.DisposeAsync().ConfigureAwait(false);
+                if (cts != null) {
+                    cts.Dispose();
+                }
             }
         }
 
