@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="KdSoft.Utils" Version="3.0.3" />
+    <PackageReference Include="KdSoft.Utils" Version="3.0.4" />
   </ItemGroup>
 
   <ItemGroup>
