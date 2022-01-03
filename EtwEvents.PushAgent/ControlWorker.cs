@@ -77,7 +77,7 @@ namespace KdSoft.EtwEvents.PushAgent
                         _logger?.LogInformation("Session already starting.");
                         return;
                     }
-                    var started = await StartWorker(default).ConfigureAwait(false);
+                    var started = await StartSessionWorker(default).ConfigureAwait(false);
                     if (started) {
                         await SendStateUpdate().ConfigureAwait(false);
                     }
@@ -105,7 +105,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     //
                     break;
                 case "Stop":
-                    var stopped = await StopWorker(default).ConfigureAwait(false);
+                    var stopped = await StopSessionWorker(default).ConfigureAwait(false);
                     if (stopped) {
                         await SendStateUpdate().ConfigureAwait(false);
                     }
@@ -314,7 +314,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
         #region Lifecycle
 
-        async Task<bool> StartWorker(CancellationToken cancelToken) {
+        async Task<bool> StartSessionWorker(CancellationToken cancelToken) {
             if (_sessionWorkerAvailable != 0)
                 return false;
 
@@ -369,17 +369,19 @@ namespace KdSoft.EtwEvents.PushAgent
             }
         }
 
-        async Task<bool> StopWorker(CancellationToken cancelToken) {
-            var oldWorkerAvailable = Interlocked.Exchange(ref _sessionWorkerAvailable, 0);
-            if (oldWorkerAvailable == 0)
+        async Task<bool> StopSessionWorker(CancellationToken cancelToken) {
+            var oldSessionWorkerAvailable = Interlocked.Exchange(ref _sessionWorkerAvailable, 0);
+            if (oldSessionWorkerAvailable == 0)
                 return false;
 
-            var oldWorker = Interlocked.Exchange(ref _sessionWorker, null);
-            if (oldWorker == null)  // should not happen 
+            var oldSessionWorker = Interlocked.Exchange(ref _sessionWorker, null);
+            if (oldSessionWorker == null)  // should not happen 
                 return false;
-            await oldWorker.StopAsync(cancelToken).ConfigureAwait(false);
 
-            // the continuation of oldWorker.ExecuteTask will clean up the scope
+            // returns when oldSessionWorker.ExecuteAsync() returns
+            await oldSessionWorker.StopAsync(cancelToken).ConfigureAwait(false);
+
+            // the continuation of oldSessionWorker.ExecuteTask() will clean up the scope
             return true;
         }
 
@@ -389,7 +391,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 sseTask = StartSSE();
 
                 stoppingToken.Register(async () => {
-                    await StopWorker(default).ConfigureAwait(false);
+                    await StopSessionWorker(default).ConfigureAwait(false);
                     var evt = _eventSource;
                     if (evt != null) {
                         _eventSource = null;
@@ -402,7 +404,7 @@ namespace KdSoft.EtwEvents.PushAgent
             }
 
             try {
-                await StartWorker(default).ConfigureAwait(false);
+                await StartSessionWorker(default).ConfigureAwait(false);
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Failure starting session.");

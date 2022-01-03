@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace KdSoft.EtwEvents.Server
 {
-    public abstract class EventChannel
+    public abstract class EventChannel: IAsyncDisposable
     {
         protected readonly IEventSink _sink;
         protected readonly ILogger _logger;
@@ -41,11 +41,6 @@ namespace KdSoft.EtwEvents.Server
 
         protected abstract Task ProcessBatches(CancellationToken stoppingToken);
 
-        public virtual ValueTask DisposeAsync() {
-            _timer?.Dispose();
-            return _sink.DisposeAsync();
-        }
-
         /// <summary>
         /// Changes batch size.
         /// </summary>
@@ -76,6 +71,11 @@ namespace KdSoft.EtwEvents.Server
             }
             var runTask = ProcessBatches(stoppingToken);
             this.RunTask = runTask.ContinueWith(continuation);
+        }
+
+        public virtual ValueTask DisposeAsync() {
+            _timer?.Dispose();
+            return _sink.DisposeAsync();
         }
     }
 }
