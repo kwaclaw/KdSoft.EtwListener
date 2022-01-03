@@ -106,6 +106,7 @@ namespace KdSoft.EtwEvents.Server
                     }
                     finally {
                         foreach (var evt in batch.Events) {
+                            evt.Payload.Clear();
                             _etwEventPool.Return(evt);
                         }
                     }

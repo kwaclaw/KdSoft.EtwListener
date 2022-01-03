@@ -50,6 +50,7 @@ namespace KdSoft.EtwEvents.Server
                 etwEvent.WriteTo(_bufferWriter);
             }
             finally {
+                etwEvent.Payload.Clear();
                 _etwEventPool.Return(etwEvent);
             }
 
