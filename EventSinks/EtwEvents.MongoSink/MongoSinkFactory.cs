@@ -1,6 +1,4 @@
 ﻿using System;
-using System.IO;
-using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -17,10 +15,6 @@ namespace KdSoft.EtwEvents.EventSinks
         static readonly JsonSerializerOptions _serializerOptions;
 
         static MongoSinkFactory() {
-            var evtSinkAssembly = Assembly.GetExecutingAssembly();
-            var evtSinkDir = Path.GetDirectoryName(evtSinkAssembly.Location);
-            AppDomain.CurrentDomain.AssemblyResolve += (sender, args) => Utils.DirectoryResolveAssembly(evtSinkDir!, args);
-
             _serializerOptions = new JsonSerializerOptions {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };

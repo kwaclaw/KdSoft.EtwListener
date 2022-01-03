@@ -4,7 +4,7 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <VersionPrefix>1.1.0</VersionPrefix>
+    <VersionPrefix>1.1.1</VersionPrefix>
     <LangVersion>Latest</LangVersion>
     <Nullable>enable</Nullable>
     <EnableDynamicLoading>true</EnableDynamicLoading>
@@ -14,11 +14,18 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="KdSoft.Utils" Version="3.0.0" />
+    <PackageReference Include="KdSoft.Utils" Version="3.0.3" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\EtwEvents.Shared\EtwEvents.Shared.csproj" />
+    <ProjectReference Include="..\..\EtwEvents.Protobuf.Shared\EtwEvents.Protobuf.Shared.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\..\EtwEvents.Shared\EtwEvents.Shared.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
   </ItemGroup>
 
 </Project>

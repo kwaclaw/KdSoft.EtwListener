@@ -242,16 +242,12 @@ namespace KdSoft.EtwEvents.PushAgent
         public IImmutableDictionary<string, EventChannel> FailedEventChannels => _eventProcessor.FailedEventChannels;
 
         async Task<IEventSinkFactory?> LoadSinkFactory(string sinkType, string version) {
-            // One can initiate unloading of the CollectibleAssemblyLoadContext by either calling its Unload method
-            // getting rid of the reference to the AssemblyLoadContext, e.g. by just using a local variable;
-            // see https://docs.microsoft.com/en-us/dotnet/standard/assembly/unloadability
-            var loadContext = new CollectibleAssemblyLoadContext();
-            var sinkFactory = _sinkService.LoadEventSinkFactory(sinkType, version, loadContext);
+            var sinkFactory = _sinkService.LoadEventSinkFactory(sinkType, version);
             if (sinkFactory == null) {
                 _logger.LogInformation("Downloading event sink factory '{sinkType}~{version}'.", sinkType, version);
                 await _sinkService.DownloadEventSink(sinkType, version);
             }
-            sinkFactory = _sinkService.LoadEventSinkFactory(sinkType, version, loadContext);
+            sinkFactory = _sinkService.LoadEventSinkFactory(sinkType, version);
             return sinkFactory;
         }
 

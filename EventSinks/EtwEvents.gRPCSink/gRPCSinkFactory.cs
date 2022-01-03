@@ -1,5 +1,4 @@
 ﻿using System.Net.Security;
-using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using Grpc.Net.Client;
@@ -15,10 +14,6 @@ namespace KdSoft.EtwEvents.EventSinks
         static readonly JsonSerializerOptions _serializerOptions;
 
         static gRPCSinkFactory() {
-            var evtSinkAssembly = Assembly.GetExecutingAssembly();
-            var evtSinkDir = Path.GetDirectoryName(evtSinkAssembly.Location);
-            AppDomain.CurrentDomain.AssemblyResolve += (sender, args) => Utils.DirectoryResolveAssembly(evtSinkDir!, args);
-
             _serializerOptions = new JsonSerializerOptions {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };

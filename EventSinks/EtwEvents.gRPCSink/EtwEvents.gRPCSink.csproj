@@ -23,13 +23,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\EtwEvents.Shared\EtwEvents.Shared.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Protobuf Include="..\..\Protos\etwSink.proto" GrpcServices="Client">
       <Link>etwSink.proto</Link>
     </Protobuf>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\EtwEvents.Protobuf.Shared\EtwEvents.Protobuf.Shared.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\..\EtwEvents.Shared\EtwEvents.Shared.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
   </ItemGroup>
 
 </Project>

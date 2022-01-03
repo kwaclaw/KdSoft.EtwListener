@@ -40,12 +40,16 @@ namespace KdSoft.EtwEvents.PushAgent
             this._runtimeAssemblyPaths = Directory.GetFiles(RuntimeEnvironment.GetRuntimeDirectory(), "*.dll");
         }
 
-        public IEventSinkFactory? LoadEventSinkFactory(string sinkType, string version, AssemblyLoadContext? loadContext = null) {
-            if (loadContext is null) {
-                loadContext = AssemblyLoadContext.Default;
-            }
-
+        /// <summary>
+        /// Load event sink factory from its dedicated directory.
+        /// Based on https://docs.microsoft.com/en-us/dotnet/core/tutorials/creating-app-with-plugin-support.
+        /// </summary>
+        /// <param name="sinkType">Event sink type as indicated by the <see cref="EventSinkAttribute"/> of the event sink factory.</param>
+        /// <param name="version">Version of event sink.</param>
+        /// <returns></returns>
+        public IEventSinkFactory? LoadEventSinkFactory(string sinkType, string version) {
             var eventSinksDir = Path.Combine(_rootPath, _eventSinksDir);
+
             var dirInfo = new DirectoryInfo(eventSinksDir);
             var evtSinkDirectories = dirInfo.EnumerateDirectories();
 
@@ -67,9 +71,11 @@ namespace KdSoft.EtwEvents.PushAgent
                         var factoryTypes = metaLoadContext.GetEventSinkFactoriesBySinkType(evtSinkFile.FullName, sinkType);
                         foreach (var factoryType in factoryTypes) {
                             var factoryTypeName = factoryType.FullName;
+                            var factoryAssemblyName = factoryType.Assembly.GetName();
                             // only interested in first one
-                            if (factoryTypeName != null && factoryType.Assembly.GetName().Version?.ToString() == version) {
-                                var factoryAssembly = loadContext.LoadFromAssemblyPath(evtSinkFile.FullName);
+                            if (factoryTypeName != null && factoryAssemblyName.Version?.ToString() == version) {
+                                var loadContext = new EventSinkLoadContext(evtSinkFile.FullName);
+                                var factoryAssembly = loadContext.LoadFromAssemblyName(factoryAssemblyName);
                                 return (IEventSinkFactory?)factoryAssembly.CreateInstance(factoryTypeName);
                             }
                         }

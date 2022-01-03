@@ -8,7 +8,11 @@ namespace KdSoft.EtwEvents
         public static Assembly? DirectoryResolveAssembly(string assemblyDir, ResolveEventArgs args) {
             var requestedAssembly = new AssemblyName(args.Name);
 
-            var alreadyLoadedAssembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == requestedAssembly.Name);
+            var alreadyLoadedAssembly = AppDomain.CurrentDomain.GetAssemblies()
+                .FirstOrDefault(ass => {
+                    var assName = ass.GetName();
+                    return assName.Name == requestedAssembly.Name && assName.Version >= requestedAssembly.Version;
+                });
 
             if (alreadyLoadedAssembly != null) {
                 return alreadyLoadedAssembly;
@@ -19,6 +23,9 @@ namespace KdSoft.EtwEvents
                 return Assembly.LoadFrom(requestedFile);
             }
             catch (FileNotFoundException) {
+                return null;
+            }
+            catch (FileLoadException) {
                 return null;
             }
         }

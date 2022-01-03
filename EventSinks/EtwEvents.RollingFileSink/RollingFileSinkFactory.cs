@@ -17,7 +17,6 @@ namespace KdSoft.EtwEvents.EventSinks
         static RollingFileSinkFactory() {
             var evtSinkAssembly = Assembly.GetExecutingAssembly();
             _evtSinkDir = Path.GetDirectoryName(evtSinkAssembly.Location)!;
-            AppDomain.CurrentDomain.AssemblyResolve += (sender, args) => Utils.DirectoryResolveAssembly(_evtSinkDir, args);
 
             _serializerOptions = new JsonSerializerOptions {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
