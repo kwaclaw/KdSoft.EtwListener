@@ -38,9 +38,9 @@ namespace KdSoft.EtwEvents.Server
             this._lastWrittenMSecs = Environment.TickCount;
         }
 
-        public override void PostEvent(tracing.TraceEvent evt) {
-            if (_stoppingTokenSource?.Token.IsCancellationRequested ?? false) {
-                return;
+        public override bool PostEvent(tracing.TraceEvent evt) {
+            if (_stoppingTokenSource?.Token.IsCancellationRequested ?? true) {
+                return false;
             }
 
             var etwEvent = _etwEventPool.Get();
@@ -58,7 +58,7 @@ namespace KdSoft.EtwEvents.Server
             if (posted) {
                 var batchCount = Interlocked.Increment(ref _batchCounter);
                 // checking for exact match resolves issue with multiple concurrent increments,
-                // only one of them will match and trigger the bacth terminator message
+                // only one of them will match and trigger the batch terminator message
                 if (batchCount == _batchSize) {
                     Volatile.Write(ref _batchCounter, 0);
                     Volatile.Write(ref _lastWrittenMSecs, Environment.TickCount);
@@ -71,12 +71,16 @@ namespace KdSoft.EtwEvents.Server
             else {
                 _logger.LogInformation("Could not post trace event {eventIndex}.", evt.EventIndex);
             }
+            return posted;
         }
 
         /// <summary>
         /// Timer callback that triggers periodical write operations even if the event batch is not full
         /// </summary>
         void TimerCallback(object? state) {
+            if (_stoppingTokenSource?.Token.IsCancellationRequested ?? true) {
+                return;
+            }
             var lastCheckedTicks = Interlocked.Exchange(ref _lastWrittenMSecs, Environment.TickCount);
             // integer subtraction is immune to rollover, e.g. unchecked(int.MaxValue + y) - (int.MaxValue - x) = y + x;
             // Environment.TickCount rolls over from int.Maxvalue to int.MinValue!
@@ -101,58 +105,77 @@ namespace KdSoft.EtwEvents.Server
                 throw new InvalidOperationException("Channel already stopped.");
             }
 
+            // without this the reader will be blocked
             await Task.Yield();
 
             _timer = new Timer(TimerCallback);
             try {
+                bool isCompleted;
+
                 using var reader = _channel.GetNewReader();
                 do {
+                    isCompleted = true;
                     var batch = new EtwEventBatch();
 
-                    //TODO this does not update the _nextAddress field in reader!, but it works without NullReferenceExceptions in TryEnqueue
-                    //await foreach (var (owner, length, _, _) in reader.GetAsyncEnumerable(stoppingToken).ConfigureAwait(false)) {
-                    await foreach (var (owner, length) in reader.ReadAllAsync(cts.Token).ConfigureAwait(false)) {
-                        using (owner) {
-                            var byteSequence = new ReadOnlySequence<byte>(owner.Memory).Slice(0, length);
+                    try {
+                        //TODO this does not update the _nextAddress field in reader!, but it works without NullReferenceExceptions in TryEnqueue
+                        //await foreach (var (owner, length, _, _) in reader.GetAsyncEnumerable(stoppingToken).ConfigureAwait(false)) {
+                        await foreach (var (owner, length) in reader.ReadAllAsync(cts.Token).ConfigureAwait(false)) {
+                            // this does not get called when the loop returns without yielding data
+                            isCompleted = false;
 
-                            // check if this data items indicates the end of a batch
-                            if (length == _batchSentinel.Length && byteSequence.FirstSpan.SequenceEqual(_batchSentinel.Span)) {
-                                if (batch.Events.Count == 0)
-                                    continue;
-                                break;
+                            using (owner) {
+                                var byteSequence = new ReadOnlySequence<byte>(owner.Memory).Slice(0, length);
+
+                                // check if this data items indicates the end of a batch
+                                if (length == _batchSentinel.Length && byteSequence.FirstSpan.SequenceEqual(_batchSentinel.Span)) {
+                                    if (batch.Events.Count == 0)
+                                        continue;
+                                    break;
+                                }
+
+                                var etwEvent = EtwEvent.Parser.ParseFrom(byteSequence);
+                                batch.Events.Add(etwEvent);
                             }
+                        }
 
-                            var etwEvent = EtwEvent.Parser.ParseFrom(byteSequence);
-                            batch.Events.Add(etwEvent);
+                        if (batch.Events.Count > 0) {
+                            _logger.LogInformation("Received batch with {eventCount} events.", batch.Events.Count);
+                            bool success = await WriteBatchAsync(batch).ConfigureAwait(false);
+                            if (success) {
+                                reader.Truncate();
+                                await _channel.CommitAsync(default).ConfigureAwait(false);
+                            }
+                            else { // event sink failed or closed
+                                isCompleted = true;
+                            }
                         }
                     }
-
-                    if (batch.Events.Count > 0) {
-                        _logger.LogInformation("Received batch with {eventCount} events.", batch.Events.Count);
-                        bool success = await WriteBatchAsync(batch).ConfigureAwait(false);
-                        if (success) {
-                            reader.Truncate();
-                            await _channel.CommitAsync(default).ConfigureAwait(false);
-                        }
-                        else { // event sink failed or closed
-                            break;
-                        }
+                    // gets triggered when the _stoppingTokenSource gets cancelled, even before the registered callback
+                    catch (OperationCanceledException) {
+                        // for this type of reader we cannot re-enter reader.ReadAllAsync() as it may not return
+                        isCompleted = true;
                     }
 
-                } while (!cts.Token.IsCancellationRequested);
+                } while (!isCompleted);
             }
             finally {
                 await base.DisposeAsync().ConfigureAwait(false);
+                var ctsToDispose = Interlocked.Exchange(ref _stoppingTokenSource, null);
+                if (ctsToDispose != null) {
+                    ctsToDispose.Dispose();
+                }
+                // may throw exception
                 await _sink.RunTask.ConfigureAwait(false);
             }
         }
 
         public override async ValueTask DisposeAsync() {
-            var cts = _stoppingTokenSource;
+            var cts = Interlocked.Exchange(ref _stoppingTokenSource, null);
+            if (cts == null)  // already disposed
+                return;
             try {
-                if (cts != null) {
-                    cts.Cancel();
-                }
+                cts.Cancel();
 
                 var runTask = this.RunTask;
                 if (runTask != null)
@@ -164,9 +187,7 @@ namespace KdSoft.EtwEvents.Server
                 _logger.LogError(ex, "Error closing event channel.");
             }
             finally {
-                if (cts != null) {
-                    cts.Dispose();
-                }
+                cts.Dispose();
             }
         }
 

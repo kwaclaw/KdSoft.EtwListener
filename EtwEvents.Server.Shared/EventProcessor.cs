@@ -108,7 +108,10 @@ namespace KdSoft.EtwEvents.Server
         public void PostEvent(TraceEvent evt) {
             var eventChannels = this._activeEventChannels;
             foreach (var entry in eventChannels) {
-                entry.Value.PostEvent(evt);
+                var success = entry.Value.PostEvent(evt);
+                if (!success) {
+                    //TODO move the entry to closed or failed channels?
+                }
             }
         }
 

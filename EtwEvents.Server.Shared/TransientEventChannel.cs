@@ -36,21 +36,24 @@ namespace KdSoft.EtwEvents.Server
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override void PostEvent(TraceEvent evt) {
-            if (_stoppingTokenSource?.Token.IsCancellationRequested ?? false) {
-                _channel.Writer.TryComplete();
-                return;
+        public override bool PostEvent(TraceEvent evt) {
+            if (_stoppingTokenSource?.Token.IsCancellationRequested ?? true) {
+                return false;
             }
             var etwEvent = _etwEventPool.Get();
             var posted = _channel.Writer.TryWrite(etwEvent.SetTraceEvent(evt));
             if (!posted)
                 _logger.LogInformation("Could not post trace event {eventIndex}.", evt.EventIndex);
+            return posted;
         }
 
         /// <summary>
         /// Timer callback that triggers periodical write operations even if the event batch is not full
         /// </summary>
         void TimerCallback(object? state) {
+            if (_stoppingTokenSource?.Token.IsCancellationRequested ?? true) {
+                return;
+            }
             var lastCheckedTicks = Interlocked.Exchange(ref _lastWrittenMSecs, Environment.TickCount);
             // integer subtraction is immune to rollover, e.g. unchecked(int.MaxValue + y) - (int.MaxValue - x) = y + x;
             // Environment.TickCount rolls over from int.Maxvalue to int.MinValue!
@@ -80,23 +83,27 @@ namespace KdSoft.EtwEvents.Server
             _timer = new Timer(TimerCallback);
             try {
                 bool isCompleted;
+
                 do {
                     isCompleted = true;
                     var batch = new EtwEventBatch();
 
                     try {
-                        await foreach (var evt in _channel.Reader.ReadAllAsync(cts.Token).ConfigureAwait(false)) {
+                        // when cts == null then we are just looping through the rest of the data
+                        await foreach (var evt in _channel.Reader.ReadAllAsync(cts?.Token ?? default).ConfigureAwait(false)) {
+                            // this does not get called when the loop returns without yielding data
+                            isCompleted = false;
+
                             // _emptyEvent instance indicates we should write the batch even if incomplete
                             if (ReferenceEquals(_emptyEvent, evt)) {
                                 if (batch.Events.Count == 0)
                                     continue;
-                                isCompleted = false;
                                 break;
                             }
                             batch.Events.Add(evt);
+
                             // write the batch if it is full
                             if (batch.Events.Count >= _batchSize) {
-                                isCompleted = false;
                                 break;
                             }
                         }
@@ -106,32 +113,47 @@ namespace KdSoft.EtwEvents.Server
 
                         // this should not throw if event sink is implemented correctly
                         var success = await WriteBatchAsync(batch).ConfigureAwait(false);
-                        isCompleted = !success;
+                        if (!success) {
+                            _channel.Writer.TryComplete();
+                            isCompleted = true;
+                            break;
+                        }
+                    }
+                    // gets triggered when the _stoppingTokenSource gets cancelled, even before the registered callback
+                    catch (OperationCanceledException) {
+                        _channel.Writer.TryComplete();
                     }
                     finally {
+                        if (_channel.Reader.Completion.IsCompleted) {
+                            isCompleted = true;
+                        }
                         foreach (var evt in batch.Events) {
                             evt.Payload.Clear();
                             _etwEventPool.Return(evt);
                         }
                     }
 
-                } while (!isCompleted && !cts.Token.IsCancellationRequested);
+                } while (!isCompleted);
             }
             finally {
+                // let's not wait for reader completion, because we might not be able to continue writing to the event sink
+                // await _channel.Reader.Completion.ConfigureAwait(false);
                 await base.DisposeAsync().ConfigureAwait(false);
+                var ctsToDispose = Interlocked.Exchange(ref _stoppingTokenSource, null);
+                if (ctsToDispose != null) {
+                    ctsToDispose.Dispose();
+                }
+                // may throw exception
                 await _sink.RunTask.ConfigureAwait(false);
             }
         }
 
         public override async ValueTask DisposeAsync() {
-            var cts = _stoppingTokenSource;
+            var cts = Interlocked.Exchange(ref _stoppingTokenSource, null);
+            if (cts == null)  // already disposed
+                return;
             try {
-                if (cts != null) {
-                    cts.Cancel();
-                }
-
-                await _channel.Reader.Completion.ConfigureAwait(false);
-
+                cts.Cancel();
                 var runTask = this.RunTask;
                 if (runTask != null)
                     await runTask.ConfigureAwait(false);
@@ -140,9 +162,7 @@ namespace KdSoft.EtwEvents.Server
                 _logger.LogError(ex, "Error closing event channel.");
             }
             finally {
-                if (cts != null) {
-                    cts.Dispose();
-                }
+                cts.Dispose();
             }
         }
 

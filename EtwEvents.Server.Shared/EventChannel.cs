@@ -61,7 +61,7 @@ namespace KdSoft.EtwEvents.Server
             return oldDelay;
         }
 
-        public abstract void PostEvent(TraceEvent evt);
+        public abstract bool PostEvent(TraceEvent evt);
 
         public Task? RunTask { get; private set; }
 
