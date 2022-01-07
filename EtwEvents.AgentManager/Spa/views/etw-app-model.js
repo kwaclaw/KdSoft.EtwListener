@@ -288,15 +288,19 @@ class EtwAppModel {
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
-  getAgentStates(reset) {
+  getState() {
+    const agentState = this.activeAgentState;
+    if (!agentState) return;
+    this.fetcher.postJson('GetState', { agentId: agentState.id })
+      .catch(error => window.etwApp.defaultHandleError(error));
+  }
+
+  getAgentStates() {
     return this.fetcher.getJson('GetAgentStates')
       .then(st => {
         const rawThis = raw(this);
         _updateAgentsMap(rawThis._agentsMap, st.agents);
         _updateAgentsList(this.agents, rawThis._agentsMap);
-        if (reset) {
-          this.resetAll();
-        }
       })
       .catch(error => window.etwApp.defaultHandleError(error));
   }

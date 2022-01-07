@@ -170,6 +170,11 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         [HttpPost]
+        public IActionResult GetState(string agentId) {
+            return PostAgent(agentId, "GetState", "");
+        }
+
+        [HttpPost]
         public IActionResult UpdateProviders(string agentId, [FromBody] JsonElement enabledProviders) {
             // we are passing the JSON simply through, enabledProviders should match protobuf message ProviderSettingsList
             return PostAgent(agentId, "UpdateProviders", enabledProviders.GetRawText() ?? "{}");
