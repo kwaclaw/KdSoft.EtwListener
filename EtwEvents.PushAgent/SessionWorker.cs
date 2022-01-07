@@ -268,22 +268,6 @@ namespace KdSoft.EtwEvents.PushAgent
             return false;
         }
 
-        static readonly Regex StripWhiteSpace = new Regex(@"\s(?=([^""]* ""[^""]*"")*[^""]*$)", RegexOptions.Compiled | RegexOptions.Multiline);
-
-        // compare EventSinkProfiles, but ignore BatchSize and MaxWriteDelayMSecs
-        bool ProfilesMatch(EventSinkProfile xProfile, EventSinkProfile yProfile) {
-            if (xProfile.PersistentChannel != yProfile.PersistentChannel)
-                return false;
-            // we try to compare JSON based settings by removing redundant whitespace
-            var xOptions = StripWhiteSpace.Replace(xProfile.Options, "");
-            var yOptions = StripWhiteSpace.Replace(yProfile.Options, "");
-            if (xOptions != yOptions)
-                return false;
-            var xCredentials = StripWhiteSpace.Replace(xProfile.Credentials, "");
-            var yCredentials = StripWhiteSpace.Replace(yProfile.Credentials, "");
-            return xCredentials == yCredentials;
-        }
-
         /// <summary>
         /// Updates or re-created EventChannel based on an <see cref="EventSinkProfile"/>.
         /// </summary>
@@ -291,7 +275,7 @@ namespace KdSoft.EtwEvents.PushAgent
         public async Task UpdateEventChannel(EventSinkProfile sinkProfile) {
             if (_eventProcessor.ActiveEventChannels.TryGetValue(sinkProfile.Name, out var channel)) {
                 // the only settings we can update on a running channel/EventSink are BatchSize and MaxWriteDelayMSecs
-                if (ProfilesMatch(sinkProfile, _sessionConfig.SinkProfiles[sinkProfile.Name])) {
+                if (EventSinkProfile.Matches(sinkProfile, _sessionConfig.SinkProfiles[sinkProfile.Name])) {
                     var batchSize = sinkProfile.BatchSize == 0 ? 100 : sinkProfile.BatchSize;
                     var maxWriteDelayMSecs = sinkProfile.MaxWriteDelayMSecs == 0 ? 400 : sinkProfile.MaxWriteDelayMSecs;
                     channel.ChangeBatchSize(batchSize);
