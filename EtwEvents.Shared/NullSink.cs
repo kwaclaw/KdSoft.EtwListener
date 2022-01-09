@@ -1,6 +1,6 @@
 using KdSoft.EtwLogging;
 
-namespace KdSoft.EtwEvents.Client
+namespace KdSoft.EtwEvents
 {
     public sealed class NullSink: IEventSink
     {
