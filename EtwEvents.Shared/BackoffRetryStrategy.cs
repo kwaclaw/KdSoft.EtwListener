@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace KdSoft.EtwEvents
+﻿namespace KdSoft.EtwEvents
 {
     /// <summary>
-    /// Implements exponential back strategy, based on a starting delay and maximum delay.
+    /// Implements exponential backoff strategy, based on a starting delay and maximum delay.
+    /// Can also be configured to have no backoff, and to run forever.
     /// </summary>
     /// <remarks>
     /// We follow this equation to calculate the delay, when only maxRetries is given:
@@ -17,7 +12,7 @@ namespace KdSoft.EtwEvents
     ///   alpha = log(maxDelay / startDelay) / maxRetries
     ///   Sum[k= 1 to max_retries] {startDelay * e^(k*alpha)} = delaySpan
     /// </remarks>
-    public class ExponentialBackoffRetryStrategy: IRetryStrategy
+    public class BackoffRetryStrategy: IRetryStrategy
     {
         readonly TimeSpan _startDelay;
         readonly TimeSpan _maxDelay;
@@ -32,6 +27,10 @@ namespace KdSoft.EtwEvents
         public double Alpha => _alpha;
 
         int _retries = 1;
+        public int TotalRetries => _retries - 1;
+
+        TimeSpan _totalDelay = TimeSpan.Zero;
+        public TimeSpan TotalDelay => _totalDelay;
 
         /// <summary>
         /// Constructor.
@@ -43,7 +42,7 @@ namespace KdSoft.EtwEvents
         ///     Indicates if NextDelay() should continue calculating new delays
         ///     forever even if the maximum delay was already arrived at.
         /// </param>
-        public ExponentialBackoffRetryStrategy(TimeSpan startDelay, TimeSpan maxDelay, int maxRetries, bool forever = false) {
+        public BackoffRetryStrategy(TimeSpan startDelay, TimeSpan maxDelay, int maxRetries, bool forever = false) {
             if (maxDelay < startDelay)
                 throw new ArgumentException("Max delay must not be less than startDelay", nameof(maxDelay));
             if (maxRetries < 1)
@@ -71,7 +70,7 @@ namespace KdSoft.EtwEvents
         ///     Indicates if NextDelay() should continue calculating new delays
         ///     forever even if the maximum delay was already achieved.
         /// </param>
-        public ExponentialBackoffRetryStrategy(TimeSpan startDelay, TimeSpan maxDelay, TimeSpan backoffSpan, bool forever = false) {
+        public BackoffRetryStrategy(TimeSpan startDelay, TimeSpan maxDelay, TimeSpan backoffSpan, bool forever = false) {
             if (maxDelay < startDelay)
                 throw new ArgumentException("Max delay must not be less than startDelay", nameof(maxDelay));
             if (backoffSpan < maxDelay)
@@ -107,13 +106,15 @@ namespace KdSoft.EtwEvents
             else {
                 doRetry = _forever;
             }
-            count = _retries++;
 
             if (doRetry) {
+                count = _retries++;
                 var delayTicks = Math.Exp(_alpha * retryIndex) * _startDelay.Ticks;
                 delay = new TimeSpan((long)delayTicks);
+                _totalDelay += delay;
             }
             else {
+                count = 0;
                 delay = TimeSpan.Zero;
             }
 
@@ -122,6 +123,7 @@ namespace KdSoft.EtwEvents
 
         public void Reset() {
             _retries = 1;
+            _totalDelay = TimeSpan.Zero;
         }
     }
 }

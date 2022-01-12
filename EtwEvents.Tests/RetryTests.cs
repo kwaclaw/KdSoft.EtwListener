@@ -13,8 +13,10 @@ namespace EtwEvents.Tests
             this._output = output;
         }
 
+        #region Backoff Strategy
+
         void BackoffMaxRetries(TimeSpan startDelay, TimeSpan maxDelay, int maxRetries) {
-            var strategy = new ExponentialBackoffRetryStrategy(startDelay, maxDelay, maxRetries);
+            var strategy = new BackoffRetryStrategy(startDelay, maxDelay, maxRetries);
             _output.WriteLine($"Alpha: {strategy.Alpha}");
 
             var totalDelay = TimeSpan.Zero;
@@ -63,7 +65,7 @@ namespace EtwEvents.Tests
         }
 
         void BackoffDelaySpan(TimeSpan startDelay, TimeSpan maxDelay, TimeSpan backoffSpan) {
-            var strategy = new ExponentialBackoffRetryStrategy(startDelay, maxDelay, backoffSpan);
+            var strategy = new BackoffRetryStrategy(startDelay, maxDelay, backoffSpan);
             _output.WriteLine($"Alpha: {strategy.Alpha}");
             _output.WriteLine($"MaxRetries: {strategy.MaxRetries}");
 
@@ -118,5 +120,6 @@ namespace EtwEvents.Tests
             var backoffSpan = TimeSpan.FromSeconds(5400);
             BackoffDelaySpan(startDelay, maxDelay, backoffSpan);
         }
-    }
+
+        #endregion
 }
