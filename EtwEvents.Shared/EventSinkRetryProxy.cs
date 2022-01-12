@@ -14,7 +14,7 @@ namespace KdSoft.EtwEvents
         readonly IEventSinkFactory _sinkFactory;
         readonly ILoggerFactory _loggerFactory;
         readonly ILogger<EventSinkRetryProxy> _logger;
-        readonly AsyncRetryExecutor<bool> _retryExecutor;
+        readonly AsyncRetrier<bool> _retrier;
 
         IEventSink? _sink;
 
@@ -31,8 +31,8 @@ namespace KdSoft.EtwEvents
             this._sinkFactory = sinkFactory;
             this._loggerFactory = loggerFactory;
             _logger = loggerFactory.CreateLogger<EventSinkRetryProxy>();
-            var retryStrategy = new ExponentialBackoffRetryStrategy(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(60), TimeSpan.FromMinutes(15), true);
-            _retryExecutor = new AsyncRetryExecutor<bool>(r => !r, retryStrategy);
+            var retryStrategy = new BackoffRetryStrategy(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(60), TimeSpan.FromMinutes(15), true);
+            _retrier = new AsyncRetrier<bool>(r => r, retryStrategy);
         }
 
         public async ValueTask DisposeAsync() {
@@ -131,7 +131,7 @@ namespace KdSoft.EtwEvents
         }
 
         public ValueTask<bool> FlushAsync() {
-            return _retryExecutor.ExecuteAsync(DoFlushAsync);
+            return _retrier.ExecuteAsync(DoFlushAsync);
         }
 
         #endregion
@@ -153,7 +153,7 @@ namespace KdSoft.EtwEvents
         }
 
         public ValueTask<bool> WriteAsync(EtwEvent evt) {
-            return _retryExecutor.ExecuteAsync(WriteEventAsync, evt);
+            return _retrier.ExecuteAsync(WriteEventAsync, evt);
         }
 
         #endregion
@@ -175,7 +175,7 @@ namespace KdSoft.EtwEvents
         }
 
         public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
-            return _retryExecutor.ExecuteAsync(WriteBatchAsync, evtBatch);
+            return _retrier.ExecuteAsync(WriteBatchAsync, evtBatch);
         }
 
         #endregion
