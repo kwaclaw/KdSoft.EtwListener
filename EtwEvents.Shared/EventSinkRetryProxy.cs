@@ -1,18 +1,20 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using KdSoft.EtwLogging;
+﻿using KdSoft.EtwLogging;
 using Microsoft.Extensions.Logging;
 
-namespace KdSoft.EtwEvents.PushAgent
+namespace KdSoft.EtwEvents
 {
-    class EventSinkRetryProxy: IEventSink {
+    /// <summary>
+    /// Proxy for <see cref="IEventSink"/> that handles sink failures on FlushAsync() or WriteAsync()
+    /// by closing/disposing of the event sink, and re-creating it on the next call to FlushAsync() or WriteAsync().
+    /// </summary>
+    public class EventSinkRetryProxy: IEventSink {
         readonly string _sinkId;
         readonly string _options;
         readonly string _credentials;
         readonly IEventSinkFactory _sinkFactory;
         readonly ILoggerFactory _loggerFactory;
         readonly ILogger<EventSinkRetryProxy> _logger;
+        readonly AsyncRetryExecutor<bool> _retryExecutor;
 
         IEventSink? _sink;
 
@@ -29,27 +31,8 @@ namespace KdSoft.EtwEvents.PushAgent
             this._sinkFactory = sinkFactory;
             this._loggerFactory = loggerFactory;
             _logger = loggerFactory.CreateLogger<EventSinkRetryProxy>();
-        }
-
-        static async Task<IEventSinkFactory?> LoadSinkFactory(EventSinkService sinkService, string sinkType, string version, ILogger logger) {
-            var sinkFactory = sinkService.LoadEventSinkFactory(sinkType, version);
-            if (sinkFactory == null) {
-                logger.LogInformation("Downloading event sink factory '{sinkType}~{version}'.", sinkType, version);
-                await sinkService.DownloadEventSink(sinkType, version);
-            }
-            sinkFactory = sinkService.LoadEventSinkFactory(sinkType, version);
-            return sinkFactory;
-        }
-
-        public static async Task<EventSinkRetryProxy> Create(EventSinkProfile profile, EventSinkService sinkService, ILoggerFactory loggerFactory) {
-            var factoryLogger = loggerFactory.CreateLogger<EventSinkRetryProxy>();
-            var sinkFactory = await LoadSinkFactory(sinkService, profile.SinkType, profile.Version, factoryLogger).ConfigureAwait(false);
-            if (sinkFactory == null)
-                throw new EventSinkException("Failed to create event sink factory.") {
-                    Data = { { "SinkType", profile.SinkType }, { "Version", profile.Version } }
-                };
-            var sinkId = $"{profile.SinkType}~{profile.Version}::{profile.Name}";
-            return new EventSinkRetryProxy(sinkId, profile.Options, profile.Credentials, sinkFactory, loggerFactory);
+            var retryStrategy = new ExponentialBackoffRetryStrategy(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(60), TimeSpan.FromMinutes(15), true);
+            _retryExecutor = new AsyncRetryExecutor<bool>(r => !r, retryStrategy);
         }
 
         public async ValueTask DisposeAsync() {
@@ -138,13 +121,17 @@ namespace KdSoft.EtwEvents.PushAgent
             return await InternalPerformAsync(sink.FlushAsync()).ConfigureAwait(false);
         }
 
-        public ValueTask<bool> FlushAsync() {
+        ValueTask<bool> DoFlushAsync() {
             var sinkTask = GetSink();
             if (sinkTask.IsCompleted) {
                 var sink = sinkTask.GetAwaiter().GetResult();
                 return InternalPerformAsync(sink.FlushAsync());
             }
             return InternalFlushAsync(sinkTask);
+        }
+
+        public ValueTask<bool> FlushAsync() {
+            return _retryExecutor.ExecuteAsync(DoFlushAsync);
         }
 
         #endregion
@@ -156,13 +143,17 @@ namespace KdSoft.EtwEvents.PushAgent
             return await InternalPerformAsync(sink.WriteAsync(evt)).ConfigureAwait(false);
         }
 
-        public ValueTask<bool> WriteAsync(EtwEvent evt) {
+        public ValueTask<bool> WriteEventAsync(EtwEvent evt) {
             var sinkTask = GetSink();
             if (sinkTask.IsCompleted) {
                 var sink = sinkTask.GetAwaiter().GetResult();
                 return InternalPerformAsync(sink.WriteAsync(evt));
             }
             return InternalWriteAsync(sinkTask, evt);
+        }
+
+        public ValueTask<bool> WriteAsync(EtwEvent evt) {
+            return _retryExecutor.ExecuteAsync(WriteEventAsync, evt);
         }
 
         #endregion
@@ -174,13 +165,17 @@ namespace KdSoft.EtwEvents.PushAgent
             return await InternalPerformAsync(sink.WriteAsync(evtBatch)).ConfigureAwait(false);
         }
 
-        public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
+        public ValueTask<bool> WriteBatchAsync(EtwEventBatch evtBatch) {
             var sinkTask = GetSink();
             if (sinkTask.IsCompleted) {
                 var sink = sinkTask.GetAwaiter().GetResult();
                 return InternalPerformAsync(sink.WriteAsync(evtBatch));
             }
             return InternalWriteAsync(sinkTask, evtBatch);
+        }
+
+        public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
+            return _retryExecutor.ExecuteAsync(WriteBatchAsync, evtBatch);
         }
 
         #endregion
