@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using KdSoft.EtwEvents;
 using Xunit;
 using Xunit.Abstractions;
@@ -122,4 +123,52 @@ namespace EtwEvents.Tests
         }
 
         #endregion
+
+        #region Retrier
+
+        class Operation {
+            readonly int _maxCount;
+            int _count;
+
+            public Operation(int maxCount) {
+                this._maxCount = maxCount;
+            }
+
+            public async ValueTask<bool> Execute() {
+                await Task.Delay(100).ConfigureAwait(false);
+                var result = ++_count > _maxCount;
+                return result;
+            }
+        }
+
+        [Fact]
+        public async Task Retrier() {
+            var retryStrategy = new BackoffRetryStrategy(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(800), 20);
+            var retrier = new AsyncRetrier<bool>(r => r, retryStrategy);
+            var countHolder = new ValueHolder<int>();
+
+            // op.Execute always fails
+            var op = new Operation(int.MaxValue);
+            var result = await retrier.ExecuteAsync(op.Execute, countHolder).ConfigureAwait(false);
+            _output.WriteLine($"Retrier with {countHolder.Value} retries, all failing, duration: {retryStrategy.TotalDelay}");
+            Assert.False(result);
+            Assert.Equal(countHolder.Value, retryStrategy.TotalRetries);
+
+            // op.Execute succeeds after 10 counts - before retrier gives up
+            op = new Operation(10);
+            result = await retrier.ExecuteAsync(op.Execute, countHolder).ConfigureAwait(false);
+            _output.WriteLine($"Retrier with {countHolder.Value} retries, 10 failing, duration: {retryStrategy.TotalDelay}");
+            Assert.True(result);
+            Assert.Equal(countHolder.Value, retryStrategy.TotalRetries);
+
+            // op.Execute succeeds after 21 counts - after retrier gives up
+            op = new Operation(21);
+            result = await retrier.ExecuteAsync(op.Execute, countHolder).ConfigureAwait(false);
+            _output.WriteLine($"Retrier with {countHolder.Value} retries, 21 failing, duration: {retryStrategy.TotalDelay}");
+            Assert.False(result);
+            Assert.Equal(countHolder.Value, retryStrategy.TotalRetries);
+        }
+
+        #endregion
+        }
 }
