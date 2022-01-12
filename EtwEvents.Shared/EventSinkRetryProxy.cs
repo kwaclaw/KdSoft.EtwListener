@@ -143,7 +143,7 @@ namespace KdSoft.EtwEvents
             return await InternalPerformAsync(sink.WriteAsync(evt)).ConfigureAwait(false);
         }
 
-        public ValueTask<bool> WriteEventAsync(EtwEvent evt) {
+        ValueTask<bool> WriteEventAsync(EtwEvent evt) {
             var sinkTask = GetSink();
             if (sinkTask.IsCompleted) {
                 var sink = sinkTask.GetAwaiter().GetResult();
@@ -165,7 +165,7 @@ namespace KdSoft.EtwEvents
             return await InternalPerformAsync(sink.WriteAsync(evtBatch)).ConfigureAwait(false);
         }
 
-        public ValueTask<bool> WriteBatchAsync(EtwEventBatch evtBatch) {
+        ValueTask<bool> WriteBatchAsync(EtwEventBatch evtBatch) {
             var sinkTask = GetSink();
             if (sinkTask.IsCompleted) {
                 var sink = sinkTask.GetAwaiter().GetResult();
