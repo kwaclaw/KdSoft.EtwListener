@@ -25,7 +25,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="6.0.0" />
-    <PackageReference Include="OrchardCore.Localization.Core" Version="1.1.0" />
+    <PackageReference Include="OrchardCore.Localization.Core" Version="1.2.1" />
   </ItemGroup>
 
   <ItemGroup>
