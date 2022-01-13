@@ -7,7 +7,8 @@ namespace KdSoft.EtwEvents
     /// Proxy for <see cref="IEventSink"/> that handles sink failures on FlushAsync() or WriteAsync()
     /// by closing/disposing of the event sink, and re-creating it on the next call to FlushAsync() or WriteAsync().
     /// </summary>
-    public class EventSinkRetryProxy: IEventSink {
+    public class EventSinkRetryProxy: IEventSink
+    {
         readonly string _sinkId;
         readonly string _options;
         readonly string _credentials;
@@ -15,31 +16,48 @@ namespace KdSoft.EtwEvents
         readonly ILoggerFactory _loggerFactory;
         readonly ILogger<EventSinkRetryProxy> _logger;
         readonly AsyncRetrier<bool> _retrier;
+        readonly TaskCompletionSource<bool> _tcs;
 
         IEventSink? _sink;
 
-        //TODO Runtask?
-
-        public Task<bool> RunTask => throw new NotImplementedException();
+        public Task<bool> RunTask => _tcs.Task;
 
         #region Construction & Disposal
 
-        public EventSinkRetryProxy(string sinkId, string options, string credentials, IEventSinkFactory sinkFactory, ILoggerFactory loggerFactory) {
+        public EventSinkRetryProxy(
+            string sinkId,
+            string options,
+            string credentials,
+            IEventSinkFactory sinkFactory,
+            ILoggerFactory loggerFactory,
+            IRetryStrategy retryStrategy
+        ) {
             this._sinkId = sinkId;
             this._options = options;
             this._credentials = credentials;
             this._sinkFactory = sinkFactory;
             this._loggerFactory = loggerFactory;
+            _tcs = new TaskCompletionSource<bool>();
             _logger = loggerFactory.CreateLogger<EventSinkRetryProxy>();
-            var retryStrategy = new BackoffRetryStrategy(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(60), TimeSpan.FromMinutes(15), true);
             _retrier = new AsyncRetrier<bool>(r => r, retryStrategy);
         }
 
         public async ValueTask DisposeAsync() {
             var sink = Interlocked.Exchange(ref _sink, null);
             if (sink != null) {
+                var _ = sink.RunTask.ContinueWith(rt => {
+                    if (rt.IsFaulted)
+                        _tcs.TrySetException(rt.Exception!);
+                    else if (rt.IsCanceled)
+                        _tcs.TrySetCanceled();
+                    else
+                        _tcs.TrySetResult(rt.Result);
+                });
                 await sink.FlushAsync().ConfigureAwait(false);
                 await sink.DisposeAsync().ConfigureAwait(false);
+            }
+            else {
+                _tcs.TrySetResult(true);
             }
         }
 
