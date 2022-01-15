@@ -15,7 +15,6 @@ using System.Threading.Tasks;
 using Google.Protobuf;
 using KdSoft.EtwEvents.Server;
 using KdSoft.EtwLogging;
-using LaunchDarkly.EventSource;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -29,15 +28,15 @@ namespace KdSoft.EtwEvents.PushAgent
         readonly HostBuilderContext _context;
         readonly IServiceProvider _services;
         readonly SocketsHttpHandler _httpHandler;
-        readonly IOptions<ControlOptions> _controlOptions;
+        readonly ControlConnector _controlConnector;
+        readonly IOptionsMonitor<ControlOptions> _controlOptions;
         readonly SessionConfig _sessionConfig;
         readonly ILogger<ControlWorker> _logger;
         readonly JsonSerializerOptions _jsonOptions;
         readonly JsonFormatter _jsonFormatter;
 
-        EventSource? _eventSource;
-        IServiceScope? _workerScope;
-
+        IServiceScope? _sessionScope;
+        IDisposable? _controlOptionsListener;
         FilterSource? _emptyFilterSource;
 
         SessionWorker? _sessionWorker;  // only valid when _sessionWorkerAvailable != 0
@@ -48,13 +47,15 @@ namespace KdSoft.EtwEvents.PushAgent
             HostBuilderContext context,
             IServiceProvider services,
             SocketsHttpHandler httpHandler,
-            IOptions<ControlOptions> controlOptions,
+            ControlConnector controlConnector,
+            IOptionsMonitor<ControlOptions> controlOptions,
             SessionConfig sessionConfig,
             ILogger<ControlWorker> logger
         ) {
             this._context = context;
             this._services = services;
             this._httpHandler = httpHandler;
+            this._controlConnector = controlConnector;
             this._controlOptions = controlOptions;
             this._sessionConfig = sessionConfig;
             this._logger = logger;
@@ -187,7 +188,7 @@ namespace KdSoft.EtwEvents.PushAgent
         }
 
         async Task PostMessage(string path, HttpContent content) {
-            var opts = _controlOptions.Value;
+            var opts = _controlOptions.CurrentValue;
             var postUri = new Uri(opts.Uri, path);
             var httpMsg = new HttpRequestMessage(HttpMethod.Post, postUri) { Content = content };
 
@@ -262,50 +263,6 @@ namespace KdSoft.EtwEvents.PushAgent
             return PostProtoMessage("Agent/UpdateState", state);
         }
 
-        async void EventReceived(object? sender, MessageReceivedEventArgs e) {
-            try {
-                var lastEventIdStr = string.IsNullOrEmpty(e.Message.LastEventId) ? "-1" : e.Message.LastEventId;
-                var messageDataStr = string.IsNullOrEmpty(e.Message.Data) ? "<None>" : e.Message.Data;
-                _logger?.LogInformation("{method}: {eventName}-{lastEventId}, {messageData}", nameof(EventReceived), e.EventName, lastEventIdStr, messageDataStr);
-                await ProcessEvent(new ControlEvent { Event = e.EventName, Id = e.Message.LastEventId ?? "", Data = e.Message.Data ?? "" }).ConfigureAwait(false);
-            }
-            catch (Exception ex) {
-                _logger?.LogError(ex, "Error in {method}.", nameof(EventReceived));
-            }
-        }
-
-        void EventError(object? sender, ExceptionEventArgs e) {
-            _logger?.LogError(e.Exception, "Error in EventSource.");
-        }
-
-        void EventSourceStateChanged(object? sender, StateChangedEventArgs e) {
-            _logger?.LogInformation("{method}: {readyState}", nameof(EventSourceStateChanged), e.ReadyState);
-        }
-
-        public Task StartSSE() {
-            var opts = _controlOptions.Value;
-            var evtUri = new Uri(opts.Uri, "Agent/GetEvents");
-            var cfgBuilder = Configuration.Builder(evtUri).HttpMessageHandler(_httpHandler);
-            if (opts.InitialRetryDelay != null)
-                cfgBuilder.InitialRetryDelay(opts.InitialRetryDelay.Value);
-            if (opts.MaxRetryDelay != null)
-                cfgBuilder.MaxRetryDelay(opts.MaxRetryDelay.Value);
-            if (opts.BackoffResetThreshold != null)
-                cfgBuilder.BackoffResetThreshold(opts.BackoffResetThreshold.Value);
-            var config = cfgBuilder.Build();
-
-            var evt = new EventSource(config);
-            evt.MessageReceived += EventReceived;
-            evt.Error += EventError;
-            evt.Opened += EventSourceStateChanged;
-            evt.Closed += EventSourceStateChanged;
-
-            _eventSource = evt;
-
-            // this Task will only terminate when the EventSource gets closed/disposed!
-            return evt.StartAsync();
-        }
-
         #endregion
 
         #region Lifecycle
@@ -316,10 +273,10 @@ namespace KdSoft.EtwEvents.PushAgent
 
             var scope = _services.CreateScope();
             try {
-                var oldScope = Interlocked.CompareExchange(ref _workerScope, scope, null);
+                var oldScope = Interlocked.CompareExchange(ref _sessionScope, scope, null);
                 if (oldScope != null) { // should not happen
                     oldScope.Dispose();
-                    Interlocked.Exchange<IServiceScope?>(ref _workerScope, null);
+                    Interlocked.Exchange<IServiceScope?>(ref _sessionScope, null);
                     return false;
                 }
 
@@ -337,7 +294,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 _ = sessionWorker.ExecuteTask
                     .ContinueWith(swt => {
                         Interlocked.Exchange(ref _sessionWorkerAvailable, 0);
-                        var oldScope = Interlocked.CompareExchange<IServiceScope?>(ref this._workerScope, null, scope);
+                        var oldScope = Interlocked.CompareExchange<IServiceScope?>(ref this._sessionScope, null, scope);
                         oldScope?.Dispose();
                         Interlocked.CompareExchange(ref this._sessionWorker, null, sessionWorker);
                     }, TaskContinuationOptions.ExecuteSynchronously)
@@ -381,22 +338,35 @@ namespace KdSoft.EtwEvents.PushAgent
             return true;
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
-            var sseTask = Task.CompletedTask;
+        void ControlOptionsChanged(ControlOptions opts, CancellationToken stoppingToken) {
             try {
-                sseTask = StartSSE();
+                if (!object.Equals(opts, _controlConnector.CurrentOptions)) {
+                    _controlConnector.Start(opts, ProcessEvent, stoppingToken);
+                    _logger.LogInformation("Restarting ControlEvents with new options.");
+                }
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Cannot restart ControlEvents.");
+            }
+        }
 
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
+            var eventsTask = Task.CompletedTask;
+            try {
                 stoppingToken.Register(async () => {
-                    await StopSessionWorker(default).ConfigureAwait(false);
-                    var evt = _eventSource;
-                    if (evt != null) {
-                        _eventSource = null;
-                        evt.Close();
+                    try {
+                        await StopSessionWorker(default).ConfigureAwait(false);
+                    }
+                    catch (Exception ex) {
+                        _logger.LogError(ex, "Failure stopping session.");
                     }
                 });
+                _controlOptionsListener = _controlOptions.OnChange(opts => ControlOptionsChanged(opts, stoppingToken));
+                eventsTask = _controlConnector.Start(_controlOptions.CurrentValue, ProcessEvent, stoppingToken);
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Failure running service.");
+                return;
             }
 
             try {
@@ -414,13 +384,14 @@ namespace KdSoft.EtwEvents.PushAgent
             }
 
             // this task ends only when EventSource is shut down, e.g. calling EventSource.Close()
-            await sseTask.ConfigureAwait(false);
+            await eventsTask.ConfigureAwait(false);
         }
 
         public override void Dispose() {
             base.Dispose();
-            _eventSource?.Dispose();
-            _workerScope?.Dispose();
+            _controlOptionsListener?.Dispose();
+            _controlConnector?.Dispose();
+            _sessionScope?.Dispose();
         }
 
         #endregion

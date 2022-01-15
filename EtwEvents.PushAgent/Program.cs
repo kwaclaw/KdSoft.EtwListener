@@ -50,9 +50,8 @@ namespace KdSoft.EtwEvents.PushAgent
                 })
                 .UseWindowsService()
                 .ConfigureServices((hostContext, services) => {
-                    services.Configure<ControlOptions>(opts => {
-                        hostContext.Configuration.GetSection("Control").Bind(opts);
-                    });
+                    // thos section will be monitored for changes, so we cannot use Bind()
+                    services.Configure<ControlOptions>(hostContext.Configuration.GetSection("Control"));
                     services.Configure<EventQueueOptions>(opts => {
                         hostContext.Configuration.GetSection("EventQueue").Bind(opts);
                         // make sure opts.LogPath is an absolute path
@@ -75,8 +74,9 @@ namespace KdSoft.EtwEvents.PushAgent
                             provider.GetRequiredService<ILogger<EventSinkService>>()
                         );
                     });
-                    services.AddHostedService<ControlWorker>();
+                    services.AddSingleton<ControlConnector>();
                     services.AddScoped<SessionWorker>();
+                    services.AddHostedService<ControlWorker>();
                 });
     }
 }

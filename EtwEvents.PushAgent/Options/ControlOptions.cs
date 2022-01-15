@@ -27,5 +27,18 @@ namespace KdSoft.EtwEvents.PushAgent
         public TimeSpan? BackoffResetThreshold { get; set; }
 
         public ClientCertOptions ClientCertificate { get; set; } = new ClientCertOptions();
+
+        public override bool Equals(object? obj) {
+            var other = obj as ControlOptions;
+            if (other == null) return false;
+            if (ReferenceEquals(this, other)) return true;
+
+            return object.Equals(Uri, other.Uri) && InitialRetryDelay == other.InitialRetryDelay && MaxRetryDelay == other.MaxRetryDelay
+                && BackoffResetThreshold == other.BackoffResetThreshold && object.Equals(ClientCertificate, other.ClientCertificate);
+        }
+
+        public override int GetHashCode() => Uri.GetHashCode() ^ InitialRetryDelay.GetHashCode() ^ MaxRetryDelay.GetHashCode()
+            ^ BackoffResetThreshold.GetHashCode() ^ ClientCertificate.GetHashCode();
+
     }
 }
