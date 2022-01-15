@@ -40,7 +40,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.Tests", "EtwEvent
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.gRPCSink", "EventSinks\EtwEvents.gRPCSink\EtwEvents.gRPCSink.csproj", "{ADE18974-95EB-4D85-8317-CC0C806F7ACA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EtwEvents.Shared", "EtwEvents.Shared\EtwEvents.Shared.csproj", "{2F22F789-8EC7-42DE-A2B9-B005D7E51DED}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.Shared", "EtwEvents.Shared\EtwEvents.Shared.csproj", "{2F22F789-8EC7-42DE-A2B9-B005D7E51DED}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -7,8 +7,9 @@ be imported/converted to that format. Place your CSS into Spa/css and then run "
 
 ## Run in Development mode
 
-Before starting a Visual Studio debug session, run "npm run dev" from a terminal window
-in the project directory. This will start the vite dev server, from which index.js is loaded.
+Before starting a Visual Studio debug session, switch to the Spa subdirectory and run "npm run dev"
+from a terminal window. This will start the vite dev server, from which index.js is loaded.
+This dev server can be re-used for subsequent debug sessions, it must be terminated explicitly (Ctrl-C).
 
 ## Build for production (ASPNETCORE_ENVIRONMENT = Production)
 
