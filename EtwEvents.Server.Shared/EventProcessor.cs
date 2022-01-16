@@ -144,29 +144,40 @@ namespace KdSoft.EtwEvents.Server
                 _stopping = true;
                 activeChannels = _activeEventChannels;
             }
-            var activeRunTasks = activeChannels.Select(ac => ac.Value.RunTask!).Where(rt => rt != null);
-            //TODO tell the active channels to stop processing - need access to their CancellationTokenSource, or need to dispose them
+            var activeRunTasks = activeChannels.Select(ac => ac.Value.RunTask!).Where(rt => rt != null).ToList();
             await Task.WhenAll(activeRunTasks).ConfigureAwait(false);
         }
 
+        // should only be called after Process() task has finished
         public async ValueTask DisposeAsync() {
             // clear channels and prevent more channels from being added
             var (activeChannels, closedChannels, failedChannels) = ClearEventChannels();
             // stop processing
             var cts = _stoppingTokenSource;
-            if (cts != null) {
+            if (cts != null && !cts.IsCancellationRequested) {
                 cts.Cancel();
             }
 
-            var taskList = new List<ValueTask>(activeChannels.Select(ac => ac.Value.DisposeAsync()));
-            taskList.AddRange(closedChannels.Select(ac => ac.Value.DisposeAsync()));
-            taskList.AddRange(failedChannels.Select(ac => ac.Value.DisposeAsync()));
-            foreach (var vt in taskList) {
-                await vt.ConfigureAwait(false);
+            try {
+                var activeRunTasks = activeChannels.Select(ac => ac.Value.RunTask!).Where(rt => rt != null).ToList();
+                var waitAllTask = Task.WhenAll(activeRunTasks);
+                var timeoutTask = Task.Delay(5000); // we don't want to wait forever
+                await Task.WhenAny(waitAllTask, timeoutTask).ConfigureAwait(false);
             }
+            catch {
+                //TODO maybe log exception, but we don't want DisposeAsync() to throw
+            }
+            finally {
+                var taskList = new List<ValueTask>(activeChannels.Select(ac => ac.Value.DisposeAsync()));
+                taskList.AddRange(closedChannels.Select(ac => ac.Value.DisposeAsync()));
+                taskList.AddRange(failedChannels.Select(ac => ac.Value.DisposeAsync()));
+                foreach (var vt in taskList) {
+                    await vt.ConfigureAwait(false);
+                }
 
-            if (cts != null) {
-                cts.Dispose();
+                if (cts != null) {
+                    cts.Dispose();
+                }
             }
         }
     }
