@@ -43,5 +43,12 @@
         /// could be continued based on the timestamp and its file size.
         /// </summary>
         public bool NewFileOnStartup { get; set; }
+
+        /// <summary>
+        /// Allows for bypassing some character escapes that sometimes may be a security risk.
+        /// For instance, '+' is usually encoded as '\u002B' which can be confusing in UTC time stamps.
+        /// True by default.
+        /// </summary>
+        public bool RelaxedJsonEscaping { get; set; } = true;
     }
 }

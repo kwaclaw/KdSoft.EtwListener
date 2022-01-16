@@ -1,6 +1,7 @@
 using System;
 using System.Buffers;
 using System.IO;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Channels;
@@ -27,7 +28,7 @@ namespace KdSoft.EtwEvents.EventSinks
 
         public Task<bool> RunTask { get; }
 
-        public RollingFileSink(RollingFileFactory fileFactory, ILogger logger) {
+        public RollingFileSink(RollingFileFactory fileFactory, bool relaxedJsonEscaping, ILogger logger) {
             this._fileFactory = fileFactory;
             this._logger = logger;
             this._channel = Channel.CreateUnbounded<EtwEvent>(new UnboundedChannelOptions {
@@ -40,6 +41,9 @@ namespace KdSoft.EtwEvents.EventSinks
                 Indented = false,
                 SkipValidation = true,
             };
+            if (relaxedJsonEscaping)
+                _jsonOptions.Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
+
             _bufferWriter = new ArrayBufferWriter<byte>(1024);
             _jsonWriter = new Utf8JsonWriter(_bufferWriter, _jsonOptions);
 

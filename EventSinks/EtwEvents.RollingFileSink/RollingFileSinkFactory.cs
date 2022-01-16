@@ -40,7 +40,7 @@ namespace KdSoft.EtwEvents.EventSinks
                     options.MaxFileCount,
                     options.NewFileOnStartup
                 );
-                return Task.FromResult((IEventSink)new RollingFileSink(rollingFileFactory, logger));
+                return Task.FromResult((IEventSink)new RollingFileSink(rollingFileFactory, options.RelaxedJsonEscaping, logger));
             }
             catch (Exception ex) {
                 logger.LogError(ex, "Error in {eventSink} initialization.", nameof(RollingFileSink));
