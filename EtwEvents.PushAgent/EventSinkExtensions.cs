@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Logging;
 
@@ -27,7 +28,12 @@ namespace KdSoft.EtwEvents.PushAgent
                     Data = { { "SinkType", profile.SinkType }, { "Version", profile.Version } }
                 };
             var sinkId = $"{profile.SinkType}~{profile.Version}::{profile.Name}";
-            return new EventSinkRetryProxy(sinkId, profile.Options, profile.Credentials, sinkFactory, loggerFactory);
+            var retryStrategy = new BackoffRetryStrategy(
+                TimeSpan.FromMilliseconds(200),
+                TimeSpan.FromSeconds(15),
+                TimeSpan.FromHours(2),
+                forever: true);
+            return new EventSinkRetryProxy(sinkId, profile.Options, profile.Credentials, sinkFactory, loggerFactory, retryStrategy);
         }
     }
 }
