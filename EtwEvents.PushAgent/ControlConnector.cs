@@ -28,6 +28,7 @@ namespace KdSoft.EtwEvents.PushAgent
             _tcs = new TaskCompletionSource();
         }
 
+        // this Task will only terminate when the last sseTask terminates!
         public Task RunTask => _tcs.Task;
 
         void CloseEventSource(EventSource evt, Task sseTask) {
@@ -48,7 +49,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
         public ControlOptions? CurrentOptions { get; private set; }
 
-        public Task Start(ControlOptions opts, Func<ControlEvent, Task> processEvent, CancellationToken stoppingToken) {
+        public void Start(ControlOptions opts, Func<ControlEvent, Task> processEvent, CancellationToken stoppingToken) {
             var evtUri = new Uri(opts.Uri, "Agent/GetEvents");
             var cfgBuilder = Configuration.Builder(evtUri).HttpMessageHandler(_httpHandler);
             if (opts.InitialRetryDelay != null)
@@ -90,9 +91,6 @@ namespace KdSoft.EtwEvents.PushAgent
                     _logger?.LogError(ex, "Error starting EventSource.");
                 }
             }
-
-            // this Task will only terminate when the last sseTask terminates!
-            return _tcs.Task;
         }
 
         async void EventReceived(MessageReceivedEventArgs e, Func<ControlEvent, Task> processEvent) {

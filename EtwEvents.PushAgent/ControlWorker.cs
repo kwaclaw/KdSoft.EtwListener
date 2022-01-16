@@ -37,6 +37,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
         IServiceScope? _sessionScope;
         IDisposable? _controlOptionsListener;
+        CancellationTokenRegistration _cancelRegistration;
         FilterSource? _emptyFilterSource;
 
         SessionWorker? _sessionWorker;  // only valid when _sessionWorkerAvailable != 0
@@ -351,9 +352,8 @@ namespace KdSoft.EtwEvents.PushAgent
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
-            var eventsTask = Task.CompletedTask;
             try {
-                stoppingToken.Register(async () => {
+                _cancelRegistration = stoppingToken.Register(async () => {
                     try {
                         await StopSessionWorker(default).ConfigureAwait(false);
                     }
@@ -362,9 +362,11 @@ namespace KdSoft.EtwEvents.PushAgent
                     }
                 });
                 _controlOptionsListener = _controlOptions.OnChange(opts => ControlOptionsChanged(opts, stoppingToken));
-                eventsTask = _controlConnector.Start(_controlOptions.CurrentValue, ProcessEvent, stoppingToken);
+                _controlConnector.Start(_controlOptions.CurrentValue, ProcessEvent, stoppingToken);
             }
             catch (Exception ex) {
+                _cancelRegistration.Dispose();
+                _controlOptionsListener?.Dispose();
                 _logger.LogError(ex, "Failure running service.");
                 return;
             }
@@ -384,11 +386,12 @@ namespace KdSoft.EtwEvents.PushAgent
             }
 
             // this task ends only when EventSource is shut down, e.g. calling EventSource.Close()
-            await eventsTask.ConfigureAwait(false);
+            await _controlConnector.RunTask.ConfigureAwait(false);
         }
 
         public override void Dispose() {
             base.Dispose();
+            _cancelRegistration.Dispose();
             _controlOptionsListener?.Dispose();
             _controlConnector?.Dispose();
             _sessionScope?.Dispose();
