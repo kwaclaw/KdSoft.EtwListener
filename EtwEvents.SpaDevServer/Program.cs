@@ -5,16 +5,16 @@ using System.Net.NetworkInformation;
 var workingDir = Path.GetFullPath("..\\..\\..\\..\\EtwEvents.AgentManager\\Spa");
 
 var ipGlobalProperties = IPGlobalProperties.GetIPGlobalProperties();
-var tcpConnInfoArray = ipGlobalProperties.GetActiveTcpConnections();
+var tcpListeners = ipGlobalProperties.GetActiveTcpListeners();
 
-bool isAvailable = true;
-foreach (var tcpi in tcpConnInfoArray) {
-    if (tcpi.LocalEndPoint.Port == 41000) {
-        isAvailable = false;
+bool isAlreadyRunning = false;
+foreach (var tcpListener in tcpListeners) {
+    if (tcpListener.Port == 41000) {
+        isAlreadyRunning = true;
         break;
     }
 }
-if (!isAvailable) {
+if (isAlreadyRunning) {
     return;
 }
 
