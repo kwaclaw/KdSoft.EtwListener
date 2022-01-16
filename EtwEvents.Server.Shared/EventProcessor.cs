@@ -160,12 +160,12 @@ namespace KdSoft.EtwEvents.Server
 
             try {
                 var activeRunTasks = activeChannels.Select(ac => ac.Value.RunTask!).Where(rt => rt != null).ToList();
-                var waitAllTask = Task.WhenAll(activeRunTasks);
+                var waitAllTask = Task.WhenAll(activeRunTasks).ContinueWith(art => art.Exception); // observe Exception
                 var timeoutTask = Task.Delay(5000); // we don't want to wait forever
                 await Task.WhenAny(waitAllTask, timeoutTask).ConfigureAwait(false);
             }
             catch {
-                //TODO maybe log exception, but we don't want DisposeAsync() to throw
+                // just to make sure, should not throw anyway
             }
             finally {
                 var taskList = new List<ValueTask>(activeChannels.Select(ac => ac.Value.DisposeAsync()));
