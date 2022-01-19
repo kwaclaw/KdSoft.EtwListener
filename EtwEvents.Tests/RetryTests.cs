@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents;
+using KdSoft.EtwEvents.EventSinks;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -126,7 +129,8 @@ namespace EtwEvents.Tests
 
         #region Retrier
 
-        class Operation {
+        class Operation
+        {
             readonly int _maxCount;
             int _count;
 
@@ -170,5 +174,93 @@ namespace EtwEvents.Tests
         }
 
         #endregion
+
+        #region RetryProxy
+
+        [Fact]
+        public async Task RetryProxyRollingFile() {
+            var serializerOptions = new JsonSerializerOptions {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+            var sinkFactory = new RollingFileSinkFactory();
+            var sinkOptions = new RollingFileSinkOptions {
+                Directory = @"C:\Temp\TestLogs",
+                FileExtension = ".log",
+                FileNameFormat = "etw-test-{0:yyyy-MM-dd}",
+                FileSizeLimitKB = 64,
+                MaxFileCount = 100,
+                NewFileOnStartup = true,
+                RelaxedJsonEscaping = true
+            };
+            var sinkCredentials = new RollingFileSinkCredentials();
+            var loggerFactory = new MockLoggerFactory();
+            var retryStrategy = new BackoffRetryStrategy(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(800), 20);
+
+            var retryProxy = new EventSinkRetryProxy(
+                "test-sink-rolling-file",
+                JsonSerializer.Serialize(sinkOptions, serializerOptions),
+                JsonSerializer.Serialize(sinkCredentials, serializerOptions),
+                sinkFactory,
+                loggerFactory,
+                retryStrategy
+            );
+
+            var writeTasks = new List<ValueTask<bool>>();
+            for (int i = 0; i < 100; i++) {
+                var wt = retryProxy.WriteAsync(new KdSoft.EtwLogging.EtwEvent());
+                writeTasks.Add(wt);
+            }
+            foreach (var wt in writeTasks) {
+                if (!wt.IsCompleted) {
+                    await wt.ConfigureAwait(false);
+                }
+            }
+
+            await retryProxy.DisposeAsync().ConfigureAwait(false);
         }
+
+        [Fact]
+        public async Task RetryProxyFailingSink() {
+            var serializerOptions = new JsonSerializerOptions {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+            var sinkFactory = new MockSinkFactory();
+            var lf1 = (100, TimeSpan.FromMilliseconds(100));
+            var lf2 = (200, TimeSpan.FromMilliseconds(90));
+            var lf3= (300, TimeSpan.FromMilliseconds(110));
+            var lff = (0, TimeSpan.FromMilliseconds(350));
+            var sinkOptions = new MockSinkOptions {
+                LifeCycles = 
+                { lf1, lff, lff, lff, lff, lf2, lf3, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff
+                    , lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lf1, lf1, lf1, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff
+                    , lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff
+                },
+            };
+            var sinkCredentials = new MockSinkCredentials();
+            var loggerFactory = new MockLoggerFactory();
+            var retryStrategy = new BackoffRetryStrategy(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(800), 20);
+
+            //TODO how to pass different options each time EventSinkRetryProxy calls CreateEventSink
+            //   - make MockSinkOptions cntain an array of options, and let MockSinkFactory pick a different on each Create call
+            var retryProxy = new EventSinkRetryProxy(
+                "test-sink-failing",
+                JsonSerializer.Serialize(sinkOptions, serializerOptions),
+                JsonSerializer.Serialize(sinkCredentials, serializerOptions),
+                sinkFactory,
+                loggerFactory,
+                retryStrategy
+            );
+
+            // must ne have overlapping writes
+            for (int i = 0; i < 100; i++) {
+                await retryProxy.WriteAsync(new KdSoft.EtwLogging.EtwEvent()).ConfigureAwait(false);
+                if ((i % 10) == 0)
+                    await retryProxy.FlushAsync().ConfigureAwait(false);
+            }
+
+            await retryProxy.DisposeAsync().ConfigureAwait(false);
+        }
+
+        #endregion
+    }
 }
