@@ -17,7 +17,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Grpc.Net.Client" Version="2.41.0" />
+    <PackageReference Include="Grpc.Net.Client" Version="2.42.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,7 +29,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="6.0.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.1" />
-    <PackageReference Include="OrchardCore.Localization.Core" Version="1.2.1" />
+    <PackageReference Include="OrchardCore.Localization.Core" Version="1.2.2" />
   </ItemGroup>
 
   <ItemGroup>
