@@ -12,14 +12,14 @@
 
         #region No Arguments
 
-        async ValueTask<T> ExecuteAsyncAsync(ValueTask<T> task, Func<ValueTask<T>> callback, ValueHolder<int>? countHolder) {
+        async ValueTask<T> ExecuteAsyncAsync(ValueTask<T> task, Func<int, ValueTask<T>> callback, ValueHolder<int>? countHolder) {
             var result = await task.ConfigureAwait(false);
             while (!_succeeded(result)) {
                 if (_retryStrategy.NextDelay(out var delay, out var count)) {
                     if (countHolder != null)
                         countHolder.Value = count;
                     await Task.Delay(delay).ConfigureAwait(false);
-                    result = await callback().ConfigureAwait(false);
+                    result = await callback(count).ConfigureAwait(false);
                 }
                 else {
                     return result;
@@ -28,9 +28,9 @@
             return result;
         }
 
-        public ValueTask<T> ExecuteAsync(Func<ValueTask<T>> callback, ValueHolder<int>? countHolder = null) {
+        public ValueTask<T> ExecuteAsync(Func<int, ValueTask<T>> callback, ValueHolder<int>? countHolder = null) {
             // check fast path (sync completion)
-            var task = callback();
+            var task = callback(0);
             if (task.IsCompleted) {
                 var result = task.GetAwaiter().GetResult();
                 if (_succeeded(result)) {
@@ -48,7 +48,7 @@
 
         async ValueTask<T> ExecuteAsyncAsync<P>(
             ValueTask<T> task,
-            Func<P, ValueTask<T>> callback,
+            Func<P, int, ValueTask<T>> callback,
             P arg,
             ValueHolder<int>? countHolder
         ) {
@@ -58,7 +58,7 @@
                     if (countHolder != null)
                         countHolder.Value = count;
                     await Task.Delay(delay).ConfigureAwait(false);
-                    result = await callback(arg).ConfigureAwait(false);
+                    result = await callback(arg, count).ConfigureAwait(false);
                 }
                 else {
                     return result;
@@ -68,12 +68,12 @@
         }
 
         public ValueTask<T> ExecuteAsync<P>(
-            Func<P, ValueTask<T>> callback,
+            Func<P, int, ValueTask<T>> callback,
             P arg,
             ValueHolder<int>? countHolder = null
         ) {
             // check fast path (sync completion)
-            var task = callback(arg);
+            var task = callback(arg, 0);
             if (task.IsCompleted) {
                 var result = task.GetAwaiter().GetResult();
                 if (_succeeded(result)) {
@@ -91,7 +91,7 @@
 
         async ValueTask<T> ExecuteAsyncAsync<P, Q>(
             ValueTask<T> task,
-            Func<P, Q, ValueTask<T>> callback,
+            Func<P, Q, int, ValueTask<T>> callback,
             P argP,
             Q argQ,
             ValueHolder<int>? countHolder
@@ -102,7 +102,7 @@
                     if (countHolder != null)
                         countHolder.Value = count;
                     await Task.Delay(delay).ConfigureAwait(false);
-                    result = await callback(argP, argQ).ConfigureAwait(false);
+                    result = await callback(argP, argQ, count).ConfigureAwait(false);
                 }
                 else {
                     return result;
@@ -112,13 +112,13 @@
         }
 
         public ValueTask<T> ExecuteAsync<P, Q>(
-            Func<P, Q, ValueTask<T>> callback,
+            Func<P, Q, int, ValueTask<T>> callback,
             P argP,
             Q argQ,
             ValueHolder<int>? countHolder = null
         ) {
             // check fast path (sync completion)
-            var task = callback(argP, argQ);
+            var task = callback(argP, argQ, 0);
             if (task.IsCompleted) {
                 var result = task.GetAwaiter().GetResult();
                 if (_succeeded(result)) {

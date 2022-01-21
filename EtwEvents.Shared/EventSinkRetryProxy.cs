@@ -139,7 +139,9 @@ namespace KdSoft.EtwEvents
             return await InternalPerformAsync(sink.FlushAsync()).ConfigureAwait(false);
         }
 
-        ValueTask<bool> DoFlushAsync() {
+        ValueTask<bool> DoFlushAsync(int retryNum) {
+            if (retryNum > 0)
+                _logger.LogInformation("FlushAsync retry: {retryNum}", retryNum);
             var sinkTask = GetSink();
             if (sinkTask.IsCompleted) {
                 var sink = sinkTask.GetAwaiter().GetResult();
@@ -161,7 +163,9 @@ namespace KdSoft.EtwEvents
             return await InternalPerformAsync(sink.WriteAsync(evt)).ConfigureAwait(false);
         }
 
-        ValueTask<bool> WriteEventAsync(EtwEvent evt) {
+        ValueTask<bool> WriteEventAsync(EtwEvent evt, int retryNum) {
+            if (retryNum > 0)
+                _logger.LogInformation("WriteAsync (event) retry: {retryNum}", retryNum);
             var sinkTask = GetSink();
             if (sinkTask.IsCompleted) {
                 var sink = sinkTask.GetAwaiter().GetResult();
@@ -183,7 +187,9 @@ namespace KdSoft.EtwEvents
             return await InternalPerformAsync(sink.WriteAsync(evtBatch)).ConfigureAwait(false);
         }
 
-        ValueTask<bool> WriteBatchAsync(EtwEventBatch evtBatch) {
+        ValueTask<bool> WriteBatchAsync(EtwEventBatch evtBatch, int retryNum) {
+            if (retryNum > 0)
+                _logger.LogInformation("WriteAsync (batch) retry: {retryNum}", retryNum);
             var sinkTask = GetSink();
             if (sinkTask.IsCompleted) {
                 var sink = sinkTask.GetAwaiter().GetResult();
