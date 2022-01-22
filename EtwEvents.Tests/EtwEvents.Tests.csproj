@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-
+    <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
@@ -23,6 +23,7 @@
     <ProjectReference Include="..\EtwEvents.AgentManager\EtwEvents.AgentManager.csproj" />
     <ProjectReference Include="..\EtwEvents.Protobuf.Shared\EtwEvents.Protobuf.Shared.csproj" />
     <ProjectReference Include="..\EtwEvents.PushAgent\EtwEvents.PushAgent.csproj" />
+    <ProjectReference Include="..\EventSinks\EtwEvents.RollingFileSink\EtwEvents.RollingFileSink.csproj" />
   </ItemGroup>
 
 </Project>
