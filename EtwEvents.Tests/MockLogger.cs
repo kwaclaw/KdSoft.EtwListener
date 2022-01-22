@@ -24,9 +24,13 @@ namespace EtwEvents.Tests
             _formattedEntries = new List<string>();
         }
 
-        public IDisposable BeginScope<TState>(TState state) => _externalScopeProvider?.Push(state) ?? MockDisposable.Instance;
+        public IDisposable BeginScope<TState>(TState state) {
+            if (_externalScopeProvider != null)
+                return _externalScopeProvider.Push(state);
+            return MockDisposable.Instance;
+        }
 
-        public bool IsEnabled(LogLevel logLevel) => true;
+        public bool IsEnabled(LogLevel logLevel) => logLevel != LogLevel.None && logLevel >= LogLevel.Information;
 
         public void Log<TState>(
             LogLevel logLevel,

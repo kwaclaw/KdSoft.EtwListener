@@ -8,6 +8,7 @@ namespace EtwEvents.Tests
         readonly IExternalScopeProvider _scopeProvider;
         readonly List<MockLogger> _loggers;
 
+        public IExternalScopeProvider ScopeProvider => _scopeProvider;
         public IReadOnlyList<MockLogger> Loggers => _loggers;
 
         public MockLoggerFactory() {
