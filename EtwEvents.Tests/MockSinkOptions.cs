@@ -5,7 +5,7 @@ namespace EtwEvents.Tests
 {
     class MockSinkOptions
     {
-        public IList<(int maxWrites, TimeSpan duration)> LifeCycles { get; set; } = new List<(int maxWrites, TimeSpan duration)>();
+        public IList<Tuple<int, TimeSpan>> LifeCycles { get; set; } = new List<Tuple<int, TimeSpan>>();
         public int ActiveCycle { get; set; }
     }
 }
