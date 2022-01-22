@@ -1,9 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Google.Protobuf.WellKnownTypes;
 using KdSoft.EtwEvents;
 using KdSoft.EtwEvents.EventSinks;
+using KdSoft.EtwLogging;
+using Microsoft.Extensions.Logging;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -138,7 +142,7 @@ namespace EtwEvents.Tests
                 this._maxCount = maxCount;
             }
 
-            public async ValueTask<bool> Execute() {
+            public async ValueTask<bool> Execute(int retryNum, TimeSpan delay) {
                 await Task.Delay(100).ConfigureAwait(false);
                 var result = ++_count > _maxCount;
                 return result;
@@ -149,28 +153,28 @@ namespace EtwEvents.Tests
         public async Task Retrier() {
             var retryStrategy = new BackoffRetryStrategy(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(800), 20);
             var retrier = new AsyncRetrier<bool>(r => r, retryStrategy);
-            var countHolder = new ValueHolder<int>();
+            var retryHolder = new ValueHolder<int, TimeSpan>();
 
             // op.Execute always fails
             var op = new Operation(int.MaxValue);
-            var result = await retrier.ExecuteAsync(op.Execute, countHolder).ConfigureAwait(false);
-            _output.WriteLine($"Retrier with {countHolder.Value} retries, all failing, duration: {retryStrategy.TotalDelay}");
+            var result = await retrier.ExecuteAsync(op.Execute, retryHolder).ConfigureAwait(false);
+            _output.WriteLine($"Retrier with {retryHolder.Value1} retries, all failing, duration: {retryStrategy.TotalDelay}");
             Assert.False(result);
-            Assert.Equal(countHolder.Value, retryStrategy.TotalRetries);
+            Assert.Equal(retryHolder.Value1, retryStrategy.TotalRetries);
 
             // op.Execute succeeds after 10 counts - before retrier gives up
             op = new Operation(10);
-            result = await retrier.ExecuteAsync(op.Execute, countHolder).ConfigureAwait(false);
-            _output.WriteLine($"Retrier with {countHolder.Value} retries, 10 failing, duration: {retryStrategy.TotalDelay}");
+            result = await retrier.ExecuteAsync(op.Execute, retryHolder).ConfigureAwait(false);
+            _output.WriteLine($"Retrier with {retryHolder.Value1} retries, 10 failing, duration: {retryStrategy.TotalDelay}");
             Assert.True(result);
-            Assert.Equal(countHolder.Value, retryStrategy.TotalRetries);
+            Assert.Equal(retryHolder.Value1, retryStrategy.TotalRetries);
 
             // op.Execute succeeds after 21 counts - after retrier gives up
             op = new Operation(21);
-            result = await retrier.ExecuteAsync(op.Execute, countHolder).ConfigureAwait(false);
-            _output.WriteLine($"Retrier with {countHolder.Value} retries, 21 failing, duration: {retryStrategy.TotalDelay}");
+            result = await retrier.ExecuteAsync(op.Execute, retryHolder).ConfigureAwait(false);
+            _output.WriteLine($"Retrier with {retryHolder.Value1} retries, 21 failing, duration: {retryStrategy.TotalDelay}");
             Assert.False(result);
-            Assert.Equal(countHolder.Value, retryStrategy.TotalRetries);
+            Assert.Equal(retryHolder.Value1, retryStrategy.TotalRetries);
         }
 
         #endregion
@@ -205,14 +209,12 @@ namespace EtwEvents.Tests
                 retryStrategy
             );
 
-            var writeTasks = new List<ValueTask<bool>>();
-            for (int i = 0; i < 100; i++) {
-                var wt = retryProxy.WriteAsync(new KdSoft.EtwLogging.EtwEvent());
-                writeTasks.Add(wt);
-            }
-            foreach (var wt in writeTasks) {
-                if (!wt.IsCompleted) {
-                    await wt.ConfigureAwait(false);
+            // must not have overlapping writes
+            for (int i = 1; i <= 100; i++) {
+                var evt = new KdSoft.EtwLogging.EtwEvent() { Id = (uint)i, TimeStamp = DateTimeOffset.UtcNow.ToTimestamp() };
+                await retryProxy.WriteAsync(evt).ConfigureAwait(false);
+                if ((i % 10) == 0) {
+                    await retryProxy.FlushAsync().ConfigureAwait(false);
                 }
             }
 
@@ -224,24 +226,30 @@ namespace EtwEvents.Tests
             var serializerOptions = new JsonSerializerOptions {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
+
             var sinkFactory = new MockSinkFactory();
-            var lf1 = (100, TimeSpan.FromMilliseconds(100));
-            var lf2 = (200, TimeSpan.FromMilliseconds(90));
-            var lf3= (300, TimeSpan.FromMilliseconds(110));
-            var lff = (0, TimeSpan.FromMilliseconds(350));
+
+            // using Tuples instead of ValueTuples, as the latter won't be serialized into JSON
+            var lf1 = Tuple.Create(6, TimeSpan.FromMilliseconds(100));
+            var lf2 = Tuple.Create(11, TimeSpan.FromMilliseconds(90));
+            var lf3= Tuple.Create(17, TimeSpan.FromMilliseconds(110));
+            var lff = Tuple.Create(0, TimeSpan.FromMilliseconds(350));
             var sinkOptions = new MockSinkOptions {
-                LifeCycles = 
-                { lf1, lff, lff, lff, lff, lf2, lf3, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff
-                    , lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lf1, lf1, lf1, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff
-                    , lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff
+                LifeCycles = { 
+                    lf1, lff, lff, lff, lff, lf2, lf3, lff, lff, lff, lff, lff, lff, lff, lff, lff,
+                    lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff,
+                    lff, lff, lff, lf1, lf1, lf1, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff,
+                    lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff,
+                    lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lf2, lff,
                 },
             };
+            var totalMaxWrites = sinkOptions.LifeCycles.Select(lc => lc.Item1).Aggregate<int>((x,y) => x + y);
+
             var sinkCredentials = new MockSinkCredentials();
             var loggerFactory = new MockLoggerFactory();
-            var retryStrategy = new BackoffRetryStrategy(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(800), 20);
+            var retryStrategy = new BackoffRetryStrategy(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(600), 15);
 
-            //TODO how to pass different options each time EventSinkRetryProxy calls CreateEventSink
-            //   - make MockSinkOptions cntain an array of options, and let MockSinkFactory pick a different on each Create call
+            //TODO figure out what to measure and assert - e.g. 
             var retryProxy = new EventSinkRetryProxy(
                 "test-sink-failing",
                 JsonSerializer.Serialize(sinkOptions, serializerOptions),
@@ -251,14 +259,72 @@ namespace EtwEvents.Tests
                 retryStrategy
             );
 
-            // must ne have overlapping writes
-            for (int i = 0; i < 100; i++) {
-                await retryProxy.WriteAsync(new KdSoft.EtwLogging.EtwEvent()).ConfigureAwait(false);
-                if ((i % 10) == 0)
-                    await retryProxy.FlushAsync().ConfigureAwait(false);
+            var testLogger = loggerFactory.CreateLogger("retry-test");
+            var writeLoops = new List<(EtwEvent evt, int retries,TimeSpan delay)>();
+            // must not have overlapping writes
+            for (int i = 0; i < 240; i++) {
+                // if Id = 0 it won't be stored (as it is a default value in protobuf)
+                var evt = new KdSoft.EtwLogging.EtwEvent() { Id = (uint)(i+1), TimeStamp = DateTimeOffset.UtcNow.ToTimestamp() };
+                using (var scope = testLogger.BeginScope("WriteAsync {evt}: {scopeType}-{scopeId}", evt, "w", i)) {
+                    retryStrategy.Reset();
+                    await retryProxy.WriteAsync(evt).ConfigureAwait(false);
+                    writeLoops.Add((evt, retryStrategy.TotalRetries, retryStrategy.TotalDelay));
+                }
+                if ((i % 10) == 0) {
+                    using (var scope = testLogger.BeginScope("FlushAsync {Id}|{timestamp}: {scopeType}-{scopeId}", i+1, DateTimeOffset.UtcNow, "f", i)) {
+                        retryStrategy.Reset();
+                        await retryProxy.FlushAsync().ConfigureAwait(false);
+                        var loopEntry = writeLoops[i];
+                        loopEntry.retries += retryStrategy.TotalRetries;
+                        loopEntry.delay += retryStrategy.TotalDelay;
+                        writeLoops[i] = loopEntry;
+                    }
+                }
             }
 
             await retryProxy.DisposeAsync().ConfigureAwait(false);
+
+            _output.WriteLine($"Total life cycles: {sinkFactory.SinkLifeCycles.Count}, total max retries: {totalMaxWrites}");
+
+            for (int indx = 0; indx < sinkFactory.SinkLifeCycles.Count; indx++) {
+                var lc = sinkFactory.SinkLifeCycles[indx];
+                var ocIndx = indx % sinkOptions.LifeCycles.Count;
+                var oc = sinkOptions.LifeCycles[ocIndx];
+
+                Assert.Equal(oc.Item1, lc.MaxWrites);
+                Assert.Equal(oc.Item2, lc.CallDuration);
+
+                Assert.True(lc.Disposed);
+                Assert.Equal(lc.MaxWrites, lc.WriteCount);
+            }
+
+            var lifeCycleGroups = sinkFactory.SinkLifeCycles.Where(lc => lc.Event != null).GroupBy(lc => lc.Event!.Id);
+            var lifeCycleMap = lifeCycleGroups.ToDictionary(grp => grp.Key);
+            //Assert.Equal(240, lifeCycleGroups.Count);
+
+            for (int indx = 0; indx < 240; indx++) {
+                bool hasGroup = lifeCycleMap.TryGetValue((uint)(indx + 1), out var lcGroup);
+                var loopEntry = writeLoops[indx];
+
+                int lifeCycleCount = 0;
+                TimeSpan totalLifeSpan = TimeSpan.Zero;
+                if (hasGroup) {
+                    lifeCycleCount = lcGroup!.Count();
+                    totalLifeSpan = lcGroup!.Aggregate(TimeSpan.Zero, (t, y) => t + y.LifeSpan);
+                }
+
+                _output.WriteLine($"[{indx}] Lifecycles: {lifeCycleCount} | {totalLifeSpan.TotalMilliseconds},\tRetries: {loopEntry.retries} | {loopEntry.delay.TotalMilliseconds}");
+            }
+
+            _output.WriteLine("");
+
+            foreach (var logger in loggerFactory.Loggers) {
+                foreach (var formatted in logger.FormattedEntries) {
+                    _output.WriteLine(formatted);
+                }
+            }
+
+            loggerFactory.Dispose();
         }
 
         #endregion
