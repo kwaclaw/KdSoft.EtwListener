@@ -12,14 +12,20 @@
 
         #region No Arguments
 
-        async ValueTask<T> ExecuteAsyncAsync(ValueTask<T> task, Func<int, ValueTask<T>> callback, ValueHolder<int>? countHolder) {
+        async ValueTask<T> ExecuteAsyncAsync(
+            ValueTask<T> task,
+            Func<int, TimeSpan, ValueTask<T>> callback,
+            ValueHolder<int, TimeSpan>? retryHolder
+        ) {
             var result = await task.ConfigureAwait(false);
             while (!_succeeded(result)) {
                 if (_retryStrategy.NextDelay(out var delay, out var count)) {
-                    if (countHolder != null)
-                        countHolder.Value = count;
+                    if (retryHolder != null) {
+                        retryHolder.Value1 = count;
+                        retryHolder.Value2 = delay;
+                    }
                     await Task.Delay(delay).ConfigureAwait(false);
-                    result = await callback(count).ConfigureAwait(false);
+                    result = await callback(count, delay).ConfigureAwait(false);
                 }
                 else {
                     return result;
@@ -28,9 +34,9 @@
             return result;
         }
 
-        public ValueTask<T> ExecuteAsync(Func<int, ValueTask<T>> callback, ValueHolder<int>? countHolder = null) {
+        public ValueTask<T> ExecuteAsync(Func<int, TimeSpan, ValueTask<T>> callback, ValueHolder<int, TimeSpan>? retryHolder = null) {
             // check fast path (sync completion)
-            var task = callback(0);
+            var task = callback(0, default);
             if (task.IsCompleted) {
                 var result = task.GetAwaiter().GetResult();
                 if (_succeeded(result)) {
@@ -39,7 +45,7 @@
             }
             // otherwise go full async
             _retryStrategy.Reset();
-            return ExecuteAsyncAsync(task, callback, countHolder);
+            return ExecuteAsyncAsync(task, callback, retryHolder);
         }
 
         #endregion
@@ -48,17 +54,19 @@
 
         async ValueTask<T> ExecuteAsyncAsync<P>(
             ValueTask<T> task,
-            Func<P, int, ValueTask<T>> callback,
+            Func<P, int, TimeSpan, ValueTask<T>> callback,
             P arg,
-            ValueHolder<int>? countHolder
+            ValueHolder<int, TimeSpan>? retryHolder
         ) {
             var result = await task.ConfigureAwait(false);
             while (!_succeeded(result)) {
                 if (_retryStrategy.NextDelay(out var delay, out var count)) {
-                    if (countHolder != null)
-                        countHolder.Value = count;
+                    if (retryHolder != null) {
+                        retryHolder.Value1 = count;
+                        retryHolder.Value2 = delay;
+                    }
                     await Task.Delay(delay).ConfigureAwait(false);
-                    result = await callback(arg, count).ConfigureAwait(false);
+                    result = await callback(arg, count, delay).ConfigureAwait(false);
                 }
                 else {
                     return result;
@@ -68,12 +76,12 @@
         }
 
         public ValueTask<T> ExecuteAsync<P>(
-            Func<P, int, ValueTask<T>> callback,
+            Func<P, int, TimeSpan, ValueTask<T>> callback,
             P arg,
-            ValueHolder<int>? countHolder = null
+            ValueHolder<int, TimeSpan>? retryHolder = null
         ) {
             // check fast path (sync completion)
-            var task = callback(arg, 0);
+            var task = callback(arg, 0, default);
             if (task.IsCompleted) {
                 var result = task.GetAwaiter().GetResult();
                 if (_succeeded(result)) {
@@ -82,7 +90,7 @@
             }
             // otherwise go full async
             _retryStrategy.Reset();
-            return ExecuteAsyncAsync(task, callback, arg, countHolder);
+            return ExecuteAsyncAsync(task, callback, arg, retryHolder);
         }
 
         #endregion
@@ -91,18 +99,20 @@
 
         async ValueTask<T> ExecuteAsyncAsync<P, Q>(
             ValueTask<T> task,
-            Func<P, Q, int, ValueTask<T>> callback,
+            Func<P, Q, int, TimeSpan, ValueTask<T>> callback,
             P argP,
             Q argQ,
-            ValueHolder<int>? countHolder
+            ValueHolder<int, TimeSpan>? retryHolder
         ) {
             var result = await task.ConfigureAwait(false);
             while (!_succeeded(result)) {
                 if (_retryStrategy.NextDelay(out var delay, out var count)) {
-                    if (countHolder != null)
-                        countHolder.Value = count;
+                    if (retryHolder != null) {
+                        retryHolder.Value1 = count;
+                        retryHolder.Value2 = delay;
+                    }
                     await Task.Delay(delay).ConfigureAwait(false);
-                    result = await callback(argP, argQ, count).ConfigureAwait(false);
+                    result = await callback(argP, argQ, count, delay).ConfigureAwait(false);
                 }
                 else {
                     return result;
@@ -112,13 +122,13 @@
         }
 
         public ValueTask<T> ExecuteAsync<P, Q>(
-            Func<P, Q, int, ValueTask<T>> callback,
+            Func<P, Q, int, TimeSpan, ValueTask<T>> callback,
             P argP,
             Q argQ,
-            ValueHolder<int>? countHolder = null
+            ValueHolder<int, TimeSpan>? retryHolder = null
         ) {
             // check fast path (sync completion)
-            var task = callback(argP, argQ, 0);
+            var task = callback(argP, argQ, 0, default);
             if (task.IsCompleted) {
                 var result = task.GetAwaiter().GetResult();
                 if (_succeeded(result)) {
@@ -127,7 +137,7 @@
             }
             // otherwise go full async
             _retryStrategy.Reset();
-            return ExecuteAsyncAsync(task, callback, argP, argQ, countHolder);
+            return ExecuteAsyncAsync(task, callback, argP, argQ, retryHolder);
         }
 
         #endregion
