@@ -244,7 +244,6 @@ namespace EtwEvents.Tests
                     lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lf2, lff,
                 },
             };
-            var totalMaxWrites = sinkOptions.LifeCycles.Select(lc => lc.Item1).Aggregate<int>((x,y) => x + y);
 
             var sinkCredentials = new MockSinkCredentials();
             var loggerFactory = new MockLoggerFactory();
@@ -261,7 +260,7 @@ namespace EtwEvents.Tests
             );
 
             var testLogger = loggerFactory.CreateLogger("retry-test");
-            var writeLoops = new List<(EtwEvent evt, TimeSpan elapsed, int retries,TimeSpan delay)>();
+            var writeLoops = new List<(EtwEvent evt, bool success, TimeSpan elapsed, int retries,TimeSpan delay)>();
             var batch = new EtwEventBatch();
             var stopWatch = new Stopwatch();
             stopWatch.Start();
@@ -280,14 +279,15 @@ namespace EtwEvents.Tests
                     if (!success) {
                         _output.WriteLine($"Failed write: {i}, retries: {retryStrategy.TotalRetries}, delay: {retryStrategy.TotalDelay.TotalMilliseconds}");
                     }
-                    writeLoops.Add((evt, elapsed, retryStrategy.TotalRetries, retryStrategy.TotalDelay));
+                    writeLoops.Add((evt, success, elapsed, retryStrategy.TotalRetries, retryStrategy.TotalDelay));
                 }
             }
 
             await retryProxy.DisposeAsync().ConfigureAwait(false);
             await retryProxy.RunTask.ConfigureAwait(false);
 
-            _output.WriteLine($"Total life cycles: {sinkFactory.SinkLifeCycles.Count}, total max retries: {totalMaxWrites}");
+            _output.WriteLine("");
+            _output.WriteLine($"Total life cycles: {sinkFactory.SinkLifeCycles.Count}");
 
             for (int indx = 0; indx < sinkFactory.SinkLifeCycles.Count; indx++) {
                 var lc = sinkFactory.SinkLifeCycles[indx];
@@ -304,8 +304,8 @@ namespace EtwEvents.Tests
                     _output.WriteLine($"Not all writes were used for life cycle {indx} (max|actual): {lc.MaxWrites} | {lc.WriteCount}");
                 else if (lc.WriteCount > (lc.MaxWrites + 1))
                     _output.WriteLine($"Extra writes were used for life cycle {indx} (max|actual): {lc.MaxWrites} | {lc.WriteCount}");
-
             }
+            _output.WriteLine("");
 
             var lifeCycleGroups = sinkFactory.SinkLifeCycles.Where(lc => lc.Event != null).GroupBy(lc => lc.Event!.Id);
             var lifeCycleMap = lifeCycleGroups.ToDictionary(grp => grp.Key);
@@ -315,14 +315,17 @@ namespace EtwEvents.Tests
                 var loopEntry = writeLoops[indx];
 
                 int lifeCycleCount = 0;
-                TimeSpan totalLifeSpan = TimeSpan.Zero;
                 if (hasGroup) {
                     lifeCycleCount = lcGroup!.Count();
-                    totalLifeSpan = loopEntry.elapsed;
                 }
 
-                // if life-cycle count > retriy count then the WriteAsync failed
-                _output.WriteLine($"[{indx}] Lifecycles: {lifeCycleCount} | {totalLifeSpan.TotalMilliseconds},\tRetries: {loopEntry.retries} | {loopEntry.delay.TotalMilliseconds}");
+                // if life-cycle count > retry count then the WriteAsync failed
+                _output.WriteLine($"[{indx}]-{loopEntry.success} Lifecycles: {lifeCycleCount} | {loopEntry.elapsed.TotalMilliseconds},\tRetries: {loopEntry.retries} | {loopEntry.delay.TotalMilliseconds}");
+
+                // tolerate difference between elasped time and total calculated retry delay of up to 330ms
+                var diffTime = loopEntry.elapsed - loopEntry.delay;
+                Assert.True(diffTime.TotalMilliseconds < 330, 
+                    $"At loop index {indx} (elapsed | delay): {loopEntry.elapsed.TotalMilliseconds} | {loopEntry.delay.TotalMilliseconds}");
             }
 
             _output.WriteLine("");
