@@ -156,6 +156,10 @@ namespace KdSoft.EtwEvents.Server
                         // for this type of reader we cannot re-enter reader.ReadAllAsync() as it may not return
                         isCompleted = true;
                     }
+                    catch (Exception ex) {
+                        _logger.LogError(ex, "Error reading from event channel.");
+                        throw;
+                    }
 
                 } while (!isCompleted);
             }

@@ -123,6 +123,10 @@ namespace KdSoft.EtwEvents.Server
                     catch (OperationCanceledException) {
                         _channel.Writer.TryComplete();
                     }
+                    catch (Exception ex) {
+                        _logger.LogError(ex, "Error reading from event channel.");
+                        throw;
+                    }
                     finally {
                         if (_channel.Reader.Completion.IsCompleted) {
                             isCompleted = true;
