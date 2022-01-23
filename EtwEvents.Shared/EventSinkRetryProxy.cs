@@ -13,6 +13,7 @@ namespace KdSoft.EtwEvents
         readonly string _options;
         readonly string _credentials;
         readonly IEventSinkFactory _sinkFactory;
+        readonly EventSinkLoadContext? _loadContext;
         readonly ILoggerFactory _loggerFactory;
         readonly ILogger<EventSinkRetryProxy> _logger;
         readonly AsyncRetrier<bool> _retrier;
@@ -24,11 +25,22 @@ namespace KdSoft.EtwEvents
 
         #region Construction & Disposal
 
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="sinkId">Event sink Id.</param>
+        /// <param name="options">Event sink options.</param>
+        /// <param name="credentials">Event sink credentials.</param>
+        /// <param name="sinkFactory"><see cref="IEventSinkFactory"/> to create instances of the specified event sink.</param>
+        /// <param name="loadContext">Collectible assembly load context, as we need to keep a reference to it if not null.</param>
+        /// <param name="loggerFactory"><see cref="ILoggerFactory"/> instance needed for new event sink instances.</param>
+        /// <param name="retryStrategy">Determines how retries are performed.</param>
         public EventSinkRetryProxy(
             string sinkId,
             string options,
             string credentials,
             IEventSinkFactory sinkFactory,
+            EventSinkLoadContext? loadContext,
             ILoggerFactory loggerFactory,
             IRetryStrategy retryStrategy
         ) {
@@ -36,6 +48,7 @@ namespace KdSoft.EtwEvents
             this._options = options;
             this._credentials = credentials;
             this._sinkFactory = sinkFactory;
+            this._loadContext = loadContext;
             this._loggerFactory = loggerFactory;
             _tcs = new TaskCompletionSource<bool>();
             _logger = loggerFactory.CreateLogger<EventSinkRetryProxy>();

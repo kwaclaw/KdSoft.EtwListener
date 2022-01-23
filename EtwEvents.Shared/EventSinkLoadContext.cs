@@ -8,8 +8,8 @@ namespace KdSoft.EtwEvents
     /// Collectible AssemblyLoadContext for event sinks.
     /// </summary>
     /// <remarks>
-    /// One can initiate unloading of the EventSinkLoadContext by either calling its Unload method
-    /// getting rid of the reference to the AssemblyLoadContext, e.g. by just using a local variable.
+    /// One can initiate unloading of the EventSinkLoadContext by either calling its Unload method,
+    /// or by getting rid of the reference to the AssemblyLoadContext, e.g. by just using a local variable.
     /// See https://docs.microsoft.com/en-us/dotnet/standard/assembly/unloadability
     /// and https://docs.microsoft.com/en-us/dotnet/core/tutorials/creating-app-with-plugin-support
     /// </remarks>

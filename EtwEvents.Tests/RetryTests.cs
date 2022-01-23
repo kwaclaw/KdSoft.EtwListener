@@ -206,6 +206,7 @@ namespace EtwEvents.Tests
                 JsonSerializer.Serialize(sinkOptions, serializerOptions),
                 JsonSerializer.Serialize(sinkCredentials, serializerOptions),
                 sinkFactory,
+                null,
                 loggerFactory,
                 retryStrategy
             );
@@ -255,6 +256,7 @@ namespace EtwEvents.Tests
                 JsonSerializer.Serialize(sinkOptions, serializerOptions),
                 JsonSerializer.Serialize(sinkCredentials, serializerOptions),
                 sinkFactory,
+                null,
                 loggerFactory,
                 retryStrategy
             );

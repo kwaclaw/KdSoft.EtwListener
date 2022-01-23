@@ -44,8 +44,10 @@ namespace KdSoft.EtwEvents.PushAgent
         /// </summary>
         /// <param name="sinkType">Event sink type as indicated by the <see cref="EventSinkAttribute"/> of the event sink factory.</param>
         /// <param name="version">Version of event sink.</param>
-        /// <returns></returns>
-        public IEventSinkFactory? LoadEventSinkFactory(string sinkType, string version) {
+        /// <returns>An <see cref="IEventSinkFactory"/> instance, and a reference to its <see cref="EventSinkLoadContext">assembly load context</see>.</returns>
+        /// <remarks>It is ncessary to keep a reference to the sink factory's assembly load context, because
+        /// it will be unloaded otherwise (as it is a collectible load context).</remarks>
+        public (IEventSinkFactory? sinkFactory, EventSinkLoadContext? loadContext) LoadEventSinkFactory(string sinkType, string version) {
             var eventSinksDir = Path.Combine(_rootPath, _eventSinksDir);
 
             var dirInfo = new DirectoryInfo(eventSinksDir);
@@ -74,13 +76,13 @@ namespace KdSoft.EtwEvents.PushAgent
                             if (factoryTypeName != null && factoryAssemblyName.Version?.ToString() == version) {
                                 var loadContext = new EventSinkLoadContext(evtSinkFile.FullName);
                                 var factoryAssembly = loadContext.LoadFromAssemblyName(factoryAssemblyName);
-                                return (IEventSinkFactory?)factoryAssembly.CreateInstance(factoryTypeName);
+                                return ((IEventSinkFactory?)factoryAssembly.CreateInstance(factoryTypeName), loadContext);
                             }
                         }
                     }
                 }
             }
-            return null;
+            return (null, null);
         }
 
         public async Task<string> DownloadEventSink(string sinkType, string version) {
@@ -93,7 +95,7 @@ namespace KdSoft.EtwEvents.PushAgent
             var dirName = $"{sinkType}~{version}";
             var eventSinkDir = Path.Combine(_rootPath, _eventSinksDir, dirName);
 
-            _logger.LogInformation("Downloading event sink module '{dirName}' from {uri}", dirName, opts.Uri );
+            _logger.LogInformation("Downloading event sink module '{dirName}' from {uri}", dirName, opts.Uri);
 
             var tempDir = Path.GetTempPath();
             var randFile = Path.GetRandomFileName();
@@ -120,5 +122,4 @@ namespace KdSoft.EtwEvents.PushAgent
             return eventSinkDir;
         }
     }
-
 }
