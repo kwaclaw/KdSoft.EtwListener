@@ -107,40 +107,13 @@ namespace KdSoft.EtwEvents.EventSinks
             }
         }
 
-        public ValueTask<bool> FlushAsync() {
-            if (IsDisposed || RunTask.IsCompleted)
-                return ValueTask.FromResult(false);
-            if (_evl.Count == 0)
-                return ValueTask.FromResult(true);
-            try {
-                return new ValueTask<bool>(FlushAsyncInternal());
-            }
-            catch (Exception ex) {
-                _tcs.TrySetException(ex);
-                return ValueTask.FromResult(false);
-            }
-        }
-
-        //TODO maybe use Interlocked and two lists to keep queueing while a bulk write is in process
-        public ValueTask<bool> WriteAsync(EtwEvent evt) {
-            if (IsDisposed || RunTask.IsCompleted)
-                return ValueTask.FromResult(false);
-            try {
-                _evl.Add(_jsonFormatter.Format(evt));
-                return ValueTask.FromResult(true);
-            }
-            catch (Exception ex) {
-                _tcs.TrySetException(ex);
-                return ValueTask.FromResult(false);
-            }
-        }
-
         public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
             if (IsDisposed || RunTask.IsCompleted)
                 return new ValueTask<bool>(false);
             try {
                 _evl.AddRange(evtBatch.Events.Select(evt => _jsonFormatter.Format(evt)));
-                return ValueTask.FromResult(true);
+                // flush
+                return new ValueTask<bool>(FlushAsyncInternal());
             }
             catch (Exception ex) {
                 _tcs.TrySetException(ex);

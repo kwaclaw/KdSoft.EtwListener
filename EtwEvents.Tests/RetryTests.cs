@@ -213,9 +213,6 @@ namespace EtwEvents.Tests
             for (int i = 1; i <= 100; i++) {
                 var evt = new KdSoft.EtwLogging.EtwEvent() { Id = (uint)i, TimeStamp = DateTimeOffset.UtcNow.ToTimestamp() };
                 await retryProxy.WriteAsync(evt).ConfigureAwait(false);
-                if ((i % 10) == 0) {
-                    await retryProxy.FlushAsync().ConfigureAwait(false);
-                }
             }
 
             await retryProxy.DisposeAsync().ConfigureAwait(false);
@@ -269,15 +266,6 @@ namespace EtwEvents.Tests
                     retryStrategy.Reset();
                     await retryProxy.WriteAsync(evt).ConfigureAwait(false);
                     writeLoops.Add((evt, retryStrategy.TotalRetries, retryStrategy.TotalDelay));
-                }
-                if ((i % 10) == 0) {
-                    using (var scope = testLogger.BeginScope("FlushAsync {Id}|{timestamp}: {scopeType}-{scopeId}", i+1, DateTimeOffset.UtcNow, "f", i)) {
-                        retryStrategy.Reset();
-                        await retryProxy.FlushAsync().ConfigureAwait(false);
-                        var loopEntry = writeLoops[i];
-                        loopEntry.retries += retryStrategy.TotalRetries;
-                        loopEntry.delay += retryStrategy.TotalDelay;
-                        writeLoops[i] = loopEntry;
                     }
                 }
             }

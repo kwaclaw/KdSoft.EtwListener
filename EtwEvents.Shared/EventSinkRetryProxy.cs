@@ -4,8 +4,8 @@ using Microsoft.Extensions.Logging;
 namespace KdSoft.EtwEvents
 {
     /// <summary>
-    /// Proxy for <see cref="IEventSink"/> that handles sink failures on FlushAsync() or WriteAsync()
-    /// by closing/disposing of the event sink, and re-creating it on the next call to FlushAsync() or WriteAsync().
+    /// Proxy for <see cref="IEventSink"/> that handles sink failures on WriteAsync()
+    /// by closing/disposing of the event sink, and re-creating it on the next call to WriteAsync().
     /// </summary>
     public class EventSinkRetryProxy: IEventSink
     {
@@ -53,7 +53,6 @@ namespace KdSoft.EtwEvents
                     else
                         _tcs.TrySetResult(rt.Result);
                 });
-                await sink.FlushAsync().ConfigureAwait(false);
                 await sink.DisposeAsync().ConfigureAwait(false);
             }
             else {
@@ -83,7 +82,7 @@ namespace KdSoft.EtwEvents
         }
 
         /*
-         * When a write task fails (FlushAsync() or WriteAsync()) then we will
+         * When a write task fails (WriteAsync()) then we will
          * await IEventSink.RunTask and then dispose the IEventSink instance.
          * The _sink field will be set to null.
          * When a write task is executed with a null for _sink, then
@@ -128,54 +127,6 @@ namespace KdSoft.EtwEvents
             else {
                 return InternalPerformAsyncAsync(writeTask);
             }
-        }
-
-        #endregion
-
-        #region FlushAsync
-
-        async ValueTask<bool> InternalFlushAsync(ValueTask<IEventSink> sinkTask) {
-            var sink = await sinkTask.ConfigureAwait(false);
-            return await InternalPerformAsync(sink.FlushAsync()).ConfigureAwait(false);
-        }
-
-        ValueTask<bool> DoFlushAsync(int retryNum, TimeSpan delay) {
-            if (retryNum > 0)
-                _logger.LogInformation("FlushAsync retry: {retryNum}, {delay}", retryNum, delay);
-            var sinkTask = GetSink();
-            if (sinkTask.IsCompleted) {
-                var sink = sinkTask.GetAwaiter().GetResult();
-                return InternalPerformAsync(sink.FlushAsync());
-            }
-            return InternalFlushAsync(sinkTask);
-        }
-
-        public ValueTask<bool> FlushAsync() {
-            return _retrier.ExecuteAsync(DoFlushAsync);
-        }
-
-        #endregion
-
-        #region WriteAsync(EtwEvent)
-
-        async ValueTask<bool> InternalWriteAsync(ValueTask<IEventSink> sinkTask, EtwEvent evt) {
-            var sink = await sinkTask.ConfigureAwait(false);
-            return await InternalPerformAsync(sink.WriteAsync(evt)).ConfigureAwait(false);
-        }
-
-        ValueTask<bool> WriteEventAsync(EtwEvent evt, int retryNum, TimeSpan delay) {
-            if (retryNum > 0)
-                _logger.LogInformation("WriteAsync (event) retry: {retryNum}, {delay}", retryNum, delay);
-            var sinkTask = GetSink();
-            if (sinkTask.IsCompleted) {
-                var sink = sinkTask.GetAwaiter().GetResult();
-                return InternalPerformAsync(sink.WriteAsync(evt));
-            }
-            return InternalWriteAsync(sinkTask, evt);
-        }
-
-        public ValueTask<bool> WriteAsync(EtwEvent evt) {
-            return _retrier.ExecuteAsync(WriteEventAsync, evt);
         }
 
         #endregion

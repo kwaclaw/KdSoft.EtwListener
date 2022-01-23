@@ -130,36 +130,6 @@ namespace KdSoft.EtwEvents.EventSinks
             _bufferWriter.Write(_newLine.Span);
         }
 
-        public ValueTask<bool> FlushAsync() {
-            if (IsDisposed || RunTask.IsCompleted)
-                return ValueTask.FromResult(false);
-            try {
-                var posted = _channel.Writer.TryWrite(_emptyEvent);
-                if (!posted)
-                    _channel.Writer.TryComplete();
-                return ValueTask.FromResult(posted);
-            }
-            catch (Exception ex) {
-                _channel.Writer.TryComplete(ex);
-                return ValueTask.FromResult(false);
-            }
-        }
-
-        public ValueTask<bool> WriteAsync(EtwEvent evt) {
-            if (IsDisposed || RunTask.IsCompleted)
-                return ValueTask.FromResult(false);
-            try {
-                var posted = _channel.Writer.TryWrite(evt);
-                if (!posted)
-                    _channel.Writer.TryComplete();
-                return ValueTask.FromResult(posted);
-            }
-            catch (Exception ex) {
-                _channel.Writer.TryComplete(ex);
-                return ValueTask.FromResult(false);
-            }
-        }
-
         public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
             if (IsDisposed || RunTask.IsCompleted)
                 return ValueTask.FromResult(false);
@@ -172,6 +142,10 @@ namespace KdSoft.EtwEvents.EventSinks
                         break;
                     }
                 }
+                // flush
+                posted = _channel.Writer.TryWrite(_emptyEvent);
+                if (!posted)
+                    _channel.Writer.TryComplete();
                 return ValueTask.FromResult(posted);
             }
             catch (Exception ex) {

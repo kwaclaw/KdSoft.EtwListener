@@ -17,29 +17,13 @@ namespace KdSoft.EtwEvents
         Task<bool> RunTask { get; }
 
         /// <summary>
-        /// Writes event asynchronously, but may execute synchronously. The event may be queued for batched writing.
-        /// Must not be called concurrently with itself, <see cref="FlushAsync"/> or <see cref="IAsyncDisposable.DisposeAsync"/>.
-        /// Must not throw an exception, exceptions in the implementation must be handled and forwarded to RunTask, to be thrown there.
-        /// </summary>
-        /// <param name="evt">Event to write.</param>
-        /// <returns><c>true</c> if writing was successful (and can continue), <c>false</c> otherwise.</returns>
-        ValueTask<bool> WriteAsync(EtwEvent evt);
-
-        /// <summary>
-        /// Writes batch of events asynchronously, but may execute synchronously. The events may be queued for batched writing.
-        /// Must not be called concurrently with itself, <see cref="FlushAsync"/> or <see cref="IAsyncDisposable.DisposeAsync"/>.
-        /// Must not throw an exception, exceptions in the implementation must be handled and forwarded to RunTask, to be thrown there.
+        /// Writes batch of events asynchronously, but may execute synchronously.
+        /// The events should not be queued for processing in a subsequent call.
+        /// Must not be called concurrently with itself.
+        /// Must not throw an exception, exceptions must be handled and forwarded to RunTask, to be thrown there.
         /// </summary>
         /// <param name="evts">Events to write.</param>
         /// <returns><c>true</c> if writing was successful (and can continue), <c>false</c> otherwise.</returns>
         ValueTask<bool> WriteAsync(EtwEventBatch evtBatch);
-
-        /// <summary>
-        /// Flushes queue, performs pending writes. Must be called to ensure events have been written, even if the event sink has no buffer.
-        /// Must not be called concurrently with itself, <see cref="WriteAsync"/> or <see cref="IAsyncDisposable.DisposeAsync"/>.
-        /// Must not throw an exception, exceptions in the implementation must be handled and forwarded to RunTask, to be thrown there.
-        /// </summary>
-        /// <returns><c>true</c> if flushing was successful (and can continue), <c>false</c> otherwise.</returns>
-        ValueTask<bool> FlushAsync();
     }
 }

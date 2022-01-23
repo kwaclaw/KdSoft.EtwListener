@@ -210,15 +210,6 @@ namespace KdSoft.EtwEvents.Client
                     taskList[indx++] = (entry, entry.Value.WriteAsync(evtBatch));
                 }
                 result = await CheckEventSinkWriteTasks(taskList, eventSinks.Count).ConfigureAwait(false);
-                if (!result)
-                    return result;
-
-                // WriteAsync() and FlushAsync() must not be called concurrently on the same event sink
-                indx = 0;
-                foreach (var entry in eventSinks) {
-                    taskList[indx++] = (entry, entry.Value.FlushAsync());
-                }
-                result = await CheckEventSinkWriteTasks(taskList, eventSinks.Count).ConfigureAwait(false);
             }
             finally {
                 this._eventSinkTaskPool.Return(taskList);

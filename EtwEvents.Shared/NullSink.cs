@@ -14,14 +14,6 @@ namespace KdSoft.EtwEvents
             return default;
         }
 
-        public ValueTask<bool> FlushAsync() {
-            return ValueTask.FromResult(true);
-        }
-
-        public ValueTask<bool> WriteAsync(EtwEvent evt) {
-            return ValueTask.FromResult(true);
-        }
-
         public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
             return ValueTask.FromResult(true);
         }

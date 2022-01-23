@@ -46,29 +46,6 @@ namespace EtwEvents.Tests
                 _lifeCycle.Event = _event;
         }
 
-        public async ValueTask<bool> FlushAsync() {
-            if (_writeCount >= _maxWrites) {
-                CompleteLifeCycle();
-                _tcs.TrySetException(new Exception("Flush Error"));
-                return false;
-            }
-            await Task.Delay(_duration);
-            _writeCount++;
-            return true;
-        }
-
-        public async ValueTask<bool> WriteAsync(EtwEvent evt) {
-            _event = evt;
-            if (_writeCount >= _maxWrites) {
-                CompleteLifeCycle();
-                _tcs.TrySetException(new Exception("EtwEvent Error"));
-                return false;
-            }
-            await Task.Delay(_duration);
-            _writeCount++;
-            return true;
-        }
-
         public async ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
             if (_writeCount >= _maxWrites) {
                 CompleteLifeCycle();

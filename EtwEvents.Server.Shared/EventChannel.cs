@@ -31,11 +31,7 @@ namespace KdSoft.EtwEvents.Server
         // this should not throw if event sink is implemented correctly
         protected async ValueTask<bool> WriteBatchAsync(EtwEventBatch batch) {
             var result = await _sink.WriteAsync(batch).ConfigureAwait(false);
-            if (!result) {
-                // we assume that the IEventSink.RunTask is now complete and the event sink will be closed
-                return result;
-            }
-            result = await _sink.FlushAsync().ConfigureAwait(false);
+            // if (!result): we assume that the IEventSink.RunTask is now complete and the event sink will be closed
             return result;
         }
 
