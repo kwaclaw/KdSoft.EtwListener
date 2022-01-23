@@ -240,24 +240,6 @@ namespace KdSoft.EtwEvents.PushAgent
         public IImmutableDictionary<string, EventChannel> ActiveEventChannels => _eventProcessor.ActiveEventChannels;
         public IImmutableDictionary<string, EventChannel> FailedEventChannels => _eventProcessor.FailedEventChannels;
 
-        async Task<IEventSinkFactory?> LoadSinkFactory(string sinkType, string version) {
-            var sinkFactory = _sinkService.LoadEventSinkFactory(sinkType, version);
-            if (sinkFactory == null) {
-                _logger.LogInformation("Downloading event sink factory '{sinkType}~{version}'.", sinkType, version);
-                await _sinkService.DownloadEventSink(sinkType, version);
-            }
-            sinkFactory = _sinkService.LoadEventSinkFactory(sinkType, version);
-            return sinkFactory;
-        }
-
-        async Task<IEventSink> CreateEventSink(EventSinkProfile sinkProfile) {
-            var sinkFactory = await LoadSinkFactory(sinkProfile.SinkType, sinkProfile.Version).ConfigureAwait(false);
-            if (sinkFactory == null)
-                throw new InvalidOperationException($"Error loading event sink factory '{sinkProfile.SinkType}~{sinkProfile.Version}'.");
-            var logger = _loggerFactory.CreateLogger(sinkProfile.SinkType);
-            return await sinkFactory.Create(sinkProfile.Options, sinkProfile.Credentials, logger).ConfigureAwait(false);
-        }
-
         public async Task<bool> CloseEventChannel(string name) {
             if (_eventProcessor.ActiveEventChannels.TryGetValue(name, out var channel)) {
                 await channel.DisposeAsync().ConfigureAwait(false);
@@ -307,14 +289,14 @@ namespace KdSoft.EtwEvents.PushAgent
             }
 
             EventChannel? newChannel = null;
-            var sink = await CreateEventSink(sinkProfile).ConfigureAwait(false);
+            var sinkProxy = await sinkProfile.CreateRetryProxy(_sinkService, _loggerFactory).ConfigureAwait(false);
             try {
-                newChannel = _eventProcessor.AddChannel(sinkProfile.Name, sink, CreateChannel);
+                newChannel = _eventProcessor.AddChannel(sinkProfile.Name, sinkProxy, CreateChannel);
                 _sessionConfig.SaveSinkProfile(sinkProfile);
             }
             catch (Exception ex) {
                 if (newChannel == null) {
-                    await sink.DisposeAsync().ConfigureAwait(false);
+                    await sinkProxy.DisposeAsync().ConfigureAwait(false);
                 }
                 else {
                     await newChannel.DisposeAsync().ConfigureAwait(false);
