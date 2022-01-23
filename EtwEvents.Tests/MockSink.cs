@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents;
 using KdSoft.EtwLogging;
@@ -10,11 +11,11 @@ namespace EtwEvents.Tests
         readonly int _maxWrites;
         readonly TimeSpan _duration;
         readonly TaskCompletionSource<bool> _tcs;
-        readonly DateTimeOffset _startTime;
         readonly MockSinkLifeCycle _lifeCycle;
 
         int _writeCount;
         EtwEvent? _event;
+        int _completed;
 
         public MockSink(MockSinkOptions options, MockSinkLifeCycle lifeCycle) {
             var activeCycle = options.LifeCycles[options.ActiveCycle];
@@ -25,7 +26,6 @@ namespace EtwEvents.Tests
             lifeCycle.Sink = this;
             lifeCycle.MaxWrites = _maxWrites;
             lifeCycle.CallDuration = _duration;
-            _startTime = DateTimeOffset.UtcNow;
 
             _tcs = new TaskCompletionSource<bool>();
         }
@@ -40,20 +40,23 @@ namespace EtwEvents.Tests
         }
 
         void CompleteLifeCycle() {
-            _lifeCycle.LifeSpan = DateTimeOffset.UtcNow - _startTime;
+            var oldCompleted = Interlocked.Exchange(ref _completed, 99);
+            if (oldCompleted > 0)
+                return;
             _lifeCycle.WriteCount = _writeCount;
             if (_event != null)
                 _lifeCycle.Event = _event;
         }
 
         public async ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
-            if (_writeCount >= _maxWrites) {
+            _writeCount++;
+            _event = evtBatch.Events[0];
+            if (_writeCount > _maxWrites) {
                 CompleteLifeCycle();
                 _tcs.TrySetException(new Exception("EtwEventBatch Error"));
                 return false;
             }
             await Task.Delay(_duration);
-            _writeCount++;
             return true;
         }
     }
@@ -65,7 +68,6 @@ namespace EtwEvents.Tests
         public int WriteCount { get; set; }
         public int MaxWrites { get; set; }
         public TimeSpan CallDuration { get; set; }
-        public TimeSpan LifeSpan { get; set; }
         public bool Disposed { get; set; }
     }
 }
