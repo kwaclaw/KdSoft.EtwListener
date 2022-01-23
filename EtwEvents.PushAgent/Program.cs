@@ -50,7 +50,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 })
                 .UseWindowsService()
                 .ConfigureServices((hostContext, services) => {
-                    // thos section will be monitored for changes, so we cannot use Bind()
+                    // this section will be monitored for changes, so we cannot use Bind()
                     services.Configure<ControlOptions>(hostContext.Configuration.GetSection("Control"));
                     services.Configure<EventQueueOptions>(opts => {
                         hostContext.Configuration.GetSection("EventQueue").Bind(opts);

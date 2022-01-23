@@ -6,8 +6,8 @@ using Microsoft.Extensions.Logging;
 namespace KdSoft.EtwEvents.PushAgent
 {
     /// <summary>
-    /// Proxy for <see cref="IEventSink"/> that handles sink failures on FlushAsync() or WriteAsync()
-    /// by closing/disposing of the event sink, and re-creating it on the next call to FlushAsync() or WriteAsync().
+    /// Proxy for <see cref="IEventSink"/> that handles sink failures on WriteAsync()
+    /// by closing/disposing of the event sink, and re-creating it on the next call to WriteAsync().
     /// </summary>
     static class EventSinkExtensions {
         static async Task<IEventSinkFactory?> LoadSinkFactory(EventSinkService sinkService, string sinkType, string version, ILogger logger) {
