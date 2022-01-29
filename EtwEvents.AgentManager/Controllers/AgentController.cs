@@ -23,18 +23,18 @@ namespace KdSoft.EtwEvents.AgentManager
     class AgentController: ControllerBase
     {
         readonly AgentProxyManager _agentProxyManager;
-        readonly EventSinkService _evtSinkService;
+        readonly EventSinkProvider _evtSinkProvider;
         readonly JsonFormatter _jsonFormatter;
         readonly ILogger<AgentController> _logger;
 
         public AgentController(
             AgentProxyManager agentProxyManager,
-            EventSinkService evtSinkService,
+            EventSinkProvider evtSinkProvider,
             JsonFormatter jsonFormatter,
             ILogger<AgentController> logger
         ) {
             this._agentProxyManager = agentProxyManager;
-            this._evtSinkService = evtSinkService;
+            this._evtSinkProvider = evtSinkProvider;
             this._jsonFormatter = jsonFormatter;
             this._logger = logger;
         }
@@ -155,7 +155,7 @@ namespace KdSoft.EtwEvents.AgentManager
 
         [HttpPost]
         public IActionResult GetEventSinkModule(ModuleRequest request) {
-            var zipFile = _evtSinkService.GetEventSinkZipFile(request.SinkType, request.Version, true);
+            var zipFile = _evtSinkProvider.GetEventSinkZipFile(request.SinkType, request.Version, true);
             if (zipFile == null)
                 return NotFound();
             return PhysicalFile(zipFile, "application/zip", Path.GetFileName(zipFile));

@@ -8,7 +8,6 @@ using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Protobuf;
-using KdSoft.EtwEvents.AgentManager.Services;
 using KdSoft.EtwLogging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -27,20 +26,20 @@ namespace KdSoft.EtwEvents.AgentManager
     class ManagerController: ControllerBase
     {
         readonly AgentProxyManager _agentProxyManager;
-        readonly EventSinkService _evtSinkService;
+        readonly EventSinkProvider _evtSinkProvider;
         readonly IOptions<JsonOptions> _jsonOptions;
         readonly JsonFormatter _jsonFormatter;
         readonly ILogger<ManagerController> _logger;
 
         public ManagerController(
             AgentProxyManager agentProxyManager,
-            EventSinkService evtSinkService,
+            EventSinkProvider evtSinkProvider,
             JsonFormatter jsonFormatter,
             IOptions<JsonOptions> jsonOptions,
             ILogger<ManagerController> logger
         ) {
             this._agentProxyManager = agentProxyManager;
-            this._evtSinkService = evtSinkService;
+            this._evtSinkProvider = evtSinkProvider;
             this._jsonFormatter = jsonFormatter;
             this._jsonOptions = jsonOptions;
             this._logger = logger;
@@ -48,16 +47,11 @@ namespace KdSoft.EtwEvents.AgentManager
 
         [HttpGet]
         public IActionResult GetEventSinkInfos() {
-            var result = _evtSinkService.GetEventSinkInfos().Select(si => si.Item1);
+            var result = _evtSinkProvider.GetEventSinkInfos().Select(si => si.Item1);
             return Ok(result);
         }
 
-        #region Server Events for Manager
-
-        //see https://stackoverflow.com/questions/36227565/aspnet-core-server-sent-events-response-flush
-        //also, maybe better: https://github.com/tpeczek/Lib.AspNetCore.ServerSentEvents and https://github.com/tpeczek/Demo.AspNetCore.ServerSentEvents
-
-        async Task<IActionResult> GetAgentStateEventStream(CancellationToken cancelToken) {
+        HttpResponse SetupSSEResponse() {
             var resp = Response;
 
             resp.ContentType = Constants.EventStreamHeaderValue;
@@ -69,6 +63,17 @@ namespace KdSoft.EtwEvents.AgentManager
             // Make sure we disable all response buffering for SSE
             var bufferingFeature = resp.HttpContext.Features.Get<IHttpResponseBodyFeature>();
             bufferingFeature?.DisableBuffering();
+
+            return resp;
+        }
+
+        #region Agent Events to Manager (SPA)
+
+        //see https://stackoverflow.com/questions/36227565/aspnet-core-server-sent-events-response-flush
+        //also, maybe better: https://github.com/tpeczek/Lib.AspNetCore.ServerSentEvents and https://github.com/tpeczek/Demo.AspNetCore.ServerSentEvents
+
+        async Task<IActionResult> GetAgentStateEventStream(CancellationToken cancelToken) {
+            var resp = SetupSSEResponse();
 
             var jsonSerializerOptions = _jsonOptions.Value.JsonSerializerOptions;
 
@@ -97,7 +102,7 @@ namespace KdSoft.EtwEvents.AgentManager
 
         #endregion
 
-        #region Messages to Agent
+        #region Control Messages to Agent
 
         IActionResult PostAgent(string agentId, string eventName, string jsonData) {
             ProblemDetails pd;
@@ -263,6 +268,69 @@ namespace KdSoft.EtwEvents.AgentManager
 
             var profilesMessageJson = profilesMessage.ToJsonString(jsonSettings);
             return PostAgent(agentId, "UpdateEventSinks", profilesMessageJson ?? "");
+        }
+
+        #endregion
+
+        #region ETW Events to Manager (SPA)
+
+        async Task<IActionResult> GetEtwEventStream(AgentProxy proxy, CancellationToken cancelToken) {
+            var receivingSource = new TaskCompletionSource<int>();
+            var etwEventStream = await proxy.GetEtwEventStream(receivingSource).ConfigureAwait(false);
+            if (etwEventStream == null) {
+                receivingSource.TrySetCanceled();
+                return new EmptyResult();
+            }
+
+            int eventCount = 0;
+            try {
+                var resp = SetupSSEResponse();
+                while (await etwEventStream.MoveNext(cancelToken).ConfigureAwait(false)) {
+                    var evtBatch = etwEventStream.Current;
+                    eventCount += evtBatch.Events.Count();
+
+                    var evtBatchJson = evtBatch.ToString();
+                    await resp.WriteAsync($"data:{evtBatchJson}\n\n", cancelToken).ConfigureAwait(false);
+                    await resp.Body.FlushAsync(cancelToken).ConfigureAwait(false);
+                }
+                receivingSource.TrySetResult(eventCount);
+            }
+            catch (Exception ex) {
+                receivingSource.TrySetException(ex);
+            }
+
+            // OkResult not right here, tries to set status code which is not allowed once the response has started
+            return new EmptyResult();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetEtwEvents(CancellationToken cancelToken) {
+            var agentId = User.Identity?.Name;
+            if (agentId == null)
+                return Unauthorized();
+
+            var proxy = _agentProxyManager.ActivateProxy(agentId);
+
+            // send control message to Agent, telling it to activate the proper event sink
+            var evt = new ControlEvent {
+                Id = proxy.GetNextEventId().ToString(),
+                Event = Constants.StartManagerSinkEvent,
+                //TODO Data = jsonData ?
+            };
+
+            if (!proxy.Post(evt)) {
+                var pd = new ProblemDetails {
+                    Status = (int)HttpStatusCode.InternalServerError,
+                    Title = "Could not post message.",
+                };
+                return StatusCode(pd.Status.Value, pd);
+            }
+
+            if (Request.Headers[HeaderNames.Accept].Contains(Constants.EventStreamHeaderValue)) {
+                return await GetEtwEventStream(proxy, cancelToken).ConfigureAwait(false);
+            }
+
+            return BadRequest();
         }
 
         #endregion

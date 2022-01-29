@@ -10,6 +10,7 @@ namespace KdSoft.EtwEvents.AgentManager
         public const string KeepAliveEvent = "##keepAlive";
         public const string GetStateEvent = "GetState";
         public const string SetEmptyFilterEvent = "SetEmptyFilter";
+        public const string StartManagerSinkEvent = "StartManagerSink";
 
         public const int FilterTemplateVersion = 1;
 

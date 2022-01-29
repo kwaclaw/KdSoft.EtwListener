@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using Grpc.Core;
 using KdSoft.EtwLogging;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 
-namespace KdSoft.EtwEvents.AgentManager.Services
+namespace KdSoft.EtwEvents.AgentManager
 {
     public class AgentProxy
     {
@@ -22,6 +23,8 @@ namespace KdSoft.EtwEvents.AgentManager.Services
         AgentState _state;
         int _connected;
         int _eventId;
+        IAsyncStreamReader<EtwEventBatch>? _eventStream;
+        CancellationToken _eventCancelToken;
 
         public AgentProxy(string agentId, Channel<ControlEvent> channel, ILogger logger) {
             this._channel = channel;
@@ -175,5 +178,44 @@ namespace KdSoft.EtwEvents.AgentManager.Services
 
             return finished;
         }
-    }
+
+        TaskCompletionSource<IAsyncStreamReader<EtwEventBatch>?>? _eventStreamSource;
+        Task<int>? _eventProcessingTask;
+
+        int CompleteEventStream(Task<int> processingTask) {
+            var oldSource = Interlocked.Exchange(ref _eventStreamSource, null);
+            if (oldSource != null) {
+                oldSource.TrySetCanceled();
+            }
+            return processingTask.Result;
+        }
+
+        public Task<IAsyncStreamReader<EtwEventBatch>?> GetEtwEventStream(TaskCompletionSource<int> processingSource) {
+            var tcs = new TaskCompletionSource<IAsyncStreamReader<EtwEventBatch>?>();
+            var oldSource = Interlocked.Exchange(ref _eventStreamSource, tcs);
+            if (oldSource != null) {
+                oldSource.TrySetCanceled();
+            }
+
+            var processingTask = processingSource.Task.ContinueWith(CompleteEventStream);
+            var oldProcessingTask = Interlocked.Exchange(ref _eventProcessingTask, processingTask);
+
+            return tcs.Task;
+        }
+
+        // returns -1 if unsuccessful
+        public Task<int> ProcessEventStream(IAsyncStreamReader<EtwEventBatch> eventStream) {
+            var evtStreamSource = _eventStreamSource;
+            var evtProcTask = _eventProcessingTask;
+            if (evtStreamSource != null) {
+                if (!evtStreamSource.TrySetResult(eventStream))
+                    return Task.FromResult(-1);
+                if (evtProcTask != null) {
+                    return evtProcTask;
+                }
+            }
+            return Task.FromResult(-1);
+        }
+
+   }
 }

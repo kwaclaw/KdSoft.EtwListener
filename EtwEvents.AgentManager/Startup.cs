@@ -8,14 +8,12 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Google.Protobuf;
-using KdSoft.EtwEvents.AgentManager.Services;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
-using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -108,7 +106,7 @@ namespace KdSoft.EtwEvents.AgentManager
             });
 
             services.AddSingleton<AgentProxyManager>();
-            services.AddSingleton(provider => new EventSinkService(
+            services.AddSingleton(provider => new EventSinkProvider(
                 _env.ContentRootPath,
                 "EventSinks",
                 "EventSinksCache",
@@ -167,8 +165,9 @@ namespace KdSoft.EtwEvents.AgentManager
                 options.SuppressModelStateInvalidFilter = true;
             });
 
-            //TODO enable when ready
-            //services.AddGrpc();
+            services.AddGrpc(opts => {
+                opts.Interceptors.Add<AuthInterceptor>(authorizedAgents);
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
@@ -205,8 +204,7 @@ namespace KdSoft.EtwEvents.AgentManager
             app.UseEndpoints(endpoints => {
                 endpoints.MapRazorPages();
                 endpoints.MapControllers();
-                //TODO enable when ready
-                //endpoints.MapGrpcService<gRPCSinkService>();
+                endpoints.MapGrpcService<EventSinkService>();
             });
 
             if (env.IsDevelopment()) {

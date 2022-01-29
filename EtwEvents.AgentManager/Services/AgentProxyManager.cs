@@ -8,7 +8,7 @@ using KdSoft.EtwLogging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace KdSoft.EtwEvents.AgentManager.Services
+namespace KdSoft.EtwEvents.AgentManager
 {
     public class AgentProxyManager
     {

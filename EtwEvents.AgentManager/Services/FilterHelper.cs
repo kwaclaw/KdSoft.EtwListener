@@ -2,7 +2,7 @@
 using System.Collections.Immutable;
 using KdSoft.EtwLogging;
 
-namespace KdSoft.EtwEvents.AgentManager.Services
+namespace KdSoft.EtwEvents.AgentManager
 {
     public class FilterHelper
     {
