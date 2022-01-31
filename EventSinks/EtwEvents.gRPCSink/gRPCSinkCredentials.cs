@@ -1,8 +1,10 @@
-﻿namespace KdSoft.EtwEvents.EventSinks
+﻿using System;
+
+namespace KdSoft.EtwEvents.EventSinks
 {
     public class gRPCSinkCredentials
     {
-        public gRPCSinkCredentials(byte[] certificateRawData) {
+        public gRPCSinkCredentials(ReadOnlyMemory<byte> certificateRawData) {
             this.CertificateRawData = certificateRawData;
         }
 
@@ -15,24 +17,23 @@
             this.CertificateKeyPem = new string(keyPem);
         }
 
-        public gRPCSinkCredentials(string thumbPrint) {
-            this.ThumbPrint = thumbPrint;
-        }
-
-        public gRPCSinkCredentials() {
-            this.UseAgentCertificate = true;
+        public gRPCSinkCredentials(string? thumbPrint, string? subjectCN) {
+            if (thumbPrint == null && subjectCN == null)
+                throw new ArgumentException("Certificate Thumbprint and Subject CN must not both be null.");
+            this.CertificateThumbPrint = thumbPrint;
+            this.CertificateSubjectCN = subjectCN;
         }
 
         //TODO do we need to send the root certificates for the client certificate?
 
-        public byte[]? CertificateRawData { get; }
+        public ReadOnlyMemory<byte> CertificateRawData { get; }
 
         public string? CertificatePem { get; }
 
         public string? CertificateKeyPem { get; }
 
-        public string? ThumbPrint { get; }
+        public string? CertificateThumbPrint { get; }
 
-        public bool UseAgentCertificate { get; }
+        public string? CertificateSubjectCN { get; }
     }
 }

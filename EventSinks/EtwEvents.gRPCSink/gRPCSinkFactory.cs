@@ -1,6 +1,9 @@
-﻿using System.Net.Security;
+﻿using System;
+using System.Net.Http;
+using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Grpc.Net.Client;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Schema.Generation;
@@ -38,10 +41,22 @@ namespace KdSoft.EtwEvents.EventSinks
             return channel;
         }
 
+        X509Certificate2? GetCertificate(gRPCSinkCredentials creds) {
+            if (!creds.CertificateRawData.Equals(ReadOnlyMemory<byte>.Empty)) {
+                return new X509Certificate2(creds.CertificateRawData.Span);
+            }
+            else if (creds.CertificatePem != null && creds.CertificateKeyPem != null) {
+                return X509Certificate2.CreateFromPem(creds.CertificatePem, creds.CertificateKeyPem);
+            }
+            return Utils.GetCertificate(StoreLocation.LocalMachine, creds.CertificateThumbPrint?? string.Empty, creds.CertificateSubjectCN ?? string.Empty);
+        }
 
         public Task<IEventSink> Create(gRPCSinkOptions options, gRPCSinkCredentials creds, ILogger logger) {
             try {
-                var channel = CreateChannel(options.Host, creds.Certificate);
+                var cert = GetCertificate(creds);
+                if (cert == null)
+                    throw new ArgumentException("Credentials do not specify certificate.");
+                var channel = CreateChannel(options.Host, cert);
                 var client = new EtwSinkClient(channel);
                 var eventStream = client.SendEvents();
 
