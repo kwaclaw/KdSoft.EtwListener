@@ -16,7 +16,7 @@ namespace KdSoft.EtwEvents.PushAgent
             return (sinkFactory, loadContext);
         }
 
-        public static async Task<EventSinkRetryProxy> CreateRetryProxy(this EventSinkProfile profile, EventSinkService sinkService, ILoggerFactory loggerFactory) {
+        public static async Task<EventSinkRetryProxy> CreateRetryProxy(this EventSinkProfile profile, EventSinkService sinkService, IRetryStrategy retryStrategy, ILoggerFactory loggerFactory) {
             var factoryLogger = loggerFactory.CreateLogger<IEventSinkFactory>();
             var (sinkFactory, loadContext) = await LoadSinkFactory(sinkService, profile.SinkType, profile.Version, factoryLogger).ConfigureAwait(false);
             if (sinkFactory == null)
@@ -24,11 +24,6 @@ namespace KdSoft.EtwEvents.PushAgent
                     Data = { { "SinkType", profile.SinkType }, { "Version", profile.Version } }
                 };
             var sinkId = $"{profile.SinkType}~{profile.Version}::{profile.Name}";
-            var retryStrategy = new BackoffRetryStrategy(
-                TimeSpan.FromMilliseconds(200),
-                TimeSpan.FromSeconds(15),
-                TimeSpan.FromHours(2),
-                forever: true);
             return new EventSinkRetryProxy(sinkId, profile.Options, profile.Credentials, sinkFactory, loadContext, loggerFactory, retryStrategy);
         }
     }

@@ -33,6 +33,13 @@ namespace KdSoft.EtwEvents.PushAgent
         readonly EventProcessor _eventProcessor;
         readonly JsonSerializerOptions _jsonOptions;
 
+        static readonly IRetryStrategy _defaultRetryStrategy = new BackoffRetryStrategy(
+            TimeSpan.FromMilliseconds(200),
+            TimeSpan.FromSeconds(15),
+            TimeSpan.FromHours(2),
+            forever: true
+        );
+
         public SessionConfig SessionConfig => _sessionConfig;
 
         RealTimeTraceSession? _session;
@@ -253,7 +260,7 @@ namespace KdSoft.EtwEvents.PushAgent
         /// Updates or re-created EventChannel based on an <see cref="EventSinkProfile"/>.
         /// </summary>
         /// <param name="sinkProfile"></param>
-        public async Task UpdateEventChannel(EventSinkProfile sinkProfile) {
+        public async Task UpdateEventChannel(EventSinkProfile sinkProfile, IRetryStrategy? retryStrategy = null) {
             if (_eventProcessor.ActiveEventChannels.TryGetValue(sinkProfile.Name, out var channel)) {
                 // the only settings we can update on a running channel/EventSink are BatchSize and MaxWriteDelayMSecs
                 if (EventSinkProfile.Matches(sinkProfile, _sessionConfig.SinkProfiles[sinkProfile.Name])) {
@@ -289,7 +296,7 @@ namespace KdSoft.EtwEvents.PushAgent
             }
 
             EventChannel? newChannel = null;
-            var sinkProxy = await sinkProfile.CreateRetryProxy(_sinkService, _loggerFactory).ConfigureAwait(false);
+            var sinkProxy = await sinkProfile.CreateRetryProxy(_sinkService, retryStrategy ?? _defaultRetryStrategy, _loggerFactory).ConfigureAwait(false);
             try {
                 newChannel = _eventProcessor.AddChannel(sinkProfile.Name, sinkProxy, CreateChannel);
                 _sessionConfig.SaveSinkProfile(sinkProfile);
