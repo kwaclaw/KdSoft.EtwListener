@@ -183,6 +183,27 @@ namespace KdSoft.EtwEvents.PushAgent
                     }
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
+                case Constants.StartManagerSinkEvent:
+                    var managerSinkProfile = string.IsNullOrEmpty(sse.Data)
+                        ? null
+                        : EventSinkProfile.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
+                    if (managerSinkProfile == null)
+                        return;
+                    if (worker != null) {
+                        var clientCert = (_httpHandler.SslOptions.ClientCertificates as X509Certificate2Collection)?.First();
+                        if (clientCert == null)
+                            return;
+                        // this must be compatible with gRPCCredentials
+                        var gRPCCreds = new
+                        {
+                            CertificateThumbPrint = clientCert.Thumbprint,
+                        };
+                        var retryStrategy = new BackoffRetryStrategy(TimeSpan.FromMilliseconds(500), TimeSpan.FromMilliseconds(500), 5);
+                        managerSinkProfile.Credentials = JsonSerializer.Serialize(gRPCCreds, _jsonOptions);
+                        await worker.UpdateEventChannel(managerSinkProfile, retryStrategy).ConfigureAwait(false);
+                    }
+                    await SendStateUpdate().ConfigureAwait(false);
+                    break;
                 default:
                     break;
             }
