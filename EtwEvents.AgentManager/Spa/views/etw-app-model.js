@@ -288,6 +288,18 @@ class EtwAppModel {
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
+  getEvents() {
+    const agentState = this.activeAgentState;
+    if (!agentState) return;
+    const evs = new EventSource(`Manager/GetEtwEvents?agentId=${agentState.id}`);
+    evs.onmessage = e => {
+      console.log('Events received');
+    };
+    evs.onerror = e => {
+      console.error('GetEtwEvents event source error.');
+    };
+  }
+
   getState() {
     const agentState = this.activeAgentState;
     if (!agentState) return;
