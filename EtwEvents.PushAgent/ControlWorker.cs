@@ -74,7 +74,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
         async Task ProcessEvent(ControlEvent sse) {
             switch (sse.Event) {
-                case "Start":
+                case Constants.StartEvent:
                     if (_sessionWorkerAvailable != 0) {
                         _logger?.LogInformation("Session already starting.");
                         return;
@@ -82,13 +82,13 @@ namespace KdSoft.EtwEvents.PushAgent
                     var started = await StartSessionWorker(default).ConfigureAwait(false);
                     await SendStateUpdate().ConfigureAwait(false);
                     return;
-                case "Stop":
+                case Constants.StopEvent:
                     if (_sessionWorkerAvailable == 0) {
                         _logger?.LogInformation("Session already stopping.");
                         return;
                     }
                     break;
-                case "GetState":
+                case Constants.GetStateEvent:
                     await SendStateUpdate().ConfigureAwait(false);
                     return;
                 default:
@@ -104,17 +104,17 @@ namespace KdSoft.EtwEvents.PushAgent
                 case "ChangeLogLevel":
                     //
                     break;
-                case "Stop":
+                case Constants.StopEvent:
                     var stopped = await StopSessionWorker(default).ConfigureAwait(false);
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
-                case "SetEmptyFilter":
+                case Constants.SetEmptyFilterEvent:
                     var emptyFilter = string.IsNullOrEmpty(sse.Data) ? null : Filter.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
                     if (emptyFilter == null)
                         return;
                     _emptyFilterSource = SessionWorker.BuildFilterSource(emptyFilter);
                     break;
-                case "UpdateProviders":
+                case Constants.UpdateProvidersEvent:
                     // WithDiscardUnknownFields does currently not work, so we should fix this at source
                     var providerSettingsList = ProviderSettingsList.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
                     var providerSettings = providerSettingsList.ProviderSettings;
@@ -128,7 +128,7 @@ namespace KdSoft.EtwEvents.PushAgent
                         await SendStateUpdate().ConfigureAwait(false);
                     }
                     break;
-                case "ApplyProcessingOptions":
+                case Constants.ApplyProcessingOptionsEvent:
                     // WithDiscardUnknownFields does currently not work, so we should fix this at source
                     var processingOptions = string.IsNullOrEmpty(sse.Data) ? null : ProcessingOptions.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
                     if (processingOptions == null)
@@ -151,13 +151,13 @@ namespace KdSoft.EtwEvents.PushAgent
                     await PostProtoMessage($"Agent/ApplyFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
-                case "TestFilter":
+                case Constants.TestFilterEvent:
                     // WithDiscardUnknownFields does currently not work, so we should fix this at source
                     var filter = string.IsNullOrEmpty(sse.Data) ? new Filter() : Filter.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
                     filterResult = SessionWorker.TestFilter(filter);
                     await PostProtoMessage($"Agent/TestFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
                     break;
-                case "UpdateEventSinks":
+                case Constants.UpdateEventSinksEvent:
                     var sinkProfilesHolder = string.IsNullOrEmpty(sse.Data)
                         ? null
                         : EventSinkProfiles.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
@@ -171,7 +171,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     }
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
-                case "CloseEventSink":
+                case Constants.CloseEventSinkEvent:
                     var sinkName = sse.Data;
                     if (sinkName == null)
                         return;

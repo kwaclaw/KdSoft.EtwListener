@@ -23,8 +23,6 @@ namespace KdSoft.EtwEvents.AgentManager
         AgentState _state;
         int _connected;
         int _eventId;
-        IAsyncStreamReader<EtwEventBatch>? _eventStream;
-        CancellationToken _eventCancelToken;
 
         public AgentProxy(string agentId, Channel<ControlEvent> channel, ILogger logger) {
             this._channel = channel;

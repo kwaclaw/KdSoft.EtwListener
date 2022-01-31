@@ -8,6 +8,7 @@ using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Protobuf;
+using KdSoft.EtwEvents.EventSinks;
 using KdSoft.EtwLogging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -79,7 +80,7 @@ namespace KdSoft.EtwEvents.AgentManager
 
             var changes = _agentProxyManager.GetAgentStateChanges();
             await foreach (var change in changes.WithCancellation(cancelToken).ConfigureAwait(false)) {
-                var statusJson = System.Text.Json.JsonSerializer.Serialize(change, jsonSerializerOptions);
+                var statusJson = JsonSerializer.Serialize(change, jsonSerializerOptions);
                 await resp.WriteAsync($"data:{statusJson}\n\n", cancelToken).ConfigureAwait(false);
                 await resp.Body.FlushAsync(cancelToken).ConfigureAwait(false);
             }
@@ -166,23 +167,23 @@ namespace KdSoft.EtwEvents.AgentManager
 
         [HttpPost]
         public IActionResult Start(string agentId) {
-            return PostAgent(agentId, "Start", "");
+            return PostAgent(agentId, Constants.StartEvent, "");
         }
 
         [HttpPost]
         public IActionResult Stop(string agentId) {
-            return PostAgent(agentId, "Stop", "");
+            return PostAgent(agentId, Constants.StopEvent, "");
         }
 
         [HttpPost]
         public IActionResult GetState(string agentId) {
-            return PostAgent(agentId, "GetState", "");
+            return PostAgent(agentId, Constants.GetStateEvent, "");
         }
 
         [HttpPost]
         public IActionResult UpdateProviders(string agentId, [FromBody] JsonElement enabledProviders) {
             // we are passing the JSON simply through, enabledProviders should match protobuf message ProviderSettingsList
-            return PostAgent(agentId, "UpdateProviders", enabledProviders.GetRawText() ?? "{}");
+            return PostAgent(agentId, Constants.UpdateProvidersEvent, enabledProviders.GetRawText() ?? "{}");
         }
 
         /// <summary>
@@ -204,7 +205,7 @@ namespace KdSoft.EtwEvents.AgentManager
                 ? new EtwLogging.Filter()  // we are clearing the filter
                 : Filter.MergeFilterTemplate(dynamicParts); // WE are supplying the filter template
             var json = _jsonFormatter.Format(filter);
-            return CallAgent(agentId, "TestFilter", json, TimeSpan.FromSeconds(15));
+            return CallAgent(agentId, Constants.TestFilterEvent, json, TimeSpan.FromSeconds(15));
         }
 
         /// <summary>
@@ -231,12 +232,12 @@ namespace KdSoft.EtwEvents.AgentManager
                 Filter = filter
             };
             var json = _jsonFormatter.Format(processingOptions);
-            return CallAgent(agentId, "ApplyProcessingOptions", json, TimeSpan.FromSeconds(15));
+            return CallAgent(agentId, Constants.ApplyProcessingOptionsEvent, json, TimeSpan.FromSeconds(15));
         }
 
         [HttpPost]
         public IActionResult UpdateEventSinks(string agentId, [FromBody] JsonArray eventSinkProfiles) {
-            var jsonSettings = _jsonOptions.Value.JsonSerializerOptions;
+            var jsonSerializerOptions = _jsonOptions.Value.JsonSerializerOptions;
 
             var profilesHolder = new List<JsonNode>();
             // The credentials and options properties need to be converted back to JSON
@@ -245,7 +246,7 @@ namespace KdSoft.EtwEvents.AgentManager
                     continue;
 
                 var opts = eventSinkProfile["options"];
-                var optsString = opts?.ToJsonString(jsonSettings);
+                var optsString = opts?.ToJsonString(jsonSerializerOptions);
                 eventSinkProfile["options"] = optsString;
 
                 var creds = eventSinkProfile["credentials"];
@@ -266,8 +267,8 @@ namespace KdSoft.EtwEvents.AgentManager
                 profiles[(string?)eventSinkProfile["name"] ?? "unknown"] = eventSinkProfile;
             }
 
-            var profilesMessageJson = profilesMessage.ToJsonString(jsonSettings);
-            return PostAgent(agentId, "UpdateEventSinks", profilesMessageJson ?? "");
+            var profilesMessageJson = profilesMessage.ToJsonString(jsonSerializerOptions);
+            return PostAgent(agentId, Constants.UpdateEventSinksEvent, profilesMessageJson ?? "");
         }
 
         #endregion
