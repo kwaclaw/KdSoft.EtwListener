@@ -305,18 +305,29 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetEtwEvents(CancellationToken cancelToken) {
-            var agentId = User.Identity?.Name;
-            if (agentId == null)
-                return Unauthorized();
-
+        public async Task<IActionResult> GetEtwEvents(string agentId, CancellationToken cancelToken) {
             var proxy = _agentProxyManager.ActivateProxy(agentId);
+            var jsonSerializerOptions = _jsonOptions.Value.JsonSerializerOptions;
+
+            // get latest version of gRPCSink
+            var grpcSinkVersion = typeof(gRPCSink).Assembly.GetName().Version?.ToString();
 
             // send control message to Agent, telling it to activate the proper event sink
+            var gRPCOpts = new gRPCSinkOptions(Dns.GetHostName());
+            var managerSinkProfile = new EventSinkProfile {
+                BatchSize = 100,
+                MaxWriteDelayMSecs = 400,
+                Name = $"{agentId}-Sink",
+                SinkType = nameof(gRPCSink),
+                Version = grpcSinkVersion!,
+                Options = JsonSerializer.Serialize(gRPCOpts, jsonSerializerOptions),
+                PersistentChannel = false,
+            };
+
             var evt = new ControlEvent {
                 Id = proxy.GetNextEventId().ToString(),
                 Event = Constants.StartManagerSinkEvent,
-                //TODO Data = jsonData ?
+                Data = _jsonFormatter.Format(managerSinkProfile),
             };
 
             if (!proxy.Post(evt)) {
