@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Google.Protobuf" Version="3.19.3" />
+    <PackageReference Include="Google.Protobuf" Version="3.19.4" />
     <PackageReference Include="Grpc.Tools" Version="2.43.0" PrivateAssets="All" />
     <PackageReference Include="Grpc.AspNetCore.Server" Version="2.42.0" />
     <PackageReference Include="KdSoft.Data.Models.Shared" Version="1.1.0" />
