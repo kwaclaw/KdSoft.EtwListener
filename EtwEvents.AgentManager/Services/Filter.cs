@@ -1,21 +1,11 @@
-﻿using System.Collections.Immutable;
+﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using KdSoft.EtwLogging;
 
 namespace KdSoft.EtwEvents.AgentManager
 {
-    public static class Constants
+    public class Filter
     {
-        public const string EventStreamHeaderValue = "text/event-stream";
-        public const string CloseEvent = "##close";
-        public const string KeepAliveEvent = "##keepAlive";
-        public const string GetStateEvent = "GetState";
-        public const string SetEmptyFilterEvent = "SetEmptyFilter";
-        public const string StartManagerSinkEvent = "StartManagerSink";
-
-        public const int FilterTemplateVersion = 1;
-
-        public const string X500DistNameClaim = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/x500distinguishedname";
-
         public const string FilterTemplate =
 @"using System.Linq;
 using Microsoft.Diagnostics.Tracing;
@@ -45,6 +35,8 @@ namespace KdSoft.EtwEvents.Server
     }}
 }}";
 
+        public const int FilterTemplateVersion = 1;
+
         static ImmutableArray<FilterPart> SplitTemplate() {
             var markedTemplate = string.Format(FilterTemplate, "\u001D0\u001D", "\u001D8\u001D", "\u001D12\u001D", "\u001D12\u001D");
             var parts = markedTemplate.Split(new char[] { '\u001D' });
@@ -66,5 +58,31 @@ namespace KdSoft.EtwEvents.Server
         }
 
         public static readonly ImmutableArray<FilterPart> FilterTemplateParts = SplitTemplate();
+
+        public static EtwLogging.Filter MergeFilterTemplate(IReadOnlyList<string>? dynamicParts = null) {
+            if (dynamicParts == null)
+                dynamicParts = ImmutableArray<string>.Empty;
+
+            var filterParts = ImmutableArray<FilterPart>.Empty;
+            int dynamicIndx = 0;
+            for (int indx = 0; indx < Filter.FilterTemplateParts.Length; indx++) {
+                var clonedPart = Filter.FilterTemplateParts[indx].Clone();
+                if (clonedPart.Name.StartsWith("dynamic")) {
+                    if (dynamicIndx < dynamicParts.Count) {
+                        var dynamicPart = dynamicParts[dynamicIndx++];
+                        if (dynamicPart != null) {
+                            clonedPart.Code = dynamicPart;
+                        }
+                    }
+                }
+                filterParts = filterParts.Add(clonedPart);
+            }
+
+            var filter = new EtwLogging.Filter {
+                TemplateVersion = FilterTemplateVersion,
+                FilterParts = { filterParts }
+            };
+            return filter;
+        }
     }
 }

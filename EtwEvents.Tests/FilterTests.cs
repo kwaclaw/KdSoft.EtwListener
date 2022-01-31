@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using KdSoft.EtwEvents.AgentManager.Services;
+using KdSoft.EtwEvents.AgentManager;
 using KdSoft.EtwEvents.PushAgent;
 using KdSoft.EtwEvents.Server;
 using Xunit;
@@ -23,7 +23,7 @@ namespace EtwEvents.Tests
                 "_count = 23;\ncount++;",
                 "if (_count > 0)\n    return true;\nelse\n    return false;"
             };
-            var filter = FilterHelper.MergeFilterTemplate(codeParts);
+            var filter = Filter.MergeFilterTemplate(codeParts);
             var (sourceText, ranges) = SessionWorker.BuildSourceText(filter);
 
             //NOTE: it is possible that diagnostics are reported against lines in the template,

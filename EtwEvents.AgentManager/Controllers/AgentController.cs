@@ -7,7 +7,6 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Protobuf;
-using KdSoft.EtwEvents.AgentManager.Services;
 using KdSoft.EtwLogging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -44,7 +43,7 @@ namespace KdSoft.EtwEvents.AgentManager
         async Task<IActionResult> GetMessageEventStream(string agentId, CancellationToken cancelToken) {
             var agentProxy = _agentProxyManager.ActivateProxy(agentId);
 
-            var emptyFilter = FilterHelper.MergeFilterTemplate();
+            var emptyFilter = Filter.MergeFilterTemplate();
             var emptyFilterEvent = new ControlEvent {
                 Event = Constants.SetEmptyFilterEvent,
                 Id = agentProxy.GetNextEventId().ToString(),
