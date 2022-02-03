@@ -68,6 +68,7 @@
     <ItemGroup>
       <BinFiles Include="$(SolutionDir)EventSinks/Deploy/**/*.*" />
     </ItemGroup>
+    <RemoveDir Directories="$(ProjectDir)EventSinks" />
     <Copy SourceFiles="@(BinFiles)" DestinationFiles="@(BinFiles->'$(ProjectDir)EventSinks/%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
   </Target>
 </Project>
