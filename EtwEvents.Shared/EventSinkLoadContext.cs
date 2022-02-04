@@ -1,9 +1,9 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System.Runtime.Loader;
 
 namespace KdSoft.EtwEvents
 {
-
     /// <summary>
     /// Collectible AssemblyLoadContext for event sinks.
     /// </summary>
@@ -16,11 +16,30 @@ namespace KdSoft.EtwEvents
     public class EventSinkLoadContext: AssemblyLoadContext
     {
         readonly AssemblyDependencyResolver _resolver;
-        public EventSinkLoadContext(string eventSinkPath) : base(isCollectible: true) {
-            this._resolver = new AssemblyDependencyResolver(eventSinkPath);
+        readonly HashSet<AssemblyName> _sharedAssemblies;
+
+        public class AssemblyNameEqualityComparer: EqualityComparer<AssemblyName>
+        {
+            public override bool Equals(AssemblyName? x, AssemblyName? y) => AssemblyName.ReferenceMatchesDefinition(x, y);
+            public override int GetHashCode([DisallowNull] AssemblyName obj) => obj.Name?.GetHashCode() ?? 0;
+        }
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="eventSinkPath">Path to main assembly file, that has an associated *.deps.json file.</param>
+        /// <param name="sharedAssemblies">Assembly names that should not be loaded even if they can be resolved to a local assembly.</param>
+        public EventSinkLoadContext(string eventSinkPath, params AssemblyName[] sharedAssemblies) : base(isCollectible: true) {
+            _resolver = new AssemblyDependencyResolver(eventSinkPath);
+            _sharedAssemblies = new HashSet<AssemblyName>(sharedAssemblies, new AssemblyNameEqualityComparer());
         }
 
         protected override Assembly? Load(AssemblyName assemblyName) {
+            // don't load shared assemblies in this load context
+            if (_sharedAssemblies.Contains(assemblyName)) {
+                return null;
+            }
+
             string? assemblyPath = _resolver.ResolveAssemblyToPath(assemblyName);
             if (assemblyPath != null) {
                 return LoadFromAssemblyPath(assemblyPath);

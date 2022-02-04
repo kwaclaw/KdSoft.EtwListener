@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\EtwEvents.Protobuf.Shared\EtwEvents.Protobuf.Shared.csproj" />
+    <ProjectReference Include="..\EtwEvents.Shared.EventSink\EtwEvents.Shared.EventSink.csproj" />
   </ItemGroup>
 
 </Project>
