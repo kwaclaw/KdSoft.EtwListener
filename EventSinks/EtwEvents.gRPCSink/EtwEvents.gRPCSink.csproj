@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <Import Project="..\eventSink.targets" />
-  
+
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <VersionPrefix>1.0.0</VersionPrefix>
@@ -14,7 +14,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Google.Protobuf" Version="3.19.4" />
     <PackageReference Include="Grpc.Net.Client" Version="2.42.0" />
     <PackageReference Include="Grpc.Tools" Version="2.43.0">
       <PrivateAssets>all</PrivateAssets>
@@ -30,11 +29,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\EtwEvents.Protobuf.Shared\EtwEvents.Protobuf.Shared.csproj">
-      <Private>false</Private>
-      <ExcludeAssets>runtime</ExcludeAssets>
-    </ProjectReference>
-    <ProjectReference Include="..\..\EtwEvents.Shared\EtwEvents.Shared.csproj">
+    <ProjectReference Include="..\..\EtwEvents.Shared\EtwEvents.Shared.csproj" />
+    <!-- see https://docs.microsoft.com/en-us/dotnet/core/tutorials/creating-app-with-plugin-support -->
+    <ProjectReference Include="..\..\EtwEvents.Shared.EventSink\EtwEvents.Shared.EventSink.csproj">
       <Private>false</Private>
       <ExcludeAssets>runtime</ExcludeAssets>
     </ProjectReference>
