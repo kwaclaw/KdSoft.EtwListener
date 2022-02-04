@@ -2,6 +2,8 @@
 {
     public class gRPCSinkOptions
     {
+        public gRPCSinkOptions() { }
+
         public gRPCSinkOptions(
             string host,
             int? maxSendMessageSize = null,

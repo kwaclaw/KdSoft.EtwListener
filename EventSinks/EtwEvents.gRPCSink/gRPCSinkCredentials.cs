@@ -4,6 +4,8 @@ namespace KdSoft.EtwEvents.EventSinks
 {
     public class gRPCSinkCredentials
     {
+        public gRPCSinkCredentials() { }
+
         public gRPCSinkCredentials(ReadOnlyMemory<byte> certificateRawData) {
             this.CertificateRawData = certificateRawData;
         }
@@ -24,16 +26,14 @@ namespace KdSoft.EtwEvents.EventSinks
             this.CertificateSubjectCN = subjectCN;
         }
 
-        //TODO do we need to send the root certificates for the client certificate?
+        public ReadOnlyMemory<byte> CertificateRawData { get; set; }
 
-        public ReadOnlyMemory<byte> CertificateRawData { get; }
+        public string? CertificatePem { get; set; }
 
-        public string? CertificatePem { get; }
+        public string? CertificateKeyPem { get; set; }
 
-        public string? CertificateKeyPem { get; }
+        public string? CertificateThumbPrint { get; set; }
 
-        public string? CertificateThumbPrint { get; }
-
-        public string? CertificateSubjectCN { get; }
+        public string? CertificateSubjectCN { get; set; }
     }
 }
