@@ -6,11 +6,12 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using KdSoft.EtwEvents.Client;
+using KdSoft.EtwLogging;
+using Microsoft.Extensions.Logging;
 
 namespace KdSoft.EtwEvents.AgentManager
 {
-    class EventSinkProvider
-    {
+    class EventSinkProvider {
         readonly string _rootPath;
         readonly string _eventSinksDirName;
         readonly string _eventSinksCacheDirName;
@@ -26,62 +27,66 @@ namespace KdSoft.EtwEvents.AgentManager
             this._runtimeAssemblyPaths = Directory.GetFiles(RuntimeEnvironment.GetRuntimeDirectory(), "*.dll");
         }
 
+        public IEnumerable<(EventSinkInfo, DirectoryInfo?)> GetEventSinkInfos(DirectoryInfo evtSinkDirInfo, DirectoryInfo eventSinksConfigDirInfo) {
+            var eventSinksDir = evtSinkDirInfo.Parent?.FullName;
+            var eventSinksConfigDirUri = new Uri($"file:///{eventSinksConfigDirInfo.FullName}/");
+
+            var assemblyPaths = new HashSet<string>(_runtimeAssemblyPaths, StringComparer.CurrentCultureIgnoreCase);
+            // see https://docs.microsoft.com/en-us/dotnet/core/tutorials/creating-app-with-plugin-support 
+            // we add these explicitly, as we have them loaded locally, and the event sink should not include them
+            assemblyPaths.Add(typeof(IEventSinkFactory).Assembly.Location);
+            assemblyPaths.Add(typeof(global::Google.Protobuf.MessageParser).Assembly.Location);
+            //assemblyPaths.Add(typeof(global::Grpc.Core.ClientBase).Assembly.Location);
+            assemblyPaths.Add(typeof(EtwEventBatch).Assembly.Location);
+            assemblyPaths.Add(typeof(EventSinkException).Assembly.Location);
+            assemblyPaths.Add(typeof(ILogger).Assembly.Location);
+            var evtSinkFiles = evtSinkDirInfo.GetFiles("*.dll");
+            foreach (var evtSinkFile in evtSinkFiles) {
+                assemblyPaths.Add(evtSinkFile.FullName);
+            }
+
+            // Create PathAssemblyResolver that can resolve assemblies using the created list.
+            var resolver = new PathAssemblyResolver(assemblyPaths);
+            using (var metaLoadContext = new MetadataLoadContext(resolver)) {
+                var evtSinkFile = evtSinkDirInfo.GetFiles(SinkAssemblyFilter).FirstOrDefault();
+                if (evtSinkFile != null) {
+                    var (evtSinkType, evtSinkVersion) = metaLoadContext.GetEventSinkTypes(evtSinkFile.FullName).FirstOrDefault();
+                    if (evtSinkType != null) {
+                        var version = evtSinkVersion ?? "0.0";
+                        var sinkRelativeDir = Path.GetRelativePath(eventSinksDir!, evtSinkDirInfo.FullName);
+                        var configView = eventSinksConfigDirInfo.GetFiles(@$"{sinkRelativeDir}/*-config.js").First();
+                        var configViewUri = new Uri($"file:///{configView.FullName}");
+                        var configModel = eventSinksConfigDirInfo.GetFiles(@$"{sinkRelativeDir}/*-config-model.js").First();
+                        var configModelUri = new Uri($"file:///{configModel.FullName}");
+                        var sinkInfo = new EventSinkInfo {
+                            SinkType = evtSinkType,
+                            Version = version,
+                            // relative Uri does not include "EventSinks" path component (has a trailing '/')
+                            ConfigViewUrl = eventSinksConfigDirUri.MakeRelativeUri(configViewUri),
+                            ConfigModelUrl = eventSinksConfigDirUri.MakeRelativeUri(configModelUri),
+                        };
+                        yield return (sinkInfo, evtSinkDirInfo);
+                    }
+                }
+            }
+        }
+
         /// <summary>
         /// Returns event sink types in configured container directory.
         /// The subdirectory name must match the event sink type.
         /// </summary>
         public IEnumerable<(EventSinkInfo, DirectoryInfo?)> GetEventSinkInfos() {
             var eventSinksDir = Path.Combine(_rootPath, _eventSinksDirName);
-            var eventSinksConfigDir = Path.Combine(_rootPath, _eventSinksConfigDirName);
-
             var eventSinksDirInfo = new DirectoryInfo(eventSinksDir);
             var evtSinkDirectories = eventSinksDirInfo.EnumerateDirectories();
 
+            var eventSinksConfigDir = Path.Combine(_rootPath, _eventSinksConfigDirName);
             var eventSinksConfigDirInfo = new DirectoryInfo(eventSinksConfigDir);
-            // trailing '/' is important for building relative Uris
-            var eventSinksConfigDirUri = new Uri($"file:///{eventSinksConfigDirInfo.FullName}/");
 
-            var assemblyPaths = new List<string>(_runtimeAssemblyPaths);
-            assemblyPaths.Add(typeof(IEventSinkFactory).Assembly.Location);
-            assemblyPaths.Add(typeof(global::Google.Protobuf.MessageParser).Assembly.Location);
-            assemblyPaths.Add(typeof(global::Grpc.Core.ClientBase).Assembly.Location);
-            foreach (var evtSinkDir in evtSinkDirectories) {
-                var evtSinkFile = evtSinkDir.GetFiles(SinkAssemblyFilter).FirstOrDefault();
-                if (evtSinkFile != null) {
-                    assemblyPaths.Add(evtSinkFile.FullName);
-                }
-            }
-            //foreach (var evtSinkDir in evtSinkDirectories) {
-            //    var evtSinkFiles = evtSinkDir.GetFiles("*.dll");
-            //    foreach (var evtSinkFile in evtSinkFiles) {
-            //        assemblyPaths.Add(evtSinkFile.FullName);
-            //    }
-            //}
-
-            // Create PathAssemblyResolver that can resolve assemblies using the created list.
-            var resolver = new PathAssemblyResolver(assemblyPaths);
-            using (var metaLoadContext = new MetadataLoadContext(resolver)) {
-                foreach (var evtSinkDir in evtSinkDirectories) {
-                    var evtSinkFile = evtSinkDir.GetFiles(SinkAssemblyFilter).FirstOrDefault();
-                    if (evtSinkFile != null) {
-                        var (evtSinkType, evtSinkVersion) = metaLoadContext.GetEventSinkTypes(evtSinkFile.FullName).FirstOrDefault();
-                        if (evtSinkType != null) {
-                            var version = evtSinkVersion ?? "0.0";
-                            var sinkRelativeDir = Path.GetRelativePath(eventSinksDir, evtSinkDir.FullName);
-                            var configView = eventSinksConfigDirInfo.GetFiles(@$"{sinkRelativeDir}/*-config.js").First();
-                            var configViewUri = new Uri($"file:///{configView.FullName}");
-                            var configModel = eventSinksConfigDirInfo.GetFiles(@$"{sinkRelativeDir}/*-config-model.js").First();
-                            var configModelUri = new Uri($"file:///{configModel.FullName}");
-                            var sinkInfo = new EventSinkInfo {
-                                SinkType = evtSinkType,
-                                Version = version,
-                                // relative Uri does not include "EventSinks" path component (has a trailing '/')
-                                ConfigViewUrl = eventSinksConfigDirUri.MakeRelativeUri(configViewUri),
-                                ConfigModelUrl = eventSinksConfigDirUri.MakeRelativeUri(configModelUri),
-                            };
-                            yield return (sinkInfo, evtSinkDir);
-                        }
-                    }
+            foreach (var evtSinkDirInfo in evtSinkDirectories) {
+                var dirSinkInfos = GetEventSinkInfos(evtSinkDirInfo, eventSinksConfigDirInfo);
+                foreach (var (sinkInfo, dirInfo) in dirSinkInfos) {
+                    yield return (sinkInfo, dirInfo);
                 }
             }
         }
