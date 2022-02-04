@@ -8,6 +8,7 @@ using System.Net.Http.Json;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using KdSoft.EtwLogging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -38,6 +39,40 @@ namespace KdSoft.EtwEvents.PushAgent
             this._runtimeAssemblyPaths = Directory.GetFiles(RuntimeEnvironment.GetRuntimeDirectory(), "*.dll");
         }
 
+        public Type? GetEventSinkFactoryType(DirectoryInfo evtSinkDirInfo, string sinkType, string version) {
+            var assemblyPaths = new HashSet<string>(_runtimeAssemblyPaths, StringComparer.CurrentCultureIgnoreCase);
+            // see https://docs.microsoft.com/en-us/dotnet/core/tutorials/creating-app-with-plugin-support 
+            // we add these explicitly, as we have them loaded locally, and the event sink should not include them
+            assemblyPaths.Add(typeof(IEventSinkFactory).Assembly.Location);
+            assemblyPaths.Add(typeof(global::Google.Protobuf.MessageParser).Assembly.Location);
+            //assemblyPaths.Add(typeof(global::Grpc.Core.ClientBase).Assembly.Location);
+            assemblyPaths.Add(typeof(EtwEventBatch).Assembly.Location);
+            assemblyPaths.Add(typeof(EventSinkException).Assembly.Location);
+            assemblyPaths.Add(typeof(ILogger).Assembly.Location);
+            var evtSinkFiles = evtSinkDirInfo.GetFiles("*.dll");
+            foreach (var evtSinkFile in evtSinkFiles) {
+                assemblyPaths.Add(evtSinkFile.FullName);
+            }
+
+            // Create PathAssemblyResolver that can resolve assemblies using the created list.
+            var resolver = new PathAssemblyResolver(assemblyPaths);
+            using (var metaLoadContext = new MetadataLoadContext(resolver)) {
+                var evtSinkFile = evtSinkDirInfo.GetFiles(SinkAssemblyFilter).FirstOrDefault();
+                if (evtSinkFile != null) {
+                    var factoryTypes = metaLoadContext.GetEventSinkFactoriesBySinkType(evtSinkFile.FullName, sinkType);
+                    foreach (var factoryType in factoryTypes) {
+                        var factoryTypeName = factoryType.FullName;
+                        var factoryAssemblyName = factoryType.Assembly.GetName();
+                        // only interested in first one
+                        if (factoryTypeName != null && factoryAssemblyName.Version?.ToString() == version) {
+                            return factoryType;
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
         /// <summary>
         /// Load event sink factory from its dedicated directory.
         /// Based on https://docs.microsoft.com/en-us/dotnet/core/tutorials/creating-app-with-plugin-support.
@@ -53,34 +88,28 @@ namespace KdSoft.EtwEvents.PushAgent
             var dirInfo = new DirectoryInfo(eventSinksDir);
             var evtSinkDirectories = dirInfo.EnumerateDirectories();
 
-            var assemblyPaths = new List<string>(_runtimeAssemblyPaths);
-            assemblyPaths.Add(typeof(IEventSinkFactory).Assembly.Location);
-            foreach (var evtSinkDir in evtSinkDirectories) {
-                var evtSinkFile = evtSinkDir.GetFiles(SinkAssemblyFilter).FirstOrDefault();
-                if (evtSinkFile != null) {
-                    assemblyPaths.Add(evtSinkFile.FullName);
-                }
+            Type? factoryMetaType = default;
+            foreach (var evtSinkDirInfo in evtSinkDirectories) {
+                factoryMetaType = GetEventSinkFactoryType(evtSinkDirInfo, sinkType, version);
+                if (factoryMetaType != null)
+                    break;
             }
 
-            // Create PathAssemblyResolver that can resolve assemblies using the created list.
-            var resolver = new PathAssemblyResolver(assemblyPaths);
-            using (var metaLoadContext = new MetadataLoadContext(resolver)) {
-                foreach (var evtSinkDir in evtSinkDirectories) {
-                    var evtSinkFile = evtSinkDir.GetFiles(SinkAssemblyFilter).FirstOrDefault();
-                    if (evtSinkFile != null) {
-                        var factoryTypes = metaLoadContext.GetEventSinkFactoriesBySinkType(evtSinkFile.FullName, sinkType);
-                        foreach (var factoryType in factoryTypes) {
-                            var factoryTypeName = factoryType.FullName;
-                            var factoryAssemblyName = factoryType.Assembly.GetName();
-                            // only interested in first one
-                            if (factoryTypeName != null && factoryAssemblyName.Version?.ToString() == version) {
-                                var loadContext = new EventSinkLoadContext(evtSinkFile.FullName);
-                                var factoryAssembly = loadContext.LoadFromAssemblyName(factoryAssemblyName);
-                                return ((IEventSinkFactory?)factoryAssembly.CreateInstance(factoryTypeName), loadContext);
-                            }
-                        }
-                    }
-                }
+            if (factoryMetaType?.FullName != null) {
+                // make sure we do not let the EventSinkLoadContext load shared assemblies,
+                // as we would get TypeLoadExceptions like "method XXX has no implementation"
+                var loadContext = new EventSinkLoadContext(
+                    factoryMetaType.Assembly.Location
+                    // these are the shared assemblies' names
+                    , typeof(IEventSinkFactory).Assembly.GetName()
+                    , typeof(global::Google.Protobuf.MessageParser).Assembly.GetName()
+                    , typeof(EtwEventBatch).Assembly.GetName()
+                    , typeof(EventSinkException).Assembly.GetName()
+                    , typeof(ILogger).Assembly.GetName()
+                );
+                var factoryAssembly = loadContext.LoadFromAssemblyName(factoryMetaType.Assembly.GetName());
+                var factory = factoryAssembly.CreateInstance(factoryMetaType.FullName);
+                return ((IEventSinkFactory?)factory, loadContext);
             }
             return (null, null);
         }
