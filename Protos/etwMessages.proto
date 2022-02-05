@@ -36,6 +36,10 @@ message EtwEventBatch {
   repeated EtwEvent events = 1;
 }
 
+message EtwEventResponse {
+  int32 events_received = 1;
+}
+
 message EventSinkProfile {
   string sink_type  = 1;
   string name = 2;

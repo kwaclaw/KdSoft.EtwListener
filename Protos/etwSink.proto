@@ -7,7 +7,3 @@ package KdSoft.EtwLogging;
 service EtwSink {
   rpc SendEvents (stream EtwEventBatch) returns (EtwEventResponse);
 }
-
-message EtwEventResponse {
-  int32 events_received = 1;
-}

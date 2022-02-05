@@ -51,12 +51,6 @@
     <ProjectReference Include="..\EventSinks\EtwEvents.gRPCSink\EtwEvents.gRPCSink.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Protobuf Include="..\Protos\etwSink.proto" GrpcServices="Server">
-      <Link>etwSink.proto</Link>
-    </Protobuf>
-  </ItemGroup>
-
 
   <Target Name="PostCSS" BeforeTargets="Build">
     <Copy SourceFiles="@(FontAwsomeSprites)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeSprites->'wwwroot/css/fontawesome/sprites/%(RecursiveDir)%(Filename)%(Extension)')" />
