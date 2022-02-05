@@ -36,9 +36,8 @@ namespace KdSoft.EtwEvents.AgentManager
             // we add these explicitly, as we have them loaded locally, and the event sink should not include them
             assemblyPaths.Add(typeof(IEventSinkFactory).Assembly.Location);
             assemblyPaths.Add(typeof(global::Google.Protobuf.MessageParser).Assembly.Location);
-            //assemblyPaths.Add(typeof(global::Grpc.Core.ClientBase).Assembly.Location);
             assemblyPaths.Add(typeof(EtwEventBatch).Assembly.Location);
-            assemblyPaths.Add(typeof(EventSinkException).Assembly.Location);
+            assemblyPaths.Add(typeof(IEventFilter).Assembly.Location);
             assemblyPaths.Add(typeof(ILogger).Assembly.Location);
             var evtSinkFiles = evtSinkDirInfo.GetFiles("*.dll");
             foreach (var evtSinkFile in evtSinkFiles) {
