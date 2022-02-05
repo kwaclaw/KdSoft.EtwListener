@@ -9,7 +9,7 @@ namespace KdSoft.EtwEvents.AgentManager
     public class EventSinkService: EtwSink.EtwSinkBase
     {
         readonly AgentProxyManager _agentProxyManager;
-        readonly ILogger _logger;
+        readonly ILogger<EventSinkService> _logger;
 
         string GetAgentIdentity(ServerCallContext context) {
             var ids = context.AuthContext.PeerIdentity;
@@ -24,7 +24,7 @@ namespace KdSoft.EtwEvents.AgentManager
             throw new RpcException(new Status(StatusCode.PermissionDenied, "Unauthorized."));
         }
 
-        public EventSinkService(ILogger logger, AgentProxyManager agentProxyManager) {
+        public EventSinkService(ILogger<EventSinkService> logger, AgentProxyManager agentProxyManager) {
             this._agentProxyManager = agentProxyManager;
             this._logger = logger;
         }
