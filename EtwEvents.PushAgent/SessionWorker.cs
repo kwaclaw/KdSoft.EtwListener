@@ -260,7 +260,7 @@ namespace KdSoft.EtwEvents.PushAgent
         /// Updates or re-created EventChannel based on an <see cref="EventSinkProfile"/>.
         /// </summary>
         /// <param name="sinkProfile"></param>
-        public async Task UpdateEventChannel(EventSinkProfile sinkProfile, IRetryStrategy? retryStrategy = null) {
+        public async Task UpdateEventChannel(EventSinkProfile sinkProfile, IRetryStrategy? retryStrategy = null, bool saveProfile = true) {
             if (_eventProcessor.ActiveEventChannels.TryGetValue(sinkProfile.Name, out var channel)) {
                 // the only settings we can update on a running channel/EventSink are BatchSize and MaxWriteDelayMSecs
                 if (EventSinkProfile.Matches(sinkProfile, _sessionConfig.SinkProfiles[sinkProfile.Name])) {
@@ -268,7 +268,9 @@ namespace KdSoft.EtwEvents.PushAgent
                     var maxWriteDelayMSecs = sinkProfile.MaxWriteDelayMSecs == 0 ? 400 : sinkProfile.MaxWriteDelayMSecs;
                     channel.ChangeBatchSize(batchSize);
                     channel.ChangeWriteDelay(maxWriteDelayMSecs);
-                    _sessionConfig.SaveSinkProfile(sinkProfile);
+                    if (saveProfile) {
+                        _sessionConfig.SaveSinkProfile(sinkProfile);
+                    }
                     return;
                 }
                 else {
@@ -299,7 +301,9 @@ namespace KdSoft.EtwEvents.PushAgent
             var sinkProxy = await sinkProfile.CreateRetryProxy(_sinkService, retryStrategy ?? _defaultRetryStrategy, _loggerFactory).ConfigureAwait(false);
             try {
                 newChannel = _eventProcessor.AddChannel(sinkProfile.Name, sinkProxy, CreateChannel);
-                _sessionConfig.SaveSinkProfile(sinkProfile);
+                if (saveProfile) {
+                    _sessionConfig.SaveSinkProfile(sinkProfile);
+                }
             }
             catch (Exception ex) {
                 if (newChannel == null) {

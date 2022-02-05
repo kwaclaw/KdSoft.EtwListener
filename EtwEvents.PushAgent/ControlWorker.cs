@@ -200,7 +200,7 @@ namespace KdSoft.EtwEvents.PushAgent
                         };
                         var retryStrategy = new BackoffRetryStrategy(TimeSpan.FromMilliseconds(500), TimeSpan.FromMilliseconds(500), 5);
                         managerSinkProfile.Credentials = JsonSerializer.Serialize(gRPCCreds, _jsonOptions);
-                        await worker.UpdateEventChannel(managerSinkProfile, retryStrategy).ConfigureAwait(false);
+                        await worker.UpdateEventChannel(managerSinkProfile, retryStrategy, false).ConfigureAwait(false);
                     }
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
