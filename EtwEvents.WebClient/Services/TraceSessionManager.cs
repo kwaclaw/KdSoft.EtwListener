@@ -91,7 +91,7 @@ namespace KdSoft.EtwEvents.WebClient
 
         public async Task<bool> CloseRemoteSession(string name) {
             if (TryRemove(name, out var entry)) {
-                var traceSession = await entry.ConfigureAwait(false);
+                var traceSession = await entry!.ConfigureAwait(false);
                 await traceSession.CloseRemote().ConfigureAwait(false);
                 await PostSessionStateChange().ConfigureAwait(false);
                 return true;

@@ -31,7 +31,7 @@ namespace EtwEvents.Tests
             var diagnostics = RealTimeTraceSession.TestFilter(sourceText);
 
             _output.WriteLine("---- Part Spans (line:character -- line:character excl.):");
-            var linePositions = SessionWorker.GetPartLineSpans(sourceText, ranges);
+            var linePositions = SessionWorker.GetPartLineSpans(sourceText!, ranges!);
             int partIndx = 0;
             foreach (var linePos in linePositions) {
                 _output.WriteLine($"Part{++partIndx}: {linePos.Start.Line}:{linePos.Start.Character} -- {linePos.End.Line}:{linePos.End.Character}");
@@ -46,7 +46,7 @@ namespace EtwEvents.Tests
 
             _output.WriteLine("---- Source:");
             List<KdSoft.EtwLogging.TextLine> textLines = new List<KdSoft.EtwLogging.TextLine>();
-            foreach (var line in sourceText.Lines) {
+            foreach (var line in sourceText!.Lines) {
                 var textLine = new KdSoft.EtwLogging.TextLine {
                     Line = line.LineNumber,
                     Text = line.ToString(),

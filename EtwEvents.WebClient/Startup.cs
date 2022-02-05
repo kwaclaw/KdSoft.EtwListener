@@ -26,8 +26,6 @@ namespace KdSoft.EtwEvents.WebClient
 {
     public class Startup
     {
-        IWebHostEnvironment _env;
-
         public Startup(IConfiguration configuration) {
             Configuration = configuration;
         }
@@ -128,8 +126,6 @@ namespace KdSoft.EtwEvents.WebClient
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
             Contract.Assert(app != null);
             Contract.Assert(env != null);
-
-            this._env = env;
 
             if (env.IsDevelopment()) {
                 app.UseExceptionHandler("/error-local-development");

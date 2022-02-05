@@ -27,7 +27,7 @@ namespace KdSoft.EtwEvents.Server
 
         RealTimeTraceSession GetSession(string name) {
             if (_sesManager.TryGetValue(name, out var session)) {
-                session.GetLifeCycle().Used();
+                session!.GetLifeCycle().Used();
                 return session;
             }
             throw new RpcException(new Status(StatusCode.NotFound, "Session"), "Session not found.");

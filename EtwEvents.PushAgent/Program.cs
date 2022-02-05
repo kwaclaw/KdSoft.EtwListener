@@ -20,7 +20,7 @@ namespace KdSoft.EtwEvents.PushAgent
 {
     public class Program
     {
-        public static async Task Main(string[] args) {
+        public static void Main(string[] args) {
             // Today you have to be Admin to turn on ETW events (anyone can write ETW events).   
             if (!(TraceEventSession.IsElevated() ?? false)) {
                 Debug.WriteLine("To turn on ETW events you need to be Administrator, please run from an Admin process.");
