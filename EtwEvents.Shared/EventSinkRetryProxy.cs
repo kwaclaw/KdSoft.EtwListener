@@ -20,6 +20,7 @@ namespace KdSoft.EtwEvents
         readonly TaskCompletionSource<bool> _tcs;
 
         IEventSink? _sink;
+        int _disposing;
 
         public Task<bool> RunTask => _tcs.Task;
 
@@ -56,6 +57,7 @@ namespace KdSoft.EtwEvents
         }
 
         public async ValueTask DisposeAsync() {
+            _disposing = 99;
             var sink = Interlocked.Exchange(ref _sink, null);
             if (sink != null) {
                 var _ = sink.RunTask.ContinueWith(rt => {
@@ -163,6 +165,8 @@ namespace KdSoft.EtwEvents
         }
 
         public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
+            if (_disposing > 0)
+                return ValueTask.FromResult(false);
             return _retrier.ExecuteAsync(WriteBatchAsync, evtBatch);
         }
 
