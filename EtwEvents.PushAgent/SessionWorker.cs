@@ -262,8 +262,9 @@ namespace KdSoft.EtwEvents.PushAgent
         /// <param name="sinkProfile"></param>
         public async Task UpdateEventChannel(EventSinkProfile sinkProfile, IRetryStrategy? retryStrategy = null, bool saveProfile = true) {
             if (_eventProcessor.ActiveEventChannels.TryGetValue(sinkProfile.Name, out var channel)) {
+                var profileIsStored = _sessionConfig.SinkProfiles.TryGetValue(sinkProfile.Name, out var storedProfile);
                 // the only settings we can update on a running channel/EventSink are BatchSize and MaxWriteDelayMSecs
-                if (EventSinkProfile.Matches(sinkProfile, _sessionConfig.SinkProfiles[sinkProfile.Name])) {
+                if (!profileIsStored || EventSinkProfile.Matches(sinkProfile, storedProfile!)) {
                     var batchSize = sinkProfile.BatchSize == 0 ? 100 : sinkProfile.BatchSize;
                     var maxWriteDelayMSecs = sinkProfile.MaxWriteDelayMSecs == 0 ? 400 : sinkProfile.MaxWriteDelayMSecs;
                     channel.ChangeBatchSize(batchSize);
