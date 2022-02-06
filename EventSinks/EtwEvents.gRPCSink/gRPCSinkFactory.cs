@@ -42,10 +42,7 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         X509Certificate2? GetCertificate(gRPCSinkCredentials creds) {
-            if (!creds.CertificateRawData.Equals(ReadOnlyMemory<byte>.Empty)) {
-                return new X509Certificate2(creds.CertificateRawData.Span);
-            }
-            else if (creds.CertificatePem != null && creds.CertificateKeyPem != null) {
+            if (creds.CertificatePem != null && creds.CertificateKeyPem != null) {
                 return X509Certificate2.CreateFromPem(creds.CertificatePem, creds.CertificateKeyPem);
             }
             return Utils.GetCertificate(StoreLocation.LocalMachine, creds.CertificateThumbPrint ?? string.Empty, creds.CertificateSubjectCN ?? string.Empty);
@@ -54,9 +51,14 @@ namespace KdSoft.EtwEvents.EventSinks
         public Task<IEventSink> Create(gRPCSinkOptions options, gRPCSinkCredentials creds, ILogger logger) {
             try {
                 var cert = GetCertificate(creds);
-                if (cert == null)
+                if (cert == null) {
                     throw new ArgumentException("Credentials do not specify certificate.");
-                var channel = CreateChannel(options.Host, cert);
+                }
+                var host = options.Host;
+                if (string.IsNullOrWhiteSpace(host)) {
+                    throw new ArgumentException("Options do not specify host URI.");
+                }
+                var channel = CreateChannel(host, cert);
                 var client = new EtwSinkClient(channel);
                 var eventStream = client.SendEvents();
 

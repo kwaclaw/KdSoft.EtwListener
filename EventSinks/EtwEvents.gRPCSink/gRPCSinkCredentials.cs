@@ -6,10 +6,6 @@ namespace KdSoft.EtwEvents.EventSinks
     {
         public gRPCSinkCredentials() { }
 
-        public gRPCSinkCredentials(ReadOnlyMemory<byte> certificateRawData) {
-            this.CertificateRawData = certificateRawData;
-        }
-
         public gRPCSinkCredentials(ReadOnlySpan<char> certPem) {
             this.CertificatePem = new string(certPem);
         }
@@ -25,8 +21,6 @@ namespace KdSoft.EtwEvents.EventSinks
             this.CertificateThumbPrint = thumbPrint;
             this.CertificateSubjectCN = subjectCN;
         }
-
-        public ReadOnlyMemory<byte> CertificateRawData { get; set; }
 
         public string? CertificatePem { get; set; }
 
