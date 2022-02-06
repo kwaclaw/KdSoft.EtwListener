@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Security.Claims;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -42,6 +43,13 @@ namespace KdSoft.EtwEvents.AgentManager
 
         async Task<IActionResult> GetMessageEventStream(string agentId, CancellationToken cancelToken) {
             var agentProxy = _agentProxyManager.ActivateProxy(agentId);
+            // on initial EventSource (SSE) connect we store the Uri and client certificate information
+            // (used in the HTTP request) in the AgentProxy instance, for later use in configuring a gRPCSink
+            agentProxy.ManagerUri = $"{Request.Scheme}://{Request.Host}";
+            var certThumprint = User.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.Thumbprint)?.Value ?? "";
+            agentProxy.ClientCertThumbprint = certThumprint;
+            var certDistName = User.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.X500DistinguishedName)?.Value ?? "";
+            agentProxy.ClientCertDN = certDistName;
 
             var emptyFilter = Filter.MergeFilterTemplate();
             var emptyFilterEvent = new ControlEvent {

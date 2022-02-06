@@ -37,6 +37,10 @@ namespace KdSoft.EtwEvents.AgentManager
 
         public string AgentId { get { return _state.Id; } }
 
+        public string ManagerUri { get; set; } = "";
+        public string ClientCertThumbprint { get; set; } = "";
+        public string ClientCertDN { get; set; } = "";
+
         public int GetNextEventId() {
             return Interlocked.Increment(ref _eventId);
         }

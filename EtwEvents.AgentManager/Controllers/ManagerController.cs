@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Net;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading;
@@ -313,7 +315,18 @@ namespace KdSoft.EtwEvents.AgentManager
             var grpcSinkVersion = typeof(gRPCSink).Assembly.GetName().Version?.ToString();
 
             // send control message to Agent, telling it to activate the proper event sink
-            var gRPCOpts = new gRPCSinkOptions(Dns.GetHostName());
+            var gRPCOpts = new gRPCSinkOptions { Host = proxy.ManagerUri };
+
+            string? certSubjectCN = null;
+            if (!string.IsNullOrEmpty(proxy.ClientCertDN)) {
+                var certDN = new X500DistinguishedName(proxy.ClientCertDN);
+                var certCNData = new AsnEncodedData("CN", certDN.RawData);
+                certSubjectCN = certCNData.Format(false);
+            }
+            var gRPCCreds = new gRPCSinkCredentials {
+                CertificateThumbPrint = proxy.ClientCertThumbprint,
+                CertificateSubjectCN = certSubjectCN
+            };
             var managerSinkProfile = new EventSinkProfile {
                 BatchSize = 100,
                 MaxWriteDelayMSecs = 400,
@@ -321,6 +334,7 @@ namespace KdSoft.EtwEvents.AgentManager
                 SinkType = nameof(gRPCSink),
                 Version = grpcSinkVersion!,
                 Options = JsonSerializer.Serialize(gRPCOpts, jsonSerializerOptions),
+                Credentials = JsonSerializer.Serialize(gRPCCreds, jsonSerializerOptions),
                 PersistentChannel = false,
             };
 

@@ -190,16 +190,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     if (managerSinkProfile == null)
                         return;
                     if (worker != null) {
-                        var clientCert = (_httpHandler.SslOptions.ClientCertificates as X509Certificate2Collection)?.First();
-                        if (clientCert == null)
-                            return;
-                        // this must be compatible with gRPCCredentials
-                        var gRPCCreds = new
-                        {
-                            CertificateThumbPrint = clientCert.Thumbprint,
-                        };
                         var retryStrategy = new BackoffRetryStrategy(TimeSpan.FromMilliseconds(500), TimeSpan.FromMilliseconds(500), 5);
-                        managerSinkProfile.Credentials = JsonSerializer.Serialize(gRPCCreds, _jsonOptions);
                         await worker.UpdateEventChannel(managerSinkProfile, retryStrategy, false).ConfigureAwait(false);
                     }
                     await SendStateUpdate().ConfigureAwait(false);
