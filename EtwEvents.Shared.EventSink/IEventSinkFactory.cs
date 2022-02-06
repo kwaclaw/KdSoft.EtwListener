@@ -18,8 +18,8 @@ namespace KdSoft.EtwEvents
         /// <summary>
         /// Creates new instance of IEventSink.
         /// </summary>
-        /// <param name="optionsJson"></param>
-        /// <param name="credentialsJson"></param>
+        /// <param name="optionsJson">Options encoded in JSON.</param>
+        /// <param name="credentialsJson">Credentials encoded in JSON.</param>
         /// <returns></returns>
         Task<IEventSink> Create(string optionsJson, string credentialsJson, ILogger logger);
     }

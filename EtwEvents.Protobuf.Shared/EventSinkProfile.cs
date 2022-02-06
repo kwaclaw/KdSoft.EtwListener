@@ -12,6 +12,9 @@ namespace KdSoft.EtwLogging
 
         public static readonly Regex StripWhiteSpace = new Regex(@"\s(?=([^""]* ""[^""]*"")*[^""]*$)", RegexOptions.Compiled | RegexOptions.Multiline);
        
+        /// <summary>
+        /// Matches two EventSinkProfiles based on options, credentials and context.
+        /// </summary>
         public static bool Matches(EventSinkProfile xProfile, EventSinkProfile yProfile) {
             if (xProfile.PersistentChannel != yProfile.PersistentChannel)
                 return false;
