@@ -1,14 +1,9 @@
-﻿/* workaround for snowpack bug not processing first line imports */
-
-import { observable } from '@nx-js/observer-util/dist/es.es6.js';
-
-// Undefined entries will be skipped on iteration
+﻿// Undefined entries will be skipped on iteration
 class RingBuffer {
   constructor(bufferSize) {
     this._items = new Array(bufferSize);
     // next index to write to, one past the last item, also first item when buffer is full
     this._itemOffset = 0;
-    return observable(this);
   }
 
   addItem(item) {
