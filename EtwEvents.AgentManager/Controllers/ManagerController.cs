@@ -290,7 +290,7 @@ namespace KdSoft.EtwEvents.AgentManager
                 var resp = SetupSSEResponse();
                 while (await etwEventStream.MoveNext(cancelToken).ConfigureAwait(false)) {
                     var evtBatch = etwEventStream.Current;
-                    eventCount += evtBatch.Events.Count();
+                    eventCount += evtBatch.Events.Count;
 
                     var evtBatchJson = evtBatch.ToString();
                     await resp.WriteAsync($"data:{evtBatchJson}\n\n", cancelToken).ConfigureAwait(false);
