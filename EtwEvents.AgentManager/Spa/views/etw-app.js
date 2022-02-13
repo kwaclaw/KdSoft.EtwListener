@@ -1,15 +1,39 @@
 /* global i18n */
 
 import { html, nothing } from 'lit';
+import { classMap } from 'lit/directives/class-map.js';
 import { repeat } from 'lit/directives/repeat.js';
 import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
 import { LitMvvmElement, css } from '@kdsoft/lit-mvvm';
 import './etw-app-side-bar.js';
 import './etw-agent.js';
+import './live-view.js';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
 import gridStyles from '../styles/kdsoft-grid-styles.js';
+
+const tabBase = {
+  'text-gray-300': true,
+  'pt-3': true,
+  'pb-2': true,
+  'px-6': true,
+  block: true,
+  'hover:text-blue-400': true,
+  'focus:outline-none': true
+};
+
+const tabClassList = {
+  tabActive: {
+    ...tabBase,
+    'bg-gray-700': true,
+    'text-blue-400': true,
+    'border-b-2': true,
+    'font-medium': true,
+    'border-blue-500': true
+  },
+  tabInactive: tabBase,
+};
 
 class EtwApp extends LitMvvmElement {
   constructor() {
@@ -145,6 +169,25 @@ class EtwApp extends LitMvvmElement {
 
   //#endregion
 
+  //#region agent tabs
+
+  _agentTabClick(e) {
+    e.stopPropagation();
+    const div = e.target.closest('div');
+    if (!div) return;
+    this.model.activeAgentTab = div.dataset.tabid;
+  }
+
+  _tabClassType(tabId) {
+    return tabClassList[this.model.activeAgentTab === tabId ? 'tabActive' : 'tabInactive'];
+  }
+
+  _tabSectionClass(tabId) {
+    return this.model.activeAgentTab === tabId ? 'active' : '';
+  }
+
+  //#endregion
+
   //#region overrides
 
   /* eslint-disable indent, no-else-return */
@@ -161,6 +204,7 @@ class EtwApp extends LitMvvmElement {
   beforeFirstRender() {
     this.model.sideBarWidth = '24rem';
     this.model.errorHeight = '2rem';
+    this.model.activeAgentTab = 'agent-config';
   }
 
   // called at most once every time after connectedCallback was executed
@@ -247,6 +291,17 @@ class EtwApp extends LitMvvmElement {
         #main {
           grid-column: 3;
           grid-row: 1/2;
+          position: relative;
+          display: flex;
+           flex-direction: column;
+        }
+
+        #main > .section:not(.active) {
+          display: none !important;
+        }
+
+        live-view {
+          flex-grow: 1;
         }
 
         footer {
@@ -308,6 +363,9 @@ class EtwApp extends LitMvvmElement {
   }
 
   render() {
+    const activeAgentState = this.model.activeAgentState;
+    const agentConfigTabType = this._tabClassType('agent-config');
+    const agentLiveViewTabType = this._tabClassType('agent-live-view');
     return html`
       <style>
         :host {
@@ -321,7 +379,26 @@ class EtwApp extends LitMvvmElement {
 
         <div id="sidebar-resize" @pointerdown=${this._sidebarSizeDown} @pointerup=${this._sidebarSizeUp}></div>
 
-        <etw-agent id="main" .model=${this.model}></etw-agent>
+        <div id="main">
+          ${!activeAgentState
+            ? nothing
+            : html`
+              <nav class="flex bg-gray-500" @click=${this._agentTabClick}>
+                <div data-tabid="agent-config" class=${classMap(agentConfigTabType)}>
+                  <a href="#">Configuration</a>
+                </div>
+                <div data-tabid="agent-live-view" class=${classMap(agentLiveViewTabType)}>
+                  <a href="#">Live View</a>
+                </div>
+              </nav>
+              <etw-agent id="agent-config" .model=${this.model}
+                class="${this._tabSectionClass('agent-config')} section">
+              </etw-agent>
+              <live-view id="agent-events" .model=${activeAgentState}
+                class="${this._tabSectionClass('agent-live-view')} section">
+              </live-view>
+          `}
+        </div>
 
         <footer>
           ${(!this.model.showLastError && !this.model.showErrors)

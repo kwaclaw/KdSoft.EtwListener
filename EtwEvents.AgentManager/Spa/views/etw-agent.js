@@ -205,8 +205,6 @@ class EtwAgent extends LitMvvmElement {
         }
         
         #main {
-          grid-column: 3;
-          grid-row: 1/2;
           height: auto;
           width: 100%;
           position: relative;
@@ -272,93 +270,88 @@ class EtwAgent extends LitMvvmElement {
     const processingModel = activeAgentState?.processingModel;
     return html`
       <div id="main">
-        ${activeAgentState
-          ? html`
-              <form id="providers" class="max-w-full border">
-                <div class="flex my-2 pr-2">
-                  <span class="font-semibold ${this.model.providersModified ? 'italic text-red-500' : ''}">Event Providers</span>
-                  <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
-                    @click=${this._addProviderClick}>
-                  </span>
-                </div>
-                ${activeAgentState.enabledProviders.map(provider => html`
-                  <provider-config class="my-3"
-                    .model=${provider}
-                    @beforeExpand=${this._providerBeforeExpand}
-                    @delete=${this._deleteProviderClick}>
-                  </provider-config>
-                `)}
-                <hr class="my-3" />
-                <div class="flex flex-wrap mt-2 bt-1">
-                  <button type="button" class="py-1 px-2 ml-auto" @click=${this._applyProvidersClick} title="Apply">
-                    <i class="fas fa-lg fa-check text-green-500"></i>
-                  </button>
-                  <button type="button" class="py-1 px-2" @click=${this._resetProvidersClick} title="Reset to Current">
-                    <i class="fas fa-lg fa-times text-red-500"></i>
-                  </button>
-                </div>
-              </form>
+        <form id="providers" class="max-w-full border">
+          <div class="flex my-2 pr-2">
+            <span class="font-semibold ${this.model.providersModified ? 'italic text-red-500' : ''}">Event Providers</span>
+            <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
+              @click=${this._addProviderClick}>
+            </span>
+          </div>
+          ${activeAgentState.enabledProviders.map(provider => html`
+            <provider-config class="my-3"
+              .model=${provider}
+              @beforeExpand=${this._providerBeforeExpand}
+              @delete=${this._deleteProviderClick}>
+            </provider-config>
+          `)}
+          <hr class="my-3" />
+          <div class="flex flex-wrap mt-2 bt-1">
+            <button type="button" class="py-1 px-2 ml-auto" @click=${this._applyProvidersClick} title="Apply">
+              <i class="fas fa-lg fa-check text-green-500"></i>
+            </button>
+            <button type="button" class="py-1 px-2" @click=${this._resetProvidersClick} title="Reset to Current">
+              <i class="fas fa-lg fa-times text-red-500"></i>
+            </button>
+          </div>
+        </form>
 
-              <form id="processing" class="max-w-full border"  @change=${e => this._processingFieldChange(e, activeAgentState)}>
-                <div class="flex my-2 pr-2">
-                  <span class="font-semibold ${this.model.processingModified ? 'italic text-red-500' : ''}">Processing</span>
-                </div>
-                <div id="processingEdit">
-                  <label for="filterEdit">Filter</label>
-                  <filter-edit id="filterEdit" class="p-2" .model=${processingModel.filter}></filter-edit>
-                  <hr class="my-3" />
-                  <div class="flex flex-wrap mt-2 bt-1">
-                    <button type="button" class="py-1 px-2" @click=${this._testFilterClick} title="Test">
-                      <i class="fas fa-lg fa-vial" style="color:orange"></i>
-                    </button>
-                    <button type="button" class="py-1 px-2" @click=${this._clearFilterClick} title="Clear">
-                      <i class="fas fa-lg fa-ban text-gray-500"></i>
-                    </button>
-                    <button type="button" class="py-1 px-2 ml-auto" @click=${this._applyProcessingClick} title="Apply">
-                      <i class="fas fa-lg fa-check text-green-500"></i>
-                    </button>
-                    <button type="button" class="py-1 px-2" @click=${this._resetProcessingClick} title="Reset to Current">
-                      <i class="fas fa-lg fa-times text-red-500"></i>
-                    </button>
-                  </div>
-                </div>
-              </form> 
+        <form id="processing" class="max-w-full border"  @change=${e => this._processingFieldChange(e, activeAgentState)}>
+          <div class="flex my-2 pr-2">
+            <span class="font-semibold ${this.model.processingModified ? 'italic text-red-500' : ''}">Processing</span>
+          </div>
+          <div id="processingEdit">
+            <label for="filterEdit">Filter</label>
+            <filter-edit id="filterEdit" class="p-2" .model=${processingModel.filter}></filter-edit>
+            <hr class="my-3" />
+            <div class="flex flex-wrap mt-2 bt-1">
+              <button type="button" class="py-1 px-2" @click=${this._testFilterClick} title="Test">
+                <i class="fas fa-lg fa-vial" style="color:orange"></i>
+              </button>
+              <button type="button" class="py-1 px-2" @click=${this._clearFilterClick} title="Clear">
+                <i class="fas fa-lg fa-ban text-gray-500"></i>
+              </button>
+              <button type="button" class="py-1 px-2 ml-auto" @click=${this._applyProcessingClick} title="Apply">
+                <i class="fas fa-lg fa-check text-green-500"></i>
+              </button>
+              <button type="button" class="py-1 px-2" @click=${this._resetProcessingClick} title="Reset to Current">
+                <i class="fas fa-lg fa-times text-red-500"></i>
+              </button>
+            </div>
+          </div>
+        </form> 
 
-              <form id="event-sinks" class="max-w-full border">
-                <div class="flex my-2 pr-2">
-                  <span class="font-semibold ${this.model.eventSinksModified ? 'italic text-red-500' : ''}">Event Sinks</span>
-                  <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
-                    @click=${this._addEventSinkClick}>
-                  </span>
-                </div>
+        <form id="event-sinks" class="max-w-full border">
+          <div class="flex my-2 pr-2">
+            <span class="font-semibold ${this.model.eventSinksModified ? 'italic text-red-500' : ''}">Event Sinks</span>
+            <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
+              @click=${this._addEventSinkClick}>
+            </span>
+          </div>
 
-                ${repeat(
-                  Object.entries(activeAgentState.eventSinks),
-                  entry => entry[0],
-                  entry => html`
-                    <event-sink-config class="bg-gray-300 px-2 my-3"
-                      .model=${entry[1]}
-                      @beforeExpand=${this._eventSinkBeforeExpand}
-                      @delete=${this._deleteEventSinkClick}>
-                    </event-sink-config>
-                  `
-                )}
-                <hr class="my-3" />
-                <div id="ok-cancel-buttons" class="flex flex-wrap mt-2 bt-1">
-                  <button type="button" class="py-1 px-2" @click=${this._exportEventSinksClick} title="Export">
-                    <i class="fas fa-lg fa-file-export text-gray-600"></i>
-                  </button>
-                  <button type="button" class="py-1 px-2 ml-auto" @click=${() => this.model.updateEventSinks()} title="Apply">
-                    <i class="fas fa-lg fa-check text-green-500"></i>
-                  </button>
-                  <button type="button" class="py-1 px-2" @click=${() => this.model.resetEventSinks()} title="Reset to Current" autofocus>
-                    <i class="fas fa-lg fa-times text-red-500"></i>
-                  </button>
-                </div>
-              </form>
+          ${repeat(
+            Object.entries(activeAgentState.eventSinks),
+            entry => entry[0],
+            entry => html`
+              <event-sink-config class="bg-gray-300 px-2 my-3"
+                .model=${entry[1]}
+                @beforeExpand=${this._eventSinkBeforeExpand}
+                @delete=${this._deleteEventSinkClick}>
+              </event-sink-config>
             `
-          : nothing
-        }
+          )}
+          <hr class="my-3" />
+          <div id="ok-cancel-buttons" class="flex flex-wrap mt-2 bt-1">
+            <button type="button" class="py-1 px-2" @click=${this._exportEventSinksClick} title="Export">
+              <i class="fas fa-lg fa-file-export text-gray-600"></i>
+            </button>
+            <button type="button" class="py-1 px-2 ml-auto" @click=${() => this.model.updateEventSinks()} title="Apply">
+              <i class="fas fa-lg fa-check text-green-500"></i>
+            </button>
+            <button type="button" class="py-1 px-2" @click=${() => this.model.resetEventSinks()} title="Reset to Current" autofocus>
+              <i class="fas fa-lg fa-times text-red-500"></i>
+            </button>
+          </div>
+        </form>
       </div>
 
       <dialog id="dlg-add-event-sink" class="${dialogClass}">

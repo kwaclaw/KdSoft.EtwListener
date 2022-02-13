@@ -8,6 +8,7 @@ import * as utils from '../js/utils.js';
 import FetchHelper from '../js/fetchHelper.js';
 import AgentState from '../js/agentState.js';
 import ProcessingModel from './processing-model.js';
+import LiveViewConfigModel from './live-view-config-model.js';
 
 const traceLevelList = () => [
   { name: i18n.__('Always'), value: 0 },
@@ -62,11 +63,17 @@ function _enhanceAgentState(agentState, eventSinkInfos) {
 
   for (const sinkStateEntry of Object.entries(agentState.eventSinks)) {
     const sinkState = sinkStateEntry[1];
-    const sinkInfo = eventSinkInfos.find(si => si.sinkType == sinkState.profile.sinkType && si.version == sinkState.profile.version);
+    const sinkInfo = eventSinkInfos.find(
+      si => si.sinkType == sinkState.profile.sinkType && si.version == sinkState.profile.version
+    );
     if (sinkInfo) {
       sinkState.configViewUrl = sinkInfo.configViewUrl;
       sinkState.configModelUrl = sinkInfo.configModelUrl;
     }
+  }
+
+  if (!agentState.liveViewConfigModel) {
+    agentState.liveViewConfigModel = new LiveViewConfigModel();
   }
 
   return agentState;
@@ -218,13 +225,13 @@ class EtwAppModel {
     );
 
     const es = new EventSource('Manager/GetAgentStates');
-    es.onmessage = e => {
-      console.log(e.data);
-      const st = JSON.parse(e.data);
+    es.onmessage = evt => {
+      console.log(evt.data);
+      const st = JSON.parse(evt.data);
       _updateAgentsMap(this._agentsMap, st.agents);
       _updateAgentsList(observableThis.agents, this._agentsMap);
     };
-    es.onerror = e => {
+    es.onerror = err => {
       console.error('GetAgentStates event source error.');
     };
 
@@ -291,9 +298,21 @@ class EtwAppModel {
   getEvents() {
     const agentState = this.activeAgentState;
     if (!agentState) return;
+
+    let seqNo = 0;
     const evs = new EventSource(`Manager/GetEtwEvents?agentId=${agentState.id}`);
-    evs.onmessage = e => {
-      console.log('Events received');
+    agentState.liveEvents = new RingBuffer(1024);
+    evs.onmessage = evt => {
+      try {
+        const etwBatch = JSON.parse(evt.data);
+        for (let indx = 0; indx < etwBatch.events.length; indx += 1) {
+          // eslint-disable-next-line no-plusplus
+          etwBatch.events[indx]._seqNo = seqNo++;
+        }
+        agentState.liveEvents.addItems(etwBatch.events);
+      } catch (err) {
+        console.error(err);
+      }
     };
     evs.onerror = e => {
       console.error('GetEtwEvents event source error.');
