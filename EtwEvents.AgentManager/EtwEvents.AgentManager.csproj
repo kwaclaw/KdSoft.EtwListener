@@ -39,18 +39,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\EtwEvents.WebClient\InfraStructure\AggregatingNotifier.cs" Link="InfraStructure\AggregatingNotifier.cs" />
-    <Compile Include="..\EtwEvents.WebClient\InfraStructure\LocalizationFileProvider.cs" Link="InfraStructure\LocalizationFileProvider.cs" />
-    <Compile Include="..\EtwEvents.WebClient\InfraStructure\ManualResetValueTaskSource.cs" Link="InfraStructure\ManualResetValueTaskSource.cs" />
-    <Compile Include="..\EtwEvents.WebClient\InfraStructure\PendingAsyncEnumerator.cs" Link="InfraStructure\PendingAsyncEnumerator.cs" />
-    <Compile Include="..\EtwEvents.WebClient\InfraStructure\TimeSpanISO8601JsonConverter.cs" Link="InfraStructure\TimeSpanISO8601JsonConverter.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\EtwEvents.Client.Shared\EtwEvents.Client.Shared.csproj" />
     <ProjectReference Include="..\EventSinks\EtwEvents.gRPCSink\EtwEvents.gRPCSink.csproj" />
   </ItemGroup>
-
 
   <Target Name="PostCSS" BeforeTargets="Build">
     <Copy SourceFiles="@(FontAwsomeSprites)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeSprites->'wwwroot/css/fontawesome/sprites/%(RecursiveDir)%(Filename)%(Extension)')" />
