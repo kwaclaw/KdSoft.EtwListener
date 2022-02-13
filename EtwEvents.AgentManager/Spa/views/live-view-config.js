@@ -1,18 +1,19 @@
 ﻿import { html } from 'lit';
 import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
 import { LitMvvmElement, css } from '@kdsoft/lit-mvvm';
-import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
 import appStyles from '../styles/etw-app-styles.js';
+import tailwindStyles from '../styles/tailwind-styles.js';
+import '../components/etw-checklist.js';
 import * as utils from '../js/utils.js';
 import LiveViewConfigModel from './live-view-config-model.js';
 
 function getPayloadColumnListItemTemplate(item) {
   return html`
-    <div class="inline-block w-1\/3 mr-4 truncate" title=${item.name}>${item.name}</div>
-    <div class="inline-block w-2\/5 border-l pl-2 truncate" title=${item.label}>${item.label}</div>
-    <div class="inline-block w-1\/5 border-l pl-2" title=${item.type}>${item.type}&nbsp;</div>
+    <div class="inline-block w-1/3 mr-4 truncate" title=${item.name}>${item.name}</div>
+    <div class="inline-block w-2/5 border-l pl-2 truncate" title=${item.label}>${item.label}</div>
+    <div class="inline-block w-1/5 border-l pl-2" title=${item.type}>${item.type}&nbsp;</div>
     <span class="ml-auto flex-end text-gray-600 cursor-pointer" @click=${e => this._deletePayloadColumnClick(e)}>
       <i class="far fa-trash-alt"></i>
     </span>
@@ -23,27 +24,7 @@ class LiveViewConfig extends LitMvvmElement {
   constructor() {
     super();
     this.scheduler = new Queue(priorities.HIGH);
-    this.activeTabId = 'general';
     this._getPayloadColumnListItemTemplate = getPayloadColumnListItemTemplate.bind(this);
-  }
-
-  _cancel() {
-    const evt = new CustomEvent('kdsoft-done', {
-      // composed allows bubbling beyond shadow root
-      bubbles: true, composed: true, cancelable: true, detail: { model: this.model, canceled: true }
-    });
-    this.dispatchEvent(evt);
-  }
-
-  _apply() {
-    const valid = this.renderRoot.querySelector('form').reportValidity();
-    if (!valid) return;
-
-    const evt = new CustomEvent('kdsoft-done', {
-      // composed allows bubbling beyond shadow root
-      bubbles: true, composed: true, cancelable: true, detail: { model: this.model, canceled: false }
-    });
-    this.dispatchEvent(evt);
   }
 
   _fieldChange(e) {
@@ -101,12 +82,8 @@ class LiveViewConfig extends LitMvvmElement {
       fontAwesomeStyles,
       appStyles,
       css`
-        form {
-          position: relative;
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-          align-items: stretch;
+        :host {
+          display: block;
         }
 
         #general {
@@ -115,11 +92,6 @@ class LiveViewConfig extends LitMvvmElement {
           align-items: baseline;
           align-content: start;
           grid-gap: 5px;
-          min-width: 480px;
-        }
-
-        fieldset {
-          display: contents;
         }
 
         label {
@@ -127,13 +99,31 @@ class LiveViewConfig extends LitMvvmElement {
           color: #718096;
         }
 
-        #ok-cancel-buttons {
-          margin-top: auto;
-        }
-
         #standard-cols-wrapper {
           position: relative;
-          width: 40%;
+        }
+
+        #payload-cols-wrapper {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          flex-grow: 1;
+          align-items: stretch;
+          height: 100%;
+        }
+
+        #payload-cols {
+          flex-grow: 1;
+          height: 100%;
+        }
+
+        #payload-fields {
+          flex-grow: 1;
+          margin-top: auto;
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          flex-wrap: wrap;
         }
       `,
     ];
@@ -141,28 +131,23 @@ class LiveViewConfig extends LitMvvmElement {
 
   render() {
     const result = html`
-      <style>
-        :host {
-          display: block;
-        }
-      </style>
-      <form @change=${this._fieldChange}>
+      <div id="general" @change=${this._fieldChange}>
         <div id="standard-cols-wrapper" class="mr-4">
           <label class="block mb-1" for="standard-cols">Standard Columns</label>
-          <kdsoft-checklist id="standard-cols" class="w-full text-black"
+          <etw-checklist id="standard-cols" class="w-full text-black"
             .model=${this.model.standardColumnCheckList}
             .getItemTemplate=${item => html`${item.label}`}
             allow-drag-drop show-checkboxes>
-          </kdsoft-checklist>
+          </etw-checklist>
         </div>
-        <div id="payload-cols-wrapper" class="flex-grow flex flex-col items-stretch">
+        <div id="payload-cols-wrapper">
           <label class="block mb-1" for="payload-cols">Payload Columns</label>
-          <kdsoft-checklist id="payload-cols" class="text-black"
+          <etw-checklist id="payload-cols" class="text-black"
             .model=${this.model.payloadColumnCheckList}
             .getItemTemplate=${this._getPayloadColumnListItemTemplate}
             allow-drag-drop show-checkboxes>
-          </kdsoft-checklist>
-          <div class="w-full self-end mt-auto pt-4 pb-1 flex items-center">
+          </etw-checklist>
+          <div id="payload-fields" class="pt-4 pb-1">
             <!-- <label class="mr-4" for="payload-field">New</label> -->
             <input id="payload-field" type="text" form="" class="mr-2"
               placeholder="field name" required @blur=${this._payloadFieldBlur} />
@@ -175,17 +160,7 @@ class LiveViewConfig extends LitMvvmElement {
             </span>
           </div>
         </div>
-        
-        <hr class="mb-4" />
-        <div id="ok-cancel-buttons" class="flex flex-wrap mt-2 bt-1">
-          <button type="button" class="py-1 px-2 ml-auto" @click=${this._apply} title="Save">
-            <i class="fas fa-lg fa-check text-green-500"></i>
-          </button>
-          <button type="button" class="py-1 px-2" @click=${this._cancel} title="Cancel">
-            <i class="fas fa-lg fa-times text-red-500"></i>
-          </button>
-        </div>
-      </form>
+      </div>
     `;
     return result;
   }

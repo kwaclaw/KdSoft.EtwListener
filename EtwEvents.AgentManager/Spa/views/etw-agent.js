@@ -20,6 +20,7 @@ import './etw-app-side-bar.js';
 import './provider-config.js';
 import './filter-edit.js';
 import './event-sink-config.js';
+import './live-view-config.js';
 import * as utils from '../js/utils.js';
 
 const dialogClass = utils.html5DialogSupported ? '' : 'fixed';
@@ -213,7 +214,7 @@ class EtwAgent extends LitMvvmElement {
           grid-template-columns: auto auto;
           grid-gap: 1em;
           justify-items: stretch;
-          overflow-y: scroll;
+          overflow-y: auto;
         }
 
         form {
@@ -270,6 +271,7 @@ class EtwAgent extends LitMvvmElement {
     const processingModel = activeAgentState?.processingModel;
     return html`
       <div id="main">
+
         <form id="providers" class="max-w-full border">
           <div class="flex my-2 pr-2">
             <span class="font-semibold ${this.model.providersModified ? 'italic text-red-500' : ''}">Event Providers</span>
@@ -327,7 +329,6 @@ class EtwAgent extends LitMvvmElement {
               @click=${this._addEventSinkClick}>
             </span>
           </div>
-
           ${repeat(
             Object.entries(activeAgentState.eventSinks),
             entry => entry[0],
@@ -352,6 +353,23 @@ class EtwAgent extends LitMvvmElement {
             </button>
           </div>
         </form>
+
+        <form id="live-view" class="max-w-full border">
+          <div class="flex my-2 pr-2">
+            <span class="font-semibold ${this.model.providersModified ? 'italic text-red-500' : ''}">Live View</span>
+          </div>
+          <live-view-config .model=${activeAgentState.liveViewConfigModel}></live-view-config>
+          <hr class="my-3" />
+          <div class="flex flex-wrap mt-2 bt-1">
+            <button type="button" class="py-1 px-2 ml-auto" @click=${this._applyLiveViewClick} title="Apply">
+              <i class="fas fa-lg fa-check text-green-500"></i>
+            </button>
+            <button type="button" class="py-1 px-2" @click=${this._resetLiveViewClick} title="Reset to Current">
+              <i class="fas fa-lg fa-times text-red-500"></i>
+            </button>
+          </div>
+        </form>
+
       </div>
 
       <dialog id="dlg-add-event-sink" class="${dialogClass}">

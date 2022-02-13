@@ -293,15 +293,34 @@ class EtwApp extends LitMvvmElement {
           grid-row: 1/2;
           position: relative;
           display: flex;
-           flex-direction: column;
+          flex-direction: column;
         }
 
-        #main > .section:not(.active) {
+        #agent {
+          position: relative;
+          height: 100%;
+        }
+
+        #agent > .section:not(.active) {
           display: none !important;
         }
 
+        etw-agent {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          overflow-y: auto;
+        }
+
         live-view {
-          flex-grow: 1;
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          overflow-y: auto;
         }
 
         footer {
@@ -391,12 +410,14 @@ class EtwApp extends LitMvvmElement {
                   <a href="#">Live View</a>
                 </div>
               </nav>
-              <etw-agent id="agent-config" .model=${this.model}
-                class="${this._tabSectionClass('agent-config')} section">
-              </etw-agent>
-              <live-view id="agent-events" .model=${activeAgentState}
-                class="${this._tabSectionClass('agent-live-view')} section">
-              </live-view>
+              <div id="agent">
+                <etw-agent .model=${this.model}
+                  class="${this._tabSectionClass('agent-config')} section">
+                </etw-agent>
+                <live-view .model=${activeAgentState}
+                  class="${this._tabSectionClass('agent-live-view')} section">
+                </live-view>
+            </div>
           `}
         </div>
 

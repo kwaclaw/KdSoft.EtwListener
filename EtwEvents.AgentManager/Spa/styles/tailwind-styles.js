@@ -495,12 +495,6 @@ Ensure the default browser behavior of the \`hidden\` attribute.
 .mb-1 {
   margin-bottom: 0.25rem;
 }
-.mt-auto {
-  margin-top: auto;
-}
-.mb-4 {
-  margin-bottom: 1rem;
-}
 .mb-5 {
   margin-bottom: 1.25rem;
 }
@@ -531,6 +525,15 @@ Ensure the default browser behavior of the \`hidden\` attribute.
 .w-full {
   width: 100%;
 }
+.w-1\\/3 {
+  width: 33.333333%;
+}
+.w-2\\/5 {
+  width: 40%;
+}
+.w-1\\/5 {
+  width: 20%;
+}
 .max-w-full {
   max-width: 100%;
 }
@@ -550,9 +553,6 @@ Ensure the default browser behavior of the \`hidden\` attribute.
 .resize {
   resize: both;
 }
-.flex-col {
-  flex-direction: column;
-}
 .flex-wrap {
   flex-wrap: wrap;
 }
@@ -562,14 +562,8 @@ Ensure the default browser behavior of the \`hidden\` attribute.
 .items-baseline {
   align-items: baseline;
 }
-.items-stretch {
-  align-items: stretch;
-}
 .justify-start {
   justify-content: flex-start;
-}
-.self-end {
-  align-self: flex-end;
 }
 .self-center {
   align-self: center;
