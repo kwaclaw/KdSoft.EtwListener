@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading;
@@ -286,14 +288,27 @@ namespace KdSoft.EtwEvents.AgentManager
             }
 
             int eventCount = 0;
+            var jsonOptions = new JsonWriterOptions {
+                Indented = false,
+                SkipValidation = true,
+            };
             try {
                 var resp = SetupSSEResponse();
+                var jsonWriter = new Utf8JsonWriter(resp.BodyWriter, jsonOptions);
+                var dataPrefix = Encoding.UTF8.GetBytes("data:");
+                var dataEnd = Encoding.UTF8.GetBytes("\n\n");
+
                 while (await etwEventStream.MoveNext(cancelToken).ConfigureAwait(false)) {
                     var evtBatch = etwEventStream.Current;
                     eventCount += evtBatch.Events.Count;
 
-                    var evtBatchJson = evtBatch.ToString();
-                    await resp.WriteAsync($"data:{evtBatchJson}\n\n", cancelToken).ConfigureAwait(false);
+                    resp.BodyWriter.Write(dataPrefix);
+                    // write as canonical JSON
+                    jsonWriter.Reset();
+                    evtBatch.WriteJsonArray(jsonWriter);
+                    jsonWriter.Flush();
+                    resp.BodyWriter.Write(dataEnd);
+
                     await resp.Body.FlushAsync(cancelToken).ConfigureAwait(false);
                 }
                 receivingSource.TrySetResult(eventCount);

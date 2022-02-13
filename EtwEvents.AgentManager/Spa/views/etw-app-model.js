@@ -305,11 +305,11 @@ class EtwAppModel {
     evs.onmessage = evt => {
       try {
         const etwBatch = JSON.parse(evt.data);
-        for (let indx = 0; indx < etwBatch.events.length; indx += 1) {
+        for (let indx = 0; indx < etwBatch.length; indx += 1) {
           // eslint-disable-next-line no-plusplus
-          etwBatch.events[indx]._seqNo = seqNo++;
+          etwBatch[indx]._seqNo = seqNo++;
         }
-        agentState.liveEvents.addItems(etwBatch.events);
+        agentState.liveEvents.addItems(etwBatch);
       } catch (err) {
         console.error(err);
       }

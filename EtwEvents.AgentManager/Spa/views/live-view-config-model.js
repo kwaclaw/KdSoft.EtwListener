@@ -13,7 +13,7 @@ const traceLevelList = () => [
 ];
 
 const standardColumnList = [
-  { name: 'sequenceNo', label: 'Sequence No', type: 'number' },
+  { name: '_seqNo', label: 'Sequence No', type: 'number' },
   { name: 'providerName', label: 'Provider', type: 'string' },
   { name: 'id', label: 'Id', type: 'number' },
   { name: 'keywords', label: 'Keywords', type: 'number' },
