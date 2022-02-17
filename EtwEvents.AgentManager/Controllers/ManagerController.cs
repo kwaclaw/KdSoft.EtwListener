@@ -345,7 +345,7 @@ namespace KdSoft.EtwEvents.AgentManager
             var managerSinkProfile = new EventSinkProfile {
                 BatchSize = 100,
                 MaxWriteDelayMSecs = 400,
-                Name = $"{agentId}-Sink",
+                Name = Constants.LiveViewSinkName,
                 SinkType = nameof(gRPCSink),
                 Version = grpcSinkVersion!,
                 Options = JsonSerializer.Serialize(gRPCOpts, jsonSerializerOptions),
@@ -355,7 +355,7 @@ namespace KdSoft.EtwEvents.AgentManager
 
             var evt = new ControlEvent {
                 Id = proxy.GetNextEventId().ToString(),
-                Event = Constants.StartManagerSinkEvent,
+                Event = Constants.StartLiveViewSinkEvent,
                 Data = _jsonFormatter.Format(managerSinkProfile),
             };
 

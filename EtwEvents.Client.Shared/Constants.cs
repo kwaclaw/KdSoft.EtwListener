@@ -14,7 +14,9 @@
         public const string TestFilterEvent = "TestFilter";
         public const string UpdateEventSinksEvent = "UpdateEventSinks";
         public const string CloseEventSinkEvent = "CloseEventSink";
-        public const string StartManagerSinkEvent = "StartManagerSink";
+        public const string LiveViewSinkName = "##LiveViewSink";
+        public const string StartLiveViewSinkEvent = "StartLiveViewSink";
+        public const string StopLiveViewSinkEvent = "StopLiveViewSink";
 
         public const string X500DistNameClaim = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/x500distinguishedname";
     }

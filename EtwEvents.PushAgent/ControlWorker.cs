@@ -183,7 +183,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     }
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
-                case Constants.StartManagerSinkEvent:
+                case Constants.StartLiveViewSinkEvent:
                     var managerSinkProfile = string.IsNullOrEmpty(sse.Data)
                         ? null
                         : EventSinkProfile.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
@@ -191,7 +191,15 @@ namespace KdSoft.EtwEvents.PushAgent
                         return;
                     if (worker != null) {
                         var retryStrategy = new BackoffRetryStrategy(TimeSpan.FromMilliseconds(500), TimeSpan.FromMilliseconds(500), 5);
+                        // make sure the manager sink name is the canonical name
+                        managerSinkProfile.Name = Constants.LiveViewSinkName;
                         await worker.UpdateEventChannel(managerSinkProfile, retryStrategy, false).ConfigureAwait(false);
+                    }
+                    await SendStateUpdate().ConfigureAwait(false);
+                    break;
+                case Constants.StopLiveViewSinkEvent:
+                    if (worker != null) {
+                        await worker.CloseEventChannel(Constants.LiveViewSinkName).ConfigureAwait(false);
                     }
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
