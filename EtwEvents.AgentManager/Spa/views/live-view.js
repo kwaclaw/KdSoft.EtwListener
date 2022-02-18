@@ -1,5 +1,6 @@
 ﻿import { html, nothing } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
+import { observe } from '@nx-js/observer-util/dist/es.es6.js';
 import { LitMvvmElement, css, BatchScheduler } from '@kdsoft/lit-mvvm';
 import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
@@ -49,16 +50,16 @@ class LiveView extends LitMvvmElement {
   }
 
   beforeFirstRender() {
-    const lvm = this.model;
+    const lvcm = this.model.liveViewConfigModel;
 
-    const sclist = lvm.liveViewConfigModel.getStandardColumnList();
-    this._standardCols = lvm.liveViewConfigModel.standardColumns.map(col => sclist[col]);
-    this._expandPayload = this._standardCols.findIndex(col => col.name === 'payload') < 0;
-
-    const pclist = lvm.liveViewConfigModel.payloadColumnList;
-    this._payloadCols = lvm.liveViewConfigModel.payloadColumns.map(pcol => pclist[pcol]);
-
-    this._colTemplate = Array(this._standardCols.length + this._payloadCols.length).fill('auto').join(' ');
+    this._columnObserver = observe(() => {
+      this._standardCols = lvcm.getStandardColumnList();
+      this._payloadCols = lvcm.getPayloadColumnList();
+      this._expandPayload = this._standardCols.findIndex(col => col.name === 'payload') < 0;
+      this._colTemplate = Array(this._standardCols.length + this._payloadCols.length).fill('auto').join(' ');
+      // trigger render as we don't observe columns in the render() method for performance reasons
+      this.model.__changeCount += 1;
+    });
   }
 
   rendered() {
@@ -105,7 +106,6 @@ class LiveView extends LitMvvmElement {
 
   render() {
     const lvm = this.model;
-
     const itemIterator = (lvm && lvm.liveEvents) ? lvm.liveEvents.itemIterator() : utils.emptyIterator();
 
     const result = html`

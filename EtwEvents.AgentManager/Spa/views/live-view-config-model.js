@@ -2,6 +2,7 @@
 
 import { observable, observe } from '@nx-js/observer-util/dist/es.es6.js';
 import { KdSoftChecklistModel } from '@kdsoft/lit-mvvm-components';
+import * as utils from '../js/utils.js';
 
 const traceLevelList = () => [
   { name: i18n.__('Always'), value: 0 },
@@ -26,53 +27,28 @@ const standardColumnList = [
 ];
 
 class LiveViewConfigModel {
-  constructor(standardColumnOrder, standardColumns, payloadColumnList, payloadColumns) {
-    this.standardColumns = standardColumns || [0, 1, 2, 3, 4, 5, 6, 7, 8];
-    this.payloadColumnList = payloadColumnList;
-    this.payloadColumns = payloadColumns || [];
-    if (!standardColumnOrder || standardColumnOrder.length !== standardColumnList.length) {
-      this.standardColumnOrder = standardColumnList.map((v, index) => index);
-    } else {
-      this.standardColumnOrder = standardColumnOrder;
-    }
-
+  constructor(standardColumns, payloadColumnList, payloadColumns) {
     this.standardColumnCheckList = new KdSoftChecklistModel(
-      this.getStandardColumnList(),
-      this.standardColumns,
+      utils.clone(standardColumnList),
+      standardColumns || [0, 1, 2, 3, 4, 5, 6, 7, 8],
       true,
       item => item.name
     );
 
     this.payloadColumnCheckList = new KdSoftChecklistModel(
-      this.payloadColumnList,
-      this.payloadColumns,
+      payloadColumnList || [],
+      payloadColumns || [],
       true,
       item => item.name
     );
-
-    // observe checklist model changes
-    this._standardColumnsListObserver = observe(() => {
-      // we need to update the standard colum order when the standardColumnCheckList changes it
-      this._updateStandardColumnOrder(this.standardColumnCheckList.items)
-      this.standardColumns = this.standardColumnCheckList.selectedIndexes;
-    });
-
-    this._payloadColumnsListObserver = observe(() => {
-      this.payloadColumnList = this.payloadColumnCheckList.items;
-      this.payloadColumns = this.payloadColumnCheckList.selectedIndexes;
-    });
   }
 
   getStandardColumnList() {
-    return this.standardColumnOrder.map(order => standardColumnList[order]);
+    return this.standardColumnCheckList.selectedItems;
   }
 
-  _updateStandardColumnOrder(reorderedColumns) {
-    for (let indx = 0; indx < this.standardColumnOrder.length; indx += 1) {
-      const reorderedCol = reorderedColumns[indx];
-      const newIndex = standardColumnList.findIndex(sc => sc.name === reorderedCol.name);
-      this.standardColumnOrder[indx] = newIndex;
-    }
+  getPayloadColumnList() {
+    return this.payloadColumnCheckList.selectedItems;
   }
 
   static get traceLevelList() { return observable(traceLevelList()); }
