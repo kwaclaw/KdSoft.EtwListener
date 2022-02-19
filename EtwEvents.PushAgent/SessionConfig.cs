@@ -141,5 +141,15 @@ namespace KdSoft.EtwEvents.PushAgent
         }
 
         #endregion
+
+        #region Live View
+
+        public bool SaveLiveViewOptions(LiveViewOptions liveViewOptions) {
+            LoadSessionState();
+            _sessionState.LiveViewOptions = liveViewOptions;
+            return SaveSessionState(_sessionState);
+        }
+
+        #endregion
     }
 }

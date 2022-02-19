@@ -275,6 +275,12 @@ namespace KdSoft.EtwEvents.AgentManager
             return PostAgent(agentId, Constants.UpdateEventSinksEvent, profilesMessageJson ?? "");
         }
 
+        [HttpPost]
+        public IActionResult UpdateLiveViewOptions(string agentId, [FromBody] JsonElement liveViewOptions) {
+            // we are passing the JSON simply through, enabledProviders should match protobuf message LiveViewOptions
+            return PostAgent(agentId, Constants.UpdateLiveViewOptionsEvent, liveViewOptions.GetRawText() ?? "{}");
+        }
+
         #endregion
 
         #region ETW Events to Manager (SPA)

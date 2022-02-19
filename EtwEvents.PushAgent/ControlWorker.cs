@@ -203,6 +203,14 @@ namespace KdSoft.EtwEvents.PushAgent
                     }
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
+                case Constants.UpdateLiveViewOptionsEvent:
+                    // WithDiscardUnknownFields does currently not work, so we should fix this at source
+                    var liveViewOptions = LiveViewOptions.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
+                    if (liveViewOptions != null) {
+                        _sessionConfig.SaveLiveViewOptions(liveViewOptions);
+                        await SendStateUpdate().ConfigureAwait(false);
+                    }
+                    break;
                 default:
                     break;
             }
@@ -280,6 +288,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 IsStopped = !isRunning,
                 EventSinks = { eventSinkStates },
                 ProcessingState = processingState,
+                LiveViewOptions = _sessionConfig.State.LiveViewOptions,
             };
             return PostProtoMessage("Agent/UpdateState", state);
         }

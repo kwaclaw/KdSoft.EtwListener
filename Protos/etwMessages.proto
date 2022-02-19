@@ -62,6 +62,18 @@ message EventSinkState {
   string error = 2;
 }
 
+message LiveViewColumn {
+  string name = 1;
+  string label = 2;
+  string type = 3;
+}
+
+message LiveViewOptions {
+  repeated int32 standard_columns = 1;
+  repeated LiveViewColumn payload_column_list = 2;
+  repeated int32 payload_columns = 3;
+}
+
 message AgentState {
   string id = 1;
   string site = 2;
@@ -79,9 +91,9 @@ message AgentState {
   bool is_stopped = 5;
 
   repeated ProviderSetting enabled_providers = 6;
-
   ProcessingState processing_state = 7;
   map<string, EventSinkState> event_sinks = 8;
+  LiveViewOptions live_view_options = 9;
 }
 
 message AgentStates {
@@ -127,6 +139,7 @@ message ProcessingState {
 message EventSessionState {
   ProcessingState processing_state = 1;
   repeated ProviderSetting provider_settings = 2;
+  LiveViewOptions live_view_options = 3;
 }
 
 message ProcessingOptions {

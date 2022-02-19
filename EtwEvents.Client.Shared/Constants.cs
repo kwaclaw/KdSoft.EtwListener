@@ -17,6 +17,7 @@
         public const string LiveViewSinkName = "##LiveViewSink";
         public const string StartLiveViewSinkEvent = "StartLiveViewSink";
         public const string StopLiveViewSinkEvent = "StopLiveViewSink";
+        public const string UpdateLiveViewOptionsEvent = "UpdateLiveViewOptions";
 
         public const string X500DistNameClaim = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/x500distinguishedname";
     }
