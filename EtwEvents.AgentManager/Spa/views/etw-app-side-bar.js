@@ -42,10 +42,6 @@ class EtwAppSideBar extends LitMvvmElement {
     if (agentState && agentState.isRunning) this.model.stopEvents();
   }
 
-  _getEvents(agentState) {
-    if (agentState && agentState.isRunning) this.model.getEvents();
-  }
-
   _exportAgentConfig(agentState) {
     if (!agentState) return;
 
@@ -233,7 +229,6 @@ class EtwAppSideBar extends LitMvvmElement {
     const onlyModified = entry.modified && !entry.disconnected;
     const playClass = entry.current?.isRunning ? '' : 'text-green-500';
     const stopClass = entry.current?.isRunning ? 'text-red-500' : '';
-    const sinkClass = entry.current?.isRunning ? 'text-yellow-500' : '';
     return html`
       <kdsoft-expander class="w-full" .scheduler=${this.scheduler}>
         <div part="header" slot="header" class="flex items-baseline pr-1 text-white bg-gray-500">
@@ -257,9 +252,6 @@ class EtwAppSideBar extends LitMvvmElement {
             </button>
             <button class="mr-1 ${stopClass}" @click=${() => this._stopEvents(entry.current)} title="Stop Session">
               <i class="fas fa-stop"></i>
-            </button>
-            <button class="mr-1 ${sinkClass}" @click=${() => this._getEvents(entry.current)} title="View Events">
-              <i class="fas fa-eye"></i>
             </button>
           </span>
         </div>

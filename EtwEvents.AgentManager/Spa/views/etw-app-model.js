@@ -7,6 +7,7 @@ import RingBuffer from '../js/ringBuffer.js';
 import * as utils from '../js/utils.js';
 import FetchHelper from '../js/fetchHelper.js';
 import AgentState from '../js/agentState.js';
+import LiveViewOptions from '../js/liveViewOptions.js';
 import ProcessingModel from './processing-model.js';
 import LiveViewConfigModel from './live-view-config-model.js';
 
@@ -72,8 +73,12 @@ function _enhanceAgentState(agentState, eventSinkInfos) {
     }
   }
 
-  if (!agentState.liveViewConfigModel) {
-    agentState.liveViewConfigModel = new LiveViewConfigModel();
+  // liveViewOptions should not trigger reactions to avoid recursion
+  const liveViewOptions = raw(agentState.liveViewOptions) || new LiveViewOptions();
+  if (!(agentState.liveViewConfigModel instanceof LiveViewConfigModel)) {
+    agentState.liveViewConfigModel = new LiveViewConfigModel(liveViewOptions);
+  } else {
+    agentState.liveViewConfigModel.refresh(liveViewOptions);
   }
 
   return agentState;
@@ -156,7 +161,7 @@ function _updateAgentsMap(agentsMap, agentStates) {
 }
 
 function _resetProviders(agentEntry) {
-  agentEntry.state.enabledProviders = utils.clone(agentEntry.current.enabledProviders || []);
+  agentEntry.state.enabledProviders = utils.clone(agentEntry.current?.enabledProviders || []);
 }
 
 function _resetProcessing(agentEntry) {
@@ -262,9 +267,11 @@ class EtwAppModel {
 
   //#region Agents
 
+  getActiveEntry() { return raw(this)._agentsMap.get(this.activeAgentId); }
+
   get agents() { return this._agents; }
   get activeAgentState() {
-    const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
+    const activeEntry = this.getActiveEntry();
     if (!activeEntry) return null;
 
     activeEntry.state = _enhanceAgentState(activeEntry.state, this.eventSinkInfos);
@@ -272,7 +279,7 @@ class EtwAppModel {
   }
 
   setAgentState(updateObject) {
-    const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
+    const activeEntry = this.getActiveEntry();
     if (!activeEntry) return;
 
     // it seems utils.setTargetProperties(entry.state, updateObject); does not work for event-sink-config
@@ -295,13 +302,16 @@ class EtwAppModel {
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
-  getEvents() {
+  getEtwEvents() {
     const agentState = this.activeAgentState;
     if (!agentState) return;
 
-    let seqNo = 0;
+    this.stopEtwEvents();
     const evs = new EventSource(`Manager/GetEtwEvents?agentId=${agentState.id}`);
+    this.etwEventSource = evs;
+
     agentState.liveEvents = new RingBuffer(1024);
+    let seqNo = 0;
     evs.onmessage = evt => {
       try {
         const etwBatch = JSON.parse(evt.data);
@@ -317,6 +327,14 @@ class EtwAppModel {
     evs.onerror = e => {
       console.error('GetEtwEvents event source error.');
     };
+  }
+
+  stopEtwEvents() {
+    const evs = this.etwEventSource;
+    if (evs) {
+      this.etwEventSource = null;
+      evs.close();
+    }
   }
 
   getState() {
@@ -356,13 +374,13 @@ class EtwAppModel {
   }
 
   resetProviders() {
-    const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
+    const activeEntry = this.getActiveEntry();
     if (!activeEntry) return;
     _resetProviders(activeEntry);
   }
 
   get providersModified() {
-    const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
+    const activeEntry = this.getActiveEntry();
     if (!activeEntry) return false;
     return !utils.targetEquals(activeEntry.current?.enabledProviders, activeEntry.state.enabledProviders);
   }
@@ -418,13 +436,13 @@ class EtwAppModel {
   }
 
   resetProcessing() {
-    const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
+    const activeEntry = this.getActiveEntry();
     if (!activeEntry) return;
     _resetProcessing(activeEntry);
   }
 
   get processingModified() {
-    const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
+    const activeEntry = this.getActiveEntry();
     if (!activeEntry) return false;
     const currState = activeEntry.current?.processingState;
     const state = activeEntry.state.processingState;
@@ -445,13 +463,13 @@ class EtwAppModel {
   }
 
   resetEventSinks() {
-    const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
+    const activeEntry = this.getActiveEntry();
     if (!activeEntry) return;
     _resetEventSinks(activeEntry);
   }
 
   get eventSinksModified() {
-    const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
+    const activeEntry = this.getActiveEntry();
     if (!activeEntry) return false;
     const currSinks = activeEntry.current?.eventSinks;
     const stateSinks = activeEntry.state.eventSinks;
@@ -480,8 +498,36 @@ class EtwAppModel {
 
   //#endregion
 
+  //#region Live View
+
+  applyLiveViewConfig() {
+    const agentState = this.activeAgentState;
+    if (!agentState) return;
+
+    const liveViewOptions = agentState.liveViewConfigModel.toOptions();
+    this.fetcher.postJson('UpdateLiveViewOptions', { agentId: agentState.id }, liveViewOptions)
+      .catch(error => window.etwApp.defaultHandleError(error));
+  }
+
+  resetLiveViewConfig() {
+    const activeEntry = this.getActiveEntry();
+    if (!activeEntry) return;
+
+    const liveViewOptions = raw(agentEntry.current?.liveViewOptions) || new LiveViewOptions;
+    agentEntry.state.liveViewConfigModel.refresh(liveViewOptions);
+  }
+
+  get liveViewConfigModified() {
+    const activeEntry = this.getActiveEntry();
+    if (!activeEntry) return false;
+
+    return !utils.targetEquals(activeEntry.current?.liveViewOptions, activeEntry.state.liveViewOptions);
+  }
+
+  //#endregion
+
   resetAll() {
-    const activeEntry = raw(this)._agentsMap.get(this.activeAgentId);
+    const activeEntry = this.getActiveEntry();
     if (!activeEntry) return;
     activeEntry.state = utils.clone(activeEntry.current || {});
   }

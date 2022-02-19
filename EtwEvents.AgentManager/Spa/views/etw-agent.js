@@ -71,14 +71,6 @@ class EtwAgent extends LitMvvmElement {
     });
   }
 
-  _applyProvidersClick() {
-    this.model.applyProviders();
-  }
-
-  _resetProvidersClick() {
-    this.model.resetProviders();
-  }
-
   //#endregion
 
   //#region Processing
@@ -86,22 +78,6 @@ class EtwAgent extends LitMvvmElement {
   _processingFieldChange(e, agentState) {
     e.stopPropagation();
     agentState.processingModel[e.target.name] = utils.getFieldValue(e.target);
-  }
-
-  _applyProcessingClick() {
-    this.model.applyProcessing();
-  }
-
-  _resetProcessingClick() {
-    this.model.resetProcessing();
-  }
-
-  _clearFilterClick() {
-    this.model.clearFilter();
-  }
-
-  _testFilterClick() {
-    this.model.testFilter();
   }
 
   //#endregion
@@ -288,10 +264,10 @@ class EtwAgent extends LitMvvmElement {
           `)}
           <hr class="my-3" />
           <div class="flex flex-wrap mt-2 bt-1">
-            <button type="button" class="py-1 px-2 ml-auto" @click=${this._applyProvidersClick} title="Apply">
+            <button type="button" class="py-1 px-2 ml-auto" @click=${() => this.model.applyProviders()} title="Apply">
               <i class="fas fa-lg fa-check text-green-500"></i>
             </button>
-            <button type="button" class="py-1 px-2" @click=${this._resetProvidersClick} title="Reset to Current">
+            <button type="button" class="py-1 px-2" @click=${() => this.model.resetProviders()} title="Reset to Current">
               <i class="fas fa-lg fa-times text-red-500"></i>
             </button>
           </div>
@@ -306,16 +282,16 @@ class EtwAgent extends LitMvvmElement {
             <filter-edit id="filterEdit" class="p-2" .model=${processingModel.filter}></filter-edit>
             <hr class="my-3" />
             <div class="flex flex-wrap mt-2 bt-1">
-              <button type="button" class="py-1 px-2" @click=${this._testFilterClick} title="Test">
+              <button type="button" class="py-1 px-2" @click=${() => this.model.testFilter()} title="Test">
                 <i class="fas fa-lg fa-vial" style="color:orange"></i>
               </button>
-              <button type="button" class="py-1 px-2" @click=${this._clearFilterClick} title="Clear">
+              <button type="button" class="py-1 px-2" @click=${() => this.model.clearFilter()} title="Clear">
                 <i class="fas fa-lg fa-ban text-gray-500"></i>
               </button>
-              <button type="button" class="py-1 px-2 ml-auto" @click=${this._applyProcessingClick} title="Apply">
+              <button type="button" class="py-1 px-2 ml-auto" @click=${() => this.model.applyProcessing()} title="Apply">
                 <i class="fas fa-lg fa-check text-green-500"></i>
               </button>
-              <button type="button" class="py-1 px-2" @click=${this._resetProcessingClick} title="Reset to Current">
+              <button type="button" class="py-1 px-2" @click=${() => this.model.resetProcessing()} title="Reset to Current">
                 <i class="fas fa-lg fa-times text-red-500"></i>
               </button>
             </div>
@@ -356,15 +332,15 @@ class EtwAgent extends LitMvvmElement {
 
         <form id="live-view" class="max-w-full border">
           <div class="flex my-2 pr-2">
-            <span class="font-semibold ${this.model.providersModified ? 'italic text-red-500' : ''}">Live View</span>
+            <span class="font-semibold ${this.model.liveViewConfigModified ? 'italic text-red-500' : ''}">Live View</span>
           </div>
           <live-view-config .model=${activeAgentState.liveViewConfigModel}></live-view-config>
           <hr class="my-3" />
           <div class="flex flex-wrap mt-2 bt-1">
-            <button type="button" class="py-1 px-2 ml-auto" @click=${this._applyLiveViewClick} title="Apply">
+            <button type="button" class="py-1 px-2 ml-auto" @click=${() => this.model.applyLiveViewConfig()} title="Apply">
               <i class="fas fa-lg fa-check text-green-500"></i>
             </button>
-            <button type="button" class="py-1 px-2" @click=${this._resetLiveViewClick} title="Reset to Current">
+            <button type="button" class="py-1 px-2" @click=${() => this.model.resetLiveViewConfig()} title="Reset to Current">
               <i class="fas fa-lg fa-times text-red-500"></i>
             </button>
           </div>

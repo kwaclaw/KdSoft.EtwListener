@@ -186,6 +186,13 @@ class EtwApp extends LitMvvmElement {
     return this.model.activeAgentTab === tabId ? 'active' : '';
   }
 
+  _toggleEtwEvents(agentState) {
+    if (agentState && agentState.isRunning) {
+      if (this.model.etwEventSource) this.model.stopEtwEvents();
+      else this.model.getEtwEvents();
+    }
+  }
+
   //#endregion
 
   //#region overrides
@@ -382,9 +389,16 @@ class EtwApp extends LitMvvmElement {
   }
 
   render() {
+    const activeEntry = this.model.getActiveEntry();
     const activeAgentState = this.model.activeAgentState;
+
     const agentConfigTabType = this._tabClassType('agent-config');
     const agentLiveViewTabType = this._tabClassType('agent-live-view');
+
+    const isRunning = activeEntry?.current?.isRunning;
+    const isLive = !!this.model.etwEventSource;
+    const sinkClass = isRunning ? (isLive ? 'text-yellow-300' : 'text-yellow-600') : 'text-gray-300';
+
     return html`
       <style>
         :host {
@@ -408,6 +422,9 @@ class EtwApp extends LitMvvmElement {
                 </div>
                 <div data-tabid="agent-live-view" class=${classMap(agentLiveViewTabType)}>
                   <a href="#">Live View</a>
+                  <button class="ml-2 ${sinkClass}" @click=${() => this._toggleEtwEvents(activeEntry?.current)} title="View Events">
+                    <i class="fas fa-eye"></i>
+                  </button>
                 </div>
               </nav>
               <div id="agent">
