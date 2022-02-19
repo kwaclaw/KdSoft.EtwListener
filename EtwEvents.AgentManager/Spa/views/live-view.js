@@ -53,8 +53,8 @@ class LiveView extends LitMvvmElement {
     const lvcm = this.model.liveViewConfigModel;
 
     this._columnObserver = observe(() => {
-      this._standardCols = lvcm.getStandardColumnList();
-      this._payloadCols = lvcm.getPayloadColumnList();
+      this._standardCols = lvcm.getSelectedStandardColumns();
+      this._payloadCols = lvcm.getSelectedPayloadColumns();
       this._expandPayload = this._standardCols.findIndex(col => col.name === 'payload') < 0;
       this._colTemplate = Array(this._standardCols.length + this._payloadCols.length).fill('auto').join(' ');
       // trigger render as we don't observe columns in the render() method for performance reasons

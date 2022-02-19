@@ -1,6 +1,6 @@
 ﻿/* global i18n */
 
-import { observable, observe } from '@nx-js/observer-util/dist/es.es6.js';
+import { observable, observe, raw } from '@nx-js/observer-util/dist/es.es6.js';
 import { KdSoftChecklistModel } from '@kdsoft/lit-mvvm-components';
 import * as utils from '../js/utils.js';
 
@@ -27,28 +27,44 @@ const standardColumnList = [
 ];
 
 class LiveViewConfigModel {
-  constructor(standardColumns, payloadColumnList, payloadColumns) {
+  constructor(liveViewOptions) {
+    this.refresh(liveViewOptions);
+  }
+
+  getSelectedStandardColumns() {
+    return this.standardColumnCheckList.selectedItems;
+  }
+
+  getSelectedPayloadColumns() {
+    return this.payloadColumnCheckList.selectedItems;
+  }
+
+  refresh(liveViewOptions) {
+    if (utils.targetEquals(this._liveViewOptions, liveViewOptions))
+      return;
+
+    this._liveViewOptions = liveViewOptions;
+
     this.standardColumnCheckList = new KdSoftChecklistModel(
       utils.clone(standardColumnList),
-      standardColumns || [0, 1, 2, 3, 4, 5, 6, 7, 8],
+      liveViewOptions?.standardColumns || [0, 1, 2, 3, 4, 5, 6, 7, 8],
       true,
       item => item.name
     );
 
     this.payloadColumnCheckList = new KdSoftChecklistModel(
-      payloadColumnList || [],
-      payloadColumns || [],
+      liveViewOptions?.payloadColumnList || [],
+      liveViewOptions?.payloadColumns || [],
       true,
       item => item.name
     );
   }
 
-  getStandardColumnList() {
-    return this.standardColumnCheckList.selectedItems;
-  }
-
-  getPayloadColumnList() {
-    return this.payloadColumnCheckList.selectedItems;
+  toOptions() {
+    this._liveViewOptions.standardColumns = raw(observableStandardCols.selectedIndexes);
+    this._liveViewOptions.payloadColumnList = raw(observablePayloadCols.items);
+    this._liveViewOptions.payloadColumns = raw(observablePayloadCols.selectedIndexes);
+    return this._liveViewOptions;
   }
 
   static get traceLevelList() { return observable(traceLevelList()); }

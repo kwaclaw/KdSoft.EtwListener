@@ -1,5 +1,6 @@
 ﻿import { html } from 'lit';
 import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
+import { observe } from '@nx-js/observer-util/dist/es.es6.js';
 import { LitMvvmElement, css } from '@kdsoft/lit-mvvm';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
