@@ -37,9 +37,7 @@ namespace KdSoft.EtwEvents.AgentManager
 
         public string AgentId { get { return _state.Id; } }
 
-        public string ManagerUri { get; set; } = "";
-        public string ClientCertThumbprint { get; set; } = "";
-        public string ClientCertDN { get; set; } = "";
+        #region Server Sent Events
 
         public int GetNextEventId() {
             return Interlocked.Increment(ref _eventId);
@@ -181,15 +179,23 @@ namespace KdSoft.EtwEvents.AgentManager
             return finished;
         }
 
+        #endregion
+
+        #region EtwSink (gRPC)
+
+        public string ManagerUri { get; set; } = "";
+        public string ClientCertThumbprint { get; set; } = "";
+        public string ClientCertDN { get; set; } = "";
+
         TaskCompletionSource<IAsyncStreamReader<EtwEventBatch>?>? _eventStreamSource;
         Task<int>? _eventProcessingTask;
 
-        int CompleteEventStream(Task<int> processingTask) {
+        Task<int> CompleteEventStream(Task<int> processingTask) {
             var oldSource = Interlocked.Exchange(ref _eventStreamSource, null);
             if (oldSource != null) {
                 oldSource.TrySetCanceled();
             }
-            return processingTask.Result;
+            return processingTask;
         }
 
         public Task<IAsyncStreamReader<EtwEventBatch>?> GetEtwEventStream(TaskCompletionSource<int> processingSource) {
@@ -199,7 +205,7 @@ namespace KdSoft.EtwEvents.AgentManager
                 oldSource.TrySetCanceled();
             }
 
-            var processingTask = processingSource.Task.ContinueWith(CompleteEventStream);
+            var processingTask = processingSource.Task.ContinueWith(CompleteEventStream).Unwrap();
             var oldProcessingTask = Interlocked.Exchange(ref _eventProcessingTask, processingTask);
 
             return tcs.Task;
@@ -219,5 +225,6 @@ namespace KdSoft.EtwEvents.AgentManager
             return Task.FromResult(-1);
         }
 
-   }
+        #endregion
+    }
 }

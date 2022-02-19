@@ -40,7 +40,11 @@ namespace KdSoft.EtwEvents.AgentManager
                 return new EtwEventResponse {  EventsReceived = eventCount };
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error processing event stream.");
+                if (context.CancellationToken.IsCancellationRequested) {
+                    _logger.LogInformation("Live View event stream closed.");
+                    return new EtwEventResponse { EventsReceived = -1 };
+                }
+                _logger.LogError(ex, "Error processing Live View event stream.");
                 throw new RpcException(new Status(StatusCode.Unknown, ex.Message));
             }
         }
