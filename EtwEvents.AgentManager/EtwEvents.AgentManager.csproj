@@ -27,6 +27,18 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="6.0.0" />
     <PackageReference Include="OrchardCore.Localization.Core" Version="1.2.2" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <Content Include="EventSinks/**/*" Exclude="EventSinks/**/*.json">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Update="Spa/**/*">
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </Content>
+    <Content Update="appSettings.Development.json">
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
 
   <ItemGroup>
     <FontAwsomeSprites Include="Spa/css/fontawesome/sprites/**/*" />
