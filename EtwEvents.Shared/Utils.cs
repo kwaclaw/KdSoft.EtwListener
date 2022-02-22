@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.RegularExpressions;
 
 namespace KdSoft.EtwEvents
 {
@@ -119,6 +120,7 @@ namespace KdSoft.EtwEvents
 
         /// <summary>
         /// Get certificate from certificate store based on thumprint or subject common name.
+        /// If multiple certificates match then the one with the newest NotBefore date is returned.
         /// </summary>
         /// <param name="location">Store location.</param>
         /// <param name="thumbprint">Certificate thumprint to look for. Takes precedence over subjectCN when both are specified.</param>
@@ -135,7 +137,7 @@ namespace KdSoft.EtwEvents
                 if (thumbprint.Length > 0) {
                     var certs = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, true);
                     if (certs.Count > 0)
-                        cert = certs[0];
+                        cert = certs.OrderByDescending(cert => cert.NotBefore).First();
                 }
                 else {
                     var certs = store.Certificates.Find(X509FindType.FindBySubjectName, subjectCN, true);
@@ -143,12 +145,37 @@ namespace KdSoft.EtwEvents
                         // X509NameType.SimpleName extracts CN from subject (common name)
                         var cn = matchingCert.GetNameInfo(X509NameType.SimpleName, false);
                         if (string.Equals(cn, subjectCN, StringComparison.InvariantCultureIgnoreCase)) {
-                            cert = matchingCert;
-                            break;
+                            if (cert == null)
+                                cert = matchingCert;
+                            else if (cert.NotBefore < matchingCert.NotBefore)
+                                cert = matchingCert;
                         }
                     }
                 }
                 return cert;
+            }
+        }
+
+        public static Regex SubjectRoleRegex = new Regex(@"OID\.2\.5\.4\.72\s*=\s*(?<role>[^,=]*)\s*(,|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        /// <summary>
+        /// Get certificates from certificate store based on application policy OID and predicate callback.
+        /// The resulting collections is ordered by descending NotBefore date.
+        /// </summary>
+        /// <param name="location">Store location.</param>
+        /// <param name="policyOID">Application policy OID to look for, e.g. Client Authentication (1.3.6.1.5.5.7.3.2). Required.</param>
+        /// <param name="predicate">Callback to check certificate against a condition. Optional.</param>
+        /// <returns>Matching certificates, or an empty collection if none are found.</returns>
+        public static IEnumerable<X509Certificate2> GetCertificates(StoreLocation location, string policyOID, Predicate<X509Certificate2> predicate) {
+            if (policyOID.Length == 0)
+                return Enumerable.Empty<X509Certificate2>();
+
+            using (var store = new X509Store(location)) {
+                store.Open(OpenFlags.ReadOnly);
+                var certs = store.Certificates.Find(X509FindType.FindByApplicationPolicy, policyOID, true);
+                if (certs.Count == 0 || predicate == null)
+                    return certs.OrderByDescending(cert => cert.NotBefore);
+                return certs.Where(crt => predicate(crt)).OrderByDescending(cert => cert.NotBefore);
             }
         }
     }

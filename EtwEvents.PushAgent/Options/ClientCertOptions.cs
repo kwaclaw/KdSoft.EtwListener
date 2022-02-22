@@ -6,6 +6,7 @@ namespace KdSoft.EtwEvents.PushAgent
     {
         public string Thumbprint { get; set; } = "";
         public string SubjectCN { get; set; } = "";
+        public string SubjectRole { get; set; } = "";
         public StoreLocation Location { get; set; } = StoreLocation.CurrentUser;
 
         public override bool Equals(object? obj) {
@@ -14,9 +15,9 @@ namespace KdSoft.EtwEvents.PushAgent
                 return false;
             if (ReferenceEquals(this, other))
                 return true;
-            return Thumbprint == other.Thumbprint && SubjectCN == other.SubjectCN && Location == other.Location;
+            return Thumbprint == other.Thumbprint && SubjectCN == other.SubjectCN && SubjectRole == other.SubjectRole && Location == other.Location;
         }
 
-        public override int GetHashCode() => Thumbprint.GetHashCode() ^ SubjectCN.GetHashCode() ^ Location.GetHashCode();
+        public override int GetHashCode() => Thumbprint.GetHashCode() ^ SubjectCN.GetHashCode() ^ SubjectRole.GetHashCode() ^ Location.GetHashCode();
     }
 }

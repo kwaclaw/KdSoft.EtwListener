@@ -33,8 +33,6 @@ namespace KdSoft.EtwEvents.AgentManager
 
         public IConfiguration Configuration { get; }
 
-        static Regex s_roleRegex = new Regex(@"OID\.2\.5\.4\.72\s*=\s*(?<role>[^,=]*)\s*(,|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
         public void ConfigureServices(IServiceCollection services) {
             // for IIS
             //services.AddCertificateForwarding(options => {
@@ -66,7 +64,7 @@ namespace KdSoft.EtwEvents.AgentManager
                         // ClaimsIdentity.Name here is the certificate's Subject Common Name (CN)
                         if (identity != null && identity.Name != null) {
                             string? certRole = null;
-                            var match = s_roleRegex.Match(context.ClientCertificate.Subject);
+                            var match = Utils.SubjectRoleRegex.Match(context.ClientCertificate.Subject);
                             if (match.Success) {
                                 certRole = match.Groups["role"].Value;
                             }
