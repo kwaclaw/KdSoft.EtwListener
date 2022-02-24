@@ -513,8 +513,8 @@ class EtwAppModel {
     const activeEntry = this.getActiveEntry();
     if (!activeEntry) return;
 
-    const liveViewOptions = raw(agentEntry.current?.liveViewOptions) || new LiveViewOptions;
-    agentEntry.state.liveViewConfigModel.refresh(liveViewOptions);
+    const liveViewOptions = raw(activeEntry.current?.liveViewOptions) || new LiveViewOptions();
+    activeEntry.state.liveViewConfigModel.refresh(liveViewOptions);
   }
 
   get liveViewConfigModified() {

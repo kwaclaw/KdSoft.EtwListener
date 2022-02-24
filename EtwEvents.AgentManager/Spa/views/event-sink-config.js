@@ -102,7 +102,10 @@ class EventSinkConfig extends LitMvvmElement {
       try {
         const configFormTemplate = await loadSinkDefinitionTemplate(model.profile.sinkType);
         const configModel = await loadSinkDefinitionModel(model.profile.sinkType);
-        utils.setTargetProperties(configModel, model.profile);
+        // update the configModel's credentials and options separately from profile,
+        // as otherwise we would just replace the options and credentials properties entirely
+        utils.setTargetProperties(configModel.credentials, model.profile.credentials);
+        utils.setTargetProperties(configModel.options, model.profile.options);
         this.sinkTypeTemplateHolder.tag = configFormTemplate(configModel);
       } catch (error) {
         // for "nothing" to work we need to render raw(this.sinkTypeTemplateHolder.value)
