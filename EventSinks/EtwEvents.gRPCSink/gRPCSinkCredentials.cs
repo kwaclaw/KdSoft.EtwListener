@@ -7,19 +7,19 @@ namespace KdSoft.EtwEvents.EventSinks
         public gRPCSinkCredentials() { }
 
         public gRPCSinkCredentials(ReadOnlySpan<char> certPem) {
-            this.CertificatePem = new string(certPem);
+            CertificatePem = new string(certPem);
         }
 
         public gRPCSinkCredentials(ReadOnlySpan<char> certPem, ReadOnlySpan<char> keyPem) {
-            this.CertificatePem = new string(certPem);
-            this.CertificateKeyPem = new string(keyPem);
+            CertificatePem = new string(certPem);
+            CertificateKeyPem = new string(keyPem);
         }
 
         public gRPCSinkCredentials(string? thumbPrint, string? subjectCN) {
             if (thumbPrint == null && subjectCN == null)
                 throw new ArgumentException("Certificate Thumbprint and Subject CN must not both be null.");
-            this.CertificateThumbPrint = thumbPrint;
-            this.CertificateSubjectCN = subjectCN;
+            CertificateThumbPrint = thumbPrint;
+            CertificateSubjectCN = subjectCN;
         }
 
         public string? CertificatePem { get; set; }

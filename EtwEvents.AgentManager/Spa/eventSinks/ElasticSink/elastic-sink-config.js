@@ -1,8 +1,6 @@
 ﻿import { LitMvvmElement, html, css } from '@kdsoft/lit-mvvm';
 import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
 import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
-import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
-import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
 import * as utils from '../../js/utils.js';
 
 class ElasticSinkConfig extends LitMvvmElement {
@@ -69,8 +67,6 @@ class ElasticSinkConfig extends LitMvvmElement {
   static get styles() {
     return [
       tailwindStyles,
-      fontAwesomeStyles,
-      checkboxStyles,
       css`
         :host {
           display: block;

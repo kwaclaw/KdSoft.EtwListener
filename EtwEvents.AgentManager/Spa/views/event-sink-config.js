@@ -19,7 +19,7 @@ function sinkConfigForm(sinkType) {
     case 'SeqSink':
       return 'seq-sink-config';
     default:
-      throw `No configuration form for '${sinkType}'.`
+      throw new Error(`No configuration form for '${sinkType}'.`);
   }
 }
 
@@ -36,7 +36,7 @@ function sinkConfigModel(sinkType) {
     case 'SeqSink':
       return 'seq-sink-config-model';
     default:
-      throw `No configuration model for '${sinkType}'.`
+      throw new Error(`No configuration model for '${sinkType}'.`);
   }
 }
 

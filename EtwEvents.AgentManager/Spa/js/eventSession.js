@@ -24,7 +24,7 @@ function initialMessageHandler(ev) {
       this.ws.onmessage = logMessageHandler.bind(this);
     } else {
       this.disconnect();
-      throw new Error('Initial message must be string.')
+      throw new Error('Initial message must be string.');
     }
   } catch (e) {
     console.error(e);

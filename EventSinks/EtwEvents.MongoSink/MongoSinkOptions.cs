@@ -16,8 +16,8 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         public MongoSinkOptions() {
-            this.EventFilterFields = ImmutableArray<string>.Empty;
-            this.PayloadFilterFields = ImmutableArray<string>.Empty;
+            EventFilterFields = ImmutableArray<string>.Empty;
+            PayloadFilterFields = ImmutableArray<string>.Empty;
         }
 
         public string Origin { get; set; } = string.Empty;

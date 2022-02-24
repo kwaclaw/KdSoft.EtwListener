@@ -1,4 +1,6 @@
-﻿namespace KdSoft.EtwEvents.EventSinks
+﻿using System;
+
+namespace KdSoft.EtwEvents.EventSinks
 {
     public class ElasticSinkOptions
     {
@@ -9,7 +11,7 @@
 
         public ElasticSinkOptions() { }
 
-        public string[] Nodes { get; set; } = new string[0];
+        public string[] Nodes { get; set; } = Array.Empty<string>();
 
         public string IndexFormat { get; set; } = string.Empty;
     }

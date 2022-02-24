@@ -67,8 +67,6 @@ class gRPCSinkConfig extends LitMvvmElement {
   static get styles() {
     return [
       tailwindStyles,
-      fontAwesomeStyles,
-      checkboxStyles,
       css`
         :host {
           display: block;
