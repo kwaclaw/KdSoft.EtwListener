@@ -1,7 +1,7 @@
 {
   "name": "etw-events-agentmanager",
   "version": "1.0.0",
-  "description": "Connection security and authentication/authorization are both performed using certificates.",
+  "description": "Manager for ETW Push Agents.",
   "author": "",
   "license": "ISC",
   "main": "index.js",
@@ -52,7 +52,10 @@
         "dest": "styles/assets"
       },
       "tailwindcss": {
-        "content": ["./views/**/*.{html,js}", "./eventSinks/**/*.{html,js}"],
+        "content": [
+          "./views/**/*.{html,js}",
+          "./eventSinks/**/*.{html,js}"
+        ],
         "theme": {},
         "variants": {},
         "plugins": [

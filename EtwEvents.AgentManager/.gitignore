@@ -1,4 +1,4 @@
 wwwroot/
 EventSinks/
 EventSinksCache/
-!Spa/public/**/*
+!Spa/eventSinks/
