@@ -6,7 +6,7 @@ namespace KdSoft.EtwEvents.Client
     {
         public string SinkType { get; set; } = nameof(NullSink);
         public string Version { get; set; } = "0.0";
-        public Uri? ConfigViewUrl { get; set; }
-        public Uri? ConfigModelUrl { get; set; }
+        public string CredentialsSchema { get; set; } = "";
+        public string OptionsSchema { get; set; } = "";
     }
 }

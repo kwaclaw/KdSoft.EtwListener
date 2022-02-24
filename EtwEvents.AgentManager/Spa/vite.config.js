@@ -14,6 +14,7 @@ export default defineConfig({
     cors: true
   },
   build: {
+    target: 'esnext',
     outDir: '../wwwroot',
     emptyOutDir: true,
     manifest: true,

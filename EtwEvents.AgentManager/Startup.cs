@@ -1,11 +1,9 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Globalization;
-using System.IO;
 using System.Reflection;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Google.Protobuf;
 using Microsoft.AspNetCore.Authentication.Certificate;
@@ -107,8 +105,7 @@ namespace KdSoft.EtwEvents.AgentManager
             services.AddSingleton(provider => new EventSinkProvider(
                 _env.ContentRootPath,
                 "EventSinks",
-                "EventSinksCache",
-                Path.Combine("Spa", "eventSinks")
+                "EventSinksCache"
             ));
             services.AddSingleton(provider => {
                 var jsonSettings = JsonFormatter.Settings.Default

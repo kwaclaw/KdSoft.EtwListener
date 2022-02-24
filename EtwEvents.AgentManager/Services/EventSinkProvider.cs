@@ -15,22 +15,17 @@ namespace KdSoft.EtwEvents.AgentManager
         readonly string _rootPath;
         readonly string _eventSinksDirName;
         readonly string _eventSinksCacheDirName;
-        readonly string _eventSinksConfigDirName;
         readonly string[] _runtimeAssemblyPaths;
         const string SinkAssemblyFilter = "*Sink.dll";
 
-        public EventSinkProvider(string rootPath, string eventSinksDirName, string eventSinksCacheDirName, string eventSinksConfigDirName) {
+        public EventSinkProvider(string rootPath, string eventSinksDirName, string eventSinksCacheDirName) {
             this._rootPath = rootPath;
             this._eventSinksDirName = eventSinksDirName;
             this._eventSinksCacheDirName = eventSinksCacheDirName;
-            this._eventSinksConfigDirName = eventSinksConfigDirName;
             this._runtimeAssemblyPaths = Directory.GetFiles(RuntimeEnvironment.GetRuntimeDirectory(), "*.dll");
         }
 
-        public IEnumerable<(EventSinkInfo, DirectoryInfo?)> GetEventSinkInfos(DirectoryInfo evtSinkDirInfo, DirectoryInfo eventSinksConfigDirInfo) {
-            var eventSinksDir = evtSinkDirInfo.Parent?.FullName;
-            var eventSinksConfigDirUri = new Uri($"file:///{eventSinksConfigDirInfo.FullName}/");
-
+        public IEnumerable<(EventSinkInfo, DirectoryInfo?)> GetEventSinkInfos(DirectoryInfo evtSinkDirInfo) {
             var assemblyPaths = new HashSet<string>(_runtimeAssemblyPaths, StringComparer.CurrentCultureIgnoreCase);
             // see https://docs.microsoft.com/en-us/dotnet/core/tutorials/creating-app-with-plugin-support 
             // we add these explicitly, as we have them loaded locally, and the event sink should not include them
@@ -52,17 +47,11 @@ namespace KdSoft.EtwEvents.AgentManager
                     var (evtSinkType, evtSinkVersion) = metaLoadContext.GetEventSinkTypes(evtSinkFile.FullName).FirstOrDefault();
                     if (evtSinkType != null) {
                         var version = evtSinkVersion ?? "0.0";
-                        var sinkRelativeDir = Path.GetRelativePath(eventSinksDir!, evtSinkDirInfo.FullName);
-                        var configView = eventSinksConfigDirInfo.GetFiles(@$"{sinkRelativeDir}/*-config.js").First();
-                        var configViewUri = new Uri($"file:///{configView.FullName}");
-                        var configModel = eventSinksConfigDirInfo.GetFiles(@$"{sinkRelativeDir}/*-config-model.js").First();
-                        var configModelUri = new Uri($"file:///{configModel.FullName}");
                         var sinkInfo = new EventSinkInfo {
                             SinkType = evtSinkType,
                             Version = version,
-                            // relative Uri does not include "EventSinks" path component (has a trailing '/')
-                            ConfigViewUrl = eventSinksConfigDirUri.MakeRelativeUri(configViewUri),
-                            ConfigModelUrl = eventSinksConfigDirUri.MakeRelativeUri(configModelUri),
+                            //TODO (future) CredentialsSchema = ?
+                            //TODO (future) OptionsSchema = ?
                         };
                         yield return (sinkInfo, evtSinkDirInfo);
                     }
@@ -79,11 +68,8 @@ namespace KdSoft.EtwEvents.AgentManager
             var eventSinksDirInfo = new DirectoryInfo(eventSinksDir);
             var evtSinkDirectories = eventSinksDirInfo.EnumerateDirectories();
 
-            var eventSinksConfigDir = Path.Combine(_rootPath, _eventSinksConfigDirName);
-            var eventSinksConfigDirInfo = new DirectoryInfo(eventSinksConfigDir);
-
             foreach (var evtSinkDirInfo in evtSinkDirectories) {
-                var dirSinkInfos = GetEventSinkInfos(evtSinkDirInfo, eventSinksConfigDirInfo);
+                var dirSinkInfos = GetEventSinkInfos(evtSinkDirInfo);
                 foreach (var (sinkInfo, dirInfo) in dirSinkInfos) {
                     yield return (sinkInfo, dirInfo);
                 }

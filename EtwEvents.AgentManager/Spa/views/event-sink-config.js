@@ -6,14 +6,50 @@ import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/cs
 import tailwindStyles from '../styles/tailwind-styles.js';
 import * as utils from '../js/utils.js';
 
-async function loadSinkDefinitionTemplate(sinkInfo) {
-  const elementModule = await import(/* @vite-ignore */sinkInfo.configViewUrl);
+function sinkConfigForm(sinkType) {
+  switch (sinkType) {
+    case 'ElasticSink':
+      return 'elastic-sink-config';
+    case 'gRPCSink':
+      return 'grpc-sink-config';
+    case 'MongoSink':
+      return 'mongo-sink-config';
+    case 'RollingFileSink':
+      return 'rolling-file-sink-config';
+    case 'SeqSink':
+      return 'seq-sink-config';
+    default:
+      throw `No configuration form for '${sinkType}'.`
+  }
+}
+
+function sinkConfigModel(sinkType) {
+  switch (sinkType) {
+    case 'ElasticSink':
+      return 'elastic-sink-config-model';
+    case 'gRPCSink':
+      return 'grpc-sink-config-model';
+    case 'MongoSink':
+      return 'mongo-sink-config-model';
+    case 'RollingFileSink':
+      return 'rolling-file-sink-config-model';
+    case 'SeqSink':
+      return 'seq-sink-config-model';
+    default:
+      throw `No configuration model for '${sinkType}'.`
+  }
+}
+
+async function loadSinkDefinitionTemplate(sinkType) {
+  // Vite can only analyze the dynamic import if we provide a file extension
+  const elementModule = await import(`../eventSinks/${sinkType}/${sinkConfigForm(sinkType)}.js`);
   const configElement = elementModule.default;
   return configElement;
 }
 
-async function loadSinkDefinitionModel(sinkInfo) {
-  const modelModule = await import(/* @vite-ignore */sinkInfo.configModelUrl);
+async function loadSinkDefinitionModel(sinkType) {
+  // Vite can only analyze the dynamic import if we provide a file extension
+  const modelModule = await import(`../eventSinks/${sinkType}/${sinkConfigModel(sinkType)}.js`);
   const ModelClass = modelModule.default;
   return new ModelClass();
 }
@@ -64,8 +100,8 @@ class EventSinkConfig extends LitMvvmElement {
   async _loadConfigComponent(model) {
     if (model) {
       try {
-        const configFormTemplate = await loadSinkDefinitionTemplate(model);
-        const configModel = await loadSinkDefinitionModel(model);
+        const configFormTemplate = await loadSinkDefinitionTemplate(model.profile.sinkType);
+        const configModel = await loadSinkDefinitionModel(model.profile.sinkType);
         utils.setTargetProperties(configModel, model.profile);
         this.sinkTypeTemplateHolder.tag = configFormTemplate(configModel);
       } catch (error) {
