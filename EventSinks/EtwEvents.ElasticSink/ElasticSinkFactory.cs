@@ -1,5 +1,4 @@
-﻿using System;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
@@ -28,11 +27,74 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         public string GetCredentialsJsonSchema() {
-            throw new NotImplementedException();
+            return @"
+{
+  ""type"": ""object"",
+  ""properties"": {
+                ""User"": {
+                    ""type"": [
+                      ""string"",
+        ""null""
+                  ]
+    },
+    ""Password"": {
+                    ""type"": [
+                      ""string"",
+        ""null""
+      ]
+    },
+    ""ApiKey"": {
+                    ""type"": [
+                      ""string"",
+        ""null""
+      ]
+    },
+    ""SubjectCN"": {
+                    ""type"": [
+                      ""string"",
+        ""null""
+      ]
+    }
+            },
+  ""required"": [
+    ""User"",
+    ""Password"",
+    ""ApiKey"",
+    ""SubjectCN""
+  ]
+}";
         }
 
         public string GetOptionsJsonSchema() {
-            throw new NotImplementedException();
+            return @"
+{
+  ""type"": ""object"",
+  ""properties"": {
+                ""Nodes"": {
+                    ""type"": [
+                      ""array"",
+        ""null""
+                  ],
+      ""items"": {
+                        ""type"": [
+                          ""string"",
+          ""null""
+        ]
+      }
+                },
+    ""IndexFormat"": {
+                    ""type"": [
+                      ""string"",
+        ""null""
+      ]
+    }
+            },
+  ""required"": [
+    ""Nodes"",
+    ""IndexFormat""
+  ]
+}
+";
         }
     }
 }

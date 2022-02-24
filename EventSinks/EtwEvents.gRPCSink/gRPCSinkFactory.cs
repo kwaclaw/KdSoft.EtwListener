@@ -6,7 +6,6 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Grpc.Net.Client;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Schema.Generation;
 using static KdSoft.EtwLogging.EtwSink;
 
 namespace KdSoft.EtwEvents.EventSinks
@@ -77,18 +76,12 @@ namespace KdSoft.EtwEvents.EventSinks
             return Create(options!, creds!, logger);
         }
 
-        static string GetJsonSchema<T>() {
-            var generator = new JSchemaGenerator();
-            var schema = generator.Generate(typeof(T));
-            return schema.ToString();
-        }
-
         public string GetCredentialsJsonSchema() {
-            return GetJsonSchema<gRPCSinkCredentials>();
+            return "";
         }
 
         public string GetOptionsJsonSchema() {
-            return GetJsonSchema<gRPCSinkOptions>();
+            return "";
         }
     }
 }

@@ -59,11 +59,11 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         public string GetCredentialsJsonSchema() {
-            throw new NotImplementedException();
+            return "";
         }
 
         public string GetOptionsJsonSchema() {
-            throw new NotImplementedException();
+            return "";
         }
     }
 }

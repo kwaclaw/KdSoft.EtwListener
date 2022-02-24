@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using Newtonsoft.Json.Schema.Generation;
 
 namespace KdSoft.EtwEvents.EventSinks
 {
@@ -67,18 +66,12 @@ namespace KdSoft.EtwEvents.EventSinks
             return Create(options!, creds!, logger);
         }
 
-        static string GetJsonSchema<T>() {
-            var generator = new JSchemaGenerator();
-            var schema = generator.Generate(typeof(T));
-            return schema.ToString();
-        }
-
         public string GetCredentialsJsonSchema() {
-            return GetJsonSchema<MongoSinkCredentials>();
+            return "";
         }
 
         public string GetOptionsJsonSchema() {
-            return GetJsonSchema<MongoSinkOptions>();
+            return "";
         }
     }
 }
