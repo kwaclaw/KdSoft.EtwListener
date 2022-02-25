@@ -123,6 +123,15 @@ class EtwAgent extends LitMvvmElement {
     });
   }
 
+  _updateEventSinksClick(e) {
+    const configForms = this.renderRoot.querySelectorAll('event-sink-config');
+    let isValid = true;
+    configForms.forEach(frm => { isValid = isValid && frm.isValid(); });
+    if (isValid) {
+      this.model.updateEventSinks();
+    }
+  }
+
   _exportEventSinksClick() {
     const activeAgentState = this.model.activeAgentState;
     if (!activeAgentState) return;
@@ -321,7 +330,7 @@ class EtwAgent extends LitMvvmElement {
             <button type="button" class="py-1 px-2" @click=${this._exportEventSinksClick} title="Export">
               <i class="fas fa-lg fa-file-export text-gray-600"></i>
             </button>
-            <button type="button" class="py-1 px-2 ml-auto" @click=${() => this.model.updateEventSinks()} title="Apply">
+            <button type="button" class="py-1 px-2 ml-auto" @click=${this._updateEventSinksClick} title="Apply">
               <i class="fas fa-lg fa-check text-green-500"></i>
             </button>
             <button type="button" class="py-1 px-2" @click=${() => this.model.resetEventSinks()} title="Reset to Current" autofocus>

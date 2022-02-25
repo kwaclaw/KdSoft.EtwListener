@@ -3,12 +3,18 @@
 class gRPCSinkConfigModel {
   constructor() {
     this.options = {
-      nodes: ['https://elastic-demo.test.com'],
-      indexFormat: 'demo-logs-test-{0:yyyy-MM-dd}',
+      host: '',
+      maxSendMessageSize: null,
+      maxReceiveMessageSize: null,
+      maxRetryAttempts: null,
+      maxRetryBufferSize: null,
+      maxRetryBufferPerCallSize: null
     };
     this.credentials = {
-      user: 'user',
-      password: 'pwd'
+      certificatePem: '',
+      certificateKeyPem: '',
+      certificateThumbPrint: '',
+      certificateSubjectCN: ''
     };
   }
 

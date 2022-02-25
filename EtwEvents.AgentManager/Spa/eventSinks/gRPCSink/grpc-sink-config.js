@@ -10,7 +10,9 @@ class gRPCSinkConfig extends LitMvvmElement {
   }
 
   isValid() {
-    return this.renderRoot.querySelector('form').reportValidity();
+    this._setValidatedCredentials();
+    const result = this.renderRoot.querySelector('form').reportValidity();
+    return result;
   }
 
   _optionsChange(e) {
@@ -18,45 +20,31 @@ class gRPCSinkConfig extends LitMvvmElement {
     this.model.options[e.target.name] = utils.getFieldValue(e.target);
   }
 
+  _setValidatedCredentials() {
+    const checkField = this.renderRoot.getElementById('check-credentials');
+    const certificatePem = utils.getFieldValue(this.renderRoot.getElementById('certificatePem'));
+    const certificateKeyPem = utils.getFieldValue(this.renderRoot.getElementById('certificateKeyPem'));
+    const certificateThumbPrint = utils.getFieldValue(this.renderRoot.getElementById('certificateThumbPrint'));
+    const certificateSubjectCN = utils.getFieldValue(this.renderRoot.getElementById('certificateSubjectCN'));
+    if (!!certificatePem && !!certificateKeyPem) {
+      checkField.setCustomValidity('');
+    } else if (!!certificateThumbPrint || !!certificateSubjectCN) {
+      checkField.setCustomValidity('');
+    } else {
+      checkField.setCustomValidity('Require credentials: Certificate Pem and Key Pem, or ThumbPrint or SubjectCN.');
+      return false;
+    }
+    this.model.certificatePem = certificatePem;
+    this.model.certificateKeyPem = certificateKeyPem;
+    this.model.certificateThumbPrint = certificateThumbPrint;
+    this.model.certificateSubjectCN = certificateSubjectCN;
+    return true;
+  }
+
   _credentialsChange(e) {
     e.stopPropagation();
-    this.model.credentials[e.target.name] = utils.getFieldValue(e.target);
-  }
-
-  _validateNodeUrls(nodesElement) {
-    const nodesStr = (nodesElement.value || '').trim();
-    if (!nodesStr) return [];
-
-    const nodes = nodesStr.split('\n');
-    const checkUrl = this.renderRoot.getElementById('check-url');
-
-    const invalidUrls = [];
-    for (const node of nodes) {
-      checkUrl.value = node;
-      if (!checkUrl.validity.valid) {
-        invalidUrls.push(node);
-      }
-    }
-
-    if (invalidUrls.length > 0) {
-      nodesElement.setCustomValidity(`Invalid URL(s):\n- ${invalidUrls.join('\n- ')}`);
-    } else {
-      nodesElement.setCustomValidity('');
-    }
-
-    return nodes;
-  }
-
-  _nodesChanged(e) {
-    e.stopPropagation();
-    const nodes = this._validateNodeUrls(e.target);
-    this.model.options.nodes = nodes;
+    this._setValidatedCredentials();
     e.target.reportValidity();
-  }
-
-  _nodeDeleted(e, index) {
-    e.stopPropagation();
-    this.model.options.nodes.splice(index, 1);
   }
 
   // first event when model is available
@@ -120,22 +108,26 @@ class gRPCSinkConfig extends LitMvvmElement {
   render() {
     const opts = this.model.options;
     const creds = this.model.credentials;
-    const nodesList = opts.nodes?.join('\n') || [];
 
     const result = html`
-      <form>
+      <form name="grpc-sink-config-form">
         <input type="url" id="check-url" name="url" style="display:none" />
         <section id="options" class="mb-5" @change=${this._optionsChange}>
           <fieldset>
             <legend>Options</legend>
             <div>
-              <label for="nodes">Hosts</label>
-              <textarea id="nodes" name="nodes"
-                cols="42" rows="3" wrap="hard"
-                @change=${this._nodesChanged}
-                placeholder="Enter one or more URLs, each on its own line" required>${nodesList}</textarea>
-              <label for="index">Index Format</label>
-              <input type="text" id="indexFormat" name="indexFormat" .value=${opts.indexFormat} />
+              <label for="host">Host</label>
+              <input type="url" id="host" name="host" .value=${opts.host} required></input>
+              <label for="maxSendMessageSize">MaxSendMessageSize</label>
+              <input type="number" id="maxSendMessageSize" name="maxSendMessageSize" min="0" .value=${opts.maxSendMessageSize} />
+              <label for="maxSendMessageSize">MaxReceiveMessageSize</label>
+              <input type="number" id="maxReceiveMessageSize" name="maxReceiveMessageSize" min="0" .value=${opts.maxReceiveMessageSize} />
+              <label for="maxRetryAttempts">MaxRetryAttempts</label>
+              <input type="number" id="maxRetryAttempts" name="maxRetryAttempts" min="0" .value=${opts.maxRetryAttempts} />
+              <label for="maxRetryBufferSize">MaxRetryBufferSize</label>
+              <input type="number" id="maxRetryBufferSize" name="maxRetryBufferSize" min="0" .value=${opts.maxRetryBufferSize} />
+              <label for="maxRetryBufferPerCallSize">MaxRetryBufferPerCallSize</label>
+              <input type="number" id="maxRetryBufferPerCallSize" name="maxRetryBufferPerCallSize" min="0" .value=${opts.maxRetryBufferPerCallSize} />
             </div>
           </fieldset>
         </section>
@@ -143,10 +135,15 @@ class gRPCSinkConfig extends LitMvvmElement {
           <fieldset>
             <legend>Credentials</legend>
             <div>
-              <label for="user">User</label>
-              <input type="text" id="user" name="user" .value=${creds.user} required></input>
-              <label for="password">Password</label>
-              <input type="password" id="password" name="password" .value=${creds.password} required></input>
+              <input id="check-credentials" style="display:none"></input>
+              <label for="certificatePem">Certificate Pem</label>
+              <textarea id="certificatePem" name="certificatePem" .value=${creds.certificatePem}></textarea>
+              <label for="certificateKeyPem">Certificate Key Pem</label>
+              <textarea id="certificateKeyPem" name="certificateKeyPem" .value=${creds.certificateKeyPem}></textarea>
+              <label for="certificateThumbPrint">Certificate ThumbPrint</label>
+              <input type="text" id="certificateThumbPrint" name="certificateThumbPrint" .value=${creds.certificateThumbPrint}></input>
+              <label for="certificateSubjectCN">Certificate SubjectCN</label>
+              <input type="text" id="certificateSubjectCN" name="certificateSubjectCN" .value=${creds.certificateSubjectCN}></input>
             </div>
           </fieldset>
         </section>

@@ -93,8 +93,8 @@ class EventSinkConfig extends LitMvvmElement {
     this.model.profile[e.target.name] = utils.getFieldValue(e.target);
   }
 
-  _isValid() {
-    return this.renderRoot.querySelector('#form-content form').reportValidity();
+  isValid() {
+    return this.renderRoot.querySelector('#form-content > *')?.isValid();
   }
 
   async _loadConfigComponent(model) {

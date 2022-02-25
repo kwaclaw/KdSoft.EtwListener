@@ -18,9 +18,31 @@ class ElasticSinkConfig extends LitMvvmElement {
     this.model.options[e.target.name] = utils.getFieldValue(e.target);
   }
 
+  _setValidatedCredentials() {
+    const credElement = this.renderRoot.getElementById('credentials');
+    const user = utils.getFieldValue(this.renderRoot.getElementById('user'));
+    const password = utils.getFieldValue(this.renderRoot.getElementById('password'));
+    const apiKey = utils.getFieldValue(this.renderRoot.getElementById('apiKey'));
+    const subjectCN = utils.getFieldValue(this.renderRoot.getElementById('subjectCN'));
+    if (!!user && !!password) {
+      credElement.setCustomValidity('');
+    } else if (!!apiKey || !!subjectCN) {
+      credElement.setCustomValidity('');
+    } else {
+      credElement.setCustomValidity('Require credentials: user and password, or apiKey or subjectCN.');
+      return false;
+    }
+    this.model.user = user;
+    this.model.password = password;
+    this.model.apiKey = apiKey;
+    this.model.subjectCN = subjectCN;
+    return true;
+  }
+
   _credentialsChange(e) {
     e.stopPropagation();
-    this.model.credentials[e.target.name] = utils.getFieldValue(e.target);
+    this._setValidatedCredentials();
+    e.target.reportValidity();
   }
 
   _validateNodeUrls(nodesElement) {
@@ -144,9 +166,13 @@ class ElasticSinkConfig extends LitMvvmElement {
             <legend>Credentials</legend>
             <div>
               <label for="user">User</label>
-              <input type="text" id="user" name="user" .value=${creds.user} required></input>
+              <input type="text" id="user" name="user" .value=${creds.user}></input>
               <label for="password">Password</label>
-              <input type="password" id="password" name="password" .value=${creds.password} required></input>
+              <input type="password" id="password" name="password" .value=${creds.password}></input>
+              <label for="apiKey">API Key</label>
+              <input type="text" id="apiKey" name="apiKey" .value=${creds.apiKey}></input>
+              <label for="subjectCN">Certificate Subject CN</label>
+              <input type="text" id="subjectCN" name="subjectCN" .value=${creds.subjectCN}></input>
             </div>
           </fieldset>
         </section>

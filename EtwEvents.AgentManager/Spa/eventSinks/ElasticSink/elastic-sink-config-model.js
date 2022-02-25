@@ -8,7 +8,9 @@ class ElasticSinkConfigModel {
     };
     this.credentials = {
       user: 'user',
-      password: 'pwd'
+      password: 'pwd',
+      apiKey: '',
+      subjectCN: ''
     };
   }
 

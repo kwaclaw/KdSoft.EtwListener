@@ -96,6 +96,8 @@ class RollingFileSinkConfig extends LitMvvmElement {
               <input type="number" id="maxFileCount" name="maxFileCount" .value=${opts.maxFileCount}></input>
               <label for="newFileOnStartup">New File on Startup</label>
               <input type="checkbox" id="newFileOnStartup" name="newFileOnStartup" .checked=${opts.newFileOnStartup}></input>
+              <label for="relaxedJsonEscaping">Relaxed JSON Escaping</label>
+              <input type="checkbox" id="relaxedJsonEscaping" name="relaxedJsonEscaping" .checked=${opts.relaxedJsonEscaping}></input>
             </div>
           </fieldset>
         </section>
