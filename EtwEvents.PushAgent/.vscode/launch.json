@@ -11,7 +11,7 @@
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
             "program": "${workspaceFolder}/bin/Debug/net6.0/KdSoft.EtwEvents.PushAgent.dll",
-            "args": ["--Site=Test-Home"],
+            "args": [],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
             "env": {
