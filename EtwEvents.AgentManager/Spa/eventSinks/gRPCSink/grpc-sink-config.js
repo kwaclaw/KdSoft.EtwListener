@@ -1,6 +1,7 @@
 ﻿import { LitMvvmElement, html, css } from '@kdsoft/lit-mvvm';
 import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
 import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
+import '../../components/valid-section.js';
 import * as utils from '../../js/utils.js';
 
 class gRPCSinkConfig extends LitMvvmElement {
@@ -10,7 +11,8 @@ class gRPCSinkConfig extends LitMvvmElement {
   }
 
   isValid() {
-    this._setValidatedCredentials();
+    const validatedSection = this.renderRoot.getElementById('credentials');
+    this._setValidatedCredentials(validatedSection);
     const result = this.renderRoot.querySelector('form').reportValidity();
     return result;
   }
@@ -20,18 +22,20 @@ class gRPCSinkConfig extends LitMvvmElement {
     this.model.options[e.target.name] = utils.getFieldValue(e.target);
   }
 
-  _setValidatedCredentials() {
-    const checkField = this.renderRoot.getElementById('check-credentials');
+  //TODO see https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements
+  // and see https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/attachInternals
+
+  _setValidatedCredentials(validatedElement) {
     const certificatePem = utils.getFieldValue(this.renderRoot.getElementById('certificatePem'));
     const certificateKeyPem = utils.getFieldValue(this.renderRoot.getElementById('certificateKeyPem'));
     const certificateThumbPrint = utils.getFieldValue(this.renderRoot.getElementById('certificateThumbPrint'));
     const certificateSubjectCN = utils.getFieldValue(this.renderRoot.getElementById('certificateSubjectCN'));
     if (!!certificatePem && !!certificateKeyPem) {
-      checkField.setCustomValidity('');
+      validatedElement.setCustomValidity('');
     } else if (!!certificateThumbPrint || !!certificateSubjectCN) {
-      checkField.setCustomValidity('');
+      validatedElement.setCustomValidity('');
     } else {
-      checkField.setCustomValidity('Require credentials: Certificate Pem and Key Pem, or ThumbPrint or SubjectCN.');
+      validatedElement.setCustomValidity('Require credentials: Certificate Pem and Key Pem, or ThumbPrint or SubjectCN.');
       return false;
     }
     this.model.certificatePem = certificatePem;
@@ -43,8 +47,9 @@ class gRPCSinkConfig extends LitMvvmElement {
 
   _credentialsChange(e) {
     e.stopPropagation();
-    this._setValidatedCredentials();
-    e.target.reportValidity();
+    const validatedSection = this.renderRoot.getElementById('credentials');
+    this._setValidatedCredentials(validatedSection);
+    validatedSection.reportValidity();
   }
 
   // first event when model is available
@@ -73,16 +78,17 @@ class gRPCSinkConfig extends LitMvvmElement {
           color: #718096;
         }
 
-        section {
+        valid-section {
           min-width: 75%;
+          width: 100%;
         }
 
-        section fieldset {
+        valid-section fieldset {
           padding: 5px;
           border-width: 1px;
         }
 
-        section fieldset > div {
+        valid-section fieldset > div {
           display:grid;
           grid-template-columns: auto auto;
           align-items: baseline;
@@ -112,7 +118,7 @@ class gRPCSinkConfig extends LitMvvmElement {
     const result = html`
       <form name="grpc-sink-config-form">
         <input type="url" id="check-url" name="url" style="display:none" />
-        <section id="options" class="mb-5" @change=${this._optionsChange}>
+        <valid-section id="options" class="mb-5" @change=${this._optionsChange}>
           <fieldset>
             <legend>Options</legend>
             <div>
@@ -130,12 +136,11 @@ class gRPCSinkConfig extends LitMvvmElement {
               <input type="number" id="maxRetryBufferPerCallSize" name="maxRetryBufferPerCallSize" min="0" .value=${opts.maxRetryBufferPerCallSize} />
             </div>
           </fieldset>
-        </section>
-        <section id="credentials" @change=${this._credentialsChange}>
+        </valid-section>
+        <valid-section id="credentials" @change=${this._credentialsChange}>
           <fieldset>
             <legend>Credentials</legend>
             <div>
-              <input id="check-credentials" style="display:none"></input>
               <label for="certificatePem">Certificate Pem</label>
               <textarea id="certificatePem" name="certificatePem" .value=${creds.certificatePem}></textarea>
               <label for="certificateKeyPem">Certificate Key Pem</label>
@@ -146,7 +151,7 @@ class gRPCSinkConfig extends LitMvvmElement {
               <input type="text" id="certificateSubjectCN" name="certificateSubjectCN" .value=${creds.certificateSubjectCN}></input>
             </div>
           </fieldset>
-        </section>
+        </valid-section>
       </form>
     `;
     return result;

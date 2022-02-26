@@ -1,6 +1,7 @@
 ﻿import { LitMvvmElement, html, css } from '@kdsoft/lit-mvvm';
 import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
 import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
+import '../../components/valid-section.js';
 import * as utils from '../../js/utils.js';
 
 class ElasticSinkConfig extends LitMvvmElement {
@@ -10,6 +11,8 @@ class ElasticSinkConfig extends LitMvvmElement {
   }
 
   isValid() {
+    const validatedElement = this.renderRoot.getElementById('credentials');
+    this._setValidatedCredentials(validatedElement);
     return this.renderRoot.querySelector('form').reportValidity();
   }
 
@@ -18,18 +21,17 @@ class ElasticSinkConfig extends LitMvvmElement {
     this.model.options[e.target.name] = utils.getFieldValue(e.target);
   }
 
-  _setValidatedCredentials() {
-    const credElement = this.renderRoot.getElementById('credentials');
+  _setValidatedCredentials(validatedElement) {
     const user = utils.getFieldValue(this.renderRoot.getElementById('user'));
     const password = utils.getFieldValue(this.renderRoot.getElementById('password'));
     const apiKey = utils.getFieldValue(this.renderRoot.getElementById('apiKey'));
     const subjectCN = utils.getFieldValue(this.renderRoot.getElementById('subjectCN'));
     if (!!user && !!password) {
-      credElement.setCustomValidity('');
+      validatedElement.setCustomValidity('');
     } else if (!!apiKey || !!subjectCN) {
-      credElement.setCustomValidity('');
+      validatedElement.setCustomValidity('');
     } else {
-      credElement.setCustomValidity('Require credentials: user and password, or apiKey or subjectCN.');
+      validatedElement.setCustomValidity('Require credentials: user and password, or apiKey or subjectCN.');
       return false;
     }
     this.model.user = user;
@@ -41,8 +43,9 @@ class ElasticSinkConfig extends LitMvvmElement {
 
   _credentialsChange(e) {
     e.stopPropagation();
-    this._setValidatedCredentials();
-    e.target.reportValidity();
+    const validatedElement = this.renderRoot.getElementById('credentials');
+    this._setValidatedCredentials(validatedElement);
+    validatedElement.reportValidity();
   }
 
   _validateNodeUrls(nodesElement) {
@@ -107,16 +110,16 @@ class ElasticSinkConfig extends LitMvvmElement {
           color: #718096;
         }
 
-        section {
+        valid-section {
           min-width: 75%;
         }
 
-        section fieldset {
+        valid-section fieldset {
           padding: 5px;
           border-width: 1px;
         }
 
-        section fieldset > div {
+        valid-section fieldset > div {
           display:grid;
           grid-template-columns: auto auto;
           align-items: baseline;
@@ -147,7 +150,7 @@ class ElasticSinkConfig extends LitMvvmElement {
     const result = html`
       <form>
         <input type="url" id="check-url" name="url" style="display:none" />
-        <section id="options" class="mb-5" @change=${this._optionsChange}>
+        <valid-section id="options" class="mb-5" @change=${this._optionsChange}>
           <fieldset>
             <legend>Options</legend>
             <div>
@@ -160,8 +163,8 @@ class ElasticSinkConfig extends LitMvvmElement {
               <input type="text" id="indexFormat" name="indexFormat" .value=${opts.indexFormat} />
             </div>
           </fieldset>
-        </section>
-        <section id="credentials" @change=${this._credentialsChange}>
+        </valid-section>
+        <valid-section id="credentials" @change=${this._credentialsChange}>
           <fieldset>
             <legend>Credentials</legend>
             <div>
@@ -175,7 +178,7 @@ class ElasticSinkConfig extends LitMvvmElement {
               <input type="text" id="subjectCN" name="subjectCN" .value=${creds.subjectCN}></input>
             </div>
           </fieldset>
-        </section>
+        </valid-section>
       </form>
     `;
     return result;

@@ -1,4 +1,4 @@
-﻿import { observable, observe, unobserve, raw } from '@nx-js/observer-util/dist/es.es6.js';
+﻿import { observable} from '@nx-js/observer-util/dist/es.es6.js';
 import { LitMvvmElement, html, css } from '@kdsoft/lit-mvvm';
 import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
 import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
@@ -10,6 +10,7 @@ import {
   KdSoftDropdownChecklistConnector,
 } from '@kdsoft/lit-mvvm-components';
 import MongoSinkConfigModel from './mongo-sink-config-model.js';
+import '../../components/valid-section.js';
 import * as utils from '../../js/utils.js';
 
 class MongoSinkConfig extends LitMvvmElement {
@@ -20,6 +21,8 @@ class MongoSinkConfig extends LitMvvmElement {
   }
 
   isValid() {
+    const validatedSection = this.renderRoot.getElementById('credentials');
+    this._setValidatedCredentials(validatedSection);
     return this.renderRoot.querySelector('form').reportValidity();
   }
 
@@ -35,33 +38,33 @@ class MongoSinkConfig extends LitMvvmElement {
     this.model.options[e.target.name] = (e.target.value || '').split(sepRegex);
   }
 
-  _validateCredentials() {
-    const certCN = this.renderRoot.getElementById('certCN');
-    const user = this.renderRoot.getElementById('user');
-    const pwd = this.renderRoot.getElementById('password');
-    if (certCN.value || (user.value && pwd.value)) {
-      certCN.setCustomValidity('');
-      user.setCustomValidity('');
-      pwd.setCustomValidity('');
+  _setValidatedCredentials(validatedElement) {
+    const certCN = utils.getFieldValue(this.renderRoot.getElementById('certCN'));
+    const user = utils.getFieldValue(this.renderRoot.getElementById('user'));
+    const pwd = utils.getFieldValue(this.renderRoot.getElementById('password'));
+    if (certCN || (user && pwd)) {
+      validatedElement.setCustomValidity('');
+      this.model.certificateCommonName = certCN;
+      this.model.user = user;
+      this.model.password = pwd;
       return true;
     }
     // change validity on first empty control, we can't really use a hidden/invisible/zero-size control
     // as the browser will not show the message on a hidden or invisible or zero-size control
     const msg = 'At least one of certificate or user/password information must be filled in.';
-    if (!certCN.value && !!user.value && !pwd.value) {
-      certCN.setCustomValidity(msg);
-    } else if (!user.value) {
-      user.setCustomValidity(msg);
-    } else if (!pwd.value) {
-      pwd.setCustomValidity(msg);
-    }
+    validatedElement.setCustomValidity(msg);
     return false;
   }
 
   _credentialsChange(e) {
     e.stopPropagation();
-    this.model.credentials[e.target.name] = utils.getFieldValue(e.target);
-    this._validateCredentials();
+    if (e.target.name === 'database') {
+      this.model.credentials[e.target.name] = utils.getFieldValue(e.target);
+    } else {
+      const validatedSection = this.renderRoot.getElementById('credentials');
+      this._setValidatedCredentials(validatedSection);
+      validatedSection.reportValidity();
+    }
   }
 
   // first event when model is available
@@ -112,16 +115,16 @@ class MongoSinkConfig extends LitMvvmElement {
           color: #718096;
         }
 
-        section {
+        valid-section {
           min-width: 75%;
         }
 
-        section fieldset {
+        valid-section fieldset {
           padding: 5px;
           border-width: 1px;
         }
 
-        section fieldset > div {
+        valid-section fieldset > div {
           display:grid;
           grid-template-columns: auto auto;
           align-items: baseline;
@@ -143,7 +146,7 @@ class MongoSinkConfig extends LitMvvmElement {
 
     const result = html`
       <form>
-        <section id="options" class="mb-5" @change=${this._optionsChange}>
+        <valid-section id="options" class="mb-5" @change=${this._optionsChange}>
           <fieldset>
             <legend>Options</legend>
             <div>
@@ -169,8 +172,8 @@ class MongoSinkConfig extends LitMvvmElement {
               <input type="text" id="payloadFilterFields" name="payloadFilterFields" .value=${payloadFieldsList} @change=${this._fieldListChange}></input>
             </div>
           </fieldset>
-        </section>
-        <section id="credentials" @change=${this._credentialsChange}>
+        </valid-section>
+        <valid-section id="credentials" @change=${this._credentialsChange}>
           <fieldset>
             <legend>Credentials</legend>
             <div>
@@ -184,7 +187,7 @@ class MongoSinkConfig extends LitMvvmElement {
               <input type="password" id="password" name="password" .value=${creds.password}></input>
             </div>
           </fieldset>
-        </section>
+        </valid-section>
       </form>
     `;
     return result;
