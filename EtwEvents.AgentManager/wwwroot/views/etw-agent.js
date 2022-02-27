@@ -378,7 +378,7 @@ class EtwAgent extends LitMvvmElement {
             <button type="submit" class="py-1 px-2 ml-auto" title="Add">
               <i class="fas fa-lg fa-check text-green-500"></i>
             </button>
-            <button type="reset" class="py-1 px-2"title="Cancel">
+            <button type="reset" class="py-1 px-2" title="Cancel">
               <i class="fas fa-lg fa-times text-red-500"></i>
             </button>
           </div>

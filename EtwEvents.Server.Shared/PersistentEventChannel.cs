@@ -180,11 +180,9 @@ namespace KdSoft.EtwEvents.Server
                 return;
             try {
                 cts.Cancel();
-
                 var runTask = this.RunTask;
                 if (runTask != null)
                     await runTask.ConfigureAwait(false);
-
                 _channel.Dispose();
             }
             catch (Exception ex) {
