@@ -91,7 +91,9 @@ class EtwAgent extends LitMvvmElement {
     dlg.showModal();
   }
 
-  _okAddEventSinkClick(e) {
+  _okAddEventSink(e) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
     const form = e.currentTarget.closest('form');
     const sinkname = form.querySelector('#sink-name');
     const sinklist = form.querySelector('#sinktype-list');
@@ -104,7 +106,7 @@ class EtwAgent extends LitMvvmElement {
     form.parentElement.close();
   }
 
-  _cancelAddEventSinkClick(e) {
+  _cancelAddEventSink(e) {
     const dlg = e.currentTarget.closest('dialog');
     dlg.close();
   }
@@ -358,7 +360,7 @@ class EtwAgent extends LitMvvmElement {
       </div>
 
       <dialog id="dlg-add-event-sink" class="${dialogClass}">
-        <form name="add-event-sink">
+        <form name="add-event-sink" @submit=${this._okAddEventSink} @reset=${this._cancelAddEventSink}>
           <label for="sinktype-ddown">Name</label>
           <input id="sink-name" name="name" type="text" required />
           <label for="sinktype-ddown">Sink Type</label>
@@ -373,10 +375,10 @@ class EtwAgent extends LitMvvmElement {
           </etw-checklist>
           <span></span>
           <div class="flex flex-wrap ml-auto mt-2 bt-1">
-            <button type="button" class="py-1 px-2 ml-auto" @click=${this._okAddEventSinkClick} title="Add">
+            <button type="submit" class="py-1 px-2 ml-auto" title="Add">
               <i class="fas fa-lg fa-check text-green-500"></i>
             </button>
-            <button type="button" class="py-1 px-2" @click=${this._cancelAddEventSinkClick} title="Cancel">
+            <button type="reset" class="py-1 px-2"title="Cancel">
               <i class="fas fa-lg fa-times text-red-500"></i>
             </button>
           </div>
