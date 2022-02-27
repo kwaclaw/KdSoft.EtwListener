@@ -323,6 +323,19 @@ namespace KdSoft.EtwEvents.AgentManager
                 receivingSource.TrySetException(ex);
             }
 
+            var evt = new ControlEvent {
+                Id = proxy.GetNextEventId().ToString(),
+                Event = Constants.StopLiveViewSinkEvent,
+            };
+
+            if (!proxy.Post(evt)) {
+                var pd = new ProblemDetails {
+                    Status = (int)HttpStatusCode.InternalServerError,
+                    Title = "Could not post message.",
+                };
+                return StatusCode(pd.Status.Value, pd);
+            }
+
             // OkResult not right here, tries to set status code which is not allowed once the response has started
             return new EmptyResult();
         }
