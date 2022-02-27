@@ -32,7 +32,10 @@
     <Content Include="EventSinks/**/*" Exclude="EventSinks/**/*.json">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
-    <Content Update="Spa/**/*">
+    <Content Update="wwwroot/node_modules/**/*;wwwroot/_tmp/**/*;wwwroot/localize/**/*">
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </Content>
+    <Content Update="wwwroot/package*.json">
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </Content>
     <Content Update="appSettings.Development.json">
@@ -41,25 +44,61 @@
   </ItemGroup>
 
   <ItemGroup>
-    <FontAwsomeSprites Include="Spa/css/fontawesome/sprites/**/*" />
-    <FontAwsomeSvgs Include="Spa/css/fontawesome/svgs/**/*" />
-    <FontAwsomeWebfonts Include="Spa/css/fontawesome/webfonts/**/*" />
-  </ItemGroup>
+    <!--<ResolvedFileToPublish Include="node_modules/@kdsoft/**/*">
+      <RelativePath>wwwroot/lib/%(RecursiveDir)%(Filename)%(Extension)</RelativePath>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </ResolvedFileToPublish>-->
+    
+    <KdSoft_Modules Include="$(MSBuildProjectDirectory)/wwwroot/node_modules/@kdsoft/**/*" />
+    <DotNetPublishFiles Include="@(KdSoft_Modules)">
+      <DestinationRelativePath>wwwroot/lib/@kdsoft/%(RecursiveDir)%(Filename)%(Extension)</DestinationRelativePath>
+    </DotNetPublishFiles>
+    
+    <NxJs_Modules Include="$(MSBuildProjectDirectory)/wwwroot/node_modules/@nx-js/**/*" />
+    <DotNetPublishFiles Include="@(NxJs_Modules)">
+      <DestinationRelativePath>wwwroot/lib/@nx-js/%(RecursiveDir)%(Filename)%(Extension)</DestinationRelativePath>
+    </DotNetPublishFiles>
+    
+    <Lit_Modules Include="$(MSBuildProjectDirectory)/wwwroot/node_modules/lit/**/*" />
+    <DotNetPublishFiles Include="@(Lit_Modules)">
+      <DestinationRelativePath>wwwroot/lib/lit/%(RecursiveDir)%(Filename)%(Extension)</DestinationRelativePath>
+    </DotNetPublishFiles>
+    
+    <LitReactive_Modules Include="$(MSBuildProjectDirectory)/wwwroot/node_modules/@lit/reactive-element/**/*" />
+    <DotNetPublishFiles Include="@(LitReactive_Modules)">
+      <DestinationRelativePath>wwwroot/lib/@lit/reactive-element/%(RecursiveDir)%(Filename)%(Extension)</DestinationRelativePath>
+    </DotNetPublishFiles>
+    
+    <Lit_Html_Modules Include="$(MSBuildProjectDirectory)/wwwroot/node_modules/lit-html/**/*" />
+    <DotNetPublishFiles Include="@(Lit_Html_Modules)">
+      <DestinationRelativePath>wwwroot/lib/lit-html/%(RecursiveDir)%(Filename)%(Extension)</DestinationRelativePath>
+    </DotNetPublishFiles>
+    
+    <Lit_Element_Modules Include="$(MSBuildProjectDirectory)/wwwroot/node_modules/lit-element/**/*" />
+    <DotNetPublishFiles Include="@(Lit_Element_Modules)">
+      <DestinationRelativePath>wwwroot/lib/lit-element/%(RecursiveDir)%(Filename)%(Extension)</DestinationRelativePath>
+    </DotNetPublishFiles>
+    
+    <Dialog_Modules Include="$(MSBuildProjectDirectory)/wwwroot/node_modules/dialog-polyfill/**/*" />
+    <DotNetPublishFiles Include="@(Dialog_Modules)">
+      <DestinationRelativePath>wwwroot/lib/dialog-polyfill/%(RecursiveDir)%(Filename)%(Extension)</DestinationRelativePath>
+    </DotNetPublishFiles>
 
-  <ItemGroup>
-    <Content Remove="Spa/css/fontawesome/metadata/**/*" />
+    <Po2json_Modules Include="$(MSBuildProjectDirectory)/wwwroot/node_modules/po2json/**/*" />
+    <DotNetPublishFiles Include="@(Po2json_Modules)">
+      <DestinationRelativePath>wwwroot/lib/po2json/%(RecursiveDir)%(Filename)%(Extension)</DestinationRelativePath>
+    </DotNetPublishFiles>
+    
+    <GetText_Modules Include="$(MSBuildProjectDirectory)/wwwroot/node_modules/gettext.js/**/*" />
+    <DotNetPublishFiles Include="@(GetText_Modules)">
+      <DestinationRelativePath>wwwroot/lib/gettext.js/%(RecursiveDir)%(Filename)%(Extension)</DestinationRelativePath>
+    </DotNetPublishFiles>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\EtwEvents.Client.Shared\EtwEvents.Client.Shared.csproj" />
     <ProjectReference Include="..\EventSinks\EtwEvents.gRPCSink\EtwEvents.gRPCSink.csproj" />
   </ItemGroup>
-
-  <Target Name="PostCSS" BeforeTargets="Build">
-    <Copy SourceFiles="@(FontAwsomeSprites)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeSprites->'wwwroot/css/fontawesome/sprites/%(RecursiveDir)%(Filename)%(Extension)')" />
-    <Copy SourceFiles="@(FontAwsomeSvgs)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeSvgs->'wwwroot/css/fontawesome/svgs/%(RecursiveDir)%(Filename)%(Extension)')" />
-    <Copy SourceFiles="@(FontAwsomeWebfonts)" SkipUnchangedFiles="true" DestinationFiles="@(FontAwsomeWebfonts->'wwwroot/css/fontawesome/webfonts/%(RecursiveDir)%(Filename)%(Extension)')" />
-  </Target>
 
   <Target Name="CopyEventSinks" AfterTargets="PostBuildEvent">
     <ItemGroup>
