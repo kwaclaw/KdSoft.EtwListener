@@ -152,10 +152,6 @@ namespace KdSoft.EtwEvents.AgentManager
                     manager.FeatureProviders.Add(new ManagerControllerFeatureProvider());
                 });
 
-            services.AddSpaStaticFiles(configuration => {
-                configuration.RootPath = ".";
-            });
-
             services.Configure<ApiBehaviorOptions>(options => {
                 options.SuppressModelStateInvalidFilter = true;
             });
@@ -186,9 +182,6 @@ namespace KdSoft.EtwEvents.AgentManager
             app.UseRequestLocalization();
 
             app.UseStaticFiles();
-            if (env.IsDevelopment()) {
-                app.UseSpaStaticFiles();
-            }
 
             app.UseRouting();
 
@@ -201,17 +194,6 @@ namespace KdSoft.EtwEvents.AgentManager
                 endpoints.MapControllers();
                 endpoints.MapGrpcService<EventSinkService>();
             });
-
-            if (env.IsDevelopment()) {
-                app.UseSpa(spa => {
-                    spa.Options.SourcePath = "./Spa";
-                    //spa.Options.DevServerPort = 41000;
-                    // spa.UseReactDevelopmentServer("dev");
-
-                    // SPA dev server needs to be started separately
-                    spa.UseProxyToSpaDevelopmentServer("http://localhost:41000");
-                });
-            }
         }
 
         /// <summary>

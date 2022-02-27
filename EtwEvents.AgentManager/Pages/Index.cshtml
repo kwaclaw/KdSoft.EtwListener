@@ -1,12 +1,18 @@
 ﻿@page
+
+@using Microsoft.AspNetCore.Hosting
+@using Microsoft.Extensions.Hosting
+@inject IWebHostEnvironment Environment
+
 @model IndexModel
 @{
     ViewData["Title"] = "Home page";
+    var importRoot =  Environment.IsDevelopment() ? "./node_modules" : "./lib";
 }
 
 @section Styles{
     <!-- Seems that fonts cannot be loaded from within a web component -->
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <style>
         etw-app {
             height: 100vh;
@@ -15,13 +21,39 @@
 }
 
 @section Scripts {
+    <script async src="https://ga.jspm.io/npm:es-module-shims@1.4.6/dist/es-module-shims.js"></script> 
     <environment names="Development">
-        <script type="module" src="http://localhost:41000/index.js"></script>
     </environment>
     <environment names="Staging,Production">
-        <link href="manifest.json" rel="manifest" />
-        <script type="module" asp-src-include="~/assets/main.*.js"></script>
     </environment>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "lit": "@(importRoot)/lit/index.js",
+            "lit/": "@(importRoot)/lit/",
+            "lit/directives/": "@(importRoot)/lit-html/directives/",
+            "lit-html": "@(importRoot)/lit-html/lit-html.js",
+            "lit-html/": "@(importRoot)/lit-html/",
+            "lit-element/lit-element.js": "@(importRoot)/lit-element/lit-element.js",
+            "@@lit/reactive-element": "@(importRoot)/@@lit/reactive-element/reactive-element.js",
+            "@@lit/reactive-element/": "@(importRoot)/@@lit/reactive-element/",
+            "@@kdsoft/": "@(importRoot)/@@kdsoft/",
+            "@@kdsoft/lit-mvvm": "@(importRoot)/@@kdsoft/lit-mvvm/lit-mvvm.js",
+            "@@kdsoft/lit-mvvm/": "@(importRoot)/@@kdsoft/lit-mvvm/",
+            "@@kdsoft/lit-mvvm-components": "@(importRoot)/@@kdsoft/lit-mvvm-components/lit-mvvm-components.js",
+            "@@kdsoft/lit-mvvm-components/": "@(importRoot)/@@kdsoft/lit-mvvm-components/",
+            "@@nx-js/observer-util": "@(importRoot)/@@nx-js/observer-util/dist/es.es6.js",
+            "@@nx-js/queue-util": "@(importRoot)/@@nx-js/queue-util/dist/es.es6.js",
+            "@@nx-js/": "@(importRoot)/@@nx-js/",
+            "dialog-polyfill": "@(importRoot)/dialog-polyfill/index.js",
+            "po2json": "@(importRoot)/po2json/index.js",
+            "gettext.js": "@(importRoot)/gettext.js/lib/gettext.js"
+        }
+    }
+    </script>
+
+    <script type="module" src="./index.js"></script>
 }
 
 <etw-app appTitle="ETW Agent Manager"></etw-app>

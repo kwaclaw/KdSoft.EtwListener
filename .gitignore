@@ -32,8 +32,6 @@ _ReSharper*/
 packages/
 
 node_modules/
-wwwroot/css/
-wwwroot/lib
 
 */deploy/publish/
 out/
