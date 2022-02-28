@@ -62,7 +62,8 @@ namespace KdSoft.EtwEvents.Server
 
             if (IsCreated) {
                 _instance.EnableProviderTimeoutMSec = 10000;
-                _instance.StopOnDispose = false;
+                // we don't want the trace session to keep running
+                // _instance.StopOnDispose = false;
                 _instance.EnableProvider(TplActivities.TplEventSourceGuid, tracing.TraceEventLevel.Always, TplActivities.TaskFlowActivityIdsKeyword);
             }
         }
@@ -74,7 +75,13 @@ namespace KdSoft.EtwEvents.Server
             var inst = _instance;
             if (inst != null) {
                 _instance = null;
-                try { inst.Dispose(); }
+                try {
+                    inst.Flush();
+                    // when StopOnDispose = false then it appears the trace session will not be shut down on Dispose()!
+                    // using "logman query -ets" to check
+                    //inst.Stop();
+                    inst.Dispose();
+                }
                 catch { /* ignore */ }
             }
 
