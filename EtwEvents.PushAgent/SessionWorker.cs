@@ -341,7 +341,8 @@ namespace KdSoft.EtwEvents.PushAgent
                 }
 
                 var logger = _loggerFactory.CreateLogger<RealTimeTraceSession>();
-                var session = new RealTimeTraceSession("default", TimeSpan.MaxValue, logger, false);
+                var sessionName = Constants.TraceSessionNamePrefix + "_" + DateTimeOffset.UtcNow.ToString("yyyy-MM-dd_hhmmss.f");
+                var session = new RealTimeTraceSession(sessionName, TimeSpan.MaxValue, logger, false);
                 this._session = session;
 
                 stoppingToken.Register(() => {

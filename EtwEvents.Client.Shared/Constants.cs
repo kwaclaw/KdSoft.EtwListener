@@ -2,6 +2,7 @@
 {
     public static class Constants
     {
+        public const string TraceSessionNamePrefix = "KdSoft-ETW-Agent";
         public const string EventStreamHeaderValue = "text/event-stream";
         public const string CloseEvent = "##close";
         public const string KeepAliveEvent = "##keepAlive";
