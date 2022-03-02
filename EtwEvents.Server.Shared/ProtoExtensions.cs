@@ -72,9 +72,9 @@ namespace KdSoft.EtwLogging
             for (int indx = 0; indx < linePositionSpans.Count; indx++) {
                 var linePositionSpan = linePositionSpans[indx];
                 var lineSpan = new LineSpan {
-                     Start = linePositionSpan.Start.Line,
-                     End = linePositionSpan.End.Line,
-                     Indent = dynamicParts[indx].Indent
+                    Start = linePositionSpan.Start.Line,
+                    End = linePositionSpan.End.Line,
+                    Indent = dynamicParts[indx].Indent
                 };
                 filterSource.DynamicLineSpans.Add(lineSpan);
             }

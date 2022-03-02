@@ -8,7 +8,8 @@ using Microsoft.Diagnostics.Tracing;
 
 namespace KdSoft.EtwEvents.Server
 {
-    public class EventProcessor: IAsyncDisposable {
+    public class EventProcessor: IAsyncDisposable
+    {
         readonly object _eventChannelLock = new object();
 
         ImmutableDictionary<string, EventChannel> _activeEventChannels;
@@ -72,7 +73,7 @@ namespace KdSoft.EtwEvents.Server
         /// <returns>Newly added EventChannel.</returns>
         /// <exception cref="InvalidOperationException"></exception>
         /// <remarks>To remove an event channel, simply dispose it.</remarks>
-        public T AddChannel<T>(string name, IEventSink sink, Func<IEventSink, T> createChannel) where T: EventChannel {
+        public T AddChannel<T>(string name, IEventSink sink, Func<IEventSink, T> createChannel) where T : EventChannel {
             T newChannel;
             lock (_eventChannelLock) {
                 if (_stopping) {

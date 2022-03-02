@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents;
@@ -29,7 +28,7 @@ namespace EtwEvents.Tests
 
             var cycleIndex = _optionsCounter++ % options!.LifeCycles.Count;
             options.ActiveCycle = cycleIndex;
-            
+
             // pass Event to next cycle, since two cycles could deal with the same event
             var previousCycle = _sinkLifeCycles.LastOrDefault();
             var previousEvent = previousCycle?.Event;

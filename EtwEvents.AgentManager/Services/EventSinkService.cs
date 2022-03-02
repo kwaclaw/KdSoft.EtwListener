@@ -37,7 +37,7 @@ namespace KdSoft.EtwEvents.AgentManager
 
             try {
                 var eventCount = await proxy.ProcessEventStream(requestStream).ConfigureAwait(false);
-                return new EtwEventResponse {  EventsReceived = eventCount };
+                return new EtwEventResponse { EventsReceived = eventCount };
             }
             catch (Exception ex) {
                 if (context.CancellationToken.IsCancellationRequested) {

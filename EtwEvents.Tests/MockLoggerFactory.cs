@@ -18,7 +18,7 @@ namespace EtwEvents.Tests
 
         public void AddProvider(ILoggerProvider provider) { }
         public ILogger CreateLogger(string categoryName) {
-            var result =  new MockLogger(categoryName, _scopeProvider);
+            var result = new MockLogger(categoryName, _scopeProvider);
             _loggers.Add(result);
             return result;
         }

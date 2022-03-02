@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using Google.Protobuf;
-using Google.Protobuf.Collections;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;

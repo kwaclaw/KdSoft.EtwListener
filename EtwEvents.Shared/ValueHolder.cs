@@ -1,6 +1,6 @@
 ﻿namespace KdSoft.EtwEvents
 {
-    public class ValueHolder<T> where T: notnull, new()
+    public class ValueHolder<T> where T : notnull, new()
     {
         public T Value { get; set; } = new T();
 
@@ -10,8 +10,8 @@
     }
 
     public class ValueHolder<T, V>
-        where T: notnull, new()
-        where V: notnull, new()
+        where T : notnull, new()
+        where V : notnull, new()
     {
         public T Value1 { get; set; } = new T();
         public V Value2 { get; set; } = new V();

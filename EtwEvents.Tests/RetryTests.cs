@@ -234,10 +234,10 @@ namespace EtwEvents.Tests
             // using Tuples instead of ValueTuples, as the latter won't be serialized into JSON
             var lf1 = Tuple.Create(6, TimeSpan.FromMilliseconds(100));
             var lf2 = Tuple.Create(11, TimeSpan.FromMilliseconds(90));
-            var lf3= Tuple.Create(17, TimeSpan.FromMilliseconds(110));
+            var lf3 = Tuple.Create(17, TimeSpan.FromMilliseconds(110));
             var lff = Tuple.Create(0, TimeSpan.FromMilliseconds(350));
             var sinkOptions = new MockSinkOptions {
-                LifeCycles = { 
+                LifeCycles = {
                     lf1, lff, lff, lff, lff, lf2, lf3, lff, lff, lff, lff, lff, lff, lff, lff, lff,
                     lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff,
                     lff, lff, lff, lf1, lf1, lf1, lff, lff, lff, lff, lff, lff, lff, lff, lff, lff,
@@ -262,14 +262,14 @@ namespace EtwEvents.Tests
             );
 
             var testLogger = loggerFactory.CreateLogger("retry-test");
-            var writeLoops = new List<(EtwEvent evt, bool success, TimeSpan elapsed, int retries,TimeSpan delay)>();
+            var writeLoops = new List<(EtwEvent evt, bool success, TimeSpan elapsed, int retries, TimeSpan delay)>();
             var batch = new EtwEventBatch();
             var stopWatch = new Stopwatch();
             stopWatch.Start();
             // must not have overlapping writes
             for (int i = 0; i < 240; i++) {
                 // if Id = 0 it won't be stored (as it is a default value in protobuf)
-                var evt = new KdSoft.EtwLogging.EtwEvent() { Id = (uint)(i+1), TimeStamp = DateTimeOffset.UtcNow.ToTimestamp() };
+                var evt = new KdSoft.EtwLogging.EtwEvent() { Id = (uint)(i + 1), TimeStamp = DateTimeOffset.UtcNow.ToTimestamp() };
                 batch.Events.Clear();
                 batch.Events.Add(evt);
                 using (var scope = testLogger.BeginScope("WriteAsync: {scopeType}-{scopeId}", "w", i)) {
@@ -326,7 +326,7 @@ namespace EtwEvents.Tests
 
                 // tolerate difference between elasped time and total calculated retry delay of up to 330ms
                 var diffTime = loopEntry.elapsed - loopEntry.delay;
-                Assert.True(diffTime.TotalMilliseconds < 330, 
+                Assert.True(diffTime.TotalMilliseconds < 330,
                     $"At loop index {indx} (elapsed | delay): {loopEntry.elapsed.TotalMilliseconds} | {loopEntry.delay.TotalMilliseconds}");
             }
 

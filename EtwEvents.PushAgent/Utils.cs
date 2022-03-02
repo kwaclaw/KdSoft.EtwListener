@@ -14,7 +14,7 @@ namespace KdSoft.EtwEvents.PushAgent
         public static SocketsHttpHandler CreateHttpHandler(ClientCertOptions certOptions) {
             if (certOptions.SubjectCN.Length == 0 && certOptions.Thumbprint.Length == 0 && certOptions.SubjectRole.Length == 0)
                 throw new ArgumentException("Client certificate options must have one of SubjectCN, SubjectRole or Thumbprint specified.");
-            
+
             X509Certificate2? clientCert = null;
             if (certOptions.Thumbprint.Length > 0) {
                 clientCert = shared.Utils.GetCertificate(certOptions.Location, certOptions.Thumbprint, string.Empty);

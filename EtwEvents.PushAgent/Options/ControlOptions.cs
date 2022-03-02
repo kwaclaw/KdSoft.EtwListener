@@ -30,8 +30,10 @@ namespace KdSoft.EtwEvents.PushAgent
 
         public override bool Equals(object? obj) {
             var other = obj as ControlOptions;
-            if (other == null) return false;
-            if (ReferenceEquals(this, other)) return true;
+            if (other == null)
+                return false;
+            if (ReferenceEquals(this, other))
+                return true;
 
             return object.Equals(Uri, other.Uri) && InitialRetryDelay == other.InitialRetryDelay && MaxRetryDelay == other.MaxRetryDelay
                 && BackoffResetThreshold == other.BackoffResetThreshold && object.Equals(ClientCertificate, other.ClientCertificate);

@@ -25,7 +25,7 @@ namespace KdSoft.EtwEvents.Server
             ILogger logger,
             uint batchSize = 100,
             uint maxWriteDelayMSecs = 400
-        ): base(sink, logger, batchSize, maxWriteDelayMSecs) {
+        ) : base(sink, logger, batchSize, maxWriteDelayMSecs) {
             this._channel = Channel.CreateUnbounded<EtwEvent>(new UnboundedChannelOptions {
                 AllowSynchronousContinuations = true,
                 SingleReader = true,

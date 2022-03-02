@@ -4,7 +4,8 @@ using Microsoft.Extensions.Logging;
 
 namespace KdSoft.EtwEvents.PushAgent
 {
-    static class EventSinkExtensions {
+    static class EventSinkExtensions
+    {
         static async Task<(IEventSinkFactory?, EventSinkLoadContext? loadContext)> LoadSinkFactory(EventSinkService sinkService, string sinkType, string version, ILogger logger) {
             var (sinkFactory, loadContext) = sinkService.LoadEventSinkFactory(sinkType, version);
             if (sinkFactory == null) {

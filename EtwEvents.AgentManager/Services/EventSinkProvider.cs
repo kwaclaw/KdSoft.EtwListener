@@ -11,7 +11,8 @@ using Microsoft.Extensions.Logging;
 
 namespace KdSoft.EtwEvents.AgentManager
 {
-    class EventSinkProvider {
+    class EventSinkProvider
+    {
         readonly string _rootPath;
         readonly string _eventSinksDirName;
         readonly string _eventSinksCacheDirName;

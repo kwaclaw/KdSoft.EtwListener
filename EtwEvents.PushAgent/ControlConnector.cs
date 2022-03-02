@@ -14,7 +14,7 @@ namespace KdSoft.EtwEvents.PushAgent
         readonly ILogger<ControlConnector> _logger;
         readonly TaskCompletionSource _tcs;
         readonly object _syncObj = new object();
-        
+
         EventSource? _eventSource;
         CancellationTokenRegistration _cancelRegistration;
 
