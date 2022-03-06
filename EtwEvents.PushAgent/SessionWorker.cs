@@ -4,6 +4,8 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -25,6 +27,7 @@ namespace KdSoft.EtwEvents.PushAgent
     {
         readonly SessionConfig _sessionConfig;
         readonly IOptions<EventQueueOptions> _eventQueueOptions;
+        readonly SocketsHttpHandler _httpHandler;
         readonly EventSinkService _sinkService;
         readonly IConfiguration _config;
         readonly ILoggerFactory _loggerFactory;
@@ -48,12 +51,14 @@ namespace KdSoft.EtwEvents.PushAgent
         public SessionWorker(
             SessionConfig sessionConfig,
             IOptions<EventQueueOptions> eventQueueOptions,
+            SocketsHttpHandler httpHandler,
             EventSinkService sinkService,
             IConfiguration config,
             ILoggerFactory loggerFactory
         ) {
             this._sessionConfig = sessionConfig;
             this._eventQueueOptions = eventQueueOptions;
+            this._httpHandler = httpHandler;
             this._sinkService = sinkService;
             this._config = config;
             this._loggerFactory = loggerFactory;
@@ -341,7 +346,9 @@ namespace KdSoft.EtwEvents.PushAgent
                 }
 
                 var logger = _loggerFactory.CreateLogger<RealTimeTraceSession>();
-                var sessionName = Constants.TraceSessionNamePrefix + "_" + DateTimeOffset.UtcNow.ToString("yyyy-MM-dd_hhmmss.f");
+                var clientCert = (_httpHandler.SslOptions.ClientCertificates as X509Certificate2Collection)?.First();
+                var siteName = clientCert?.GetNameInfo(X509NameType.SimpleName, false) ?? "<Undefined>";
+                var sessionName = Constants.TraceSessionNamePrefix + "_" + siteName;
                 var session = new RealTimeTraceSession(sessionName, TimeSpan.MaxValue, logger, false);
                 this._session = session;
 
