@@ -3,17 +3,95 @@
     [Parameter(mandatory=$true)][String]$targetDir,
     [Parameter(mandatory=$true)][String]$file,
     [Parameter(mandatory=$true)][String]$user,
+    [String]$managerUrl,
     [String]$pwd
-) 
+)
 
-$serviceName = "EtwPushAgent"
-$serviceDescription = "Forwards ETW Events to Event Sink"
-$serviceDisplayName = "Etw PushAgent"
+[string] $serviceName = "EtwPushAgent"
+[string] $serviceDescription = "Forwards ETW Events to Event Sink"
+[string] $serviceDisplayName = "Etw PushAgent"
+[string] $appSettingsFile = './appSettings.Local.json'
 
-Write-Host $targetDir
+################# Functions ##################
+
+function Load-JsonObject {
+    param (
+        [string] $jsonFilePath
+    )
+
+    [string] $content = Get-Content -Raw -Path $jsonFilePath
+    [PSCustomObject] $jsonObject = $content | ConvertFrom-Json
+
+    Write-Output $jsonObject
+}
+
+function Save-JsonObject {
+    param (
+        [string] $jsonFilePath,
+        [PSCustomObject] $jsonObject
+    )
+
+    $jsonObject | ConvertTo-Json -Compress -Depth 6 | Set-Content -Path $jsonFilePath
+}
+
+function Get-CertPfxItems {
+    param (
+        [string] $certFilePath
+    )
+
+    $clientCert = Get-PfxCertificate -FilePath $certFilePath
+    $subjectName = $clientCert.SubjectName.Decode(128)
+    if ($subjectName -match 'OID\.2\.5\.4\.72=([^,]*)') { 
+        $role = $Matches[1]
+    }
+
+    Write-Output $role, $clientCert.Thumbprint
+}
+
+################ End Functions #################
+
+#Write-Host $targetDir
+#Write-Host $managerUrl
 
 $sourceDirPath = [System.IO.Path]::GetFullPath($sourceDir)
 $targetDirPath = [System.IO.Path]::GetFullPath($targetDir)
+
+# save manager URL
+if ($managerUrl) {
+    [PSCustomObject] $jsonObject = Load-JsonObject $appSettingsFile
+    $jsonObject.Control | Add-Member -Force -MemberType NoteProperty -Name 'Uri' -Value $managerUrl
+    Save-JsonObject $appSettingsFile $jsonObject
+}
+
+# install root certificate
+$rootCertPath = [System.IO.Path]::Combine($sourceDirPath, "Kd-Soft.cer")
+Import-Certificate -FilePath $rootCertPath -CertStoreLocation Cert:\LocalMachine\Root
+
+# process first client certificate matching role=etw-pushagent
+$noClientCert = $true
+foreach ($clientCertFile in Get-ChildItem -Path . -Filter '*.p12') {
+    [string] $role, [string] $thumbPrint = Get-CertPfxItems $clientCertFile
+
+    if ($role -eq 'etw-pushagent') {
+        Import-PfxCertificate -FilePath $clientCertFile -CertStoreLocation Cert:\LocalMachine\My
+
+        [PSCustomObject] $jsonObject = Load-JsonObject $appSettingsFile
+        #$jsonObject.Control.ClientCertificate | Add-Member -Force -MemberType NoteProperty -Name 'SubjectRole' -Value $role
+        $jsonObject.Control.ClientCertificate | Add-Member -Force -MemberType NoteProperty -Name 'Thumbprint' -Value $thumbPrint
+        Save-JsonObject $appSettingsFile $jsonObject
+
+        $noClientCert = $false
+        Write-Host 'Processed' $clientCertFile
+        break
+    }
+}
+# if no client certificate is supplied, we add the SubjectRole property so that an already installed certificate can be matched
+if ($noClientCert) {
+    [PSCustomObject] $jsonObject = Load-JsonObject $appSettingsFile
+    $jsonObject.Control.ClientCertificate | Add-Member -Force -MemberType NoteProperty -Name 'SubjectRole' -Value 'etw-pushagent'
+    Save-JsonObject $appSettingsFile $jsonObject
+}
+
 
 # if password is empty, create a dummy one to allow credentials for system accounts: 
 #NT AUTHORITY\LOCAL SERVICE
@@ -26,8 +104,12 @@ else {
 }
 $cred = New-Object System.Management.Automation.PSCredential ($user, $secpwd)
 
+# make sure $targetDirPath exists
+if (!(test-path $targetDirPath)) {
+  New-Item -ItemType "directory" -Path $targetDirPath
+}
 
-#LocalSystem already has all kinds of permissions
+# LocalSystem already has all kinds of permissions
 if ($cred.UserName -notlike '*\LocalSystem') {
     $acl = Get-Acl "$targetDirPath"
     #$aclRuleArgs = $cred, "Read,Write,ReadAndExecute", "ContainerInherit,ObjectInherit", "None", "Allow"
@@ -58,8 +140,6 @@ Remove-Item $binPath -Recurse -ErrorAction SilentlyContinue
 # copy local appsettings file to target directory if it does not exist already
 $localSettingsPath = [System.IO.Path]::Combine($targetDirPath, "appsettings.Local.json") 
 if (!(test-path $localSettingsPath)) {
-  #make sure target directory exists
-  New-Item -ItemType "directory" -Path $targetDirPath
   $sourceSettingsPath = [System.IO.Path]::Combine($sourceDirPath, "appsettings.Local.json")
   Copy-Item $sourceSettingsPath -Destination $targetDirPath -ErrorAction SilentlyContinue
 }

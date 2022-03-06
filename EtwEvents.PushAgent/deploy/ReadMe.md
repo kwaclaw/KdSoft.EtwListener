@@ -8,22 +8,21 @@
 - After preparing the install package, copy the project folder "deploy" to a (temporary) location on the target system.
 - If applicable, check that the publish profile's target framework is installed.
 - On a new installation
-  - Define the Site name in "appsettings.Local.json", it must be unique among all sites managed by the same Agent Manager.
-    - It can also be specified as command line argument for the service, as in "--Site=My-Site-Name"
-  - Install the custom self-signed root certificate by dragging it onto tools\InstallRootCert.cmd (see [Client Authentication](#client-authentication) below).
   - Edit the included "appsettings.Local.json" according to the local requirements (see [Local Configuration](#local-configuration) below).
+  - It is not necessary to enter agent manager URL or certificate thumbprint, as they can be entered when running CreateService.cmd.
 - On an existing installation:
   - Take note of the current install directory, if it needs to stay the same
   - Update the current "appsettings.Local.json" file if changes are desired.
-- Check that the proper client certificate for the site is installed (see [Client Authentication](#client-authentication) below).
+- Check that the proper client certificate for the site is copied to the deploy directory (see [Client Authentication](#client-authentication) below).
   - It must include the private key.
   - It must have the role attribute (OID: 2.5.4.72): "etw-pushagent" .
   - It must be signed by a root certificate accessible to the AgentManager web site.
-  - It can be installed by dragging it onto tools\InstallClientPfx.cmd.
-  - The settings in "appsettings[.Local].json" must match the certificate (see [Client Authentication](#client-authentication) below).
-- Finally, run "CreateService.cmd \<target directory>" as administrator:
-  - \<target directory> is optional, it defaults to "C:\EtwEvents.PushAgent", on an existing installation
-    it may optionally match the current install directory from above.
+  - It can be installed by dragging it onto tools\InstallClientPfx.cmd, but it will be auto-detected and installed by the installer anyway.
+  - The settings in "appsettings[.Local].json" must match the certificate (see [Client Authentication](#client-authentication) below), 
+    but that is handled by the installer.
+- Finally, run "CreateService.cmd -installDir <target directory> -url <manager URL>" as administrator (it will prompt for elevation if necessary):
+  - <target directory> and <manager URL> are both optional, the script will prompt for them if not provided.
+  - On an existing installation the <target directory> should probably match the existing install directory.
   - This will install the application as a windows service called "Etw PushAgent".
 
 ### Local Configuration
@@ -58,6 +57,7 @@ We specify authorized clients in appsettings.Local.json, in the **Control** sect
     "Uri": "https://agent-manager.kd-soft.net:5300",
     "ClientCertificate": {
       "Location": "LocalMachine",
-      "SubjectCN": "test-site-1"
+      "SubjectRole": "etw-pushagent",
+      "Thumbprint": "XXXX..." (optional)
     }
 ```
