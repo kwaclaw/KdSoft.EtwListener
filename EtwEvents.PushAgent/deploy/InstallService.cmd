@@ -1,6 +1,9 @@
 @echo off
-
 Setlocal enabledelayedexpansion
+
+rem default Parameters
+set -installdir=
+set -url=
 
 rem %~1 removes surrounding quotes from first parameter
 set -installdir=
@@ -42,7 +45,7 @@ if [%managerUrl%]==[##none##] (
 REM use single quotes for PowerShell arguments containing blanks
 
 REM use single quotes for PowerShell arguments containing blanks
-.\tools\Elevate.exe PowerShell -ExecutionPolicy Bypass .\CreateService.ps1 -sourceDir . -targetDir '%targetDir%' ^
+.\tools\Elevate.exe PowerShell -ExecutionPolicy Bypass .\InstallService.ps1 -sourceDir . -targetDir '%targetDir%' ^
     -file 'KdSoft.EtwEvents.PushAgent.exe' -user .\LocalSystem -managerUrl '%managerUrl%' 
 
 popd
