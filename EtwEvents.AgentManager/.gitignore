@@ -1,3 +1,5 @@
 EventSinks/
 EventSinksCache/
 !wwwroot/eventSinks/
+certificates/tmp
+certificates/out
