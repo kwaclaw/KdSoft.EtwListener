@@ -16,11 +16,13 @@
     "po2json": "^0.4.5"
   },
   "devDependencies": {
-    "@tailwindcss/forms": "^0.4.0",
+    "@tailwindcss/forms": "^0.5.0",
+    "copy-node-modules": "^1.1.1",
     "eslint": "^8.10.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.25.4",
-    "postcss": "^8.4.7",
+    "move-cli": "^2.0.0",
+    "postcss": "^8.4.8",
     "postcss-cli": "^9.1.0",
     "postcss-copy": "^7.1.0",
     "postcss-import": "^14.0.2",
@@ -33,9 +35,9 @@
     "postcss-css": "postcss css/**/*[.pcss,.css] --dir _tmp --ext css",
     "wrap-css-tmp": "npm run wrap-css _tmp/**/*.css styles _tmp",
     "wrap-css-dialog": "npm run wrap-css node_modules/dialog-polyfill/dialog-polyfill.css styles node_modules/dialog-polyfill",
-    "prebuild": "rimraf _tmp/**/*  && npm run po2json",
     "build-styles": "npm run postcss-css && npm run wrap-css-tmp && npm run wrap-css-dialog",
-    "prepare": "npm run prebuild && npm run build-styles"
+    "prepare": "rimraf _tmp/**/*  && rimraf lib && npm run po2json && npm run build-styles",
+    "build": "npm install && copy-node-modules . ./_tmp && move-cli _tmp/node_modules ./lib"
   },
   "postcss": {
     "plugins": {
