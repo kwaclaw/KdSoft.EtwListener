@@ -24,8 +24,10 @@ Use the `docker run` command with arguments as described below. As an example re
 
 We neeed to mount some directories required by Asp.NET 6.0 into pre-determined paths in the container:
 
-- Mount user secrets directory to `/root/.microsoft/usersecrets`
+- ONLY IN DEVELOPMENT ENVIRONMENT (Debugging): Mount user secrets directory to `/root/.microsoft/usersecrets`
   e.g. `--mount type=bind,src="%APPDATA%\\Microsoft\\UserSecrets\\",dst=/root/.microsoft/usersecrets/,readonly`
+  OTHERWISE use environment variables to pass secrets
+  e.g. `-e "Kestrel:Endpoints:Https:Certificate:Password=?????????"`
 
 - Mount Https directory to "/root/.aspnet/https"
   e.g. `--mount type=bind,src="%APPDATA%\\ASP.NET\\Https\\",dst=/root/.aspnet/https/,readonly`
