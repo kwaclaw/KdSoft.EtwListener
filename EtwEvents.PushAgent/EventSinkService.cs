@@ -83,7 +83,6 @@ namespace KdSoft.EtwEvents.PushAgent
         /// it will be unloaded otherwise (as it is a collectible load context).</remarks>
         public (IEventSinkFactory? sinkFactory, EventSinkLoadContext? loadContext) LoadEventSinkFactory(string sinkType, string version) {
             var eventSinksDir = Path.Combine(_rootPath, _eventSinksDir);
-
             var dirInfo = new DirectoryInfo(eventSinksDir);
             var evtSinkDirectories = dirInfo.EnumerateDirectories();
 

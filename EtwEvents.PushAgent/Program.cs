@@ -30,6 +30,8 @@ namespace KdSoft.EtwEvents.PushAgent
             CreateHostBuilder(args).Build().Run();
         }
 
+        const string EventSinksDirectory = "EventSinks";
+
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((hostContext, cfgBuilder) => {
@@ -64,10 +66,14 @@ namespace KdSoft.EtwEvents.PushAgent
                     });
                     services.AddSingleton(provider => new TraceSessionManager(TimeSpan.FromMinutes(3)));
                     services.AddSingleton(provider => {
+                        var eventSinksDirPath = Path.Combine(hostContext.HostingEnvironment.ContentRootPath, EventSinksDirectory);
+                        // make sure the directory exists, even if empty, to avoid IO exceptions
+                        Directory.CreateDirectory(eventSinksDirPath);
+
                         var options = provider.GetRequiredService<IOptions<ControlOptions>>();
                         return new EventSinkService(
                             hostContext.HostingEnvironment.ContentRootPath,
-                            "EventSinks",
+                            EventSinksDirectory,
                             options,
                             provider.GetRequiredService<SocketsHttpHandler>(),
                             provider.GetRequiredService<ILogger<EventSinkService>>()
