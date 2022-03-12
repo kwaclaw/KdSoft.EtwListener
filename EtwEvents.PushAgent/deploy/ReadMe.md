@@ -13,9 +13,9 @@
 
 - Steps:
   
-  1) Unzip archive
-  2) copy certificate into unzipped folder (if provided)
-  3) Double click InstallService.cmd, follow prompts
+  1) Unzip archive.
+  2) copy certificate into unzipped folder (if provided).
+  3) Double click `InstallService.cmd`, follow prompts.
 
 ### Local Configuration
 
