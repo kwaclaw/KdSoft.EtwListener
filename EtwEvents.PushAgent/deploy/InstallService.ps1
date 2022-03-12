@@ -45,7 +45,24 @@ function Get-CertPfxItems {
         $role = $Matches[1]
     }
 
-    Write-Output $role, $clientCert.Thumbprint
+    Write-Output $role, $clientCert
+}
+
+function Add-Cert {
+    param (
+        [string] $storeName,
+        [string] $storeLocation,
+        $cert
+    )
+
+    try {
+        $store =  New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Store -ArgumentList $storeName, $storeLocation 
+        $store.Open(1)
+        $store.Add($cert)
+    }
+    finally {
+        $store.Close()
+    }
 }
 
 ################ End Functions #################
@@ -64,20 +81,24 @@ if ($managerUrl) {
 }
 
 # install root certificate
+Write-Host Importing root certificate
 $rootCertPath = [System.IO.Path]::Combine($sourceDirPath, "Kd-Soft.cer")
 Import-Certificate -FilePath $rootCertPath -CertStoreLocation Cert:\LocalMachine\Root
 
 # process first client certificate matching role=etw-pushagent
+Write-Host
+Write-Host Checking client certificates
 $noClientCert = $true
 foreach ($clientCertFile in Get-ChildItem -Path . -Filter '*.p12') {
-    [string] $role, [string] $thumbPrint = Get-CertPfxItems $clientCertFile
+    [string] $role, $clientCert = Get-CertPfxItems $clientCertFile
 
     if ($role -eq 'etw-pushagent') {
-        Import-PfxCertificate -FilePath $clientCertFile -CertStoreLocation Cert:\LocalMachine\My
+        Write-Host Importing client certificate $clientCertFile
+        Add-Cert 'My' 'LocalMachine' $clientCert
 
         [PSCustomObject] $jsonObject = Load-JsonObject $appSettingsFile
         #$jsonObject.Control.ClientCertificate | Add-Member -Force -MemberType NoteProperty -Name 'SubjectRole' -Value $role
-        $jsonObject.Control.ClientCertificate | Add-Member -Force -MemberType NoteProperty -Name 'Thumbprint' -Value $thumbPrint
+        $jsonObject.Control.ClientCertificate | Add-Member -Force -MemberType NoteProperty -Name 'Thumbprint' -Value $clientCert.ThumbPrint
         Save-JsonObject $appSettingsFile $jsonObject
 
         $noClientCert = $false
