@@ -21,37 +21,19 @@ WORKDIR /src
 # shared projects
 COPY ["EtwEvents.Shared/EtwEvents.Shared.csproj", "EtwEvents.Shared/"]
 COPY ["EtwEvents.Shared.EventSink/EtwEvents.Shared.EventSink.csproj", "EtwEvents.Shared.EventSink/"]
+# gRPCSink project
+COPY ["EventSinks/EtwEvents.gRPCSink/EtwEvents.gRPCSink.csproj", "EventSinks/EtwEvents.gRPCSink/"]
 COPY ["EtwEvents.Protobuf.Shared/EtwEvents.Protobuf.Shared.csproj", "EtwEvents.Protobuf.Shared/"]
-# ElasticSink project
-COPY ["EventSinks/EtwEvents.ElasticSink/EtwEvents.ElasticSink.csproj", "EventSinks/EtwEvents.ElasticSink/"]
-RUN dotnet restore "EventSinks/EtwEvents.ElasticSink/EtwEvents.ElasticSink.csproj"
-# MongoSink project
-COPY ["EventSinks/EtwEvents.MongoSink/EtwEvents.MongoSink.csproj", "EventSinks/EtwEvents.MongoSink/"]
-RUN dotnet restore "EventSinks/EtwEvents.MongoSink/EtwEvents.MongoSink.csproj"
-# RollingFileSink project
-COPY ["EventSinks/EtwEvents.RollingFileSink/EtwEvents.RollingFileSink.csproj", "EventSinks/EtwEvents.RollingFileSink/"]
-RUN dotnet restore "EventSinks/EtwEvents.RollingFileSink/EtwEvents.RollingFileSink.csproj"
-# SeqSink project
-COPY ["EventSinks/EtwEvents.SeqSink/EtwEvents.SeqSink.csproj", "EventSinks/EtwEvents.SeqSink/"]
-RUN dotnet restore "EventSinks/EtwEvents.SeqSink/EtwEvents.SeqSink.csproj"
+RUN dotnet restore "EventSinks/EtwEvents.gRPCSink/EtwEvents.gRPCSink.csproj"
 # main AgentManager project
 COPY ["EtwEvents.AgentManager/EtwEvents.AgentManager.csproj", "EtwEvents.AgentManager/"]
 COPY ["EtwEvents.Client.Shared/EtwEvents.Client.Shared.csproj", "EtwEvents.Client.Shared/"]
 RUN dotnet restore "EtwEvents.AgentManager/EtwEvents.AgentManager.csproj"
 # copy the rest
 COPY . .
-# build event sinks
-WORKDIR "/src/EventSinks/EtwEvents.ElasticSink"
-RUN dotnet build "EtwEvents.ElasticSink.csproj" --no-incremental
-WORKDIR "/src/EventSinks/EtwEvents.MongoSink"
-RUN dotnet build "EtwEvents.MongoSink.csproj" --no-incremental
-WORKDIR "/src/EventSinks/EtwEvents.RollingFileSink"
-RUN dotnet build "EtwEvents.RollingFileSink.csproj" --no-incremental
-WORKDIR "/src/EventSinks/EtwEvents.SeqSink"
-RUN dotnet build "EtwEvents.SeqSink.csproj" --no-incremental
 # SPA build steps
 WORKDIR "/src/EtwEvents.AgentManager/wwwroot"
-RUN npm install && npm run build
+RUN npm run build
 # build AgentManager
 WORKDIR "/src/EtwEvents.AgentManager"
 RUN dotnet build "EtwEvents.AgentManager.csproj" -c Release -o /app/build
@@ -65,6 +47,6 @@ WORKDIR /usr/local/share/ca-certificates
 COPY ["./EtwEvents.AgentManager/certificates/Kd-Soft.crt", "./"]
 RUN update-ca-certificates
 WORKDIR /app
+COPY ["./EventSinks/Deploy", "./EventSinks"]
 COPY --from=publish /app/publish .
-COPY --from=build /src/EventSinks/Deploy ./EventSinks
 ENTRYPOINT ["dotnet", "KdSoft.EtwEvents.AgentManager.dll"]

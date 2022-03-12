@@ -12,8 +12,10 @@ be imported/converted to that format. Place your CSS into Spa/css and then run "
     
 ## Build  and Run Docker image for production
 
-- To build: run the build-docker.cmd script
-- To run: run the run-docker.cmd script
+- Before build: build all EventSinks projects so that EventSinks/Deploy/ gets populated.
+- Switch to AgentManager project directory
+- To build: run build-docker.cmd
+- To run: use run-docker.cmd
 
 ## Certificates
 
