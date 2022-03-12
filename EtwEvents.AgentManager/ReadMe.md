@@ -1,113 +1,86 @@
-# Build
+# Build And Run Instructions
 
 ## Import Styles before production build or development run
 
 Any CSS that is not available as CSS-in-JS in the form of lit-element css`...my styles...` must
-be imported/converted to that format. Place your CSS into Spa/css and then run "npm run prepare" in wwwroot.
+be imported/converted to that format. Place your CSS into `wwwroot/css` and then run `npm run prepare` in `wwwroot`.
 
-## Debug in Docker
+## Debug with Visual Studio in Docker
 
-- Before debugging, switch to wwwroot directory and run "npm install", if necessary
+- Before debugging, switch to wwwroot directory and run `npm install`, if necessary
 - Then debug with the Docker launch settings selected.
-    
-## Build  and Run Docker image for production
 
-- Before build: build all EventSinks projects so that EventSinks/Deploy/ gets populated.
-- Switch to AgentManager project directory
-- To build: run build-docker.cmd
-- To run: use run-docker.cmd
+## Build Docker image for production
 
-## Certificates
+- Before build: build all EventSinks projects so that `EventSinks/Deploy/` gets populated.
+- Switch to `AgentManager` project directory
+- Run `build-docker.cmd`
 
-Connection security and authentication/authorization are both performed using certificates.
-- The server certificate must be placed in directory mounted into the Docker image (see run-docker.cmd).
-- The appSettings entry for the certificate path must be added as environment variable in run-docker.cmd.
-- The appSettings entry for the certificate password can be handled as a user secret, or it can be added as an 
-environment variable in run-docker.cmd.
+## Run Docker image for production
 
+Use the `docker run` command with arguments as described below. As an example review `run-docker.cmd` in the `EtwEvents.AgentManager` directory.
 
-### TLS
+#### Asp.NET 6.0 specific arguments
 
-Specified in appsettings.json in the Kestrel section.
+We neeed to mount some directories required by Asp.NET 6.0 into pre-determined paths in the container:
 
-```json
-  "Kestrel": {
-    "EndpointDefaults": {
-      "Protocols": "Http1AndHttp2"
-    },
-    "Endpoints": {
-      "Https": {
-        "Url": "https://0.0.0.0:5099",
-        WE CAN SPECIFY A CERTIFICATE FILE (must be used for Docker)
-        "Certificate": {
-          "Path": "D:\\PlayPen\\EtwListener\\localhost.p12",
-          "Password": "XXXXXXXXXXXXX"
-        }
-        OR WE CAN USE THE LOCAL CERTIFICATE STORAGE (Windows only)
-        // will select the matching certificate with the latest expiry date
-        "Certificate": {
-          "Subject": "localhost", // matches any Subject containing that string
-          "Store": "My" / Only stores indicated by the StoreName type are accepted
-          "Location": "LocalMachine",
-          "AllowInvalid": false // must be false for server certificates>
-        }
-      }
-    }
-  }
-```
+- Mount user secrets directory to `/root/.microsoft/usersecrets`
+  e.g. `--mount type=bind,src="%APPDATA%\\Microsoft\\UserSecrets\\",dst=/root/.microsoft/usersecrets/,readonly`
 
-### Client/User Authentication
+- Mount Https directory to "/root/.aspnet/https"
+  e.g. `--mount type=bind,src="%APPDATA%\\ASP.NET\\Https\\",dst=/root/.aspnet/https/,readonly`
 
-We can use a self-signed root certificate , as client authentication certificates are provided by us. 
+- Mount a data protection directory to `/root/.aspnet/DataProtection-Keys`
+  e.g. `--mount type=bind,src="C:\\Temp\\DP-Keys\\",dst=/root/.aspnet/DataProtection-Keys/`
 
-- The self-signed root certificate must be installed in the "**Local Computer\Personal**" folder of the local certificate storage.
+#### Server Certificate arguments
+
+- Obtain  a server certificate, or generate your own (based on the **Kd-Soft.cer** CA certificate). It must be in PKCS12 format.
+
+- Place it in a directory and mount that directory into the docker container:
+   e.g. `--mount type=bind,src=c:/apps/certificates//,dst=/app/certs/,readonly`
+
+- Override the certificate path in `appsettings.json`
+  e.g. `-e "Kestrel:Endpoints:Https:Certificate:Path=/app/certs/server-cert.p12"`
+
+- Override the certificate password in `appsettings.json` (or save it as user secret)
+  e.g. `-e "Kestrel:Endpoints:Https:Certificate:Password=?????????"`
+
+#### Event Sink arguments
+
+- Event Sinks are stored in the `/app/EventSinks` directory in the container.
+
+- This directory can also be mounted externally, which will replace the existing directory in the container:
+  e.g. `--mount type=bind,src=c:/app/EventSinks,dst=/app/EventSinks/`
+
+- **Note:** If there are two versions of the same event sink type, they still must be copied to two different directories.
+
+### Client Authentication
+
+Both, the user accessing the agent manager, and the ETW agent accessing the agent manager are considered clients that need to be authenticated. We use client certificates for both.
+
+We must use a the same self-signed root certificate mentioned above (**Kd-Soft.cer**), as client authentication certificates are provided by us. 
+
 - The client certificate must be configured to support client authorization.
 
-A useful tool for creating certificates is [XCA](https://www.hohnstaedt.de/xca/).
+- On a Windows client, the self-signed root certificate must be installed in the "**Local Computer\Personal**" folder of the local certificate storage.
 
-We specify authorized users in appsettings.json, in the **ClientValidation** section:
+- On a Linux client it depends on the distribution. A popular way is:
+  
+  - copy `Kd-Soft.cer` to `/usr/local/share/ca-certificates/`
+  - run `update-ca-certificates` with the proper permissions (root)
 
-```json
+- A useful tool for creating certificates is [XCA](https://www.hohnstaedt.de/xca/).
+
+- We also have OpenSSL scripts in the `EtwEvents.PushAgent/certificates` directory
+
+- We specify authorized users/agents in `appsettings.json`, in the **ClientValidation** or **AgentValidation** section, e.g.:
+  
+  ```json
   "ClientValidation": {
     "RootCertificateThumbprint": "d87dce532fb17cabd3804e77d7f344ec4e49c80f",
     "AuthorizedCommonNames": [
       "karl@waclawek.net"
     ]
   }
-```
-
-### Authentication as Client of Grpc Server
-
-We must have obtained a certificate from the site owning the server. This certificate must be installed in the  "**CurrentUser\Personal**" folder of the local certificate storage.
-
-The common name in the certificate must correspond to one of the authorized common names configured on the Grpc server.
-
-We specify the certificate we use to authorize this web application as the client of the Grpc server in appsettings.json as well, in the **ClientCertificate** section:
-
-```json
-  "ClientCertificate": {
-    "Location": "CurrentUser",
-    "Thumbprint": "558efcc579f8b7be36f02d709cf58ea29020644e"
-  }
-```
-
-# Event Sinks
-
-## Location of Binaries
-
-Each event sink implementation must be located in a unique folder under the EventSinks directory.
-
-**Note:** If there are two versions of the same event sink type, they still must be copied to two different directories.
-
-## Location of web interface components
-
-- These components provide a configuration UI for a specific event sink and version.
-
-- They must be located under the Spa/eventSinks directory and reflect the same directory structure as the binaries so they can be mapped.
-
-- The file names must match the patterns `*-config.js` and `*-config-model.js`.
-
-**Note:** If web components are used they must have unique names, even between event sinks of the same type.
-
-
-
+  ```
