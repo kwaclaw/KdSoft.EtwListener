@@ -30,6 +30,20 @@
         "ASPNETCORE_ENVIRONMENT": "Production"
       },
       "applicationUrl": "https://agent-manager.kd-soft.net:50300"
+    },
+    "Docker": {
+      "commandName": "Docker",
+      "launchBrowser": true,
+      "environmentVariables": {
+        // prevent appSettings.Development.json from loading
+        "ASPNETCORE_ENVIRONMENT": "Docker"
+      },
+      //"launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
+      "launchUrl": "https://agent-manager.kd-soft.net:50300",
+      "DockerfileRunArguments": "--mount type=bind,src=D:/Work/Private/KdSoft.EtwListener/EtwEvents.AgentManager/certificates/out/,dst=/app/certs/,readonly -e \"Kestrel:Endpoints:Https:Certificate:Path=/app/certs/agent-manager.kd-soft.net.p12\"",
+      "httpPort": 50301,
+      "useSSL":  true,
+      "sslPort":  50300
     }
   }
 }

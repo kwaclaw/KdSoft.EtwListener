@@ -9,6 +9,9 @@
     <AssemblyName>KdSoft.EtwEvents.AgentManager</AssemblyName>
     <RootNamespace>KdSoft.EtwEvents.AgentManager</RootNamespace>
     <UserSecretsId>aca35d68-2f97-4471-bcee-88a607e466f3</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <!--<PublishTrimmed>true</PublishTrimmed>-->
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,6 +28,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="6.0.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.14.0" />
     <PackageReference Include="OrchardCore.Localization.Core" Version="1.2.2" />
   </ItemGroup>
   
@@ -49,6 +53,7 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </ResolvedFileToPublish>-->
     
+    <!--
     <KdSoft_Modules Include="$(MSBuildProjectDirectory)/wwwroot/node_modules/@kdsoft/**/*" />
     <DotNetPublishFiles Include="@(KdSoft_Modules)">
       <DestinationRelativePath>wwwroot/lib/@kdsoft/%(RecursiveDir)%(Filename)%(Extension)</DestinationRelativePath>
@@ -93,6 +98,7 @@
     <DotNetPublishFiles Include="@(GetText_Modules)">
       <DestinationRelativePath>wwwroot/lib/gettext.js/%(RecursiveDir)%(Filename)%(Extension)</DestinationRelativePath>
     </DotNetPublishFiles>
+    -->
   </ItemGroup>
 
   <ItemGroup>

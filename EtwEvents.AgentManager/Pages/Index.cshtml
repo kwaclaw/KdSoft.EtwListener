@@ -7,7 +7,8 @@
 @model IndexModel
 @{
     ViewData["Title"] = "Home page";
-    var importRoot =  Environment.IsDevelopment() ? "./node_modules" : "./lib";
+    // any environment but Production uses the node_modules directory
+    var importRoot =  Environment.IsProduction() ? "./lib": "./node_modules";
 }
 
 @section Styles{

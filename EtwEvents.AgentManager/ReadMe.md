@@ -3,22 +3,26 @@
 ## Import Styles before production build or development run
 
 Any CSS that is not available as CSS-in-JS in the form of lit-element css`...my styles...` must
-be imported/converted to that format. Place your CSS into Spa/css and then run "npm run import-styles" in Spa.
+be imported/converted to that format. Place your CSS into Spa/css and then run "npm run prepare" in wwwroot.
 
-## Run in Development mode
+## Debug in Docker
 
-Before starting a Visual Studio debug session, switch to the Spa subdirectory and run "npm run dev"
-from a terminal window. This will start the vite dev server, from which index.js is loaded.
-This dev server can be re-used for subsequent debug sessions, it must be terminated explicitly (Ctrl-C).
+- Before debugging, switch to wwwroot directory and run "npm install", if necessary
+- Then debug with the Docker launch settings selected.
+    
+## Build  and Run Docker image for production
 
-## Build for production (ASPNETCORE_ENVIRONMENT = Production)
-
-Before starting a debug session, run "npm run build" from a terminal window in the project directory.
-This will populate wwwroot with bundled Javascript and CSS assets.
+- To build: run the build-docker.cmd script
+- To run: run the run-docker.cmd script
 
 ## Certificates
 
 Connection security and authentication/authorization are both performed using certificates.
+- The server certificate must be placed in directory mounted into the Docker image (see run-docker.cmd).
+- The appSettings entry for the certificate path must be added as environment variable in run-docker.cmd.
+- The appSettings entry for the certificate password can be handled as a user secret, or it can be added as an 
+environment variable in run-docker.cmd.
+
 
 ### TLS
 
@@ -32,12 +36,12 @@ Specified in appsettings.json in the Kestrel section.
     "Endpoints": {
       "Https": {
         "Url": "https://0.0.0.0:5099",
-        WE CAN SPECIFY A CERTIFICATE FILE
+        WE CAN SPECIFY A CERTIFICATE FILE (must be used for Docker)
         "Certificate": {
           "Path": "D:\\PlayPen\\EtwListener\\localhost.p12",
           "Password": "XXXXXXXXXXXXX"
         }
-        OR WE CAN USE THE LOCAL CERTIFICATE STORAGE
+        OR WE CAN USE THE LOCAL CERTIFICATE STORAGE (Windows only)
         // will select the matching certificate with the latest expiry date
         "Certificate": {
           "Subject": "localhost", // matches any Subject containing that string
