@@ -57,6 +57,18 @@ We neeed to mount some directories required by Asp.NET 6.0 into pre-determined p
 
 - **Note:** If there are two versions of the same event sink type, they still must be copied to two different directories.
 
+#### Docker Networking
+
+Detailed instructions are out of scope, but there is plenty of documentation online.
+
+**Note about Docker Desktop**:
+- When you are using Docker Desktop, then by default the firewall blocks incoming requests, look for rules named "Docker Desktop Backend".
+- Disable 'Block' rules, enable 'Allow' rules, also for Public networks.
+- It is recommended to use a user-defined bridge network instead of the default:
+  - pass `--network my-net` argument to docker run,
+  - or call `docker network connect my-net my-container`
+
+
 ### Client Authentication
 
 Both, the user accessing the agent manager, and the ETW agent accessing the agent manager are considered clients that need to be authenticated. We use client certificates for both.
