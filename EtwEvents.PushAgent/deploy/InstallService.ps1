@@ -34,6 +34,7 @@ function Save-JsonObject {
     $jsonObject | ConvertTo-Json -Compress -Depth 6 | Set-Content -Path $jsonFilePath
 }
 
+# this returns a certificate where the KeyStorageFlags are not set properly
 function Get-CertPfxItems {
     param (
         [string] $certFilePath
@@ -48,6 +49,7 @@ function Get-CertPfxItems {
     Write-Output $role, $clientCert
 }
 
+# this requires the certificate to have KeyStorageFlags  MachineKeySet | PersistKeySet
 function Add-Cert {
     param (
         [string] $storeName,
@@ -63,6 +65,24 @@ function Add-Cert {
     finally {
         $store.Close()
     }
+}
+
+function Import-Cert {
+    param (
+        [string] $clientCertFile,
+        [string] $storeLocation
+    )
+
+    $cred = Get-Credential -UserName 'Installer' -Message ('Password for ' + $clientCertFile)
+    if ($cred) {
+        $clientCert = Import-PfxCertificate -FilePath $clientCertFile -CertStoreLocation $storeLocation -Password $cred.Password
+        $subjectName = $clientCert.SubjectName.Decode(128)
+        if ($subjectName -match 'OID\.2\.5\.4\.72=([^,]*)') { 
+            $role = $Matches[1]
+        }
+    }
+
+    Write-Output $role, $clientCert
 }
 
 ################ End Functions #################
@@ -90,11 +110,9 @@ Write-Host
 Write-Host Checking client certificates
 $noClientCert = $true
 foreach ($clientCertFile in Get-ChildItem -Path . -Filter '*.p12') {
-    [string] $role, $clientCert = Get-CertPfxItems $clientCertFile
-
+    $role, $clientCert = Import-Cert $clientCertFile cert:\localMachine\my
     if ($role -eq 'etw-pushagent') {
-        Write-Host Importing client certificate $clientCertFile
-        Add-Cert 'My' 'LocalMachine' $clientCert
+        Write-Host Using client certificate $clientCertFile
 
         [PSCustomObject] $jsonObject = Load-JsonObject $appSettingsFile
         #$jsonObject.Control.ClientCertificate | Add-Member -Force -MemberType NoteProperty -Name 'SubjectRole' -Value $role
