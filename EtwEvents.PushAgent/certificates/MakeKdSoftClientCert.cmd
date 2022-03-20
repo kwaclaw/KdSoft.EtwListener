@@ -30,15 +30,18 @@ openssl genrsa -out "tmp/client.key" 4096
 if %ERRORLEVEL% NEQ 0 (Exit /b)
 
 @echo generate CSR
-openssl req -new -key "tmp/client.key" -out "tmp/client.csr" -sha256 -config "kd-soft-client.cnf"
+openssl req -new -key "tmp/client.key" -out "tmp/client.csr" -config "kd-soft-client.cnf"
 if %ERRORLEVEL% NEQ 0 (Exit /b)
     
 @echo create and sign the client certificate    
-openssl x509 -req -days 750 -in "tmp/client.csr" -sha256 -CA "Kd-Soft.crt" -CAkey "Kd-Soft.key" ^
+openssl x509 -req -days 750 -in "tmp/client.csr" -CA "Kd-Soft.crt" -CAkey "Kd-Soft.key" ^
     -CAcreateserial -out "tmp/client.crt" -subj "%dn%" -copy_extensions copy
 if %ERRORLEVEL% NEQ 0 (Exit /b)
-    
+
+  
 @echo export to pkcs12
-openssl pkcs12 -export -in "tmp/client.crt" -inkey "tmp/client.key" -out "out/%-name%.p12"
+rem sha256 encrypted keys cannot be imported on WinServer 2016 / Win10 <= 1703, use TripleDES-SHA1 instead
+rem openssl pkcs12 -export -in "tmp/client.crt" -inkey "tmp/client.key" -out "out/%-name%.p12"
+openssl pkcs12 -export -in "tmp/client.crt" -inkey "tmp/client.key" -macalg SHA1 -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -out "out/%-name%.p12"
     
 pause
