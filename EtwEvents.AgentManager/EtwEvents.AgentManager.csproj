@@ -52,6 +52,12 @@
     <ProjectReference Include="..\EventSinks\EtwEvents.gRPCSink\EtwEvents.gRPCSink.csproj" />
   </ItemGroup>
 
+  <!-- This seems to be the only way top clean the Publish directory before publishing -->
+  <Target Name="ClearPublishDir" BeforeTargets="PrepareForPublish">
+    <Message Importance="high" Text="Cleaning out publish directory..." />
+    <RemoveDir Directories="$(PublishDir)" />
+  </Target>
+
   <Target Name="CopyEventSinks" AfterTargets="PostBuildEvent">
     <ItemGroup>
       <BinFiles Include="$(SolutionDir)EventSinks/Deploy/**/*.*" />
