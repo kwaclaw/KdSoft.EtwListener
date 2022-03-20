@@ -9,7 +9,7 @@
 
 [string] $serviceName = "EtwPushAgent"
 [string] $serviceDescription = "Forwards ETW Events to Event Sink"
-[string] $serviceDisplayName = "Etw PushAgent"
+[string] $serviceDisplayName = "Etw Push Agent"
 [string] $appSettingsFile = './appSettings.Local.json'
 
 ################# Functions ##################

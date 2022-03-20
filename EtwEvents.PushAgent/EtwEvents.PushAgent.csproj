@@ -47,6 +47,12 @@
     <Folder Include="EventSinks\" />
   </ItemGroup>
 
+  <!-- This seems to be the only way top clean the Publish directory before publishing -->
+  <Target Name="ClearPublishDir" BeforeTargets="PrepareForPublish">
+    <Message Importance="high" Text="Cleaning out publish directory..." />
+    <RemoveDir Directories="$(PublishDir)" />
+  </Target>
+  
   <Target Name="CreateEventSinkFolders" AfterTargets="Publish">
     <MakeDir Directories="$(PublishDir)EventSinks" Condition="!Exists('$(PublishDir)EventSinks')" />
     <MakeDir Directories="$(PublishDir)EventQueue" Condition="!Exists('$(PublishDir)EventQueue')" />
