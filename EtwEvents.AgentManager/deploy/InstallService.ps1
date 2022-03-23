@@ -3,13 +3,13 @@
     [Parameter(mandatory=$true)][String]$targetDir,
     [Parameter(mandatory=$true)][String]$file,
     [Parameter(mandatory=$true)][String]$user,
-    [String]$pwd
+    [String]$pwd,
+    [int]$port
 )
 
 [string] $serviceName = "EtwAgentManager"
 [string] $serviceDescription = "Manages ETW Push Agents"
 [string] $serviceDisplayName = "Etw Agent Manager"
-[string] $appSettingsFile = [System.IO.Path]::Combine($sourceDirPath, "appsettings.json")
 
 ################# Functions ##################
 
@@ -47,10 +47,40 @@ function Import-Cert {
     Write-Output $serverCert
 }
 
+function Update-AppSettings {
+    param (
+        $serverCert
+    )
+
+    [PSCustomObject] $jsonObject = Load-JsonObject $appSettingsFile
+    $httpsObject = $jsonObject.Kestrel.Endpoints.Https
+	
+	if ($port) {
+		$urlValue = 'https://0.0.0.0:' + $port
+		$httpsObject | Add-Member -Force -MemberType NoteProperty -Name 'Url' -Value $urlValue
+	}
+	
+    $certObject = $httpsObject.Certificate
+    if ($certObject) {
+        $certObject.psobject.properties.remove('Path')
+        $certObject.psobject.properties.remove('Password')
+    } else {
+		$newObj = [PSCustomObject]@{}
+        $httpsObject | Add-Member -Force -MemberType NoteProperty -Name 'Certificate' -Value $newObj
+        $certObject = $httpsObject.Certificate
+    }
+    $certObject | Add-Member -Force -MemberType NoteProperty -Name 'Store' -Value 'My'
+    $certObject | Add-Member -Force -MemberType NoteProperty -Name 'Location' -Value 'LocalMachine'
+    $certObject | Add-Member -Force -MemberType NoteProperty -Name 'Thumbprint' -Value $serverCert.ThumbPrint
+    Save-JsonObject $appSettingsFile $jsonObject
+}
+
 ################ End Functions #################
 
 $sourceDirPath = [System.IO.Path]::GetFullPath($sourceDir)
 $targetDirPath = [System.IO.Path]::GetFullPath($targetDir)
+
+[string] $appSettingsFile = [System.IO.Path]::Combine($targetDirPath, "appsettings.json")
 
 # install root certificate
 Write-Host Importing root certificate
@@ -60,22 +90,11 @@ Import-Certificate -FilePath $rootCertPath -CertStoreLocation Cert:\LocalMachine
 # process first server certificate
 Write-Host
 Write-Host Checking server certificates
-$noClientCert = $true
+$serverCert = $null
 foreach ($serverCertFile in Get-ChildItem -Path . -Filter '*.p12') {
-    $serverCert = Import-Cert $serverCertFile cert:\localMachine\my
+    $serverCert = Import-Cert $serverCertFile cert:\LocalMachine\My
     if ($serverCert) {
         Write-Host Using server certificate $serverCertFile
-
-        [PSCustomObject] $jsonObject = Load-JsonObject $appSettingsFile
-        $httpsObject = $jsonObject.Kestrel.Endpoints.Https
-        $httpsObject.psobject.properties.remove('Path')
-        $httpsObject.psobject.properties.remove('Password')
-        $httpsObject | Add-Member -Force -MemberType NoteProperty -Name 'Store' -Value 'My'
-        $httpsObject | Add-Member -Force -MemberType NoteProperty -Name 'Location' -Value 'LocalMachine'
-        $httpsObject | Add-Member -Force -MemberType NoteProperty -Name 'Thumbprint' -Value $serverCert.ThumbPrint
-        Save-JsonObject $appSettingsFile $jsonObject
-
-        Write-Host 'Processed' $serverCertFile
         break
     }
 }
@@ -91,21 +110,6 @@ else {
 }
 $cred = New-Object System.Management.Automation.PSCredential ($user, $secpwd)
 
-# make sure $targetDirPath exists
-if (!(test-path $targetDirPath)) {
-  New-Item -ItemType "directory" -Path $targetDirPath
-}
-
-# LocalSystem already has all kinds of permissions
-if ($cred.UserName -notlike '*\LocalSystem') {
-    $acl = Get-Acl "$targetDirPath"
-    #$aclRuleArgs = $cred, "Read,Write,ReadAndExecute", "ContainerInherit,ObjectInherit", "None", "Allow"
-    $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($user, "Read,Write,ReadAndExecute", "ContainerInherit,ObjectInherit", "None", "Allow")
-    $acl.SetAccessRule($accessRule)
-    $acl | Set-Acl "$targetDirPath"
-}
-
-
 $existingService  = Get-WmiObject -Class Win32_Service -Filter "Name='$serviceName'"
 if ($existingService) {
   "'$serviceName' exists already. Stopping."
@@ -120,16 +124,30 @@ if ($existingService) {
   
 echo "Install Directory: $targetDirPath"
 
-# delete target bin directory
-$binPath = [System.IO.Path]::Combine($targetDirPath, "bin")
-Remove-Item $binPath -Recurse -ErrorAction SilentlyContinue
+# clean target directory
+Remove-Item $targetDirPath -Force -Recurse -ErrorAction SilentlyContinue
+if (!(test-path $targetDirPath)) {
+  New-Item -ItemType "directory" -Path $targetDirPath
+}
 
-#copy source publish directory to target bin directory
-$sourceBinPath = [System.IO.Path]::Combine($sourceDirPath, "publish") 
-Copy-Item -Path $sourceBinPath -Destination $binPath -Recurse
+# LocalSystem already has all kinds of permissions
+if ($cred.UserName -notlike '*\LocalSystem') {
+    $acl = Get-Acl "$targetDirPath"
+    #$aclRuleArgs = $cred, "Read,Write,ReadAndExecute", "ContainerInherit,ObjectInherit", "None", "Allow"
+    $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($user, "Read,Write,ReadAndExecute", "ContainerInherit,ObjectInherit", "None", "Allow")
+    $acl.SetAccessRule($accessRule)
+    $acl | Set-Acl "$targetDirPath"
+}
 
-#path of service binary executable
-$filepath = [System.IO.Path]::Combine($binPath, $file)
+# copy source publish directory to target directory
+$sourcePublishPath = [System.IO.Path]::Combine($sourceDirPath, "publish", "*") 
+Copy-Item -Path $sourcePublishPath -Destination $targetDirPath -Recurse
+
+# update appSettings.json in target directory
+Update-AppSettings $serverCert
+
+# path of service binary executable
+$filepath = [System.IO.Path]::Combine($targetDirPath, $file)
 
 "Installing the service."
 New-Service -Name $serviceName -BinaryPathName $filepath -Credential $cred -Description $serviceDescription -DisplayName $serviceDisplayName -StartupType Automatic
