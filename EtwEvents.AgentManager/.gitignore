@@ -3,3 +3,4 @@ EventSinksCache/
 !wwwroot/eventSinks/
 certificates/tmp
 certificates/out
+wwwroot/lib

@@ -49,38 +49,47 @@ function Import-Cert {
 
 function Update-AppSettings {
     param (
+        [string]$jsonFile,
         $serverCert
     )
 
-    [PSCustomObject] $jsonObject = Load-JsonObject $appSettingsFile
-    $httpsObject = $jsonObject.Kestrel.Endpoints.Https
-	
-	if ($port) {
-		$urlValue = 'https://0.0.0.0:' + $port
-		$httpsObject | Add-Member -Force -MemberType NoteProperty -Name 'Url' -Value $urlValue
-	}
-	
+    [PSCustomObject] $jsonObject = Load-JsonObject $jsonFile
+    $endPointsObject = $jsonObject.Kestrel.Endpoints
+    $httpsObject = $endPointsObject.Https
+    
+    # need to move our endpoints to unoccupied ports
+    if ($port) {
+        $httpsUrl = 'https://0.0.0.0:' + $port
+        $httpsObject | Add-Member -Force -MemberType NoteProperty -Name 'Url' -Value $httpsUrl
+        $httpUrl = 'http://0.0.0.0:' + ($port + 1)
+        $endPointsObject.Http | Add-Member -Force -MemberType NoteProperty -Name 'Url' -Value $httpUrl
+    }
+    
     $certObject = $httpsObject.Certificate
     if ($certObject) {
-        $certObject.psobject.properties.remove('Path')
-        $certObject.psobject.properties.remove('Password')
+        #$certObject.psobject.properties.remove('Path')
+        #$certObject.psobject.properties.remove('Password')
+        # we can't remove already loaded properties, so we must override them and hope it works
+        $certObject | Add-Member -Force -MemberType NoteProperty -Name 'Path' -Value $null
+        $certObject | Add-Member -Force -MemberType NoteProperty -Name 'Password' -Value $null
     } else {
-		$newObj = [PSCustomObject]@{}
+        $newObj = [PSCustomObject]@{}
         $httpsObject | Add-Member -Force -MemberType NoteProperty -Name 'Certificate' -Value $newObj
         $certObject = $httpsObject.Certificate
     }
     $certObject | Add-Member -Force -MemberType NoteProperty -Name 'Store' -Value 'My'
     $certObject | Add-Member -Force -MemberType NoteProperty -Name 'Location' -Value 'LocalMachine'
-    $certObject | Add-Member -Force -MemberType NoteProperty -Name 'Thumbprint' -Value $serverCert.ThumbPrint
-    Save-JsonObject $appSettingsFile $jsonObject
+    
+    $dnsName = $serverCert.GetNameInfo([System.Security.Cryptography.X509Certificates.X509NameType]::SimpleName, $false)
+    $certObject | Add-Member -Force -MemberType NoteProperty -Name 'Subject' -Value $dnsName
+    
+    Save-JsonObject $jsonFile $jsonObject
 }
 
 ################ End Functions #################
 
 $sourceDirPath = [System.IO.Path]::GetFullPath($sourceDir)
 $targetDirPath = [System.IO.Path]::GetFullPath($targetDir)
-
-[string] $appSettingsFile = [System.IO.Path]::Combine($targetDirPath, "appsettings.json")
 
 # install root certificate
 Write-Host Importing root certificate
@@ -133,8 +142,9 @@ if (!(test-path $targetDirPath)) {
 # LocalSystem already has all kinds of permissions
 if ($cred.UserName -notlike '*\LocalSystem') {
     $acl = Get-Acl "$targetDirPath"
-    #$aclRuleArgs = $cred, "Read,Write,ReadAndExecute", "ContainerInherit,ObjectInherit", "None", "Allow"
-    $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($user, "Read,Write,ReadAndExecute", "ContainerInherit,ObjectInherit", "None", "Allow")
+    $aclRuleArgs = $cred.UserName, "Read,Write,ReadAndExecute", "ContainerInherit,ObjectInherit", "None", "Allow"
+    $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($aclRuleArgs)
+    #$accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($cred.UserName, "Read,Write,ReadAndExecute", "ContainerInherit,ObjectInherit", "None", "Allow")
     $acl.SetAccessRule($accessRule)
     $acl | Set-Acl "$targetDirPath"
 }
@@ -143,8 +153,11 @@ if ($cred.UserName -notlike '*\LocalSystem') {
 $sourcePublishPath = [System.IO.Path]::Combine($sourceDirPath, "publish", "*") 
 Copy-Item -Path $sourcePublishPath -Destination $targetDirPath -Recurse
 
-# update appSettings.json in target directory
-Update-AppSettings $serverCert
+# copy appsettings.Local.json to target directory and update it there
+[string] $localAppSettingsSource = '.\appsettings.Local.json'
+[string] $localAppSettingsTarget = [System.IO.Path]::Combine($targetDirPath, "appsettings.Local.json")
+Copy-Item -Path $localAppSettingsSource -Destination $localAppSettingsTarget
+Update-AppSettings $localAppSettingsTarget $serverCert
 
 # path of service binary executable
 $filepath = [System.IO.Path]::Combine($targetDirPath, $file)

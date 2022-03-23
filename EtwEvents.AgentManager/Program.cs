@@ -1,5 +1,8 @@
+using System.IO;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 
 namespace KdSoft.EtwEvents.AgentManager
@@ -35,6 +38,13 @@ namespace KdSoft.EtwEvents.AgentManager
                             };
                         });
                     });
-                });
+                })
+                .ConfigureAppConfiguration((hostContext, cfgBuilder) => {
+                    var env = hostContext.HostingEnvironment;
+                    // we are overriding some of the settings that are already loaded
+                    cfgBuilder.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+                    cfgBuilder.AddCommandLine(args);
+                })
+                .UseWindowsService();
     }
 }
