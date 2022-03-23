@@ -33,6 +33,10 @@
   </ItemGroup>
   
   <ItemGroup>
+    <Content Update="deploy/**/*">
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
     <Content Include="EventSinks/**/*" Exclude="EventSinks/**/*.json">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
