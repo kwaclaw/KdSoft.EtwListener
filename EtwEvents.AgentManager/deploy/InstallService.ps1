@@ -179,7 +179,7 @@ if ($cred.UserName -like 'NT SERVICE\*') {
     $ChangeStatus = $newService.Change($null, $null, $null, $null, $null, $null, $cred.UserName, $null, $null, $null, $null)
     If ($ChangeStatus.ReturnValue -eq '0')  {
         Write-host Log on account updated sucessfully for the service $newService -f Green
-        # for lack of a better understanding of minum permissions, we use Administrator rights
+        # for lack of a better understanding of minimum permissions, we use Administrator rights
         net localgroup Administrators /delete $cred.UserName
         net localgroup Administrators /add $cred.UserName
     } Else {

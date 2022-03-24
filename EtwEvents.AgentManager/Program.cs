@@ -1,8 +1,6 @@
-using System.IO;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 
 namespace KdSoft.EtwEvents.AgentManager
@@ -16,6 +14,11 @@ namespace KdSoft.EtwEvents.AgentManager
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder => {
+                    webBuilder.ConfigureAppConfiguration((hostContext, cfgBuilder) => {
+                        // we are overriding some of the settings that are already loaded
+                        cfgBuilder.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+                        cfgBuilder.AddCommandLine(args);
+                    });
                     webBuilder.UseStartup<Startup>();
                     webBuilder.ConfigureKestrel((context, options) => {
                         options.Limits.MinRequestBodyDataRate = null;
@@ -38,12 +41,6 @@ namespace KdSoft.EtwEvents.AgentManager
                             };
                         });
                     });
-                })
-                .ConfigureAppConfiguration((hostContext, cfgBuilder) => {
-                    var env = hostContext.HostingEnvironment;
-                    // we are overriding some of the settings that are already loaded
-                    cfgBuilder.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
-                    cfgBuilder.AddCommandLine(args);
                 })
                 .UseWindowsService();
     }
