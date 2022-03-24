@@ -5,13 +5,14 @@
     [String]$serviceName = "EtwPushAgent",
     [String]$serviceDisplayName = "Etw Push Agent",
     [String]$serviceDescription = "Forwards ETW Events to Event Sink",
-    [String]$user,
-    [String]$pwd,
-    [String]$managerUrl
+    [String]$user = '',
+    [String]$pwd = '',
+    [String]$managerUrl = ''
 )
 
-if (-not $user) {
+if ($user -eq '') {
     $user = 'NT SERVICE\' + $serviceName
+    Write-Host Using account $user
 }
 
 ################# Functions ##################
@@ -101,7 +102,7 @@ function Update-AppSettings {
 
     [PSCustomObject] $jsonObject = Load-JsonObject $jsonFile
 
-    if ($managerUrl) {
+    if ($managerUrl -ne '') {
         $jsonObject.Control | Add-Member -Force -MemberType NoteProperty -Name 'Uri' -Value $managerUrl
     }
 
@@ -132,7 +133,6 @@ Import-Certificate -FilePath $rootCertPath -CertStoreLocation Cert:\LocalMachine
 Write-Host
 Write-Host Checking client certificates
 $clientCert = $null
-
 foreach ($clientCertFile in Get-ChildItem -Path . -Filter '*.p12') {
     $role, $clientCert = Import-Cert $clientCertFile cert:\localMachine\my
     if ($role -eq 'etw-pushagent') {
@@ -146,7 +146,7 @@ foreach ($clientCertFile in Get-ChildItem -Path . -Filter '*.p12') {
 # if password is empty, create a dummy one to allow credentials for system accounts: 
 #NT AUTHORITY\LOCAL SERVICE
 #NT AUTHORITY\NETWORK SERVICE
-if (-not $pwd) {
+if ($pwd -eq '') {
     $secpwd = (new-object System.Security.SecureString)
 }
 else {
@@ -198,10 +198,25 @@ Update-AppSettings $localAppSettingsTarget $clientCert
 $filepath = [System.IO.Path]::Combine($targetDirPath, $file)
 
 "Installing the service."
-New-Service -Name $serviceName -BinaryPathName $filepath -Credential $cred -Description $serviceDescription -DisplayName $serviceDisplayName -StartupType Automatic
+if ($cred.UserName -like 'NT SERVICE\*') {
+    # for a virtual account (NT SERVICE\*) we need to pass a null password which PSCredential does not support, so we use $newService.Change()
+    New-Service -Name $serviceName -BinaryPathName $filepath -Description $serviceDescription -DisplayName $serviceDisplayName -StartupType Automatic
+    $newService  = Get-WmiObject -Class Win32_Service -Filter "Name='$serviceName'"
+    $ChangeStatus = $newService.Change($null, $null, $null, $null, $null, $null, $cred.UserName, $null, $null, $null, $null)
+    If ($ChangeStatus.ReturnValue -eq '0')  {
+        Write-host Log on account updated sucessfully for the service $newService -f Green
+        # for lack of a better understanding of minimum permissions, we use Administrator rights
+        net localgroup Administrators /delete $cred.UserName
+        net localgroup Administrators /add $cred.UserName
+    } Else {
+        Write-host Failed to update Log on account in the service $newService. Error code: $($ChangeStatus.ReturnValue) -f Red
+    }
+} else {
+    New-Service -Name $serviceName -BinaryPathName $filepath -Credential $cred -Description $serviceDescription -DisplayName $serviceDisplayName -StartupType Automatic
+}
 
 "Configuring the service"
-sc.exe failure $serviceName reset= 86400 actions= restart/6000/restart/6000/restart/6000
+sc.exe failure $serviceName reset=86400 actions=restart/6000/restart/6000/restart/6000
 
 "Installed and configured the service."
 
