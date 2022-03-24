@@ -157,7 +157,7 @@ namespace KdSoft.EtwEvents
         }
 
         // it seems that the same DN component can be encoded by OID or OID's friendly name, e.g. "OID.2.5.4.72" or "role"
-        public static Regex SubjectRoleRegex = new Regex(@"(OID\.2\.5\.4\.72|role)\s*=\s*(?<role>[^,=]*)\s*(,|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        public static Regex SubjectRoleRegex = new Regex(@"(OID\.2\.5\.4\.72|\.2\.5\.4\.72|role)\s*=\s*(?<role>[^,=]*)\s*(,|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         /// <summary>
         /// Get certificates from certificate store based on application policy OID and predicate callback.
