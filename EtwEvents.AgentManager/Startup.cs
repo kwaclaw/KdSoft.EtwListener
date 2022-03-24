@@ -157,7 +157,7 @@ namespace KdSoft.EtwEvents.AgentManager
             });
 
             services.AddGrpc(opts => {
-                opts.Interceptors.Add<AuthInterceptor>(authorizedAgents);
+                opts.Interceptors.Add<AuthInterceptor>(authorizedAgents ?? new HashSet<string>());
             });
         }
 
