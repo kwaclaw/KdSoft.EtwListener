@@ -2,14 +2,18 @@
     [Parameter(mandatory=$true)][String]$sourceDir,
     [Parameter(mandatory=$true)][String]$targetDir,
     [Parameter(mandatory=$true)][String]$file,
-    [Parameter(mandatory=$true)][String]$user,
-    [String]$pwd,
-    [int]$port
+    [String]$serviceName = 'EtwAgentManager',
+    [String]$serviceDisplayName = 'Etw Agent Manager',
+    [String]$serviceDescription = 'Manages ETW Push Agents',
+    [String]$user = '',
+    [String]$pwd = '',
+    [int]$port = 0
 )
 
-[string] $serviceName = "EtwAgentManager"
-[string] $serviceDescription = "Manages ETW Push Agents"
-[string] $serviceDisplayName = "Etw Agent Manager"
+if ($user -eq '') {
+    $user = 'NT SERVICE\' + $serviceName
+    Write-Host Using account $user
+}
 
 ################# Functions ##################
 
@@ -41,7 +45,12 @@ function Import-Cert {
 
     $cred = Get-Credential -UserName 'Installer' -Message ('Password for ' + $serverCertFile)
     if ($cred) {
-        $serverCert = Import-PfxCertificate -FilePath $serverCertFile -CertStoreLocation $storeLocation -Password $cred.Password
+        try {
+            $serverCert = Import-PfxCertificate -FilePath $serverCertFile -CertStoreLocation $storeLocation -Password $cred.Password
+        }
+        catch {
+            $serverCert = $null
+        }
     }
 
     Write-Output $serverCert
@@ -58,7 +67,7 @@ function Update-AppSettings {
     $httpsObject = $endPointsObject.Https
     
     # need to move our endpoints to unoccupied ports
-    if ($port) {
+    if ($port -ne 0) {
         $httpsUrl = 'https://0.0.0.0:' + $port
         $httpsObject | Add-Member -Force -MemberType NoteProperty -Name 'Url' -Value $httpsUrl
         $httpUrl = 'http://0.0.0.0:' + ($port + 1)
@@ -70,13 +79,13 @@ function Update-AppSettings {
         #$certObject.psobject.properties.remove('Path')
         #$certObject.psobject.properties.remove('Password')
         # we can't remove already loaded properties, so we must override them and hope it works
-        $certObject | Add-Member -Force -MemberType NoteProperty -Name 'Path' -Value $null
-        $certObject | Add-Member -Force -MemberType NoteProperty -Name 'Password' -Value $null
     } else {
         $newObj = [PSCustomObject]@{}
         $httpsObject | Add-Member -Force -MemberType NoteProperty -Name 'Certificate' -Value $newObj
         $certObject = $httpsObject.Certificate
     }
+    $certObject | Add-Member -Force -MemberType NoteProperty -Name 'Path' -Value $null
+    $certObject | Add-Member -Force -MemberType NoteProperty -Name 'Password' -Value $null
     $certObject | Add-Member -Force -MemberType NoteProperty -Name 'Store' -Value 'My'
     $certObject | Add-Member -Force -MemberType NoteProperty -Name 'Location' -Value 'LocalMachine'
     
@@ -111,7 +120,7 @@ foreach ($serverCertFile in Get-ChildItem -Path . -Filter '*.p12') {
 # if password is empty, create a dummy one to allow credentials for system accounts: 
 #NT AUTHORITY\LOCAL SERVICE
 #NT AUTHORITY\NETWORK SERVICE
-if ($pwd -eq "") {
+if ($pwd -eq '') {
     $secpwd = (new-object System.Security.SecureString)
 }
 else {
@@ -123,8 +132,8 @@ $existingService  = Get-WmiObject -Class Win32_Service -Filter "Name='$serviceNa
 if ($existingService) {
   "'$serviceName' exists already. Stopping."
   Stop-Service $serviceName
-  "Waiting 3 seconds to allow existing service to stop."
-  Start-Sleep -s 3
+  "Waiting 6 seconds to allow existing service to stop."
+  Start-Sleep -s 6
     
   $existingService.Delete()
   "Waiting 5 seconds to allow service to be uninstalled."
@@ -163,10 +172,25 @@ Update-AppSettings $localAppSettingsTarget $serverCert
 $filepath = [System.IO.Path]::Combine($targetDirPath, $file)
 
 "Installing the service."
-New-Service -Name $serviceName -BinaryPathName $filepath -Credential $cred -Description $serviceDescription -DisplayName $serviceDisplayName -StartupType Automatic
+if ($cred.UserName -like 'NT SERVICE\*') {
+    # for a virtual account (NT SERVICE\*) we need to pass a null password which PSCredential does not support, so we use $newService.Change()
+    New-Service -Name $serviceName -BinaryPathName $filepath -Description $serviceDescription -DisplayName $serviceDisplayName -StartupType Automatic
+    $newService  = Get-WmiObject -Class Win32_Service -Filter "Name='$serviceName'"
+    $ChangeStatus = $newService.Change($null, $null, $null, $null, $null, $null, $cred.UserName, $null, $null, $null, $null)
+    If ($ChangeStatus.ReturnValue -eq '0')  {
+        Write-host Log on account updated sucessfully for the service $newService -f Green
+        # for lack of a better understanding of minum permissions, we use Administrator rights
+        net localgroup Administrators /delete $cred.UserName
+        net localgroup Administrators /add $cred.UserName
+    } Else {
+        Write-host Failed to update Log on account in the service $newService. Error code: $($ChangeStatus.ReturnValue) -f Red
+    }
+} else {
+    New-Service -Name $serviceName -BinaryPathName $filepath -Credential $cred -Description $serviceDescription -DisplayName $serviceDisplayName -StartupType Automatic
+}
 
 "Configuring the service"
-sc.exe failure $serviceName reset= 86400 actions= restart/6000/restart/6000/restart/6000
+sc.exe failure $serviceName reset=86400 actions=restart/6000/restart/6000/restart/6000
 
 "Installed and configured the service."
 
