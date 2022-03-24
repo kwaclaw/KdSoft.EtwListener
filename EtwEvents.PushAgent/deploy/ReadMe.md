@@ -28,7 +28,7 @@
   ```json
   "Logging": {
     "RollingFile": {
-      "Directory": "../Logs",
+      "Directory": "./Logs",
     }
   },
   ```
