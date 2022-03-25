@@ -18,12 +18,22 @@ namespace KdSoft.EtwEvents
             if (context == null)
                 throw new ArgumentNullException(nameof(context));
 
+            var clientCert = context.GetHttpContext()?.Connection.ClientCertificate;
+            if (clientCert != null) {
+                string ? certRole = clientCert.GetSubjectRole();
+                if (certRole != null && certRole.Equals("etw-pushagent", System.StringComparison.OrdinalIgnoreCase)) {
+                    return;
+                }
+            }
+
+            // if we don't have the right role, check for explicit authorization by name
             if (context.AuthContext.IsPeerAuthenticated) {
                 foreach (var peer in context.AuthContext.PeerIdentity) {
                     if (_authorizedNames.Contains(peer.Value))
                         return;
                 }
             }
+
             throw new RpcException(new Status(StatusCode.PermissionDenied, "Unauthorized Certificate"));
         }
 

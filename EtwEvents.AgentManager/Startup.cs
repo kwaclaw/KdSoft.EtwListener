@@ -61,12 +61,7 @@ namespace KdSoft.EtwEvents.AgentManager
                         var identity = context.Principal?.Identity as ClaimsIdentity;
                         // ClaimsIdentity.Name here is the certificate's Subject Common Name (CN)
                         if (identity != null && identity.Name != null) {
-                            string? certRole = null;
-                            var match = Utils.SubjectRoleRegex.Match(context.ClientCertificate.Subject);
-                            if (match.Success) {
-                                certRole = match.Groups["role"].Value;
-                            }
-
+                            string? certRole = context.ClientCertificate.GetSubjectRole();
                             if (certRole != null && certRole.Equals("etw-pushagent", System.StringComparison.OrdinalIgnoreCase)) {
                                 identity.AddClaim(new Claim(ClaimTypes.Role, Role.Agent.ToString()));
                                 context.Success();
@@ -192,7 +187,7 @@ namespace KdSoft.EtwEvents.AgentManager
             app.UseEndpoints(endpoints => {
                 endpoints.MapRazorPages();
                 endpoints.MapControllers();
-                endpoints.MapGrpcService<EventSinkService>();
+                endpoints.MapGrpcService<LiveViewSinkService>();
             });
         }
 

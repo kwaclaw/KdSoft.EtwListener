@@ -6,10 +6,10 @@ using Microsoft.Extensions.Logging;
 
 namespace KdSoft.EtwEvents.AgentManager
 {
-    public class EventSinkService: EtwSink.EtwSinkBase
+    public class LiveViewSinkService: EtwSink.EtwSinkBase
     {
         readonly AgentProxyManager _agentProxyManager;
-        readonly ILogger<EventSinkService> _logger;
+        readonly ILogger<LiveViewSinkService> _logger;
 
         string GetAgentIdentity(ServerCallContext context) {
             var ids = context.AuthContext.PeerIdentity;
@@ -24,7 +24,7 @@ namespace KdSoft.EtwEvents.AgentManager
             throw new RpcException(new Status(StatusCode.PermissionDenied, "Unauthorized."));
         }
 
-        public EventSinkService(ILogger<EventSinkService> logger, AgentProxyManager agentProxyManager) {
+        public LiveViewSinkService(ILogger<LiveViewSinkService> logger, AgentProxyManager agentProxyManager) {
             this._agentProxyManager = agentProxyManager;
             this._logger = logger;
         }
