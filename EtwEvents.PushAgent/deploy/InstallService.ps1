@@ -158,8 +158,8 @@ $existingService  = Get-WmiObject -Class Win32_Service -Filter "Name='$serviceNa
 if ($existingService) {
   "'$serviceName' exists already. Stopping."
   Stop-Service $serviceName
-  "Waiting 3 seconds to allow existing service to stop."
-  Start-Sleep -s 3
+  "Waiting 6 seconds to allow existing service to stop."
+  Start-Sleep -s 6
     
   $existingService.Delete()
   "Waiting 5 seconds to allow service to be uninstalled."

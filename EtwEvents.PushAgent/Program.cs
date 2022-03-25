@@ -35,10 +35,8 @@ namespace KdSoft.EtwEvents.PushAgent
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((hostContext, cfgBuilder) => {
-                    var env = hostContext.HostingEnvironment;
-                    var provider = new PhysicalFileProvider(Path.Combine(env.ContentRootPath, ".."));
                     // we are overriding some of the settings that are already loaded
-                    cfgBuilder.AddJsonFile(provider, "appsettings.Local.json", optional: true, reloadOnChange: true);
+                    cfgBuilder.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
                     cfgBuilder.AddCommandLine(args);
                 })
                 .ConfigureLogging((hostContext, loggingBuilder) => {
