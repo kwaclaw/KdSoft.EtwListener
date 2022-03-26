@@ -94,7 +94,8 @@ class EventSinkConfig extends LitMvvmElement {
   }
 
   isValid() {
-    return this.renderRoot.querySelector('#form-content > *')?.isValid();
+    return this.renderRoot.querySelector('form').reportValidity()
+      && this.renderRoot.querySelector('#form-content > *')?.isValid();
   }
 
   async _loadConfigComponent(model) {
@@ -178,6 +179,10 @@ class EventSinkConfig extends LitMvvmElement {
           border-width: 1px;
         }
 
+        input:invalid {
+          border: 2px solid red;
+        }
+
         #common-fields {
           display: grid;
           grid-template-columns: auto auto;
@@ -216,9 +221,9 @@ class EventSinkConfig extends LitMvvmElement {
 
             <div id="common-fields" @change=${this._fieldChange}>
               <label for="batchSize">Batch Size</label>
-              <input type="number" id="batchSize" name="batchSize" .value=${profile.batchSize} />
+              <input type="number" id="batchSize" name="batchSize" .value=${profile.batchSize} min="1" />
               <label for="maxWriteDelayMSecs">Max Write Delay (msecs)</label>
-              <input type="number" id="maxWriteDelayMSecs" name="maxWriteDelayMSecs" .value=${profile.maxWriteDelayMSecs} />
+              <input type="number" id="maxWriteDelayMSecs" name="maxWriteDelayMSecs" .value=${profile.maxWriteDelayMSecs} min="0" />
               <label for="persistentChannel">Persistent Buffer</label>
               <input type="checkbox" id="persistentChannel" name="persistentChannel" .checked=${profile.persistentChannel} />
             </div>

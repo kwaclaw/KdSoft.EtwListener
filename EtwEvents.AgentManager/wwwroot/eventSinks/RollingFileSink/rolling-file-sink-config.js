@@ -87,13 +87,13 @@ class RollingFileSinkConfig extends LitMvvmElement {
               <label for="fileNameFormat">Filename Template</label>
               <input type="text" id="fileNameFormat" name="fileNameFormat" size="32" .value=${opts.fileNameFormat}></input>
               <label for="fileExtension">File Extension</label>
-              <input type="text" id="fileExtension" name="fileExtension" .value=${opts.fileExtension}></input>
+              <input type="text" id="fileExtension" name="fileExtension" .value=${opts.fileExtension} required></input>
               <label for="useLocalTime">Use Local Time</label>
               <input type="checkbox" id="useLocalTime" name="useLocalTime" .checked=${opts.useLocalTime}></input>
               <label for="fileSizeLimitKB">File-size Limit (KB)</label>
-              <input type="number" id="fileSizeLimitKB" name="fileSizeLimitKB" .value=${opts.fileSizeLimitKB}></input>
+              <input type="number" id="fileSizeLimitKB" name="fileSizeLimitKB" .value=${opts.fileSizeLimitKB} min="1"></input>
               <label for="maxFileCount">Max File Count</label>
-              <input type="number" id="maxFileCount" name="maxFileCount" .value=${opts.maxFileCount}></input>
+              <input type="number" id="maxFileCount" name="maxFileCount" .value=${opts.maxFileCount} min="1"></input>
               <label for="newFileOnStartup">New File on Startup</label>
               <input type="checkbox" id="newFileOnStartup" name="newFileOnStartup" .checked=${opts.newFileOnStartup}></input>
               <label for="relaxedJsonEscaping">Relaxed JSON Escaping</label>
