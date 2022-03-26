@@ -101,12 +101,12 @@ class EventSinkConfig extends LitMvvmElement {
     if (model) {
       try {
         const configFormTemplate = await loadSinkDefinitionTemplate(model.profile.sinkType);
-        const configModel = await loadSinkDefinitionModel(model.profile.sinkType);
-        // update the configModel's credentials and options separately from profile,
+        this.sinkConfigModel = await loadSinkDefinitionModel(model.profile.sinkType);
+        // update the sinkConfigModel's credentials and options separately from profile,
         // as otherwise we would just replace the options and credentials properties entirely
-        utils.setTargetProperties(configModel.credentials, model.profile.credentials);
-        utils.setTargetProperties(configModel.options, model.profile.options);
-        this.sinkTypeTemplateHolder.tag = configFormTemplate(configModel);
+        utils.setTargetProperties(this.sinkConfigModel.credentials, model.profile.credentials);
+        utils.setTargetProperties(this.sinkConfigModel.options, model.profile.options);
+        this.sinkTypeTemplateHolder.tag = configFormTemplate(this.sinkConfigModel);
       } catch (error) {
         // for "nothing" to work we need to render raw(this.sinkTypeTemplateHolder.value)
         this.sinkTypeTemplateHolder.tag = nothing;
@@ -178,7 +178,7 @@ class EventSinkConfig extends LitMvvmElement {
           border-width: 1px;
         }
 
-        #processing-vars {
+        #common-fields {
           display: grid;
           grid-template-columns: auto auto;
           row-gap: 5px;
@@ -214,7 +214,7 @@ class EventSinkConfig extends LitMvvmElement {
               class="my-2 w-full border-2 border-red-500 focus:outline-none focus:border-red-700"
             >${this.model.error}</textarea></pre>
 
-            <div id="processing-vars" @change=${this._fieldChange}>
+            <div id="common-fields" @change=${this._fieldChange}>
               <label for="batchSize">Batch Size</label>
               <input type="number" id="batchSize" name="batchSize" .value=${profile.batchSize} />
               <label for="maxWriteDelayMSecs">Max Write Delay (msecs)</label>
