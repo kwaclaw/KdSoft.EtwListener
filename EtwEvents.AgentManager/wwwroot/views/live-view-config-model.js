@@ -61,9 +61,9 @@ class LiveViewConfigModel {
   }
 
   toOptions() {
-    this._liveViewOptions.standardColumns = raw(observableStandardCols.selectedIndexes);
-    this._liveViewOptions.payloadColumnList = raw(observablePayloadCols.items);
-    this._liveViewOptions.payloadColumns = raw(observablePayloadCols.selectedIndexes);
+    this._liveViewOptions.standardColumns = raw(this.standardColumnCheckList.selectedIndexes);
+    this._liveViewOptions.payloadColumnList = raw(this.payloadColumnCheckList.items);
+    this._liveViewOptions.payloadColumns = raw(this.payloadColumnCheckList.selectedIndexes);
     return this._liveViewOptions;
   }
 

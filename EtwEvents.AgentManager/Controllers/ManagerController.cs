@@ -277,7 +277,7 @@ namespace KdSoft.EtwEvents.AgentManager
 
         [HttpPost]
         public IActionResult UpdateLiveViewOptions(string agentId, [FromBody] JsonElement liveViewOptions) {
-            // we are passing the JSON simply through, enabledProviders should match protobuf message LiveViewOptions
+            // we are passing the JSON simply through, liveViewOptions should match protobuf message LiveViewOptions
             return PostAgent(agentId, Constants.UpdateLiveViewOptionsEvent, liveViewOptions.GetRawText() ?? "{}");
         }
 
