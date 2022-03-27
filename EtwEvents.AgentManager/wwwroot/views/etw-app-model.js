@@ -514,7 +514,10 @@ class EtwAppModel {
     if (!activeEntry) return;
 
     const liveViewOptions = raw(activeEntry.current?.liveViewOptions) || new LiveViewOptions();
-    activeEntry.state.liveViewConfigModel.refresh(liveViewOptions);
+    // don't want to trigger a re-render yet
+    raw(activeEntry.state).liveViewOptions = liveViewOptions;
+    // this triggers a re-render anyway
+    activeEntry.state.liveViewConfigModel.refresh(liveViewOptions, true);
   }
 
   get liveViewConfigModified() {

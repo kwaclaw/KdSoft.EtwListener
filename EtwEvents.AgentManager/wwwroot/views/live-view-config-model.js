@@ -39,8 +39,8 @@ class LiveViewConfigModel {
     return this.payloadColumnCheckList.selectedItems;
   }
 
-  refresh(liveViewOptions) {
-    if (utils.targetEquals(this._liveViewOptions, liveViewOptions))
+  refresh(liveViewOptions, force = false) {
+    if (!force && utils.targetEquals(this._liveViewOptions, liveViewOptions))
       return;
 
     this._liveViewOptions = liveViewOptions;
