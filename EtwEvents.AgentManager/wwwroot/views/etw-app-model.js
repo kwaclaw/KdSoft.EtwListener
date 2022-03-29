@@ -36,7 +36,7 @@ function _enhanceProviderState(provider) {
   return provider;
 }
 
-// adds view models and view related methods to agent state, agentState must be observable
+// adds view models and view related methods to agent state, agentState must be raw
 function _enhanceAgentState(agentState, eventSinkInfos) {
   for (const provider of agentState.enabledProviders) {
     _enhanceProviderState(provider);
@@ -310,7 +310,7 @@ class EtwAppModel {
     const evs = new EventSource(`Manager/GetEtwEvents?agentId=${agentState.id}`);
     this.etwEventSource = evs;
 
-    agentState.liveEvents = new RingBuffer(1024);
+    agentState.liveEvents = new RingBuffer(2048);
     let seqNo = 0;
     evs.onmessage = evt => {
       try {
