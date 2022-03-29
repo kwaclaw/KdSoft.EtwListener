@@ -7,8 +7,6 @@ class ProcessingModel {
   }
 
   refresh(processingState) {
-    this.batchSize = processingState.batchSize;
-    this.maxWriteDelayMSecs = processingState.maxWriteDelayMSecs;
     if (this.filter) {
       this.filter.refresh(processingState.filterSource);
     } else {
@@ -30,7 +28,7 @@ class ProcessingModel {
   }
 
   toProcessingOptions() {
-    const result = new ProcessingOptions(this.batchSize, this.maxWriteDelayMSecs);
+    const result = new ProcessingOptions();
 
     let dynamicParts = this.getDynamicPartBodies();
     // if the dynamic bodies add up to an empty string, then we clear the filter

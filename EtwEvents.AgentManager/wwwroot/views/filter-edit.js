@@ -220,7 +220,7 @@ class FilterEdit extends LitMvvmElement {
     }
 
     const indent = ' '.repeat(item.indent);
-    const partBody = formatPart(item.lines, partMap);
+    const partBody = item.lines?.length ? formatPart(item.lines, partMap) : (item.body ?? '');
     const partDiagnostics = partMap.map(dg => dg.diagnostics).flat(2);
     const invalidClass = partMap.length ? 'invalid' : '';
     const title = getToolTip(partDiagnostics);
