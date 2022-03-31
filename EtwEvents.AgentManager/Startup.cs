@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Globalization;
@@ -58,28 +59,32 @@ namespace KdSoft.EtwEvents.AgentManager
                     //    return Task.CompletedTask;
                     //},
                     OnCertificateValidated = context => {
+                        var roleSet = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
                         var identity = context.Principal?.Identity as ClaimsIdentity;
                         // ClaimsIdentity.Name here is the certificate's Subject Common Name (CN)
                         if (identity != null && identity.Name != null) {
-                            string? certRole = context.ClientCertificate.GetSubjectRole();
-                            if (certRole != null && certRole.Equals("etw-pushagent", System.StringComparison.OrdinalIgnoreCase)) {
-                                identity.AddClaim(new Claim(ClaimTypes.Role, Role.Agent.ToString()));
-                                context.Success();
-                                return Task.CompletedTask;
+                            string? certRole = context.ClientCertificate.GetSubjectRole()?.ToLowerInvariant();
+                            if (certRole != null) {
+                                if (certRole.Equals("etw-pushagent")) {
+                                    roleSet.Add(Role.Agent.ToString());
+                                }
+                                else if (certRole.Equals("etw-manager")) {
+                                    roleSet.Add(Role.Manager.ToString());
+                                }
                             }
-                            else {
-                                var roleService = context.HttpContext.RequestServices.GetService<RoleService>();
-                                var roles = roleService!.GetRoles(identity.Name);
-                                foreach (var role in roles) {
-                                    identity.AddClaim(new Claim(ClaimTypes.Role, role.ToString()));
-                                }
-                                if (roles.Count > 0) {
-                                    context.Success();
-                                    return Task.CompletedTask;
-                                }
+                            var roleService = context.HttpContext.RequestServices.GetService<RoleService>();
+                            var roles = roleService!.GetRoles(identity.Name);
+                            foreach (var role in roles) {
+                                roleSet.Add(role.ToString());
+                            }
+                            foreach (var role in roleSet) {
+                                identity.AddClaim(new Claim(ClaimTypes.Role, role));
                             }
                         }
-                        context.Fail("Not authorized.");
+                        if (roleSet.Count > 0)
+                            context.Success();
+                        else
+                            context.Fail("Not authorized.");
                         return Task.CompletedTask;
                     }
                 };
