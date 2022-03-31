@@ -1,25 +1,42 @@
 @echo off
 Setlocal enabledelayedexpansion
 
-rem Example: MakeKdSoftClientCert.cmd -name my-etw-site -email karl@kd-soft.net -extra "role^=etw-pushagent"
+:: Example: MakeKdSoftClientCert.cmd -name my-etw-site -email karl@kd-soft.net -extra "role=etw-pushagent"
+:: Example: MakeKdSoftClientCert.cmd -name "Karl Waclawek" -email karl@waclawek.net -extra "role=etw-manager"
 
-rem Common Name (CN)
+:: Common Name (CN)
 set -name=
-rem email address
+:: email address
 set -email=
-rem extra DN component, to be added at end of DN
-rem should be in double quotes, any '=' must be escaped as '^='
+:: extra DN component, to be added at end of DN
+:: should be in double quotes
 set -extra=
 
-rem %~1 removes surrounding quotes from first parameter
+:: %~1 removes surrounding quotes from first parameter
 for %%a in (%*) do (
-    call set "%%~1=%%~2"
-    shift
+    set arg=%%~a
+    call :setarg %%a
 )
+goto :after
 
-if [%-name%] == [] (set -name=client)
-if [%-email%] == [] (set -email=client@kd-soft.net)
-if [%-extra%] == [] ( cd. ) else (set -extra=/%-extra%)
+:setarg
+if /i [%arg:~0,1%] == [-] (
+    set param=%arg%
+) else (
+    call set "%param%=%~1"
+)
+exit /b
+
+:after
+echo Command Line Parameters
+echo -name=%-name%
+echo -email=%-email%
+echo -extra=%-extra%
+
+
+if ["%-name%"] == [""] (set -name=client)
+if ["%-email%"] == [""] (set -email=client@kd-soft.net)
+if ["%-extra%"] == [""] ( cd. ) else (set -extra=/%-extra%)
 
 set cn=CN=%-name%
 set em=/emailAddress=%-email%
@@ -40,8 +57,8 @@ if %ERRORLEVEL% NEQ 0 (Exit /b)
 
   
 @echo export to pkcs12
-rem sha256 encrypted keys cannot be imported on WinServer 2016 / Win10 <= 1703, use TripleDES-SHA1 instead
-rem openssl pkcs12 -export -in "tmp/client.crt" -inkey "tmp/client.key" -out "out/%-name%.p12"
+:: sha256 encrypted keys cannot be imported on WinServer 2016 / Win10 <= 1703, use TripleDES-SHA1 instead
+:: openssl pkcs12 -export -in "tmp/client.crt" -inkey "tmp/client.key" -out "out/%-name%.p12"
 openssl pkcs12 -export -in "tmp/client.crt" -inkey "tmp/client.key" -macalg SHA1 -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -out "out/%-name%.p12"
     
 pause

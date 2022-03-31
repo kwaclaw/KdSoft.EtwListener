@@ -15,6 +15,20 @@
   2) copy certificate into unzipped folder (if provided).
   3) Double click `InstallService.cmd`, follow prompts.
 
+### User Authentication
+
+One of these applies (when prompted by the browser):
+
+- Use a client certificate where the subject (DN) includes "role=etw-manager" 
+- Use a client certificate where the Common Name (CN) is listed in appsettings.json under ClientValidation
+
+### Agent Authentication
+
+One of these applies:
+
+- Use a client certificate where the subject (DN) includes "role=etw-pushagent" 
+- Use a client certificate where the Common Name (CN) is listed in appsettings.json under AgentValidation
+
 ### Local Configuration
 
 - Optionally, change the settings in `appsettings.Local.json`.

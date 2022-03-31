@@ -1,21 +1,36 @@
 @echo off
 Setlocal enabledelayedexpansion
 
-rem Example: MakeKdSoftServerCert.cmd -dns sales.my-company.com -email karl@kd-soft.net
+:: Example: MakeKdSoftServerCert.cmd -dns sales.my-company.com -email karl@kd-soft.net
 
-rem Common Name (CN) for server, also subjectAltName
+:: Common Name (CN) for server, also subjectAltName
 set -dns=
-rem email address
+:: email address
 set -email=
 
-rem %~1 removes surrounding quotes from first parameter
+:: %~1 removes surrounding quotes from first parameter
 for %%a in (%*) do (
-    call set "%%~1=%%~2"
-    shift
+    set arg=%%~a
+    call :setarg %%a
 )
+goto :after
 
-if [%-dns%] == [] (set -dns=server.kd-soft.net)
-if [%-email%] == [] (set -email=admin@kd-soft.net)
+:setarg
+if /i [%arg:~0,1%] == [-] (
+    set param=%arg%
+) else (
+    call set "%param%=%~1"
+)
+exit /b
+
+:after
+echo Command Line Parameters
+echo -dns=%-dns%
+echo -email=%-email%
+
+
+if ["%-dns%"] == [""] (set -dns=server.kd-soft.net)
+if ["%-email%"] == [""] (set -email=admin@kd-soft.net)
 
 set cn=CN=%-dns%
 set em=/emailAddress=%-email%
@@ -35,8 +50,8 @@ openssl x509 -req -days 398 -in "tmp/server.csr" -CA "Kd-Soft.crt" -CAkey "Kd-So
 if %ERRORLEVEL% NEQ 0 (Exit /b)
     
 @echo export to pkcs12
-rem sha256 encrypted keys cannot be imported on WinServer 2016 / Win10 <= 1703, use TripleDES-SHA1 instead
-rem openssl pkcs12 -export -in "tmp/server.crt" -inkey "tmp/server.key" -out "out/%-dns%.p12"
+:: sha256 encrypted keys cannot be imported on WinServer 2016 / Win10 <= 1703, use TripleDES-SHA1 instead
+:: openssl pkcs12 -export -in "tmp/server.crt" -inkey "tmp/server.key" -out "out/%-dns%.p12"
 openssl pkcs12 -export -in "tmp/server.crt" -inkey "tmp/server.key" -macalg SHA1 -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -out "out/%-dns%.p12"
    
 pause
