@@ -1,6 +1,6 @@
 ﻿import { html } from 'lit';
 import { Queue, priorities } from '@nx-js/queue-util';
-import { observe } from '@nx-js/observer-util';
+import { observe, raw } from '@nx-js/observer-util';
 import { LitMvvmElement, css } from '@kdsoft/lit-mvvm';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
@@ -70,6 +70,13 @@ class LiveViewConfig extends LitMvvmElement {
 
   shouldRender() {
     return !!this.model;
+  }
+
+  beforeFirstRender() {
+    this.colObserver = observe(() => {
+      this.model._liveViewOptions.standardColumns = raw(this.model.standardColumnCheckList.selectedIndexes);
+      this.model._liveViewOptions.payloadColumns = raw(this.model.payloadColumnCheckList.selectedIndexes);
+    });
   }
 
   firstRendered() {
