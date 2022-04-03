@@ -354,6 +354,8 @@ class EtwAppModel {
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
+  //#endregion
+
   //#region Providers
 
   applyProviders() {
@@ -444,9 +446,11 @@ class EtwAppModel {
   get processingModified() {
     const activeEntry = this.getActiveEntry();
     if (!activeEntry) return false;
-    const currState = activeEntry.current?.processingState;
-    const state = activeEntry.state.processingState;
-    return !utils.targetEquals(currState, state) || !utils.targetEquals(currState?.filterSource, state.filterSource);
+
+    const currState = activeEntry.current?.processingState || {};
+    const currModel = new ProcessingModel(currState)
+    const stateModel = this.activeAgentState.processingModel;
+    return !utils.targetEquals(currModel, stateModel);
   }
 
   //#endregion
