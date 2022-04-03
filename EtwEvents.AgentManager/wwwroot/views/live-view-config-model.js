@@ -2,6 +2,7 @@
 
 import { observable, observe, raw } from '@nx-js/observer-util';
 import { KdSoftChecklistModel } from '@kdsoft/lit-mvvm-components';
+import LiveViewOptions from '../js/liveViewOptions.js';
 import * as utils from '../js/utils.js';
 
 const traceLevelList = () => [
@@ -28,6 +29,7 @@ const standardColumnList = [
 
 class LiveViewConfigModel {
   constructor(liveViewOptions) {
+    this._liveViewOptions = raw(liveViewOptions) || new LiveViewOptions();
     this.refresh(liveViewOptions);
   }
 
@@ -39,22 +41,18 @@ class LiveViewConfigModel {
     return this.payloadColumnCheckList.selectedItems;
   }
 
-  refresh(liveViewOptions, force = false) {
-    if (!force && utils.targetEquals(this._liveViewOptions, liveViewOptions))
-      return;
-
-    this._liveViewOptions = liveViewOptions;
-
+  refresh(liveViewOptions) {
+    const lvOpts = raw(liveViewOptions || new LiveViewOptions());
     this.standardColumnCheckList = new KdSoftChecklistModel(
       utils.clone(standardColumnList),
-      liveViewOptions?.standardColumns || [0, 1, 2, 3, 4, 5, 6, 7, 8],
+      utils.clone(lvOpts.standardColumns || [0, 1, 2, 3, 4, 5, 6, 7, 8]),
       true,
       item => item.name
     );
 
     this.payloadColumnCheckList = new KdSoftChecklistModel(
-      liveViewOptions?.payloadColumnList || [],
-      liveViewOptions?.payloadColumns || [],
+      utils.clone(lvOpts.payloadColumnList || []),
+      utils.clone(lvOpts.payloadColumns || []),
       true,
       item => item.name
     );

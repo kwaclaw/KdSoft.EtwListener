@@ -74,8 +74,9 @@ class LiveViewConfig extends LitMvvmElement {
 
   beforeFirstRender() {
     this.colObserver = observe(() => {
-      this.model._liveViewOptions.standardColumns = raw(this.model.standardColumnCheckList.selectedIndexes);
-      this.model._liveViewOptions.payloadColumns = raw(this.model.payloadColumnCheckList.selectedIndexes);
+      this.model._liveViewOptions.standardColumns = this.model.standardColumnCheckList.selectedIndexes;
+      this.model._liveViewOptions.payloadColumnList = this.model.payloadColumnCheckList.items;
+      this.model._liveViewOptions.payloadColumns = this.model.payloadColumnCheckList.selectedIndexes;
     });
   }
 
