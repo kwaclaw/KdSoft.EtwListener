@@ -1,4 +1,4 @@
-﻿import { observable } from '@nx-js/observer-util';
+﻿import { observe, observable } from '@nx-js/observer-util';
 import { Queue, priorities } from '@nx-js/queue-util';
 import { LitMvvmElement, html, nothing, css } from '@kdsoft/lit-mvvm';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
@@ -124,8 +124,12 @@ class EventSinkConfig extends LitMvvmElement {
     return !!this.model;
   }
 
-  beforeFirstRender() {
-    this._loadConfigComponent(this.model);
+  async beforeFirstRender() {
+    await this._loadConfigComponent(this.model);
+    this.configObserver = observe(() => {
+      this.model.profile.credentials = this.sinkConfigModel.credentials || {};
+      this.model.profile.options = this.sinkConfigModel.options || {};
+    });
   }
 
   static get styles() {

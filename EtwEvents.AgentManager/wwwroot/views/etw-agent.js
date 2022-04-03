@@ -129,10 +129,6 @@ class EtwAgent extends LitMvvmElement {
     const configForms = this.renderRoot.querySelectorAll('event-sink-config');
     let isValid = true;
     configForms.forEach(frm => {
-      const scm = frm.sinkConfigModel || {};
-      // we need to copy changes back from the sink's config model to the agent state
-      frm.model.profile.credentials = scm.credentials || {};
-      frm.model.profile.options = scm.options || {};
       isValid = isValid && frm.isValid();
     });
     if (isValid) {

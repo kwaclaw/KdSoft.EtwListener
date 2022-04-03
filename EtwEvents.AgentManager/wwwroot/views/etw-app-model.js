@@ -471,8 +471,9 @@ class EtwAppModel {
   get eventSinksModified() {
     const activeEntry = this.getActiveEntry();
     if (!activeEntry) return false;
+
     const currSinks = activeEntry.current?.eventSinks;
-    const stateSinks = activeEntry.state.eventSinks;
+    const stateSinks = this.activeAgentState.eventSinks;
     return !utils.targetEquals(currSinks, stateSinks);
   }
 
