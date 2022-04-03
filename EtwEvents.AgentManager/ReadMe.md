@@ -1,9 +1,11 @@
-# Build And Run Instructions
+# Build And Run Instructions (mostly for Docker)
 
-## Import Styles before production build or development run
+## Import Styles before production build/publish or development run
 
 Any CSS that is not available as CSS-in-JS in the form of lit-element css`...my styles...` must
 be imported/converted to that format. Place your CSS into `wwwroot/css` and then run `npm run prepare` in `wwwroot`.
+
+Or better, just run `npm run build` in `wwwroot`, which performs an NPM install followed by all other processing.
 
 ## Debug with Visual Studio in Docker
 
