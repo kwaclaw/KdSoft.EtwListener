@@ -3,12 +3,13 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using KdSoft.EtwEvents.Server;
 using KdSoft.Logging;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Diagnostics.Tracing.Session;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -87,6 +88,16 @@ namespace KdSoft.EtwEvents.PushAgent
                     services.AddSingleton<ControlConnector>();
                     services.AddScoped<SessionWorker>();
                     services.AddHostedService<ControlWorker>();
+
+                    var keyDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), nameof(KdSoft.EtwEvents.PushAgent), "Keys");
+                    var dpBuilder = services.AddDataProtection(opts => {
+                        opts.ApplicationDiscriminator = nameof(KdSoft.EtwEvents.PushAgent);
+                    }).PersistKeysToFileSystem(
+                        new DirectoryInfo(keyDirectory)
+                    );
+                    var provider = services.BuildServiceProvider();
+                    var clientCert = provider.GetRequiredService<X509Certificate2>();
+                    dpBuilder.ProtectKeysWithCertificate(clientCert);
                 });
     }
 }

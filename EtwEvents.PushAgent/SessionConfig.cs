@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Google.Protobuf;
 using KdSoft.EtwLogging;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -12,13 +13,15 @@ namespace KdSoft.EtwEvents.PushAgent
     {
         readonly HostBuilderContext _context;
         readonly ILogger<SessionConfig> _logger;
+        readonly IDataProtector _dataProtector;
         readonly JsonFormatter _jsonFormatter;
 
         bool _stateAvailable;
 
-        public SessionConfig(HostBuilderContext context, ILogger<SessionConfig> logger) {
+        public SessionConfig(HostBuilderContext context, IDataProtectionProvider provider, ILogger<SessionConfig> logger) {
             this._context = context;
             this._logger = logger;
+            this._dataProtector = provider.CreateProtector("sink-credentials");
             var jsonSettings = JsonFormatter.Settings.Default.WithFormatDefaultValues(true).WithFormatEnumsAsIntegers(true);
             _jsonFormatter = new JsonFormatter(jsonSettings);
 
@@ -79,9 +82,16 @@ namespace KdSoft.EtwEvents.PushAgent
         public bool LoadSinkProfiles() {
             try {
                 var sinkOptionsJson = File.ReadAllText(EventSinkOptionsPath);
-                _sinkProfiles = string.IsNullOrWhiteSpace(sinkOptionsJson)
+                var profiles = string.IsNullOrWhiteSpace(sinkOptionsJson)
                     ? new Dictionary<string, EventSinkProfile>(StringComparer.CurrentCultureIgnoreCase)
                     : new Dictionary<string, EventSinkProfile>(EventSinkProfiles.Parser.ParseJson(sinkOptionsJson).Profiles, StringComparer.CurrentCultureIgnoreCase);
+                foreach (var profile in profiles.Values) {
+                    if (profile.Credentials.StartsWith('*')) {
+                        var rawCredentials = this._dataProtector.Unprotect(profile.Credentials.Substring(1));
+                        profile.Credentials = rawCredentials;
+                    }
+                }
+                _sinkProfiles = profiles;
                 return true;
             }
             catch (Exception ex) {
@@ -93,7 +103,17 @@ namespace KdSoft.EtwEvents.PushAgent
 
         public bool SaveSinkProfiles(IDictionary<string, EventSinkProfile> profiles) {
             try {
-                var json = _jsonFormatter.Format(new EventSinkProfiles { Profiles = { profiles } });
+                // clone profiles so we only modify the stored version
+                var clonedProfiles = new Dictionary<string, EventSinkProfile>(profiles);
+                foreach (var profileEntry in clonedProfiles) {
+                    var clonedProfile = profileEntry.Value.Clone();
+                    if (!clonedProfile.Credentials.StartsWith('*')) {
+                        var protectedCredentials = this._dataProtector.Protect(clonedProfile.Credentials);
+                        clonedProfile.Credentials = $"*{protectedCredentials}";
+                    }
+                    clonedProfiles[profileEntry.Key] = clonedProfile;
+                }
+                var json = _jsonFormatter.Format(new EventSinkProfiles { Profiles = { clonedProfiles } });
                 File.WriteAllText(EventSinkOptionsPath, json);
                 _sinkProfiles = new Dictionary<string, EventSinkProfile>(profiles, StringComparer.CurrentCultureIgnoreCase);
                 return true;
