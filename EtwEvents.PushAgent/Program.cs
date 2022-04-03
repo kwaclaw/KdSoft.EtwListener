@@ -59,7 +59,14 @@ namespace KdSoft.EtwEvents.PushAgent
                     services.AddSingleton<SessionConfig>();
                     services.AddSingleton(provider => {
                         var options = provider.GetRequiredService<IOptions<ControlOptions>>();
-                        var handler = Utils.CreateHttpHandler(options.Value.ClientCertificate);
+                        var clientCert = Utils.GetClientCertificate(options.Value.ClientCertificate);
+                        if (clientCert == null)
+                            throw new ArgumentException("Cannot find client certificate based on specified options.", nameof(options.Value.ClientCertificate));
+                        return clientCert;
+                    });
+                    services.AddSingleton(provider => {
+                        var clientCert = provider.GetRequiredService<X509Certificate2>();
+                        var handler = Utils.CreateHttpHandler(clientCert);
                         return handler;
                     });
                     services.AddSingleton(provider => new TraceSessionManager(TimeSpan.FromMinutes(3)));

@@ -11,7 +11,7 @@ namespace KdSoft.EtwEvents.PushAgent
     {
         public const string ClientAuthPolicy = "1.3.6.1.5.5.7.3.2";
 
-        public static SocketsHttpHandler CreateHttpHandler(ClientCertOptions certOptions) {
+        public static X509Certificate2? GetClientCertificate(ClientCertOptions certOptions) {
             if (certOptions.SubjectCN.Length == 0 && certOptions.Thumbprint.Length == 0 && certOptions.SubjectRole.Length == 0)
                 throw new ArgumentException("Client certificate options must have one of SubjectCN, SubjectRole or Thumbprint specified.");
 
@@ -35,9 +35,10 @@ namespace KdSoft.EtwEvents.PushAgent
                 clientCert = shared.Utils.GetCertificate(certOptions.Location, string.Empty, certOptions.SubjectCN);
             }
 
-            if (clientCert == null)
-                throw new ArgumentException("Cannot find client certificate based on specified options.", nameof(certOptions));
+            return clientCert;
+        }
 
+        public static SocketsHttpHandler CreateHttpHandler(X509Certificate2 clientCert) {
             var httpHandler = new SocketsHttpHandler {
                 //PooledConnectionLifetime = TimeSpan.FromHours(4),
                 SslOptions = new SslClientAuthenticationOptions {
