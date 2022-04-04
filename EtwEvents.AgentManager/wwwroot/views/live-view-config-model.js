@@ -29,7 +29,6 @@ const standardColumnList = [
 
 class LiveViewConfigModel {
   constructor(liveViewOptions) {
-    this._liveViewOptions = raw(liveViewOptions) || new LiveViewOptions();
     this.refresh(liveViewOptions);
   }
 
@@ -58,8 +57,13 @@ class LiveViewConfigModel {
     );
   }
 
+  // when called via proxy, then this will be a proxy
   toOptions() {
-    return this._liveViewOptions;
+    return new LiveViewOptions(
+      raw(this.standardColumnCheckList.selectedIndexes),
+      raw(this.payloadColumnCheckList.items),
+      raw(this.payloadColumnCheckList.selectedIndexes)
+    );
   }
 
   static get traceLevelList() { return observable(traceLevelList()); }

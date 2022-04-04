@@ -26,6 +26,7 @@ class LiveViewConfig extends LitMvvmElement {
     super();
     this.scheduler = new Queue(priorities.HIGH);
     this._getPayloadColumnListItemTemplate = getPayloadColumnListItemTemplate.bind(this);
+    this.changeCallback = (opts) => { };
   }
 
   _fieldChange(e) {
@@ -73,10 +74,10 @@ class LiveViewConfig extends LitMvvmElement {
   }
 
   beforeFirstRender() {
+    // we need this to update the underlying state as early as possible
     this.colObserver = observe(() => {
-      this.model._liveViewOptions.standardColumns = this.model.standardColumnCheckList.selectedIndexes;
-      this.model._liveViewOptions.payloadColumnList = this.model.payloadColumnCheckList.items;
-      this.model._liveViewOptions.payloadColumns = this.model.payloadColumnCheckList.selectedIndexes;
+      const liveViewOptions = this.model.toOptions();
+      this.changeCallback(liveViewOptions);
     });
   }
 

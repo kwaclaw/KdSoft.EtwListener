@@ -522,11 +522,20 @@ class EtwAppModel {
     this.activeAgentState.liveViewConfigModel.refresh(liveViewOptions);
   }
 
+  // sync agent state with liveViewConfigModel; we don't want to trigger reactions here
+  updateLiveViewOptions(opts) {
+    const activeEntry = this.getActiveEntry();
+    if (!activeEntry) return false;
+    raw(activeEntry.state).liveViewOptions = opts;
+  }
+
+  // this gets called typically from within render, so after liveViewConfigModel.refresh()!
   get liveViewConfigModified() {
     const activeEntry = this.getActiveEntry();
     if (!activeEntry) return false;
 
-    return !utils.targetEquals(activeEntry.current?.liveViewOptions, activeEntry.state.liveViewOptions);
+    const liveViewOptions = raw(activeEntry.state.liveViewConfigModel.toOptions());
+    return !utils.targetEquals(activeEntry.current?.liveViewOptions, liveViewOptions);
   }
 
   //#endregion

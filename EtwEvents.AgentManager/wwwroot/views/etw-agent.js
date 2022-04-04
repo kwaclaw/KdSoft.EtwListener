@@ -347,7 +347,10 @@ class EtwAgent extends LitMvvmElement {
           <div class="flex my-2 pr-2">
             <span class="font-semibold ${this.model.liveViewConfigModified ? 'italic text-red-500' : ''}">Live View</span>
           </div>
-          <live-view-config .model=${activeAgentState.liveViewConfigModel}></live-view-config>
+          <live-view-config
+            .model=${activeAgentState.liveViewConfigModel}
+            .changeCallback=${(opts) => this.model.updateLiveViewOptions(opts)}
+          ></live-view-config>
           <hr class="my-3" />
           <div class="flex flex-wrap mt-2 bt-1">
             <button type="button" class="py-1 px-2 ml-auto" @click=${() => this.model.applyLiveViewConfig()} title="Apply">
