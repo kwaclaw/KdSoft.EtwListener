@@ -1,6 +1,8 @@
 @echo off
 Setlocal enabledelayedexpansion
 
+:: Prerequisite: OpenSSL >= 3.0 must be installed - see https://slproweb.com/products/Win32OpenSSL.html
+
 :: Example: MakeKdSoftServerCert.cmd -dns sales.my-company.com -email karl@kd-soft.net
 
 :: Common Name (CN) for server, also subjectAltName

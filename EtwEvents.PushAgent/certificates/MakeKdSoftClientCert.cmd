@@ -1,6 +1,8 @@
 @echo off
 Setlocal enabledelayedexpansion
 
+:: Prerequisite: OpenSSL >= 3.0 must be installed - see https://slproweb.com/products/Win32OpenSSL.html
+
 :: Example: MakeKdSoftClientCert.cmd -name my-etw-site -email karl@kd-soft.net -extra "role=etw-pushagent"
 :: Example: MakeKdSoftClientCert.cmd -name "Karl Waclawek" -email karl@waclawek.net -extra "role=etw-manager"
 
