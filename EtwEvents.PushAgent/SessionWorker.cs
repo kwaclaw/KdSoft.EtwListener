@@ -196,17 +196,20 @@ namespace KdSoft.EtwEvents.PushAgent
         public static BuildFilterResult TestFilter(Filter filter) {
             var result = new BuildFilterResult();
 
-            var (sourceText, dynamicRanges) = BuildSourceText(filter);
-            if (sourceText == null) {
-                var diagnostic = Diagnostic.Create(
-                    "FL1000", "Filter", "Input filter not well formed.", DiagnosticSeverity.Error, DiagnosticSeverity.Error, true, 0
-                );
-                result.AddDiagnostics(ImmutableArray<Diagnostic>.Empty.Add(diagnostic));
-            }
-            else {
-                var diagnostics = RealTimeTraceSession.TestFilter(sourceText);
-                result.AddDiagnostics(diagnostics);
-                result.FilterSource = BuildFilterSource(sourceText, dynamicRanges!, filter);
+            // an empty filter is OK
+            if (filter.FilterParts.Count > 0) {
+                var (sourceText, dynamicRanges) = BuildSourceText(filter);
+                if (sourceText == null) {
+                    var diagnostic = Diagnostic.Create(
+                        "FL1000", "Filter", "Input filter not well formed.", DiagnosticSeverity.Error, DiagnosticSeverity.Error, true, 0
+                    );
+                    result.AddDiagnostics(ImmutableArray<Diagnostic>.Empty.Add(diagnostic));
+                }
+                else {
+                    var diagnostics = RealTimeTraceSession.TestFilter(sourceText);
+                    result.AddDiagnostics(diagnostics);
+                    result.FilterSource = BuildFilterSource(sourceText, dynamicRanges!, filter);
+                }
             }
 
             return result;
