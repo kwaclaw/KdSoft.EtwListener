@@ -283,6 +283,12 @@ class EtwAppModel {
 
     // it seems utils.setTargetProperties(activeEntry.state, updateObject) does not necessarily trigger a re-render
     utils.setTargetProperties(activeEntry.state, updateObject);
+
+    // special case - need to update the filter foreground
+    const filterEditModel = activeEntry.state.processingModel.filter;
+    filterEditModel.refreshSourceLines(updateObject.processingState.filterSource);
+    filterEditModel.diagnostics = [];
+
     // force re-render
     this.__changeCount++;
   }
