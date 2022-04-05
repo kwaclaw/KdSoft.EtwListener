@@ -36,7 +36,7 @@ function _enhanceProviderState(provider) {
   return provider;
 }
 
-// adds view models and view related methods to agent state, agentState must be raw
+// adds view models and view related methods to agent state
 function _enhanceAgentState(agentState, eventSinkInfos) {
   for (const provider of agentState.enabledProviders) {
     _enhanceProviderState(provider);
@@ -274,8 +274,7 @@ class EtwAppModel {
     const activeEntry = this.getActiveEntry();
     if (!activeEntry) return null;
 
-    activeEntry.state = _enhanceAgentState(activeEntry.state, this.eventSinkInfos);
-    return activeEntry.state;
+    return _enhanceAgentState(activeEntry.state, this.eventSinkInfos);
   }
 
   setAgentState(updateObject) {
