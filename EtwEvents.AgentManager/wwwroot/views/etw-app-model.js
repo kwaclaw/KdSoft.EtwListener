@@ -446,10 +446,10 @@ class EtwAppModel {
     const activeEntry = this.getActiveEntry();
     if (!activeEntry) return false;
 
-    const currState = activeEntry.current?.processingState || {};
-    const currModel = new ProcessingModel(currState)
-    const stateModel = this.activeAgentState.processingModel;
-    return !utils.targetEquals(currModel, stateModel);
+    const currState = activeEntry.current?.processingState;
+    const currParts = (new ProcessingModel(currState)).getDynamicPartBodies();
+    const stateParts = this.activeAgentState.processingModel.getDynamicPartBodies();
+    return !utils.targetEquals(currParts, stateParts);
   }
 
   //#endregion
