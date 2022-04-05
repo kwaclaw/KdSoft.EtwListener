@@ -6,7 +6,9 @@
     this.enabledProviders = enabledProviders || [];
     this.eventSinks = eventSinks || {};
     this.processingState = processingState || {};
-    this.liveViewOptions = liveViewOptions || {}
+    this.liveViewOptions = liveViewOptions || {};
+    this.isRunning = false;
+    this.isStopped = false;
   }
 }
 

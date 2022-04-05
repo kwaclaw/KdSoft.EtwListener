@@ -235,6 +235,10 @@ class EtwAppSideBar extends LitMvvmElement {
         <div part="header" slot="header" class="flex items-baseline pr-1 text-white bg-gray-500">
           <label class="pl-1 font-bold text-xl">${entry.state.id}</label>
           <span class="ml-auto">
+            <span class="mr-4">
+              ${onlyModified ? html`<button class="mr-1 text-yellow-800 fas fa-pencil-alt"></button>` : nothing}
+              ${entry.disconnected ? html`<i class="text-red-800 fas fa-unlink"></i>` : nothing}
+            </span>
             <input id="import-agent-config"
               type="file"
               @change=${e => this._importAgentConfig(e, entry.state)}
@@ -242,12 +246,10 @@ class EtwAppSideBar extends LitMvvmElement {
             <button class="mr-1 text-gray-600" @click=${this._importDialog} title="Import Configuration">
               <i class="fas fa-file-import"></i>
             </button>
-            <button class="mr-6 text-gray-600" @click=${() => this._exportAgentConfig(entry.state)} title="Export Configuration">
+            <button class="mr-4 text-gray-600" @click=${() => this._exportAgentConfig(entry.state)} title="Export Configuration">
               <i class="fas fa-file-export"></i>
             </button>
 
-            ${onlyModified ? html`<button class="mr-1 text-yellow-800 fas fa-pencil-alt"></button>` : nothing}
-            ${entry.disconnected ? html`<i class="mr-1 text-red-800 fas fa-unlink"></i>` : nothing}
             <button class="mr-1 ${playClass}" @click=${() => this._startEvents(entry.current)} title="Start Session">
               <i class="fas fa-play"></i>
             </button>

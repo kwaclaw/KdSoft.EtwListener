@@ -483,6 +483,9 @@ Ensure the default browser behavior of the \`hidden\` attribute.
 .mr-1 {
   margin-right: 0.25rem;
 }
+.mr-4 {
+  margin-right: 1rem;
+}
 .mr-6 {
   margin-right: 1.5rem;
 }
@@ -491,9 +494,6 @@ Ensure the default browser behavior of the \`hidden\` attribute.
 }
 .mr-2 {
   margin-right: 0.5rem;
-}
-.mr-4 {
-  margin-right: 1rem;
 }
 .mb-1 {
   margin-bottom: 0.25rem;
