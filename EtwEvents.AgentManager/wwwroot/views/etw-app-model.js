@@ -475,9 +475,9 @@ class EtwAppModel {
     const activeEntry = this.getActiveEntry();
     if (!activeEntry) return false;
 
-    const currSinks = activeEntry.current?.eventSinks;
-    const stateSinks = this.activeAgentState.eventSinks;
-    return !utils.targetEquals(currSinks, stateSinks);
+    const currProfiles = Object.entries(activeEntry.current?.eventSinks).map(es => es[1].profile);
+    const stateProfiles = Object.entries(this.activeAgentState.eventSinks).map(es => es[1].profile);
+    return !utils.targetEquals(currProfiles, stateProfiles);
   }
 
   addEventSink(name, sinkInfo) {
