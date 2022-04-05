@@ -282,10 +282,10 @@ class EtwAppModel {
     const activeEntry = this.getActiveEntry();
     if (!activeEntry) return;
 
-    // it seems utils.setTargetProperties(entry.state, updateObject); does not work for event-sink-config
-    const newState = new AgentState();
-    utils.setTargetProperties(newState, updateObject);
-    activeEntry.state = newState;
+    // it seems utils.setTargetProperties(activeEntry.state, updateObject) does not necessarily trigger a re-render
+    utils.setTargetProperties(activeEntry.state, updateObject);
+    // force re-render
+    this.__changeCount++;
   }
 
   startEvents() {
