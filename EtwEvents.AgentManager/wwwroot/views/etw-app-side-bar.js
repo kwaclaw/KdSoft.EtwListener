@@ -81,19 +81,24 @@ class EtwAppSideBar extends LitMvvmElement {
     }
   }
 
-  _importDialog() {
-    const fileDlg = this.renderRoot.getElementById('import-agent-config');
+  _importAgentStateDialog(e) {
+    const root = e.currentTarget.getRootNode();
+    const fileDlg = root.getElementById('import-agent-config');
     // reset value so that @change event fires reliably
     fileDlg.value = null;
     fileDlg.click();
   }
 
-  _importAgentConfig(e, agentState) {
+  _importAgentState(e, state) {
     const selectedFile = e.currentTarget.files[0];
     if (!selectedFile) return;
 
     selectedFile.text().then(txt => {
       const importObject = JSON.parse(txt);
+      // we don't want to change agent-identifying properties
+      importObject.id = state.id;
+      importObject.site = state.site;
+      importObject.host = state.host;
       this.model.setAgentState(importObject);
     });
   }
@@ -239,11 +244,12 @@ class EtwAppSideBar extends LitMvvmElement {
               ${onlyModified ? html`<button class="mr-1 text-yellow-800 fas fa-pencil-alt"></button>` : nothing}
               ${entry.disconnected ? html`<i class="text-red-800 fas fa-unlink"></i>` : nothing}
             </span>
+
             <input id="import-agent-config"
               type="file"
-              @change=${e => this._importAgentConfig(e, entry.state)}
+              @change=${(e) => this._importAgentState(e, entry.state)}
               hidden />
-            <button class="mr-1 text-gray-600" @click=${this._importDialog} title="Import Configuration">
+            <button class="mr-1 text-gray-600" @click=${(e) => this._importAgentStateDialog(e)} title="Import Configuration">
               <i class="fas fa-file-import"></i>
             </button>
             <button class="mr-4 text-gray-600" @click=${() => this._exportAgentConfig(entry.state)} title="Export Configuration">

@@ -125,7 +125,7 @@ class EtwAgent extends LitMvvmElement {
     });
   }
 
-  _updateEventSinksClick(e) {
+  _updateEventSinks(e) {
     const configForms = this.renderRoot.querySelectorAll('event-sink-config');
     let isValid = true;
     configForms.forEach(frm => {
@@ -136,7 +136,7 @@ class EtwAgent extends LitMvvmElement {
     }
   }
 
-  _exportEventSinksClick() {
+  _exportEventSinks(e) {
     const activeAgentState = this.model.activeAgentState;
     if (!activeAgentState) return;
 
@@ -154,6 +154,31 @@ class EtwAgent extends LitMvvmElement {
     } finally {
       document.body.removeChild(a);
     }
+  }
+
+  _importEventSinksDialog(e) {
+    const root = e.currentTarget.getRootNode();
+    const fileDlg = root.getElementById('import-event-sinks');
+    // reset value so that @change event fires reliably
+    fileDlg.value = null;
+    fileDlg.click();
+  }
+
+  _importEventSinks(e) {
+    const activeAgentState = this.model.activeAgentState;
+    if (!activeAgentState) return;
+
+    const selectedFile = e.currentTarget.files[0];
+    if (!selectedFile) return;
+
+    selectedFile.text().then(txt => {
+      const profiles = JSON.parse(txt);
+      const eventSinks = {};
+      for (const profile of profiles) {
+        eventSinks[profile.name] = { profile };
+      }
+      activeAgentState.eventSinks = eventSinks;
+    });
   }
 
   //#endregion
@@ -331,10 +356,17 @@ class EtwAgent extends LitMvvmElement {
           )}
           <hr class="my-3" />
           <div id="ok-cancel-buttons" class="flex flex-wrap mt-2 bt-1">
-            <button type="button" class="py-1 px-2" @click=${this._exportEventSinksClick} title="Export">
+            <input id="import-event-sinks"
+              type="file"
+              @change=${(e) => this._importEventSinks(e)}
+              hidden />
+            <button class="mr-1 text-gray-600" @click=${(e) => this._importEventSinksDialog(e)} title="Import">
+              <i class="fas fa-lg fa-file-import"></i>
+            </button>
+            <button type="button" class="py-1 px-2" @click=${(e) => this._exportEventSinks(e)} title="Export">
               <i class="fas fa-lg fa-file-export text-gray-600"></i>
             </button>
-            <button type="button" class="py-1 px-2 ml-auto" @click=${this._updateEventSinksClick} title="Apply">
+            <button type="button" class="py-1 px-2 ml-auto" @click=${(e) => this._updateEventSinks(e)} title="Apply">
               <i class="fas fa-lg fa-check text-green-500"></i>
             </button>
             <button type="button" class="py-1 px-2" @click=${() => this.model.resetEventSinks()} title="Reset to Current" autofocus>
