@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Elasticsearch.Net;
@@ -24,7 +25,7 @@ namespace KdSoft.EtwEvents.EventSinks
 
         public Task<bool> RunTask { get; }
 
-        public ElasticSink(ElasticSinkOptions options, string dbUser, string dbPwd, ILogger logger) {
+        public ElasticSink(ElasticSinkOptions options, ElasticSinkCredentials creds, ILogger logger) {
             this._options = options;
             this._logger = logger;
 
@@ -44,6 +45,18 @@ namespace KdSoft.EtwEvents.EventSinks
                 this._connectionPool = connectionPool;
 
                 var config = new ConnectionConfiguration(connectionPool);
+
+                if (!string.IsNullOrEmpty(creds.SubjectCN)) {
+                    var clientCert = Utils.GetCertificate(StoreLocation.LocalMachine, "", creds.SubjectCN);
+                    if (clientCert != null)
+                        config.ClientCertificate(clientCert);
+                }
+                if (!string.IsNullOrEmpty(creds.ApiKeyId) && !string.IsNullOrEmpty(creds.ApiKey)) {
+                    config.ApiKeyAuthentication(creds.ApiKeyId, creds.ApiKey);
+                }
+                if (!string.IsNullOrEmpty(creds.User) && creds.Password != null) {
+                    config.BasicAuthentication(creds.User, creds.Password);
+                }
                 _client = new ElasticLowLevelClient(config);
             }
             catch (Exception ex) {

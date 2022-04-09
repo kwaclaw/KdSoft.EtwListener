@@ -13,8 +13,11 @@
 
         public string Password { get; set; } = string.Empty;
 
+        public string ApiKeyId { get; set; } = string.Empty;
+
         public string ApiKey { get; set; } = string.Empty;
 
+        // Subject CN for client certificate in LocalMachine store
         public string SubjectCN { get; set; } = string.Empty;
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
@@ -15,15 +16,15 @@ namespace KdSoft.EtwEvents.EventSinks
             };
         }
 
-        public Task<IEventSink> Create(ElasticSinkOptions options, string user, string pwd, ILogger logger) {
-            var result = new ElasticSink(options, user, pwd, logger);
-            return Task.FromResult((IEventSink)result);
-        }
-
         public Task<IEventSink> Create(string optionsJson, string credentialsJson, ILogger logger) {
             var options = JsonSerializer.Deserialize<ElasticSinkOptions>(optionsJson, _serializerOptions);
+            if (options == null)
+                throw new ArgumentException("Missing ElasticSinkOptions", nameof(options));
             var creds = JsonSerializer.Deserialize<ElasticSinkCredentials>(credentialsJson, _serializerOptions);
-            return Create(options!, creds!.User, creds!.Password, logger);
+            if (creds == null)
+                throw new ArgumentException("Missing ElasticSinkCredentials", nameof(creds));
+            var result = new ElasticSink(options, creds, logger);
+            return Task.FromResult((IEventSink)result);
         }
 
         public string GetCredentialsJsonSchema() {
@@ -31,31 +32,37 @@ namespace KdSoft.EtwEvents.EventSinks
 {
   ""type"": ""object"",
   ""properties"": {
-                ""User"": {
-                    ""type"": [
-                      ""string"",
+    ""User"": {
+      ""type"": [
+        ""string"",
         ""null""
-                  ]
+      ]
     },
     ""Password"": {
-                    ""type"": [
-                      ""string"",
+      ""type"": [
+        ""string"",
+        ""null""
+      ]
+    },
+    ""ApiKeyId"": {
+      ""type"": [
+        ""string"",
         ""null""
       ]
     },
     ""ApiKey"": {
-                    ""type"": [
-                      ""string"",
+      ""type"": [
+        ""string"",
         ""null""
       ]
     },
     ""SubjectCN"": {
-                    ""type"": [
-                      ""string"",
+      ""type"": [
+        ""string"",
         ""null""
       ]
     }
-            },
+  },
   ""required"": [
     ""User"",
     ""Password"",
@@ -70,25 +77,25 @@ namespace KdSoft.EtwEvents.EventSinks
 {
   ""type"": ""object"",
   ""properties"": {
-                ""Nodes"": {
-                    ""type"": [
-                      ""array"",
+    ""Nodes"": {
+      ""type"": [
+        ""array"",
         ""null""
-                  ],
+      ],
       ""items"": {
-                        ""type"": [
-                          ""string"",
+        ""type"": [
+          ""string"",
           ""null""
         ]
       }
-                },
+    },
     ""IndexFormat"": {
-                    ""type"": [
-                      ""string"",
+      ""type"": [
+        ""string"",
         ""null""
       ]
     }
-            },
+  },
   ""required"": [
     ""Nodes"",
     ""IndexFormat""
