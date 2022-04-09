@@ -179,7 +179,7 @@ class ElasticSinkConfig extends LitMvvmElement {
               <label for="apiKeyId">API Key Id  (non-base64 keys)</label>
               <input type="text" id="apiKeyId" name="apiKeyId" .value=${creds.apiKeyId}></input>
               <label for="apiKey">API Key</label>
-              <input type="text" id="apiKey" name="apiKey" .value=${creds.apiKey}></input>
+              <input type="password" id="apiKey" name="apiKey" .value=${creds.apiKey}></input>
               <label for="subjectCN">Certificate Subject CN</label>
               <input type="text" id="subjectCN" name="subjectCN" .value=${creds.subjectCN}></input>
             </div>
