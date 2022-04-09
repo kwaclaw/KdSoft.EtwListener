@@ -29,12 +29,12 @@ class ElasticSinkConfig extends LitMvvmElement {
     const subjectCN = utils.getFieldValue(this.renderRoot.getElementById('subjectCN'));
     if (!!user && !!password) {
       validatedElement.setCustomValidity('');
-    } else if (!!apiKeyId && !!apiKey) {
+    } else if (!!apiKey) {
       validatedElement.setCustomValidity('');
     } else if (!!subjectCN) {
       validatedElement.setCustomValidity('');
     } else {
-      validatedElement.setCustomValidity('Require credentials: user and password, or apiKeyId and apiKey, or subjectCN.');
+      validatedElement.setCustomValidity('Require credentials: user and password, or apiKeyId (optional) and apiKey, or subjectCN.');
       return false;
     }
     this.model.credentials.user = user;
@@ -176,7 +176,7 @@ class ElasticSinkConfig extends LitMvvmElement {
               <input type="text" id="user" name="user" .value=${creds.user}></input>
               <label for="password">Password</label>
               <input type="password" id="password" name="password" .value=${creds.password}></input>
-              <label for="apiKeyId">API Key Id</label>
+              <label for="apiKeyId">API Key Id  (non-base64 keys)</label>
               <input type="text" id="apiKeyId" name="apiKeyId" .value=${creds.apiKeyId}></input>
               <label for="apiKey">API Key</label>
               <input type="text" id="apiKey" name="apiKey" .value=${creds.apiKey}></input>
