@@ -51,8 +51,14 @@ namespace KdSoft.EtwEvents.EventSinks
                     if (clientCert != null)
                         config.ClientCertificate(clientCert);
                 }
-                if (!string.IsNullOrEmpty(creds.ApiKeyId) && !string.IsNullOrEmpty(creds.ApiKey)) {
-                    config.ApiKeyAuthentication(creds.ApiKeyId, creds.ApiKey);
+                if (!string.IsNullOrEmpty(creds.ApiKey)) {
+                    ApiKeyAuthenticationCredentials apiCreds;
+                    if (string.IsNullOrEmpty(creds.ApiKeyId))
+                        // this must be the base64 encoded API key, which does not require an id
+                        apiCreds = new ApiKeyAuthenticationCredentials(creds.ApiKey);
+                    else
+                        apiCreds = new ApiKeyAuthenticationCredentials(creds.ApiKeyId, creds.ApiKey);
+                    config.ApiKeyAuthentication(apiCreds);
                 }
                 if (!string.IsNullOrEmpty(creds.User) && creds.Password != null) {
                     config.BasicAuthentication(creds.User, creds.Password);
