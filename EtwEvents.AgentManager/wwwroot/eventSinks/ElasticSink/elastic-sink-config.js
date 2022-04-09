@@ -24,20 +24,24 @@ class ElasticSinkConfig extends LitMvvmElement {
   _setValidatedCredentials(validatedElement) {
     const user = utils.getFieldValue(this.renderRoot.getElementById('user'));
     const password = utils.getFieldValue(this.renderRoot.getElementById('password'));
+    const apiKeyId = utils.getFieldValue(this.renderRoot.getElementById('apiKeyId'));
     const apiKey = utils.getFieldValue(this.renderRoot.getElementById('apiKey'));
     const subjectCN = utils.getFieldValue(this.renderRoot.getElementById('subjectCN'));
     if (!!user && !!password) {
       validatedElement.setCustomValidity('');
-    } else if (!!apiKey || !!subjectCN) {
+    } else if (!!apiKeyId && !!apiKey) {
+      validatedElement.setCustomValidity('');
+    } else if (!!subjectCN) {
       validatedElement.setCustomValidity('');
     } else {
-      validatedElement.setCustomValidity('Require credentials: user and password, or apiKey or subjectCN.');
+      validatedElement.setCustomValidity('Require credentials: user and password, or apiKeyId and apiKey, or subjectCN.');
       return false;
     }
-    this.model.user = user;
-    this.model.password = password;
-    this.model.apiKey = apiKey;
-    this.model.subjectCN = subjectCN;
+    this.model.credentials.user = user;
+    this.model.credentials.password = password;
+    this.model.credentials.apiKeyId = apiKeyId;
+    this.model.credentials.apiKey = apiKey;
+    this.model.credentials.subjectCN = subjectCN;
     return true;
   }
 
@@ -172,6 +176,8 @@ class ElasticSinkConfig extends LitMvvmElement {
               <input type="text" id="user" name="user" .value=${creds.user}></input>
               <label for="password">Password</label>
               <input type="password" id="password" name="password" .value=${creds.password}></input>
+              <label for="apiKeyId">API Key Id</label>
+              <input type="text" id="apiKeyId" name="apiKeyId" .value=${creds.apiKeyId}></input>
               <label for="apiKey">API Key</label>
               <input type="text" id="apiKey" name="apiKey" .value=${creds.apiKey}></input>
               <label for="subjectCN">Certificate Subject CN</label>
