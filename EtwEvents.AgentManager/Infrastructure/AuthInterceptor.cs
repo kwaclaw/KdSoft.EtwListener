@@ -20,7 +20,7 @@ namespace KdSoft.EtwEvents
 
             var clientCert = context.GetHttpContext()?.Connection.ClientCertificate;
             if (clientCert != null) {
-                string ? certRole = clientCert.GetSubjectRole();
+                string? certRole = clientCert.GetSubjectRole();
                 if (certRole != null && certRole.Equals("etw-pushagent", System.StringComparison.OrdinalIgnoreCase)) {
                     return;
                 }

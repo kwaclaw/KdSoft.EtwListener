@@ -58,9 +58,9 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         // Warning: ValueTasks should not be awaited multiple times
-        public ValueTask DisposeAsync() {
+        public async ValueTask DisposeAsync() {
+            await _eventStream.RequestStream.CompleteAsync();
             Dispose();
-            return default;
         }
 
         /// <summary>
