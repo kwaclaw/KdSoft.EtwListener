@@ -38,6 +38,7 @@ function _enhanceProviderState(provider) {
 
 // adds view models and view related methods to agent state
 function _enhanceAgentState(agentState, eventSinkInfos) {
+  agentState.enabledProviders.sort((a, b) => utils.compareIgnoreCase(a.name, b.name));
   for (const provider of agentState.enabledProviders) {
     _enhanceProviderState(provider);
   }
@@ -95,18 +96,7 @@ function _updateAgentsList(agentsList, agentsMap) {
     ags.push(entry);
   }
 
-  ags.sort((a, b) => {
-    const idA = a.state.id.toUpperCase(); // ignore upper and lowercase
-    const idB = b.state.id.toUpperCase(); // ignore upper and lowercase
-    if (idA < idB) {
-      return -1;
-    }
-    if (idA > idB) {
-      return 1;
-    }
-    // ids must be equal
-    return 0;
-  });
+  ags.sort((a, b) => utils.compareIgnoreCase(a.state.id, b.state.id));
 
   agentsList.length = ags.length;
   for (let indx = 0; indx < ags.length; indx += 1) {

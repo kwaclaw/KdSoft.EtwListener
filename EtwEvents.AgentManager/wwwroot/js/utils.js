@@ -56,6 +56,18 @@ export const dateFormat = new Intl.DateTimeFormat('default', {
   milli: 'numeric'
 });
 
+export function compareIgnoreCase(a, b) {
+  const uA = a.toUpperCase(); // ignore upper and lowercase
+  const uB = b.toUpperCase(); // ignore upper and lowercase
+  if (uA < uB) {
+    return -1;
+  }
+  if (uA > uB) {
+    return 1;
+  }
+  return 0;
+}
+
 // this performs a deep (resursive) clone of a Javascript Array, Map, Set, Date or Object;
 // other element or property types are assumed to be primitive types like Number or Boolean;
 // it should be sufficient for data transfer objects and view models
