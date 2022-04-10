@@ -1,5 +1,4 @@
 ﻿using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 
 namespace KdSoft.EtwEvents
 {
@@ -20,7 +19,8 @@ namespace KdSoft.EtwEvents
         /// </summary>
         /// <param name="optionsJson">Options encoded in JSON.</param>
         /// <param name="credentialsJson">Credentials encoded in JSON.</param>
+        /// <param name="context">Provides execution context for event sink.</param>
         /// <returns></returns>
-        Task<IEventSink> Create(string optionsJson, string credentialsJson, ILogger logger);
+        Task<IEventSink> Create(string optionsJson, string credentialsJson, IEventSinkContext context);
     }
 }

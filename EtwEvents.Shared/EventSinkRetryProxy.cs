@@ -14,6 +14,7 @@ namespace KdSoft.EtwEvents
         readonly string _credentials;
         readonly IEventSinkFactory _sinkFactory;
         readonly EventSinkLoadContext? _loadContext;
+        string _siteName;
         readonly ILoggerFactory _loggerFactory;
         readonly ILogger<EventSinkRetryProxy> _logger;
         readonly AsyncRetrier<bool> _retrier;
@@ -22,6 +23,7 @@ namespace KdSoft.EtwEvents
         IEventSink? _sink;
         int _disposing;
 
+        public string SinkId => _sinkId;
         public Task<bool> RunTask => _tcs.Task;
 
         #region Construction & Disposal
@@ -42,14 +44,16 @@ namespace KdSoft.EtwEvents
             string credentials,
             IEventSinkFactory sinkFactory,
             EventSinkLoadContext? loadContext,
-            ILoggerFactory loggerFactory,
-            IRetryStrategy retryStrategy
+            IRetryStrategy retryStrategy,
+            string siteName,
+            ILoggerFactory loggerFactory
         ) {
             this._sinkId = sinkId;
             this._options = options;
             this._credentials = credentials;
             this._sinkFactory = sinkFactory;
             this._loadContext = loadContext;
+            this._siteName = siteName;
             this._loggerFactory = loggerFactory;
             _tcs = new TaskCompletionSource<bool>();
             _logger = loggerFactory.CreateLogger<EventSinkRetryProxy>();
@@ -79,9 +83,11 @@ namespace KdSoft.EtwEvents
 
         #region EventSink Handling
 
+        record struct EventSinkContext(string SiteName, ILogger Logger): IEventSinkContext;
+
         async Task<IEventSink> CreateEventSink() {
             var logger = _loggerFactory.CreateLogger(_sinkId);
-            var sink = await _sinkFactory.Create(_options, _credentials, logger).ConfigureAwait(false);
+            var sink = await _sinkFactory.Create(_options, _credentials, new EventSinkContext(_siteName, logger)).ConfigureAwait(false);
             var oldSink = Interlocked.CompareExchange(ref _sink, sink, null);
             if (oldSink != null)
                 throw new InvalidOperationException($"Must not replace EventSink instance {_sinkId} when it is not null.");

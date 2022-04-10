@@ -4,7 +4,7 @@ class ElasticSinkConfigModel {
   constructor() {
     this.options = {
       nodes: ['https://elastic-demo.test.com'],
-      indexFormat: 'demo-logs-test-{0:yyyy-MM-dd}',
+      indexFormat: 'demo-{site}-logs-{0:yyyy-MM-dd}',
     };
     this.credentials = {
       user: 'user',

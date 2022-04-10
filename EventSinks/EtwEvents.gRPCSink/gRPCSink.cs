@@ -17,9 +17,9 @@ namespace KdSoft.EtwEvents.EventSinks
 
         public Task<bool> RunTask { get; }
 
-        public gRPCSink(AsyncClientStreamingCall<EtwEventBatch, EtwEventResponse> eventStream, ILogger logger) {
+        public gRPCSink(AsyncClientStreamingCall<EtwEventBatch, EtwEventResponse> eventStream, IEventSinkContext context) {
             this._eventStream = eventStream;
-            this._logger = logger;
+            this._logger = context.Logger;
 
             _tcs = new TaskCompletionSource<bool>();
             RunTask = _tcs.Task;

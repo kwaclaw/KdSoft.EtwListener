@@ -19,7 +19,7 @@ namespace KdSoft.EtwEvents.EventSinks
             };
         }
 
-        public Task<IEventSink> Create(MongoSinkOptions options, MongoSinkCredentials creds, ILogger logger) {
+        public Task<IEventSink> Create(MongoSinkOptions options, MongoSinkCredentials creds, IEventSinkContext context) {
             try {
                 MongoUrl connectionUrl;
                 MongoCredential credential;
@@ -49,21 +49,23 @@ namespace KdSoft.EtwEvents.EventSinks
 
                 var client = new MongoClient(mcs);
                 var db = client.GetDatabase(options.Database);
-                var coll = db.GetCollection<BsonDocument>(options.Collection);
 
-                var result = new MongoSink(coll, options.EventFilterFields, options.PayloadFilterFields, logger);
+                var collection = options.Collection.Replace("{site}", context.SiteName);
+                var coll = db.GetCollection<BsonDocument>(collection);
+
+                var result = new MongoSink(coll, options.EventFilterFields, options.PayloadFilterFields, context.Logger);
                 return Task.FromResult((IEventSink)result);
             }
             catch (Exception ex) {
-                logger.LogError(ex, "Error in {eventSink} initialization.", nameof(MongoSink));
+                context.Logger.LogError(ex, "Error in {eventSink} initialization.", nameof(MongoSink));
                 throw;
             }
         }
 
-        public Task<IEventSink> Create(string optionsJson, string credentialsJson, ILogger logger) {
+        public Task<IEventSink> Create(string optionsJson, string credentialsJson, IEventSinkContext context) {
             var options = JsonSerializer.Deserialize<MongoSinkOptions>(optionsJson, _serializerOptions);
             var creds = JsonSerializer.Deserialize<MongoSinkCredentials>(credentialsJson, _serializerOptions);
-            return Create(options!, creds!, logger);
+            return Create(options!, creds!, context);
         }
 
         public string GetCredentialsJsonSchema() {

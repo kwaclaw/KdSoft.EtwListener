@@ -47,7 +47,7 @@ namespace KdSoft.EtwEvents.EventSinks
             return Utils.GetCertificate(StoreLocation.LocalMachine, creds.CertificateThumbPrint ?? string.Empty, creds.CertificateSubjectCN ?? string.Empty);
         }
 
-        public Task<IEventSink> Create(gRPCSinkOptions options, gRPCSinkCredentials creds, ILogger logger) {
+        public Task<IEventSink> Create(gRPCSinkOptions options, gRPCSinkCredentials creds, IEventSinkContext context) {
             try {
                 var cert = GetCertificate(creds);
                 if (cert == null) {
@@ -59,21 +59,26 @@ namespace KdSoft.EtwEvents.EventSinks
                 }
                 var channel = CreateChannel(host, cert);
                 var client = new EtwSinkClient(channel);
-                var eventStream = client.SendEvents();
 
-                var result = new gRPCSink(eventStream, logger);
+                //TODO is this the best way to add the event source/site to the event sink?
+                var metaData = new Grpc.Core.Metadata();
+                metaData.Add("site", context.SiteName);
+
+                var eventStream = client.SendEvents(metaData);
+
+                var result = new gRPCSink(eventStream, context);
                 return Task.FromResult((IEventSink)result);
             }
             catch (Exception ex) {
-                logger.LogError(ex, "Error in {eventSink} initialization.", nameof(gRPCSink));
+                context.Logger.LogError(ex, "Error in {eventSink} initialization.", nameof(gRPCSink));
                 throw;
             }
         }
 
-        public Task<IEventSink> Create(string optionsJson, string credentialsJson, ILogger logger) {
+        public Task<IEventSink> Create(string optionsJson, string credentialsJson, IEventSinkContext context) {
             var options = JsonSerializer.Deserialize<gRPCSinkOptions>(optionsJson, _serializerOptions);
             var creds = JsonSerializer.Deserialize<gRPCSinkCredentials>(credentialsJson, _serializerOptions);
-            return Create(options!, creds!, logger);
+            return Create(options!, creds!, context);
         }
 
         public string GetCredentialsJsonSchema() {

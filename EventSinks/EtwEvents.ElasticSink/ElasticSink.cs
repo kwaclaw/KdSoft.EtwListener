@@ -15,6 +15,7 @@ namespace KdSoft.EtwEvents.EventSinks
     {
         readonly ElasticSinkOptions _options;
         readonly ILogger _logger;
+        readonly string _indexFormat;
         readonly IConnectionPool _connectionPool;
         readonly TaskCompletionSource<bool> _tcs;
         readonly List<string> _evl;
@@ -25,9 +26,10 @@ namespace KdSoft.EtwEvents.EventSinks
 
         public Task<bool> RunTask { get; }
 
-        public ElasticSink(ElasticSinkOptions options, ElasticSinkCredentials creds, ILogger logger) {
+        public ElasticSink(ElasticSinkOptions options, ElasticSinkCredentials creds, IEventSinkContext context) {
             this._options = options;
-            this._logger = logger;
+            this._logger = context.Logger;
+            this._indexFormat = options.IndexFormat.Replace("{site}", context.SiteName);
 
             _tcs = new TaskCompletionSource<bool>();
             RunTask = _tcs.Task;
@@ -110,7 +112,7 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         async Task<bool> FlushAsyncInternal() {
-            var bulkMeta = $@"{{ ""index"": {{ ""_index"" : ""{string.Format(_options.IndexFormat, DateTimeOffset.UtcNow)}"" }} }}";
+            var bulkMeta = $@"{{ ""index"": {{ ""_index"" : ""{string.Format(this._indexFormat, DateTimeOffset.UtcNow)}"" }} }}";
             var postItems = EnumerateInsertRecords(bulkMeta, _evl);
             var bulkResponse = await _client.BulkAsync<StringResponse>(PostData.MultiJson(postItems)).ConfigureAwait(false);
 

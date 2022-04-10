@@ -6,7 +6,7 @@ class MongoSinkConfigModel {
       origin: 'mongodb://',
       replicaset: '',
       database: '',
-      collection: '',
+      collection: 'demo-{site}-logs',
       eventFilterFields: ['Timestamp', 'ProviderName', 'Id', 'Level', 'Keywords', 'Opcode', 'TaskName'],
       payloadFilterFields: []
     };

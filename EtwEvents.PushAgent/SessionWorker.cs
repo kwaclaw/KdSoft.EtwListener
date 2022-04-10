@@ -72,6 +72,11 @@ namespace KdSoft.EtwEvents.PushAgent
             };
         }
 
+        string GetSiteName() {
+            var clientCert = (_httpHandler.SslOptions.ClientCertificates as X509Certificate2Collection)?.First();
+            return clientCert?.GetNameInfo(X509NameType.SimpleName, false) ?? "<Undefined>";
+        }
+
         #region Provider Settings
 
         public void UpdateProviders(RepeatedField<ProviderSetting> providerSettings) {
@@ -309,7 +314,7 @@ namespace KdSoft.EtwEvents.PushAgent
             }
 
             EventChannel? newChannel = null;
-            var sinkProxy = await sinkProfile.CreateRetryProxy(_sinkService, retryStrategy ?? _defaultRetryStrategy, _loggerFactory).ConfigureAwait(false);
+            var sinkProxy = await sinkProfile.CreateRetryProxy(_sinkService, retryStrategy ?? _defaultRetryStrategy, GetSiteName(), _loggerFactory).ConfigureAwait(false);
             try {
                 newChannel = _eventProcessor.AddChannel(sinkProfile.Name, sinkProxy, CreateChannel);
                 if (isPersistent) {
@@ -349,9 +354,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 }
 
                 var logger = _loggerFactory.CreateLogger<RealTimeTraceSession>();
-                var clientCert = (_httpHandler.SslOptions.ClientCertificates as X509Certificate2Collection)?.First();
-                var siteName = clientCert?.GetNameInfo(X509NameType.SimpleName, false) ?? "<Undefined>";
-                var sessionName = Constants.TraceSessionNamePrefix + "_" + siteName;
+                var sessionName = Constants.TraceSessionNamePrefix + "_" + GetSiteName();
                 var session = new RealTimeTraceSession(sessionName, TimeSpan.MaxValue, logger, false);
                 this._session = session;
 

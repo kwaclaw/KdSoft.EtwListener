@@ -24,7 +24,7 @@ namespace KdSoft.EtwEvents.EventSinks
         public static Regex ErrorRegex = new Regex(@"""Error""\s*:\s*""(.+)""\s*[,\}]", RegexOptions.Compiled);
 
         readonly HttpClient _http;
-        readonly ILogger _logger;
+        readonly IEventSinkContext _context;
         readonly JsonWriterOptions _jsonOptions;
         readonly ArrayBufferWriter<byte> _bufferWriter;
         readonly Utf8JsonWriter _jsonWriter;
@@ -38,11 +38,11 @@ namespace KdSoft.EtwEvents.EventSinks
 
         public Task<bool> RunTask { get; }
 
-        public SeqSink(HttpClient http, Uri requestUri, TraceEventLevel? maxLevel, ILogger logger) {
+        public SeqSink(HttpClient http, Uri requestUri, TraceEventLevel? maxLevel, IEventSinkContext context) {
             this._http = http;
             this._requestUri = requestUri;
             this._maxTraceEventLevel = maxLevel;
-            this._logger = logger;
+            this._context = context;
 
             _tcs = new TaskCompletionSource<bool>();
             RunTask = _tcs.Task;
@@ -72,7 +72,7 @@ namespace KdSoft.EtwEvents.EventSinks
                     _jsonWriter?.Dispose();
                 }
                 catch (Exception ex) {
-                    _logger.LogError(ex, "Error closing event sink '{eventSink}'.", nameof(SeqSink));
+                    _context.Logger.LogError(ex, "Error closing event sink '{eventSink}'.", nameof(SeqSink));
                 }
                 _tcs.TrySetResult(true);
             }
@@ -120,6 +120,8 @@ namespace KdSoft.EtwEvents.EventSinks
             _jsonWriter.Reset();
             _jsonWriter.WriteStartObject();
 
+            //TODO what's the best way in Seq to specify a logging source/site?
+            _jsonWriter.WriteString("site", _context.SiteName);
             _jsonWriter.WriteString("providerName", evt.ProviderName);
             _jsonWriter.WriteNumber("channel", evt.Channel);
             _jsonWriter.WriteNumber("@i", evt.Id);

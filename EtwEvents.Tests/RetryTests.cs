@@ -207,8 +207,9 @@ namespace EtwEvents.Tests
                 JsonSerializer.Serialize(sinkCredentials, serializerOptions),
                 sinkFactory,
                 null,
-                loggerFactory,
-                retryStrategy
+                retryStrategy,
+                "default",
+                loggerFactory
             );
 
             // must not have overlapping writes
@@ -257,8 +258,9 @@ namespace EtwEvents.Tests
                 JsonSerializer.Serialize(sinkCredentials, serializerOptions),
                 sinkFactory,
                 null,
-                loggerFactory,
-                retryStrategy
+                retryStrategy,
+                "default",
+                loggerFactory
             );
 
             var testLogger = loggerFactory.CreateLogger("retry-test");

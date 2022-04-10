@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents;
-using Microsoft.Extensions.Logging;
 
 namespace EtwEvents.Tests
 {
@@ -22,7 +21,7 @@ namespace EtwEvents.Tests
 
         public List<MockSinkLifeCycle> SinkLifeCycles => _sinkLifeCycles;
 
-        public Task<IEventSink> Create(string optionsJson, string credentialsJson, ILogger logger) {
+        public Task<IEventSink> Create(string optionsJson, string credentialsJson, IEventSinkContext context) {
             var options = JsonSerializer.Deserialize<MockSinkOptions>(optionsJson, _serializerOptions);
             var creds = JsonSerializer.Deserialize<MockSinkCredentials>(credentialsJson, _serializerOptions);
 
