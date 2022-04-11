@@ -6,8 +6,8 @@
   "license": "ISC",
   "browser": "index.js",
   "dependencies": {
-    "@kdsoft/lit-mvvm": "^2.1.1",
-    "@kdsoft/lit-mvvm-components": "^1.0.0-beta.15",
+    "@kdsoft/lit-mvvm": "^2.1.2",
+    "@kdsoft/lit-mvvm-components": "^1.0.0-beta.16",
     "@nx-js/observer-util": "^4.2.2",
     "@nx-js/queue-util": "^1.1.1",
     "dialog-polyfill": "^0.5.6",

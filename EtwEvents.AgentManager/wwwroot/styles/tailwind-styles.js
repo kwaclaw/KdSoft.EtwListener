@@ -708,9 +708,6 @@ Ensure the default browser behavior of the \`hidden\` attribute.
 .font-medium {
   font-weight: 500;
 }
-.lowercase {
-  text-transform: lowercase;
-}
 .italic {
   font-style: italic;
 }
