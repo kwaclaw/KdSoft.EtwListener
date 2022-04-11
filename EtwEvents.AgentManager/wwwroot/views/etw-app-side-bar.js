@@ -133,9 +133,13 @@ class EtwAppSideBar extends LitMvvmElement {
       this.agentChecklistModel = observable(checklistModel);
 
       this._agentListObserver = observe(() => {
+        const oldActiveAgentId = this.model.activeAgentId;
         const selEntry = this.agentChecklistModel.firstSelectedEntry;
         const selAgent = selEntry?.item;
         this.model.activeAgentId = selAgent?.state.id;
+        if (oldActiveAgentId != this.model.activeAgentId) {
+          this.model.stopEtwEvents();
+        }
       });
     }
   }
