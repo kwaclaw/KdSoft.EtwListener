@@ -38,7 +38,6 @@ function _enhanceProviderState(provider) {
 
 // adds view models and view related methods to agent state
 function _enhanceAgentState(agentState, eventSinkInfos) {
-  agentState.enabledProviders.sort((a, b) => utils.compareIgnoreCase(a.name, b.name));
   for (const provider of agentState.enabledProviders) {
     _enhanceProviderState(provider);
   }
@@ -117,6 +116,9 @@ function _updateAgentsMap(agentsMap, agentStates) {
 
   // agentStates have unique ids (case-insensitive) - //TODO server culture vs local culture?
   for (const state of (agentStates || [])) {
+    // providers should be sorted to allow proper "modified" detection
+    state.enabledProviders.sort((a, b) => utils.compareIgnoreCase(a.name, b.name));
+
     // convert eventSinkProfile.options/credentials from a JSON string to a JSON object
     _convertEventSinkProfiles(state);
 
