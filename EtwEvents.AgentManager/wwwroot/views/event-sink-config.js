@@ -120,6 +120,14 @@ class EventSinkConfig extends LitMvvmElement {
 
   /* eslint-disable indent, no-else-return */
 
+  disconnectedCallback() {
+    if (this.configObserver) {
+      unobserve(this.configObserver);
+      this.configObserver = null;
+    }
+    super.disconnectedCallback();
+  }
+
   shouldRender() {
     return !!this.model;
   }

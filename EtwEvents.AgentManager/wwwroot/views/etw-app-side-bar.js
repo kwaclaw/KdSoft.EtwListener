@@ -112,6 +112,10 @@ class EtwAppSideBar extends LitMvvmElement {
   /* eslint-disable indent, no-else-return */
 
   disconnectedCallback() {
+    if (this._agentListObserver) {
+      unobserve(this._agentListObserver);
+      this._agentListObserver = null;
+    }
     super.disconnectedCallback();
   }
 

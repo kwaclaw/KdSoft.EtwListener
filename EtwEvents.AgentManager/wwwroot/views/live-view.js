@@ -1,6 +1,6 @@
 ﻿import { html, nothing } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
-import { observe } from '@nx-js/observer-util';
+import { observe, unobserve } from '@nx-js/observer-util';
 import { LitMvvmElement, css, BatchScheduler } from '@kdsoft/lit-mvvm';
 import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
@@ -44,6 +44,14 @@ class LiveView extends LitMvvmElement {
   }
 
   /* eslint-disable indent, no-else-return */
+
+  disconnectedCallback() {
+    if (this._columnObserver) {
+      unobserve(this._columnObserver);
+      this._columnObserver = null;
+    }
+    super.disconnectedCallback();
+  }
 
   shouldRender() {
     return !!this.model;

@@ -66,6 +66,10 @@ class LiveViewConfig extends LitMvvmElement {
   /* eslint-disable indent, no-else-return */
 
   disconnectedCallback() {
+    if (this.colObserver) {
+      unobserve(this.colObserver);
+      this.colObserver = null;
+    }
     super.disconnectedCallback();
   }
 
