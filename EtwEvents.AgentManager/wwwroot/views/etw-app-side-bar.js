@@ -1,9 +1,9 @@
 /* global i18n */
 
 import { html, nothing } from 'lit';
-import { observable, observe } from '@nx-js/observer-util';
+import { observable, observe, unobserve } from '@nx-js/observer-util';
 import { Queue, priorities } from '@nx-js/queue-util';
-import { LitMvvmElement, css } from '@kdsoft/lit-mvvm';
+import { LitMvvmElement, css, BatchScheduler } from '@kdsoft/lit-mvvm';
 import '@kdsoft/lit-mvvm-components/kdsoft-expander.js';
 import { KdSoftChecklistModel } from '@kdsoft/lit-mvvm-components';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
@@ -25,7 +25,9 @@ class EtwAppSideBar extends LitMvvmElement {
   constructor() {
     super();
     // seems priorities.HIGH may not allow render() calls in child components in some scenarios
-    this.scheduler = new Queue(priorities.LOW);
+    //this.scheduler = new Queue(priorities.LOW);
+    //this.scheduler = new BatchScheduler(0);
+    this.scheduler = window.renderScheduler;
   }
 
   _toggleNav() {

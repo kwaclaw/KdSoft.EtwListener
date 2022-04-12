@@ -1,7 +1,7 @@
-import { html } from 'lit/html.js';
+import { html } from 'lit';
 import { observable } from '@nx-js/observer-util';
 import { Queue, priorities } from '@nx-js/queue-util';
-import { LitMvvmElement, css } from '@kdsoft/lit-mvvm';
+import { LitMvvmElement, css, BatchScheduler } from '@kdsoft/lit-mvvm';
 import { KdSoftDropdownModel, KdSoftDropdownChecklistConnector } from '@kdsoft/lit-mvvm-components';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
@@ -13,7 +13,10 @@ import * as utils from '../js/utils.js';
 class ProviderConfig extends LitMvvmElement {
   constructor() {
     super();
-    this.scheduler = new Queue(priorities.HIGH);
+    //this.scheduler = new Queue(priorities.LOW);
+    //this.scheduler = new BatchScheduler(0);
+    this.scheduler = window.renderScheduler;
+
     this.levelDropDownModel = observable(new KdSoftDropdownModel());
     this.levelChecklistConnector = new KdSoftDropdownChecklistConnector(
       () => this.renderRoot.getElementById('traceLevel'),

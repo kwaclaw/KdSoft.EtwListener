@@ -1,7 +1,7 @@
 ﻿import { html } from 'lit';
 import { Queue, priorities } from '@nx-js/queue-util';
-import { observe, raw } from '@nx-js/observer-util';
-import { LitMvvmElement, css } from '@kdsoft/lit-mvvm';
+import { observe, raw, unobserve } from '@nx-js/observer-util';
+import { LitMvvmElement, css, BatchScheduler } from '@kdsoft/lit-mvvm';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
 import appStyles from '../styles/etw-app-styles.js';
@@ -24,7 +24,10 @@ function getPayloadColumnListItemTemplate(item) {
 class LiveViewConfig extends LitMvvmElement {
   constructor() {
     super();
-    this.scheduler = new Queue(priorities.HIGH);
+    //this.scheduler = new Queue(priorities.LOW);
+    //this.scheduler = new BatchScheduler(0);
+    this.scheduler = window.renderScheduler;
+
     this._getPayloadColumnListItemTemplate = getPayloadColumnListItemTemplate.bind(this);
     this.changeCallback = (opts) => { };
   }

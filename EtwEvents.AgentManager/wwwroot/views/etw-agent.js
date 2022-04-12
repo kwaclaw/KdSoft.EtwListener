@@ -2,7 +2,7 @@
 
 import { html, nothing } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
-import { LitMvvmElement, css } from '@kdsoft/lit-mvvm';
+import { LitMvvmElement, css, BatchScheduler } from '@kdsoft/lit-mvvm';
 import { observable } from '@nx-js/observer-util';
 import { Queue, priorities } from '@nx-js/queue-util';
 import dialogPolyfill from 'dialog-polyfill';
@@ -28,9 +28,11 @@ const dialogClass = utils.html5DialogSupported ? '' : 'fixed';
 class EtwAgent extends LitMvvmElement {
   constructor() {
     super();
+    //this.scheduler = new Queue(priorities.LOW);
+    //this.scheduler = new BatchScheduler(0);
+    this.scheduler = window.renderScheduler;
 
     // setting model property here because we cannot reliable set it from a non-lit-html rendered HTML page
-    this.scheduler = new Queue(priorities.HIGH);
     // we must assign the model *after* the scheduler, or assign it externally
     // this.model = new EtwAppModel(); --
 

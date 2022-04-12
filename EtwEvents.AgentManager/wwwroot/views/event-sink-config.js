@@ -1,6 +1,6 @@
-﻿import { observe, observable } from '@nx-js/observer-util';
+﻿import { observe, observable, unobserve } from '@nx-js/observer-util';
 import { Queue, priorities } from '@nx-js/queue-util';
-import { LitMvvmElement, html, nothing, css } from '@kdsoft/lit-mvvm';
+import { LitMvvmElement, html, nothing, css, BatchScheduler } from '@kdsoft/lit-mvvm';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
@@ -57,7 +57,10 @@ async function loadSinkDefinitionModel(sinkType) {
 class EventSinkConfig extends LitMvvmElement {
   constructor() {
     super();
-    this.scheduler = new Queue(priorities.HIGH);
+    //this.scheduler = new Queue(priorities.LOW);
+    //this.scheduler = new BatchScheduler(0);
+    this.scheduler = window.renderScheduler;
+
     // for "nothing" to work we need to render raw(this.sinkTypeTemplateHolder.value)
     this.sinkTypeTemplateHolder = observable({ tag: nothing });
   }

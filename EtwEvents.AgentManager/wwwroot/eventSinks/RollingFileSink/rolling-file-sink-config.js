@@ -1,4 +1,4 @@
-﻿import { LitMvvmElement, html, css } from '@kdsoft/lit-mvvm';
+﻿import { LitMvvmElement, html, css, BatchScheduler } from '@kdsoft/lit-mvvm';
 import { Queue, priorities } from '@nx-js/queue-util';
 import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
@@ -8,7 +8,7 @@ import * as utils from '../../js/utils.js';
 class RollingFileSinkConfig extends LitMvvmElement {
   constructor() {
     super();
-    this.scheduler = new Queue(priorities.HIGH);
+    this.scheduler = window.renderScheduler;
   }
 
   isValid() {

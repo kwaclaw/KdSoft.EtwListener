@@ -4,7 +4,7 @@ import { html, nothing } from 'lit';
 import { classMap } from 'lit/directives/class-map.js';
 import { repeat } from 'lit/directives/repeat.js';
 import { Queue, priorities } from '@nx-js/queue-util';
-import { LitMvvmElement, css } from '@kdsoft/lit-mvvm';
+import { LitMvvmElement, css, BatchScheduler } from '@kdsoft/lit-mvvm';
 import './etw-app-side-bar.js';
 import './etw-agent.js';
 import './live-view.js';
@@ -38,9 +38,10 @@ const tabClassList = {
 class EtwApp extends LitMvvmElement {
   constructor() {
     super();
+    //this.scheduler = new Queue(priorities.LOW);
+    this.scheduler = window.renderScheduler = new BatchScheduler(0);
 
     // setting model property here because we cannot reliable set it from a non-lit-html rendered HTML page
-    this.scheduler = new Queue(priorities.HIGH);
     // we must assign the model *after* the scheduler, or assign it externally
     // this.model = new EtwAppModel(); --
 
@@ -200,8 +201,8 @@ class EtwApp extends LitMvvmElement {
   /* eslint-disable indent, no-else-return */
 
   disconnectedCallback() {
+    this._sidebarObserver?.disconnect();
     super.disconnectedCallback();
-    this._sidebarObserver.disconnect();
   }
 
   shouldRender() {
