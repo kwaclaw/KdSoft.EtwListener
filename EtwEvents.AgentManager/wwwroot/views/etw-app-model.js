@@ -42,19 +42,23 @@ function _enhanceAgentState(agentState, eventSinkInfos) {
     _enhanceProviderState(provider);
   }
 
-  agentState.addProvider = (name, level) => {
-    const newProvider = _enhanceProviderState({ name, level, matchKeywords: 0 });
-    agentState.enabledProviders.splice(0, 0, newProvider);
-    agentState.enabledProviders.forEach(p => {
-      p.expanded = false;
-    });
-    newProvider.expanded = true;
-  };
+  if (!agentState.addProvider) {
+    agentState.addProvider = (name, level) => {
+      const newProvider = _enhanceProviderState({ name, level, matchKeywords: 0 });
+      agentState.enabledProviders.splice(0, 0, newProvider);
+      agentState.enabledProviders.forEach(p => {
+        p.expanded = false;
+      });
+      newProvider.expanded = true;
+    };
+  }
 
-  agentState.removeProvider = name => {
-    const index = agentState.enabledProviders.findIndex(p => p.name === name);
-    if (index >= 0) agentState.enabledProviders.splice(index, 1);
-  };
+  if (!agentState.removeProvider) {
+    agentState.removeProvider = name => {
+      const index = agentState.enabledProviders.findIndex(p => p.name === name);
+      if (index >= 0) agentState.enabledProviders.splice(index, 1);
+    };
+  }
 
   if (!(agentState.processingModel instanceof ProcessingModel)) {
     agentState.processingModel = new ProcessingModel(agentState.processingState);
