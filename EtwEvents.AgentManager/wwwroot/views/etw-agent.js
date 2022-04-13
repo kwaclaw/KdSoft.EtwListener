@@ -50,25 +50,17 @@ class EtwAgent extends LitMvvmElement {
 
   //#region Providers
 
-  _addProviderClick() {
-    const activeAgentState = this.model.activeAgentState;
-    if (!activeAgentState) return;
-    activeAgentState.addProvider('<New Provider>', 0);
+  _addProviderClick(e, agentState) {
+    agentState.addProvider('<New Provider>', 0);
   }
 
-  _deleteProviderClick(e) {
-    const activeAgentState = this.model.activeAgentState;
-    if (!activeAgentState) return;
-
+  _deleteProviderClick(e, agentState) {
     const provider = e.detail.model;
-    activeAgentState.removeProvider(provider.name);
+    agentState.removeProvider(provider.name);
   }
 
-  _providerBeforeExpand() {
-    const activeAgentState = this.model.activeAgentState;
-    if (!activeAgentState) return;
-
-    activeAgentState.enabledProviders.forEach(p => {
+  _providerBeforeExpand(e, agentState) {
+    agentState.enabledProviders.forEach(p => {
       p.expanded = false;
     });
   }
@@ -118,11 +110,8 @@ class EtwAgent extends LitMvvmElement {
     this.model.deleteEventSink(model.profile.name);
   }
 
-  _eventSinkBeforeExpand() {
-    const activeAgentState = this.model.activeAgentState;
-    if (!activeAgentState) return;
-
-    Object.entries(activeAgentState.eventSinks).forEach(es => {
+  _eventSinkBeforeExpand(agentState) {
+    Object.entries(agentState.eventSinks).forEach(es => {
       es[1].expanded = false;
     });
   }
@@ -138,11 +127,8 @@ class EtwAgent extends LitMvvmElement {
     }
   }
 
-  _exportEventSinks(e) {
-    const activeAgentState = this.model.activeAgentState;
-    if (!activeAgentState) return;
-
-    const profiles = Object.entries(activeAgentState.eventSinks).map(es => es[1].profile);
+  _exportEventSinks(e, agentState) {
+    const profiles = Object.entries(agentState.eventSinks).map(es => es[1].profile);
     const profileString = JSON.stringify(profiles, null, 2);
     const profileURL = `data:text/plain,${profileString}`;
 
@@ -150,7 +136,7 @@ class EtwAgent extends LitMvvmElement {
     try {
       a.style.display = 'none';
       a.href = profileURL;
-      a.download = `${activeAgentState.id}_eventSinks.json`;
+      a.download = `${agentState.id}_eventSinks.json`;
       document.body.appendChild(a);
       a.click();
     } finally {
@@ -288,14 +274,14 @@ class EtwAgent extends LitMvvmElement {
           <div class="flex my-2 pr-2">
             <span class="font-semibold ${this.model.providersModified ? 'italic text-red-500' : ''}">Event Providers</span>
             <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
-              @click=${this._addProviderClick}>
+              @click=${(e) => this._addProviderClick(e, activeAgentState)}>
             </span>
           </div>
           ${activeAgentState.enabledProviders.map(provider => html`
             <provider-config class="my-3"
               .model=${provider}
-              @beforeExpand=${this._providerBeforeExpand}
-              @delete=${this._deleteProviderClick}>
+              @beforeExpand=${(e) => this._providerBeforeExpand(e, activeAgentState)}
+              @delete=${(e) => this._deleteProviderClick(e, activeAgentState)}>
             </provider-config>
           `)}
           <hr class="my-3" />
@@ -347,7 +333,7 @@ class EtwAgent extends LitMvvmElement {
             entry => html`
               <event-sink-config class="bg-gray-300 px-2 my-3"
                 .model=${entry[1]}
-                @beforeExpand=${this._eventSinkBeforeExpand}
+                @beforeExpand=${(e) => this._eventSinkBeforeExpand(e, activeAgentState)}
                 @delete=${this._deleteEventSinkClick}>
               </event-sink-config>
             `
@@ -360,7 +346,7 @@ class EtwAgent extends LitMvvmElement {
             <button type="button" class="mr-1 text-gray-600" @click=${(e) => this._importEventSinksDialog(e)} title="Import">
               <i class="fas fa-lg fa-file-import"></i>
             </button>
-            <button type="button" class="py-1 px-2" @click=${(e) => this._exportEventSinks(e)} title="Export">
+            <button type="button" class="py-1 px-2" @click=${(e) => this._exportEventSinks(e, activeAgentState)} title="Export">
               <i class="fas fa-lg fa-file-export text-gray-600"></i>
             </button>
             <button type="button" class="py-1 px-2 ml-auto" @click=${(e) => this._updateEventSinks(e)} title="Apply">
