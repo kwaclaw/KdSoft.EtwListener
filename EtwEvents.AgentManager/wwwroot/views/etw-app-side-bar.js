@@ -84,8 +84,7 @@ class EtwAppSideBar extends LitMvvmElement {
   }
 
   _importAgentStateDialog(e) {
-    const root = e.currentTarget.getRootNode();
-    const fileDlg = root.getElementById('import-agent-config');
+    const fileDlg = e.currentTarget.parentElement.querySelector('input[type="file"]');
     // reset value so that @change event fires reliably
     fileDlg.value = null;
     fileDlg.click();
@@ -255,8 +254,7 @@ class EtwAppSideBar extends LitMvvmElement {
               ${entry.disconnected ? html`<i class="text-red-800 fas fa-unlink"></i>` : nothing}
             </span>
 
-            <input id="import-agent-config"
-              type="file"
+            <input type="file"
               @change=${(e) => this._importAgentState(e, entry.state)}
               hidden />
             <button class="mr-1 text-gray-600" @click=${(e) => this._importAgentStateDialog(e)} title="Import Configuration">

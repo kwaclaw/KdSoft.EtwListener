@@ -159,17 +159,13 @@ class EtwAgent extends LitMvvmElement {
   }
 
   _importEventSinksDialog(e) {
-    const root = e.currentTarget.getRootNode();
-    const fileDlg = root.getElementById('import-event-sinks');
+    const fileDlg = e.currentTarget.parentElement.querySelector('input[type="file"]');
     // reset value so that @change event fires reliably
     fileDlg.value = null;
     fileDlg.click();
   }
 
-  _importEventSinks(e) {
-    const activeAgentState = this.model.activeAgentState;
-    if (!activeAgentState) return;
-
+  _importEventSinks(e, agentState) {
     const selectedFile = e.currentTarget.files[0];
     if (!selectedFile) return;
 
@@ -179,7 +175,7 @@ class EtwAgent extends LitMvvmElement {
       for (const profile of profiles) {
         eventSinks[profile.name] = { profile };
       }
-      activeAgentState.eventSinks = eventSinks;
+      agentState.eventSinks = eventSinks;
     });
   }
 
@@ -358,11 +354,10 @@ class EtwAgent extends LitMvvmElement {
           )}
           <hr class="my-3" />
           <div id="ok-cancel-buttons" class="flex flex-wrap mt-2 bt-1">
-            <input id="import-event-sinks"
-              type="file"
-              @change=${(e) => this._importEventSinks(e)}
+            <input type="file"
+              @change=${(e) => this._importEventSinks(e, activeAgentState)}
               hidden />
-            <button class="mr-1 text-gray-600" @click=${(e) => this._importEventSinksDialog(e)} title="Import">
+            <button type="button" class="mr-1 text-gray-600" @click=${(e) => this._importEventSinksDialog(e)} title="Import">
               <i class="fas fa-lg fa-file-import"></i>
             </button>
             <button type="button" class="py-1 px-2" @click=${(e) => this._exportEventSinks(e)} title="Export">
