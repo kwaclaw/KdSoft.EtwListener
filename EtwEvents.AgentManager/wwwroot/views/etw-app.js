@@ -39,7 +39,8 @@ class EtwApp extends LitMvvmElement {
   constructor() {
     super();
     //this.scheduler = new Queue(priorities.LOW);
-    this.scheduler = window.renderScheduler = new BatchScheduler(0);
+    //this.scheduler = new BatchScheduler(0);
+    this.scheduler = window.renderScheduler = cb => window.queueMicrotask(cb);
 
     // setting model property here because we cannot reliable set it from a non-lit-html rendered HTML page
     // we must assign the model *after* the scheduler, or assign it externally
