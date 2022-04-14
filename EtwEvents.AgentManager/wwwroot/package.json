@@ -16,6 +16,7 @@
     "po2json": "^0.4.5"
   },
   "devDependencies": {
+    "autoprefixer": "10.4.4",
     "@tailwindcss/forms": "^0.5.0",
     "copy-node-modules": "^1.1.1",
     "eslint": "^8.13.0",
@@ -27,7 +28,7 @@
     "postcss-copy": "^7.1.0",
     "postcss-import": "^14.1.0",
     "shx": "^0.3.4",
-    "tailwindcss": "^3.0.23"
+    "tailwindcss": "^3.0.24"
   },
   "scripts": {
     "wrap-css": "node node_modules/@kdsoft/lit-mvvm-components/scripts/wrap-css.mjs",
