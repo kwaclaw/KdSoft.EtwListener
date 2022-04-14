@@ -9,8 +9,6 @@ namespace KdSoft.EtwEvents.PushAgent
 {
     public static class Utils
     {
-        public const string ClientAuthPolicy = "1.3.6.1.5.5.7.3.2";
-
         public static X509Certificate2? GetClientCertificate(ClientCertOptions certOptions) {
             if (certOptions.SubjectCN.Length == 0 && certOptions.Thumbprint.Length == 0 && certOptions.SubjectRole.Length == 0)
                 throw new ArgumentException("Client certificate options must have one of SubjectCN, SubjectRole or Thumbprint specified.");
@@ -20,7 +18,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 clientCert = shared.Utils.GetCertificate(certOptions.Location, certOptions.Thumbprint, string.Empty);
             }
             if (clientCert == null && certOptions.SubjectRole.Length > 0) {
-                var clientCerts = shared.Utils.GetCertificates(certOptions.Location, ClientAuthPolicy, crt => {
+                var clientCerts = shared.Utils.GetCertificates(certOptions.Location, shared.Utils.ClientAuthentication, crt => {
                     var match = shared.Utils.SubjectRoleRegex.Match(crt.Subject);
                     if (match.Success) {
                         var certRole = match.Groups["role"].Value;

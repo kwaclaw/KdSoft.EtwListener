@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 
@@ -119,14 +120,35 @@ namespace KdSoft.EtwEvents
         }
 
         /// <summary>
+        /// Checks if a certificate supports a given enhanced key usage.
+        /// </summary>
+        /// <param name="cert">Certificate to check.</param>
+        /// <param name="oid">Oid identifier for enhanced key usage.</param>
+        /// <remarks>If a certificate has no EKUs, then it supports all of them.</remarks>
+        public static bool SupportsEnhancedKeyUsage(this X509Certificate2 cert, string oid) {
+            var ekuCount = 0;
+            foreach (var ext in cert.Extensions) {
+                var eku = ext as X509EnhancedKeyUsageExtension;
+                if (eku != null) {
+                    ekuCount++;
+                    if (eku.Oid?.Value == oid)
+                        return true;
+                }
+            }
+            // if no ekus are present then all are present
+            return ekuCount == 0;
+        }
+
+        /// <summary>
         /// Get certificate from certificate store based on thumprint or subject common name.
         /// If multiple certificates match then the one with the newest NotBefore date is returned.
         /// </summary>
         /// <param name="location">Store location.</param>
         /// <param name="thumbprint">Certificate thumprint to look for. Takes precedence over subjectCN when both are specified.</param>
         /// <param name="subjectCN">Subject common name to look for.</param>
+        /// <param name="ekus">Enhanced key usage identifiers, all of which the certificate must support.</param>
         /// <returns>Matching certificate, or <c>null</c> if none was found.</returns>
-        public static X509Certificate2? GetCertificate(StoreLocation location, string thumbprint, string subjectCN) {
+        public static X509Certificate2? GetCertificate(StoreLocation location, string thumbprint, string subjectCN, params string[] ekus) {
             if (thumbprint.Length == 0 && subjectCN.Length == 0)
                 return null;
 
@@ -145,10 +167,16 @@ namespace KdSoft.EtwEvents
                         // X509NameType.SimpleName extracts CN from subject (common name)
                         var cn = matchingCert.GetNameInfo(X509NameType.SimpleName, false);
                         if (string.Equals(cn, subjectCN, StringComparison.InvariantCultureIgnoreCase)) {
-                            if (cert == null)
-                                cert = matchingCert;
-                            else if (cert.NotBefore < matchingCert.NotBefore)
-                                cert = matchingCert;
+                            var matchesEkus = true;
+                            foreach (var oid in ekus) {
+                                matchesEkus = matchesEkus && matchingCert.SupportsEnhancedKeyUsage(oid);
+                            }
+                            if (matchesEkus) {
+                                if (cert == null)
+                                    cert = matchingCert;
+                                else if (cert.NotBefore < matchingCert.NotBefore)
+                                    cert = matchingCert;
+                            }
                         }
                     }
                 }
@@ -167,6 +195,9 @@ namespace KdSoft.EtwEvents
             }
             return certRole;
         }
+
+        public const string ClientAuthentication = "1.3.6.1.5.5.7.3.2";
+        public const string ServerAuthentication = "1.3.6.1.5.5.7.3.1";
 
         /// <summary>
         /// Get certificates from certificate store based on application policy OID and predicate callback.
