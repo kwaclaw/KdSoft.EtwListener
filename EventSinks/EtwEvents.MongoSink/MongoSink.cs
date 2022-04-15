@@ -121,17 +121,17 @@ namespace KdSoft.EtwEvents.EventSinks
             return true;
         }
 
-        public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
+        public async ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
             if (IsDisposed || RunTask.IsCompleted)
-                return ValueTask.FromResult(false);
+                return false;
             try {
                 _evl.AddRange(evtBatch.Events.Select(evt => FromEvent(evt)));
                 // flush
-                return new ValueTask<bool>(FlushAsyncInternal());
+                return await FlushAsyncInternal().ConfigureAwait(false);
             }
             catch (Exception ex) {
                 _tcs.TrySetException(ex);
-                return ValueTask.FromResult(false);
+                return false;
             }
         }
     }

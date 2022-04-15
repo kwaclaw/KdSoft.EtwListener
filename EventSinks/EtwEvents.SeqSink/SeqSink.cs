@@ -158,9 +158,9 @@ namespace KdSoft.EtwEvents.EventSinks
             return true;
         }
 
-        public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
+        public async ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
             if (IsDisposed || RunTask.IsCompleted)
-                return ValueTask.FromResult(false);
+                return false;
             try {
                 foreach (var evt in evtBatch.Events) {
                     WriteEventJson(evt);
@@ -168,12 +168,12 @@ namespace KdSoft.EtwEvents.EventSinks
                 // flush
                 var eventBatch = _bufferWriter.WrittenMemory;
                 if (eventBatch.IsEmpty)
-                    return ValueTask.FromResult(true);
-                return new ValueTask<bool>(FlushAsyncInternal(eventBatch));
+                    return true;
+                return await FlushAsyncInternal(eventBatch).ConfigureAwait(false);
             }
             catch (Exception ex) {
                 _tcs.TrySetException(ex);
-                return ValueTask.FromResult(false);
+                return false;
             }
         }
 
