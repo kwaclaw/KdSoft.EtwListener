@@ -57,9 +57,15 @@ message EventSinkProfiles {
   map<string, EventSinkProfile> profiles = 1;
 }
 
+message EventSinkStatus {
+  uint32 num_retries = 1;
+  google.protobuf.Timestamp retry_start_time = 2;
+  string last_error = 3;
+
+}
 message EventSinkState {
   EventSinkProfile profile = 1;
-  string error = 2;
+  EventSinkStatus status = 2;
 }
 
 message LiveViewColumn {

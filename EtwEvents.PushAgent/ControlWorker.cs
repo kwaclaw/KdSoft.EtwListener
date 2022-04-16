@@ -241,16 +241,30 @@ namespace KdSoft.EtwEvents.PushAgent
             var profiles = _sessionConfig.SinkProfiles;
             var result = new Dictionary<string, EventSinkState>();
             var failedChannels = SessionWorker?.FailedEventChannels ?? ImmutableDictionary<string, EventChannel>.Empty;
+            var activeChannels = SessionWorker?.ActiveEventChannels ?? ImmutableDictionary<string, EventChannel>.Empty;
 
             foreach (var profileEntry in profiles) {
-                Exception? sinkError = null;
                 var profile = profileEntry.Value;
+                EventSinkStatus sinkStatus = new EventSinkStatus();
                 if (failedChannels.TryGetValue(profile.Name, out var failed)) {
-                    sinkError = failed.RunTask?.Exception;
+                    var sinkError = failed.RunTask?.Exception?.GetBaseException().Message;
+                    if (sinkError != null) {
+                        sinkStatus.LastError = sinkError;
+                    }
                 }
-                var state = new EventSinkState { Profile = profile };
-                if (sinkError != null)
-                    state.Error = sinkError.GetBaseException().Message;
+                else if (activeChannels.TryGetValue(profile.Name, out var active)) {
+                    var status = active.SinkStatus;
+                    if (status != null) {
+                        var sinkError = status.LastError?.GetBaseException().Message;
+                        if (sinkError != null)
+                            sinkStatus.LastError = sinkError;
+                        if (status.NumRetries > 0)
+                            sinkStatus.NumRetries = (uint)status.NumRetries;
+                        if (status.RetryStartTime != default(DateTimeOffset))
+                            sinkStatus.RetryStartTime = pb.WellKnownTypes.Timestamp.FromDateTimeOffset(status.RetryStartTime);
+                    }
+                }
+                var state = new EventSinkState { Profile = profile, Status = sinkStatus };
                 result[profile.Name] = state;
             }
             return result;
