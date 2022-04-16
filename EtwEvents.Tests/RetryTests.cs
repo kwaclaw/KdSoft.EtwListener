@@ -154,7 +154,7 @@ namespace EtwEvents.Tests
         public async Task Retrier() {
             var retryStrategy = new BackoffRetryStrategy(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(800), 20);
             var retrier = new AsyncRetrier<bool>(r => r, retryStrategy);
-            var retryHolder = new ValueHolder<int, TimeSpan>();
+            var retryHolder = new ValueHolder<int, TimeSpan, DateTimeOffset>();
 
             // op.Execute always fails
             var op = new Operation(int.MaxValue);

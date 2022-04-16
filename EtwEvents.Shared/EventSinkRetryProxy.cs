@@ -7,7 +7,7 @@ namespace KdSoft.EtwEvents
     /// Proxy for <see cref="IEventSink"/> that handles sink failures on WriteAsync()
     /// by closing/disposing of the event sink, and re-creating it on the next call to WriteAsync().
     /// </summary>
-    public class EventSinkRetryProxy: IEventSink
+    public class EventSinkRetryProxy: IEventSink, IEventSinkStatus
     {
         readonly string _sinkId;
         readonly string _options;
@@ -18,13 +18,15 @@ namespace KdSoft.EtwEvents
         readonly ILoggerFactory _loggerFactory;
         readonly ILogger<EventSinkRetryProxy> _logger;
         readonly AsyncRetrier<bool> _retrier;
+        readonly ValueHolder<int, TimeSpan, DateTimeOffset> _retryHolder;
         readonly TaskCompletionSource<bool> _tcs;
 
         IEventSink? _sink;
         int _disposing;
 
         public string SinkId => _sinkId;
-        public Task<bool> RunTask => _tcs.Task;
+
+        public readonly TimeSpan EventSinkTimeout = TimeSpan.FromSeconds(10);
 
         #region Construction & Disposal
 
@@ -36,6 +38,7 @@ namespace KdSoft.EtwEvents
         /// <param name="credentials">Event sink credentials.</param>
         /// <param name="sinkFactory"><see cref="IEventSinkFactory"/> to create instances of the specified event sink.</param>
         /// <param name="loadContext">Collectible assembly load context, as we need to keep a reference to it if not null.</param>
+        /// <param name="siteName">Name of source/site generating the events.</param>
         /// <param name="loggerFactory"><see cref="ILoggerFactory"/> instance needed for new event sink instances.</param>
         /// <param name="retryStrategy">Determines how retries are performed.</param>
         public EventSinkRetryProxy(
@@ -58,6 +61,7 @@ namespace KdSoft.EtwEvents
             _tcs = new TaskCompletionSource<bool>();
             _logger = loggerFactory.CreateLogger<EventSinkRetryProxy>();
             _retrier = new AsyncRetrier<bool>(r => r, retryStrategy);
+            _retryHolder = new ValueHolder<int, TimeSpan, DateTimeOffset>();
         }
 
         public async ValueTask DisposeAsync() {
@@ -116,18 +120,26 @@ namespace KdSoft.EtwEvents
             if (sink == null)
                 throw new InvalidOperationException($"EventSink instance {_sinkId} is null.");
             try {
-                await sink.RunTask.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+                await sink.RunTask.WaitAsync(EventSinkTimeout).ConfigureAwait(false);
             }
             catch (TimeoutException tex) {
+                LastError = tex;
                 _logger.LogError(tex, "Event sink {sinkId} timed out.", _sinkId);
             }
-            catch (OperationCanceledException) {
+            catch (OperationCanceledException cex) {
+                LastError = cex;
                 _logger.LogError("Event sink {sinkId} was cancelled.", _sinkId);
             }
             catch (Exception ex) {
+                LastError = ex;
                 _logger.LogError(ex, "Event sink {sinkId} failed.", _sinkId);
             }
             finally {
+                if (LastError != null) {
+                    NumRetries = _retryHolder.Value1;
+                    if (NumRetries <= 1)
+                        RetryStartTime = _retryHolder.Value3;
+                }
                 await sink.DisposeAsync().ConfigureAwait(false);
             }
             return false;
@@ -135,15 +147,25 @@ namespace KdSoft.EtwEvents
 
         async ValueTask<bool> InternalPerformAsyncAsync(ValueTask<bool> writeTask) {
             var result = await writeTask.ConfigureAwait(false);
-            if (!result)
+            if (result) {
+                LastError = null;
+            }
+            else {
                 return await HandleFailedWrite().ConfigureAwait(false);
+            }
             return result;
         }
 
         ValueTask<bool> InternalPerformAsync(ValueTask<bool> writeTask) {
             if (writeTask.IsCompleted) {
                 var result = writeTask.GetAwaiter().GetResult();
-                return result ? ValueTask.FromResult(result) : new ValueTask<bool>(HandleFailedWrite());
+                if (result) {
+                    LastError = null;
+                    return ValueTask.FromResult(result);
+                }
+                else {
+                    return new ValueTask<bool>(HandleFailedWrite());
+                }
             }
             else {
                 return InternalPerformAsyncAsync(writeTask);
@@ -170,11 +192,27 @@ namespace KdSoft.EtwEvents
             return InternalWriteAsync(sinkTask, evtBatch);
         }
 
+        #endregion
+
+        #region IEventSink
+
+        public Task<bool> RunTask => _tcs.Task;
+
         public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
             if (_disposing > 0)
                 return ValueTask.FromResult(false);
-            return _retrier.ExecuteAsync(WriteBatchAsync, evtBatch);
+            return _retrier.ExecuteAsync(WriteBatchAsync, evtBatch, _retryHolder);
         }
+
+        #endregion
+
+        #region IEventSinkStatus
+
+        public Exception? LastError { get; private set; }
+
+        public int NumRetries { get; private set; }
+
+        public DateTimeOffset RetryStartTime { get; private set; }
 
         #endregion
     }

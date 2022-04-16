@@ -15,7 +15,7 @@
         async ValueTask<T> ExecuteAsyncAsync(
             ValueTask<T> task,
             Func<int, TimeSpan, ValueTask<T>> callback,
-            ValueHolder<int, TimeSpan>? retryHolder
+            ValueHolder<int, TimeSpan, DateTimeOffset>? retryHolder
         ) {
             var result = await task.ConfigureAwait(false);
             while (!_succeeded(result)) {
@@ -23,6 +23,7 @@
                     if (retryHolder != null) {
                         retryHolder.Value1 = count;
                         retryHolder.Value2 = delay;
+                        retryHolder.Value3 = DateTimeOffset.UtcNow;
                     }
                     await Task.Delay(delay).ConfigureAwait(false);
                     result = await callback(count, delay).ConfigureAwait(false);
@@ -34,7 +35,7 @@
             return result;
         }
 
-        public ValueTask<T> ExecuteAsync(Func<int, TimeSpan, ValueTask<T>> callback, ValueHolder<int, TimeSpan>? retryHolder = null) {
+        public ValueTask<T> ExecuteAsync(Func<int, TimeSpan, ValueTask<T>> callback, ValueHolder<int, TimeSpan, DateTimeOffset>? retryHolder = null) {
             // check fast path (sync completion)
             var task = callback(0, default);
             if (task.IsCompleted) {
@@ -56,7 +57,7 @@
             ValueTask<T> task,
             Func<P, int, TimeSpan, ValueTask<T>> callback,
             P arg,
-            ValueHolder<int, TimeSpan>? retryHolder
+            ValueHolder<int, TimeSpan, DateTimeOffset>? retryHolder
         ) {
             var result = await task.ConfigureAwait(false);
             while (!_succeeded(result)) {
@@ -64,6 +65,7 @@
                     if (retryHolder != null) {
                         retryHolder.Value1 = count;
                         retryHolder.Value2 = delay;
+                        retryHolder.Value3 = DateTimeOffset.UtcNow;
                     }
                     await Task.Delay(delay).ConfigureAwait(false);
                     result = await callback(arg, count, delay).ConfigureAwait(false);
@@ -78,7 +80,7 @@
         public ValueTask<T> ExecuteAsync<P>(
             Func<P, int, TimeSpan, ValueTask<T>> callback,
             P arg,
-            ValueHolder<int, TimeSpan>? retryHolder = null
+            ValueHolder<int, TimeSpan, DateTimeOffset>? retryHolder = null
         ) {
             // check fast path (sync completion)
             var task = callback(arg, 0, default);
@@ -102,7 +104,7 @@
             Func<P, Q, int, TimeSpan, ValueTask<T>> callback,
             P argP,
             Q argQ,
-            ValueHolder<int, TimeSpan>? retryHolder
+            ValueHolder<int, TimeSpan, DateTimeOffset>? retryHolder
         ) {
             var result = await task.ConfigureAwait(false);
             while (!_succeeded(result)) {
@@ -110,6 +112,7 @@
                     if (retryHolder != null) {
                         retryHolder.Value1 = count;
                         retryHolder.Value2 = delay;
+                        retryHolder.Value3 = DateTimeOffset.UtcNow;
                     }
                     await Task.Delay(delay).ConfigureAwait(false);
                     result = await callback(argP, argQ, count, delay).ConfigureAwait(false);
@@ -125,7 +128,7 @@
             Func<P, Q, int, TimeSpan, ValueTask<T>> callback,
             P argP,
             Q argQ,
-            ValueHolder<int, TimeSpan>? retryHolder = null
+            ValueHolder<int, TimeSpan, DateTimeOffset>? retryHolder = null
         ) {
             // check fast path (sync completion)
             var task = callback(argP, argQ, 0, default);
