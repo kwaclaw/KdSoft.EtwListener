@@ -78,6 +78,8 @@ namespace KdSoft.EtwEvents.Server
 
             cts.Token.Register(() => {
                 _channel.Writer.TryComplete();
+                // we need to dispose the event sink, because WriteBatchAsync() would never return due to retry logic.
+                base.DisposeAsync();  // this is not supposed to throw !
             });
 
             _timer = new Timer(TimerCallback);

@@ -105,6 +105,11 @@ namespace KdSoft.EtwEvents.Server
                 throw new InvalidOperationException("Channel already stopped.");
             }
 
+            cts.Token.Register(() => {
+                // we need to dispose the event sink, because WriteBatchAsync() would never return due to retry logic.
+                base.DisposeAsync();  // this is not supposed to throw !
+            });
+
             // without this the reader will be blocked
             await Task.Yield();
 
