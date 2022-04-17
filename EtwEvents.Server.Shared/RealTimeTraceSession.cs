@@ -62,7 +62,7 @@ namespace KdSoft.EtwEvents.Server
             if (IsCreated) {
                 _instance.EnableProviderTimeoutMSec = 10000;
                 // we don't want the trace session to keep running
-                // _instance.StopOnDispose = false;
+                _instance.StopOnDispose = true;
                 _instance.EnableProvider(TplActivities.TplEventSourceGuid, tracing.TraceEventLevel.Always, TplActivities.TaskFlowActivityIdsKeyword);
             }
         }
@@ -170,15 +170,18 @@ namespace KdSoft.EtwEvents.Server
             var processTask = Task.Run<bool>(Instance.Source.Process);
             _logger.LogInformation("{sessionType} '{sessionName}' has started.", nameof(RealTimeTraceSession), sessionName);
 
-            processTask.ContinueWith(t => {
+            var continuedTask = processTask.ContinueWith<bool>(t => {
                 Interlocked.MemoryBarrier();
                 _isStopped = 1;
                 Interlocked.MemoryBarrier();
                 if (t.IsFaulted)
                     _logger.LogError(t.Exception, "Error in {sessionType} '{sessionName}'.", nameof(RealTimeTraceSession), sessionName);
+                else if (t.IsCanceled)
+                    _logger.LogWarning("Cancelled {sessionType} '{sessionName}'.", nameof(RealTimeTraceSession), sessionName);
+                 return t.Result;
             }, TaskContinuationOptions.ExecuteSynchronously);
 
-            return processTask;
+            return continuedTask;
         }
 
         /// <summary>
