@@ -110,7 +110,7 @@ class EtwAgent extends LitMvvmElement {
     this.model.deleteEventSink(model.profile.name);
   }
 
-  _eventSinkBeforeExpand(agentState) {
+  _eventSinkBeforeExpand(e, agentState) {
     Object.entries(agentState.eventSinks).forEach(es => {
       es[1].expanded = false;
     });
