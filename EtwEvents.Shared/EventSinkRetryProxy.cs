@@ -119,6 +119,7 @@ namespace KdSoft.EtwEvents
             var sink = Interlocked.Exchange(ref _sink, null);
             if (sink == null)
                 throw new InvalidOperationException($"EventSink instance {_sinkId} is null.");
+
             try {
                 await sink.RunTask.WaitAsync(EventSinkTimeout).ConfigureAwait(false);
             }
@@ -135,11 +136,6 @@ namespace KdSoft.EtwEvents
                 _logger.LogError(ex, "Event sink {sinkId} failed.", _sinkId);
             }
             finally {
-                if (LastError != null) {
-                    NumRetries = _retryHolder.Value1;
-                    if (NumRetries <= 1)
-                        RetryStartTime = _retryHolder.Value3;
-                }
                 await sink.DisposeAsync().ConfigureAwait(false);
             }
             return false;
@@ -147,10 +143,7 @@ namespace KdSoft.EtwEvents
 
         async ValueTask<bool> InternalPerformAsyncAsync(ValueTask<bool> writeTask) {
             var result = await writeTask.ConfigureAwait(false);
-            if (result) {
-                LastError = null;
-            }
-            else {
+            if (!result) {
                 return await HandleFailedWrite().ConfigureAwait(false);
             }
             return result;
@@ -160,7 +153,6 @@ namespace KdSoft.EtwEvents
             if (writeTask.IsCompleted) {
                 var result = writeTask.GetAwaiter().GetResult();
                 if (result) {
-                    LastError = null;
                     return ValueTask.FromResult(result);
                 }
                 else {
@@ -181,6 +173,9 @@ namespace KdSoft.EtwEvents
             return await InternalPerformAsync(sink.WriteAsync(evtBatch)).ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Called by the AsyncRetrier.
+        /// </summary>
         ValueTask<bool> WriteBatchAsync(EtwEventBatch evtBatch, int retryNum, TimeSpan delay) {
             if (retryNum > 0)
                 _logger.LogInformation("WriteAsync (batch) retry: {retryNum}, {delay}", retryNum, delay);
@@ -201,6 +196,9 @@ namespace KdSoft.EtwEvents
         public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
             if (_disposing > 0)
                 return ValueTask.FromResult(false);
+            LastError = null;
+            _retryStartTime = default(DateTimeOffset);
+            _retryHolder.Reset();
             return _retrier.ExecuteAsync(WriteBatchAsync, evtBatch, _retryHolder);
         }
 
@@ -210,9 +208,18 @@ namespace KdSoft.EtwEvents
 
         public Exception? LastError { get; private set; }
 
-        public int NumRetries { get; private set; }
+        public int NumRetries => _retryHolder.Value1;
 
-        public DateTimeOffset RetryStartTime { get; private set; }
+        DateTimeOffset _retryStartTime;
+        public DateTimeOffset RetryStartTime {
+            get {
+                // we must retrieve this value as soon as possible after a failed write
+                if (_retryStartTime == default(DateTimeOffset)) {
+                    _retryStartTime = _retryHolder.Value3;
+                }
+                return _retryStartTime;
+            }
+        }
 
         #endregion
     }
