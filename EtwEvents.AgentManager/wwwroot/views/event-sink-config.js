@@ -211,28 +211,31 @@ class EventSinkConfig extends LitMvvmElement {
 
   render() {
     const profile = this.model.profile;
+    const status = this.model.status;
     const expanded = this.model.expanded || false;
     const borderColor = expanded ? 'border-indigo-500' : 'border-transparent';
     const timesClasses = 'text-gray-600 fas fa-lg fa-times';
     const chevronClasses = expanded
       ? 'text-indigo-500 fas fa-lg  fa-chevron-circle-up'
       : 'text-gray-600 fas fa-lg fa-chevron-circle-down';
-    const errorClasses = this.model.error ? 'border-red-500 focus:outline-none focus:border-red-700' : '';
-    const titleClasses = this.model.error ? 'text-red-600' : (expanded ? 'text-indigo-500' : '');
+    const errorClasses = status?.lastError ? 'border-red-500 focus:outline-none focus:border-red-700' : '';
+    const titleClasses = status?.lastError ? 'text-red-600' : (expanded ? 'text-indigo-500' : '');
+    const retryTimestamp = status ? `${utils.dateFormat.format(status.retryStartTimeMSecs)}` : '';
+    const retryMessage = (status?.numRetries > 0) ? `${status.numRetries} retries since ${retryTimestamp}.\n` : '';
 
     const result = html`
       <div class="border-l-2 ${borderColor}">
         <header class="flex items-center justify-start pl-1 py-2 cursor-pointer select-none relative ${errorClasses}">
-          <span class="${titleClasses}">${profile.name} - ${profile.sinkType}</span>
+          <span class="${titleClasses}">${profile.name} - ${profile.sinkType}(${profile.version})</span>
           <span class="${timesClasses} ml-auto mr-2" @click=${this._deleteClicked}></span>
           <span class="${chevronClasses}" @click=${this._expandClicked}></span>
         </header>
 
         <form class="relative" ?hidden=${!expanded}>
           <div id="form-header">
-            <pre ?hidden=${!this.model.error}><textarea 
+            <pre ?hidden=${!status?.lastError}><textarea
               class="my-2 w-full border-2 border-red-500 focus:outline-none focus:border-red-700"
-            >${this.model.error}</textarea></pre>
+            >${retryMessage}${status?.lastError}</textarea></pre>
 
             <div id="common-fields" @change=${this._fieldChange}>
               <label for="batchSize">Batch Size</label>

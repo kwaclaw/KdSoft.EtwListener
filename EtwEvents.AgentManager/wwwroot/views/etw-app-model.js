@@ -115,6 +115,15 @@ function _convertEventSinkProfiles(agentState) {
   }
 }
 
+function _copyEventSinkStatuses(agentEntry) {
+  for (const [name, sinkState] of Object.entries(agentEntry.state.eventSinks)) {
+    const currentState = agentEntry.current.eventSinks[name];
+    if (currentState) {
+      sinkState.status = currentState.status
+    }
+  }
+}
+
 function _updateAgentsMap(agentsMap, agentStates) {
   const localAgentKeys = new Set(agentsMap.keys());
 
@@ -154,6 +163,8 @@ function _updateAgentsMap(agentsMap, agentStates) {
     } else {
       // update only the current property of entry, the state property may be modified
       entry.current = state;
+      // we need to copy the current eventsink status to entry.state, as it is not a configuration item but a real-time status
+      _copyEventSinkStatuses(entry);
     }
     localAgentKeys.delete(agentId);
   }
@@ -206,9 +217,6 @@ class EtwAppModel {
 
     const fetcher = new FetchHelper('/Manager');
     this.fetcher = fetcher;
-
-    //TODO when running in dev mode with vite, we can only serve files under the root, i.e. 'Spa'
-    //     so maybe we need to copy the event sink config files to a directory under Spa on AgentManager build
 
     observableThis.eventSinkInfos = [];
     fetcher.getJson('GetEventSinkInfos')
