@@ -18,7 +18,7 @@ namespace KdSoft.EtwEvents
         readonly ILoggerFactory _loggerFactory;
         readonly ILogger<EventSinkRetryProxy> _logger;
         readonly AsyncRetrier<bool> _retrier;
-        readonly ValueHolder<int, TimeSpan, DateTimeOffset> _retryHolder;
+        readonly ValueHolder<int, TimeSpan, long> _retryHolder;
         readonly TaskCompletionSource<bool> _tcs;
 
         IEventSink? _sink;
@@ -61,11 +61,12 @@ namespace KdSoft.EtwEvents
             _tcs = new TaskCompletionSource<bool>();
             _logger = loggerFactory.CreateLogger<EventSinkRetryProxy>();
             _retrier = new AsyncRetrier<bool>(r => r, retryStrategy);
-            _retryHolder = new ValueHolder<int, TimeSpan, DateTimeOffset>();
+            _retryHolder = new ValueHolder<int, TimeSpan, long>();
         }
 
         public async ValueTask DisposeAsync() {
             _disposing = 99;
+            _retrier.Stop();
             var sink = Interlocked.Exchange(ref _sink, null);
             if (sink != null) {
                 var _ = sink.RunTask.ContinueWith(rt => {
@@ -214,8 +215,11 @@ namespace KdSoft.EtwEvents
         public DateTimeOffset RetryStartTime {
             get {
                 // we must retrieve this value as soon as possible after a failed write
-                if (_retryStartTime == default(DateTimeOffset)) {
-                    _retryStartTime = _retryHolder.Value3;
+                var holderValue3 = Interlocked.Read(ref _retryHolder.Value3);
+                long retryTicks = _retryStartTime.Ticks;
+                Interlocked.MemoryBarrier();
+                if (retryTicks == 0) {
+                    _retryStartTime = new DateTimeOffset(holderValue3, TimeSpan.Zero);
                 }
                 return _retryStartTime;
             }
