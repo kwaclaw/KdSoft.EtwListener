@@ -144,7 +144,8 @@ namespace KdSoft.EtwEvents.Server
             finally {
                 // let's not wait for reader completion, because we might not be able to continue writing to the event sink
                 // await _channel.Reader.Completion.ConfigureAwait(false);
-                await base.DisposeAsync().ConfigureAwait(false);
+                // already done in registered cancellation callback
+                // await base.DisposeAsync().ConfigureAwait(false);
                 var ctsToDispose = Interlocked.Exchange(ref _stoppingTokenSource, null);
                 if (ctsToDispose != null) {
                     ctsToDispose.Dispose();
