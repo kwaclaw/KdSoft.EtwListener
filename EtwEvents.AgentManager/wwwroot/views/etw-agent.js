@@ -209,7 +209,7 @@ class EtwAgent extends LitMvvmElement {
           position: relative;
 
           display: grid;
-          grid-template-columns: auto auto;
+          grid-template-columns: fit-content(600px) auto;
           grid-gap: 1em;
           justify-items: stretch;
           overflow-y: auto;
@@ -226,6 +226,18 @@ class EtwAgent extends LitMvvmElement {
 
         input {
           border-width: 1px;
+        }
+
+        #providers {
+          max-width: 600px;
+        }
+
+        #event-sinks {
+          max-width: 600px;
+        }
+
+        #live-view {
+          max-width: 600px;
         }
 
         #processing {
@@ -270,7 +282,7 @@ class EtwAgent extends LitMvvmElement {
     return html`
       <div id="main">
 
-        <form id="providers" class="max-w-full border">
+        <form id="providers" class="border">
           <div class="flex my-2 pr-2">
             <span class="font-semibold ${this.model.providersModified ? 'italic text-red-500' : ''}">Event Providers</span>
             <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
@@ -320,7 +332,7 @@ class EtwAgent extends LitMvvmElement {
           </div>
         </form> 
 
-        <form id="event-sinks" class="max-w-full border">
+        <form id="event-sinks" class="border">
           <div class="flex my-2 pr-2">
             <span class="font-semibold ${this.model.eventSinksModified ? 'italic text-red-500' : ''}">Event Sinks</span>
             <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
@@ -358,7 +370,7 @@ class EtwAgent extends LitMvvmElement {
           </div>
         </form>
 
-        <form id="live-view" class="max-w-full border">
+        <form id="live-view" class="">
           <div class="flex my-2 pr-2">
             <span class="font-semibold ${this.model.liveViewConfigModified ? 'italic text-red-500' : ''}">Live View</span>
           </div>

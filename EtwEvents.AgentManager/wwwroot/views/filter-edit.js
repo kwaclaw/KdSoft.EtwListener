@@ -180,8 +180,8 @@ class FilterEdit extends LitMvvmElement {
           font: inherit;
           resize: both;
           white-space: pre;
-          overflow: hidden;
-          text-overflow: ellipsis;
+          overflow: auto;
+          text-overflow: clip;
           overflow-wrap: normal;
           width: 100%;
         }

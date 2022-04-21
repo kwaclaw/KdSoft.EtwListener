@@ -136,11 +136,10 @@ class LiveViewConfig extends LitMvvmElement {
 
         #payload-fields {
           flex-grow: 1;
-          margin-top: auto;
-          display: flex;
-          align-items: center;
-          justify-content: flex-start;
-          flex-wrap: wrap;
+          margin-top: 0.5rem;
+          display: grid;
+          grid-template-columns: auto auto auto;
+          grid-gap: 5px;
         }
       `,
     ];
@@ -158,7 +157,12 @@ class LiveViewConfig extends LitMvvmElement {
           </etw-checklist>
         </div>
         <div id="payload-cols-wrapper">
-          <label class="block mb-1" for="payload-cols">Payload Columns</label>
+          <div class="flex mb-1">
+            <label for="payload-cols">Payload Columns</label>
+            <span class="self-center ml-auto text-gray-500 fas fa-lg fa-plus cursor-pointer select-none"
+              @click=${this._addPayloadColumnClick}>
+            </span>
+          </div>
           <etw-checklist id="payload-cols" class="text-black"
             .model=${this.model.payloadColumnCheckList}
             .getItemTemplate=${this._getPayloadColumnListItemTemplate}
@@ -166,15 +170,12 @@ class LiveViewConfig extends LitMvvmElement {
           </etw-checklist>
           <div id="payload-fields" class="pt-4 pb-1">
             <!-- <label class="mr-4" for="payload-field">New</label> -->
-            <input id="payload-field" type="text" form="" class="mr-2"
+            <input id="payload-field" type="text" form=""
               placeholder="field name" required @blur=${this._payloadFieldBlur} />
-            <input id="payload-label" type="text" form="" class="mr-2" placeholder="field label" required />
+            <input id="payload-label" type="text" form="" placeholder="field label" required />
             <select id="payload-type">
               ${LiveViewConfigModel.columnType.map(ct => html`<option>${ct}</option>`)}
             </select>
-            <span class="text-gray-500 fas fa-lg fa-plus ml-auto pl-4 cursor-pointer select-none"
-              @click=${this._addPayloadColumnClick}>
-            </span>
           </div>
         </div>
       </div>
