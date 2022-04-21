@@ -214,6 +214,7 @@ namespace KdSoft.EtwEvents.Server
         #region Filters
 
         static readonly Assembly SystemRuntime = Assembly.Load(new AssemblyName("System.Runtime"));
+        static readonly Assembly SystemTextRegex = Assembly.Load(new AssemblyName("System.Text.RegularExpressions"));
         static readonly Assembly SystemLinq = Assembly.Load(new AssemblyName("System.Linq"));
         static readonly Assembly NetStandard20 = Assembly.Load("netstandard, Version=2.0.0.0");
 
@@ -314,6 +315,7 @@ namespace KdSoft.EtwEvents.Server
                 MetadataReference.CreateFromFile(typeof(IConfiguration).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(ConfigurationBuilder).Assembly.Location),
                 MetadataReference.CreateFromFile(SystemRuntime.Location),
+                MetadataReference.CreateFromFile(SystemTextRegex.Location),
                 MetadataReference.CreateFromFile(SystemLinq.Location),
                 MetadataReference.CreateFromFile(NetStandard20.Location),
             };
