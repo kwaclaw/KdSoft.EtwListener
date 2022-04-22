@@ -14,8 +14,6 @@ import appStyles from '../styles/etw-app-styles.js';
 import dialogStyles from '../styles/dialog-polyfill-styles.js';
 import '../components/etw-checklist.js';
 import * as utils from '../js/utils.js';
-import AgentState from '../js/agentState.js';
-import EventProvider from '../js/eventProvider.js';
 
 function getAgentIndex(agentList, agentId) {
   return agentList.findIndex(val => val.id === agentId);
@@ -43,65 +41,6 @@ class EtwAppSideBar extends LitMvvmElement {
 
   _stopEvents(agentState) {
     if (agentState && agentState.isRunning) this.model.stopEvents();
-  }
-
-  _exportAgentConfig(agentState) {
-    if (!agentState) return;
-
-    const exportObject = new AgentState();
-    utils.setTargetProperties(exportObject, agentState);
-
-    // fix up enabled providers to exclude extra properties
-    const enabledProviders = [];
-    for (const provider of agentState.enabledProviders) {
-      const exportProvider = new EventProvider();
-      utils.setTargetProperties(exportProvider, provider);
-      enabledProviders.push(exportProvider);
-    }
-    exportObject.enabledProviders = enabledProviders;
-
-    for (const entry of Object.entries(agentState.eventSinks)) {
-      const sinkState = entry[1];
-      delete sinkState.error;
-      delete sinkState.configViewUrl;
-      delete sinkState.configModelUrl;
-      delete sinkState.expanded;
-    }
-
-    const exportString = JSON.stringify(exportObject, null, 2);
-    const exportURL = `data:text/plain,${exportString}`;
-
-    const a = document.createElement('a');
-    try {
-      a.style.display = 'none';
-      a.href = exportURL;
-      a.download = `${exportObject.id}.json`;
-      document.body.appendChild(a);
-      a.click();
-    } finally {
-      document.body.removeChild(a);
-    }
-  }
-
-  _importAgentStateDialog(e) {
-    const fileDlg = e.currentTarget.parentElement.querySelector('input[type="file"]');
-    // reset value so that @change event fires reliably
-    fileDlg.value = null;
-    fileDlg.click();
-  }
-
-  _importAgentState(e, state) {
-    const selectedFile = e.currentTarget.files[0];
-    if (!selectedFile) return;
-
-    selectedFile.text().then(txt => {
-      const importObject = JSON.parse(txt);
-      // we don't want to change agent-identifying properties
-      importObject.id = state.id;
-      importObject.site = state.site;
-      importObject.host = state.host;
-      this.model.setAgentState(importObject);
-    });
   }
 
   _refreshStates() {
@@ -253,17 +192,6 @@ class EtwAppSideBar extends LitMvvmElement {
               ${onlyModified ? html`<button class="mr-1 text-yellow-800 fas fa-pencil-alt"></button>` : nothing}
               ${entry.disconnected ? html`<i class="text-red-800 fas fa-unlink"></i>` : nothing}
             </span>
-
-            <input type="file"
-              @change=${(e) => this._importAgentState(e, entry.state)}
-              hidden />
-            <button class="mr-1 text-gray-600" @click=${(e) => this._importAgentStateDialog(e)} title="Import Configuration">
-              <i class="fas fa-file-import"></i>
-            </button>
-            <button class="mr-4 text-gray-600" @click=${() => this._exportAgentConfig(entry.state)} title="Export Configuration">
-              <i class="fas fa-file-export"></i>
-            </button>
-
             <button class="mr-1 ${playClass}" @click=${() => this._startEvents(entry.current)} title="Start Session">
               <i class="fas fa-play"></i>
             </button>

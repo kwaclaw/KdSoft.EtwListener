@@ -489,6 +489,9 @@ Ensure the default browser behavior of the \`hidden\` attribute.
 .mr-6 {
   margin-right: 1.5rem;
 }
+.ml-4 {
+  margin-left: 1rem;
+}
 .ml-2 {
   margin-left: 0.5rem;
 }
@@ -687,9 +690,6 @@ Ensure the default browser behavior of the \`hidden\` attribute.
 }
 .pb-1 {
   padding-bottom: 0.25rem;
-}
-.pl-4 {
-  padding-left: 1rem;
 }
 .text-xl {
   font-size: 1.25rem;

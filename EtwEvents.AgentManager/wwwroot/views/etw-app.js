@@ -8,6 +8,9 @@ import { LitMvvmElement, css, BatchScheduler } from '@kdsoft/lit-mvvm';
 import './etw-app-side-bar.js';
 import './etw-agent.js';
 import './live-view.js';
+import * as utils from '../js/utils.js';
+import AgentState from '../js/agentState.js';
+import EventProvider from '../js/eventProvider.js';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
@@ -193,6 +196,65 @@ class EtwApp extends LitMvvmElement {
       if (this.model.etwEventSource) this.model.stopEtwEvents();
       else this.model.getEtwEvents();
     }
+  }
+
+  _exportAgentConfig(agentState) {
+    if (!agentState) return;
+
+    const exportObject = new AgentState();
+    utils.setTargetProperties(exportObject, agentState);
+
+    // fix up enabled providers to exclude extra properties
+    const enabledProviders = [];
+    for (const provider of agentState.enabledProviders) {
+      const exportProvider = new EventProvider();
+      utils.setTargetProperties(exportProvider, provider);
+      enabledProviders.push(exportProvider);
+    }
+    exportObject.enabledProviders = enabledProviders;
+
+    for (const entry of Object.entries(agentState.eventSinks)) {
+      const sinkState = entry[1];
+      delete sinkState.error;
+      delete sinkState.configViewUrl;
+      delete sinkState.configModelUrl;
+      delete sinkState.expanded;
+    }
+
+    const exportString = JSON.stringify(exportObject, null, 2);
+    const exportURL = `data:text/plain,${exportString}`;
+
+    const a = document.createElement('a');
+    try {
+      a.style.display = 'none';
+      a.href = exportURL;
+      a.download = `${exportObject.id}.json`;
+      document.body.appendChild(a);
+      a.click();
+    } finally {
+      document.body.removeChild(a);
+    }
+  }
+
+  _importAgentConfigDialog(e) {
+    const fileDlg = e.currentTarget.parentElement.querySelector('input[type="file"]');
+    // reset value so that @change event fires reliably
+    fileDlg.value = null;
+    fileDlg.click();
+  }
+
+  _importAgentConfig(e, state) {
+    const selectedFile = e.currentTarget.files[0];
+    if (!selectedFile) return;
+
+    selectedFile.text().then(txt => {
+      const importObject = JSON.parse(txt);
+      // we don't want to change agent-identifying properties
+      importObject.id = state.id;
+      importObject.site = state.site;
+      importObject.host = state.host;
+      this.model.setAgentState(importObject);
+    });
   }
 
   //#endregion
@@ -419,16 +481,37 @@ class EtwApp extends LitMvvmElement {
             ? nothing
             : html`
               <nav class="flex bg-gray-500" @click=${this._agentTabClick}>
+
                 <div data-tabid="agent-config" class=${classMap(agentConfigTabType)}>
                   <a href="#">Configuration</a>
+
+                  <input type="file"
+                    @change=${(e) => this._importAgentConfig(e, activeAgentState)}
+                    hidden />
+                  <button class="ml-4 text-gray-300" @click=${(e) => this._importAgentConfigDialog(e)} title="Import Configuration">
+                    <i class="fas fa-file-import"></i>
+                  </button>
+                  <button class="ml-2 text-gray-300" @click=${() => this._exportAgentConfig(activeAgentState)} title="Export Configuration">
+                    <i class="fas fa-file-export"></i>
+                  </button>
+
+                  <button class="ml-4" @click=${() => this.model.applyAllConfiguration(activeAgentState)} title="Apply All">
+                    <i class="fas fa-lg fa-check text-green-500"></i>
+                  </button>
+                  <button class="ml-2" @click=${() => this.model.resetAllConfiguration(activeEntry?.current)} title="Reset All">
+                    <i class="fas fa-lg fa-times text-red-500"></i>
+                  </button>
                 </div>
+
                 <div data-tabid="agent-live-view" class=${classMap(agentLiveViewTabType)}>
                   <a href="#">Live View</a>
                   <button class="ml-2 ${sinkClass}" @click=${() => this._toggleEtwEvents(activeEntry?.current)} title="View Events">
                     <i class="fas fa-eye"></i>
                   </button>
+
                 </div>
               </nav>
+
               <div id="agent">
                 <etw-agent .model=${this.model}
                   class="${this._tabSectionClass('agent-config')} section">
