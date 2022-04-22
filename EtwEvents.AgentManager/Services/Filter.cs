@@ -10,6 +10,7 @@ namespace KdSoft.EtwEvents.AgentManager
 @"using System.Linq;
 using Microsoft.Diagnostics.Tracing;
 using Microsoft.Extensions.Configuration;
+using System.Text.RegularExpressions;
 {0}
 
 namespace KdSoft.EtwEvents.Server
