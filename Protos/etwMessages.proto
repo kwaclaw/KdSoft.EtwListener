@@ -152,9 +152,6 @@ message ProcessingOptions {
   Filter filter = 3;
 }
 
-message EventSessionOptions {
-  ProcessingOptions processing_options = 1;
-  repeated ProviderSetting provider_settings = 2;
 }
 
 message LinePosition {
