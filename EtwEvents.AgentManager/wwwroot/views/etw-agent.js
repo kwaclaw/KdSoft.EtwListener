@@ -85,7 +85,7 @@ class EtwAgent extends LitMvvmElement {
     dlg.showModal();
   }
 
-  _okAddEventSink(e) {
+  _okAddEventSink(e, agentState) {
     e.preventDefault();
     e.stopImmediatePropagation();
     const form = e.currentTarget.closest('form');
@@ -95,7 +95,7 @@ class EtwAgent extends LitMvvmElement {
     sinklist._internals.setValidity({ valueMissing: !selectedSinkInfo }, 'Sink type must be selected.');
     if (!form.reportValidity()) return;
 
-    this.model.addEventSink(sinkname.value, selectedSinkInfo);
+    this.model.addEventSink(agentState, sinkname.value, selectedSinkInfo);
 
     form.parentElement.close();
   }
@@ -105,9 +105,9 @@ class EtwAgent extends LitMvvmElement {
     dlg.close();
   }
 
-  _deleteEventSinkClick(e) {
+  _deleteEventSinkClick(e, agentState) {
     const model = e.currentTarget.model;
-    this.model.deleteEventSink(model.profile.name);
+    this.model.deleteEventSink(agentState, model.profile.name);
   }
 
   _eventSinkBeforeExpand(e, agentState) {
@@ -116,14 +116,14 @@ class EtwAgent extends LitMvvmElement {
     });
   }
 
-  _updateEventSinks(e) {
+  _updateEventSinks(e, agentState) {
     const configForms = this.renderRoot.querySelectorAll('event-sink-config');
     let isValid = true;
     configForms.forEach(frm => {
       isValid = isValid && frm.isValid();
     });
     if (isValid) {
-      this.model.updateEventSinks();
+      this.model.updateEventSinks(agentState);
     }
   }
 
@@ -277,6 +277,7 @@ class EtwAgent extends LitMvvmElement {
   }
 
   render() {
+    const activeEntry = this.model.getActiveEntry();
     const activeAgentState = this.model.activeAgentState;
     const processingModel = activeAgentState?.processingModel;
     return html`
@@ -284,7 +285,7 @@ class EtwAgent extends LitMvvmElement {
 
         <form id="providers" class="border">
           <div class="flex my-2 pr-2">
-            <span class="font-semibold ${this.model.providersModified ? 'italic text-red-500' : ''}">Event Providers</span>
+            <span class="font-semibold ${this.model.getProvidersModified(activeEntry) ? 'italic text-red-500' : ''}">Event Providers</span>
             <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
               @click=${(e) => this._addProviderClick(e, activeAgentState)}>
             </span>
@@ -298,10 +299,10 @@ class EtwAgent extends LitMvvmElement {
           `)}
           <hr class="my-3" />
           <div class="flex flex-wrap mt-2 bt-1">
-            <button type="button" class="py-1 px-2 ml-auto" @click=${() => this.model.applyProviders()} title="Apply">
+            <button type="button" class="py-1 px-2 ml-auto" @click=${() => this.model.applyProviders(activeAgentState)} title="Apply">
               <i class="fas fa-lg fa-check text-green-500"></i>
             </button>
-            <button type="button" class="py-1 px-2" @click=${() => this.model.resetProviders()} title="Reset to Current">
+            <button type="button" class="py-1 px-2" @click=${() => this.model.resetProviders(activeEntry)} title="Reset to Current">
               <i class="fas fa-lg fa-times text-red-500"></i>
             </button>
           </div>
@@ -309,23 +310,23 @@ class EtwAgent extends LitMvvmElement {
 
         <form id="processing" class="max-w-full border"  @change=${e => this._processingFieldChange(e, activeAgentState)}>
           <div class="flex my-2 pr-2">
-            <span class="font-semibold ${this.model.processingModified ? 'italic text-red-500' : ''}">Processing</span>
+            <span class="font-semibold ${this.model.getProcessingModified(activeEntry) ? 'italic text-red-500' : ''}">Processing</span>
           </div>
           <div id="processingEdit">
             <label for="filterEdit">Filter</label>
             <filter-edit id="filterEdit" class="p-2" .model=${processingModel.filter}></filter-edit>
             <hr class="my-3" />
             <div class="flex flex-wrap mt-2 bt-1">
-              <button type="button" class="py-1 px-2" @click=${() => this.model.testFilter()} title="Test">
+              <button type="button" class="py-1 px-2" @click=${() => this.model.testFilter(activeAgentState)} title="Test">
                 <i class="fas fa-lg fa-vial" style="color:orange"></i>
               </button>
-              <button type="button" class="py-1 px-2" @click=${() => this.model.clearFilter()} title="Clear">
+              <button type="button" class="py-1 px-2" @click=${() => this.model.clearFilter(activeAgentState)} title="Clear">
                 <i class="fas fa-lg fa-ban text-gray-500"></i>
               </button>
-              <button type="button" class="py-1 px-2 ml-auto" @click=${() => this.model.applyProcessing()} title="Apply">
+              <button type="button" class="py-1 px-2 ml-auto" @click=${() => this.model.applyProcessingOptions(activeAgentState)} title="Apply">
                 <i class="fas fa-lg fa-check text-green-500"></i>
               </button>
-              <button type="button" class="py-1 px-2" @click=${() => this.model.resetProcessing()} title="Reset to Current">
+              <button type="button" class="py-1 px-2" @click=${() => this.model.resetProcessingOptions(activeEntry)} title="Reset to Current">
                 <i class="fas fa-lg fa-times text-red-500"></i>
               </button>
             </div>
@@ -334,7 +335,7 @@ class EtwAgent extends LitMvvmElement {
 
         <form id="event-sinks" class="border">
           <div class="flex my-2 pr-2">
-            <span class="font-semibold ${this.model.eventSinksModified ? 'italic text-red-500' : ''}">Event Sinks</span>
+            <span class="font-semibold ${this.model.getEventSinksModified(activeEntry) ? 'italic text-red-500' : ''}">Event Sinks</span>
             <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
               @click=${this._addEventSinkClick}>
             </span>
@@ -346,7 +347,7 @@ class EtwAgent extends LitMvvmElement {
               <event-sink-config class="bg-gray-300 px-2 my-3"
                 .model=${entry[1]}
                 @beforeExpand=${(e) => this._eventSinkBeforeExpand(e, activeAgentState)}
-                @delete=${this._deleteEventSinkClick}>
+                @delete=${(e) => this._deleteEventSinkClick(e, activeAgentState)}>
               </event-sink-config>
             `
           )}
@@ -361,10 +362,10 @@ class EtwAgent extends LitMvvmElement {
             <button type="button" class="py-1 px-2" @click=${(e) => this._exportEventSinks(e, activeAgentState)} title="Export">
               <i class="fas fa-lg fa-file-export text-gray-600"></i>
             </button>
-            <button type="button" class="py-1 px-2 ml-auto" @click=${(e) => this._updateEventSinks(e)} title="Apply">
+            <button type="button" class="py-1 px-2 ml-auto" @click=${(e) => this._updateEventSinks(e, activeAgentState)} title="Apply">
               <i class="fas fa-lg fa-check text-green-500"></i>
             </button>
-            <button type="button" class="py-1 px-2" @click=${() => this.model.resetEventSinks()} title="Reset to Current" autofocus>
+            <button type="button" class="py-1 px-2" @click=${() => this.model.resetEventSinks(activeEntry)} title="Reset to Current" autofocus>
               <i class="fas fa-lg fa-times text-red-500"></i>
             </button>
           </div>
@@ -372,18 +373,18 @@ class EtwAgent extends LitMvvmElement {
 
         <form id="live-view" class="">
           <div class="flex my-2 pr-2">
-            <span class="font-semibold ${this.model.liveViewConfigModified ? 'italic text-red-500' : ''}">Live View</span>
+            <span class="font-semibold ${this.model.getLiveViewOptionsModified(activeEntry) ? 'italic text-red-500' : ''}">Live View</span>
           </div>
           <live-view-config
             .model=${activeAgentState.liveViewConfigModel}
-            .changeCallback=${(opts) => this.model.updateLiveViewOptions(opts)}
+            .changeCallback=${(opts) => this.model.updateLiveViewOptions(activeEntry, opts)}
           ></live-view-config>
           <hr class="my-3" />
           <div class="flex flex-wrap mt-2 bt-1">
-            <button type="button" class="py-1 px-2 ml-auto" @click=${() => this.model.applyLiveViewConfig()} title="Apply">
+            <button type="button" class="py-1 px-2 ml-auto" @click=${() => this.model.applyLiveViewOptions(activeAgentState)} title="Apply">
               <i class="fas fa-lg fa-check text-green-500"></i>
             </button>
-            <button type="button" class="py-1 px-2" @click=${() => this.model.resetLiveViewConfig()} title="Reset to Current">
+            <button type="button" class="py-1 px-2" @click=${() => this.model.resetLiveViewOptions(activeEntry)} title="Reset to Current">
               <i class="fas fa-lg fa-times text-red-500"></i>
             </button>
           </div>
@@ -392,7 +393,7 @@ class EtwAgent extends LitMvvmElement {
       </div>
 
       <dialog id="dlg-add-event-sink" class="${dialogClass}">
-        <form name="add-event-sink" @submit=${this._okAddEventSink} @reset=${this._cancelAddEventSink}>
+        <form name="add-event-sink" @submit=${(e) => this._okAddEventSink(e, activeAgentState)} @reset=${this._cancelAddEventSink}>
           <label for="sinktype-ddown">Name</label>
           <input id="sink-name" name="name" type="text" required />
           <label for="sinktype-ddown">Sink Type</label>

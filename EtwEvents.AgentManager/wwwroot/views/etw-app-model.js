@@ -62,9 +62,9 @@ function _enhanceAgentState(agentState, eventSinkInfos) {
   }
 
   if (!(agentState.processingModel instanceof ProcessingModel)) {
-    agentState.processingModel = new ProcessingModel(agentState.processingState);
+    agentState.processingModel = new ProcessingModel(agentState.processingState.filterSource);
   } else {
-    agentState.processingModel.refresh(agentState.processingState);
+    agentState.processingModel.refresh(agentState.processingState.filterSource);
   }
 
   for (const sinkStateEntry of Object.entries(agentState.eventSinks)) {
@@ -181,7 +181,7 @@ function _resetProviders(agentEntry) {
   agentEntry.state.enabledProviders = utils.clone(agentEntry.current?.enabledProviders || []);
 }
 
-function _resetProcessing(agentEntry) {
+function _resetProcessingOptions(agentEntry) {
   agentEntry.state.processingState = agentEntry.current?.processingState || {};
   const filterEditModel = agentEntry.state.processingModel.filter;
   filterEditModel.reset();
@@ -291,45 +291,43 @@ class EtwAppModel {
     return _enhanceAgentState(activeEntry.state, this.eventSinkInfos);
   }
 
-  setAgentState(updateObject) {
-    const activeEntry = this.getActiveEntry();
-    if (!activeEntry) return;
+  setAgentState(entry, updateObject) {
+    if (!entry) return;
 
     // it seems utils.setTargetProperties(activeEntry.state, updateObject) does not necessarily trigger a re-render
-    utils.setTargetProperties(activeEntry.state, updateObject);
+    utils.setTargetProperties(entry.state, updateObject);
 
     // special case - need to update the filter foreground
-    const filterEditModel = activeEntry.state.processingModel.filter;
-    filterEditModel.refreshSourceLines(updateObject.processingState.filterSource);
+    const filterEditModel = entry.state.processingModel.filter;
+    if (updateObject.processingState) {
+      filterEditModel.refreshSourceLines(updateObject.processingState.filterSource);
+    }
     filterEditModel.diagnostics = [];
 
     // force re-render
     this.__changeCount++;
   }
 
-  startEvents() {
-    const agentState = this.activeAgentState;
-    if (!agentState) return;
-    this.fetcher.postJson('Start', { agentId: agentState.id })
+  startEvents(currentState) {
+    if (!currentState) return;
+    this.fetcher.postJson('Start', { agentId: currentState.id })
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
-  stopEvents() {
-    const agentState = this.activeAgentState;
-    if (!agentState) return;
-    this.fetcher.postJson('Stop', { agentId: agentState.id })
+  stopEvents(currentState) {
+    if (!currentState) return;
+    this.fetcher.postJson('Stop', { agentId: currentState.id })
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
-  getEtwEvents() {
-    const agentState = this.activeAgentState;
-    if (!agentState) return;
+  getEtwEvents(currentState) {
+    if (!currentState) return;
 
     this.stopEtwEvents();
-    const evs = new EventSource(`Manager/GetEtwEvents?agentId=${agentState.id}`);
+    const evs = new EventSource(`Manager/GetEtwEvents?agentId=${currentState.id}`);
     this.etwEventSource = evs;
 
-    agentState.liveEvents = new RingBuffer(2048);
+    currentState.liveEvents = new RingBuffer(2048);
     let seqNo = 0;
     evs.onmessage = evt => {
       try {
@@ -338,7 +336,7 @@ class EtwAppModel {
           // eslint-disable-next-line no-plusplus
           etwBatch[indx]._seqNo = seqNo++;
         }
-        agentState.liveEvents.addItems(etwBatch);
+        currentState.liveEvents.addItems(etwBatch);
       } catch (err) {
         console.error(err);
       }
@@ -356,9 +354,10 @@ class EtwAppModel {
     }
   }
 
-  getState() {
-    const agentState = this.activeAgentState;
-    if (!agentState) return;
+  refreshState(agentState) {
+    if (!agentState) {
+      return;
+    }
     this.fetcher.postJson('GetState', { agentId: agentState.id })
       .catch(error => window.etwApp.defaultHandleError(error));
   }
@@ -377,10 +376,7 @@ class EtwAppModel {
 
   //#region Providers
 
-  applyProviders() {
-    const agentState = this.activeAgentState;
-    if (!agentState) return;
-
+  getEnabledProvidersToApply(agentState) {
     // create "unenhanced" provider settings
     const enabledProviders = [];
     for (const enhancedProvider of agentState.enabledProviders) {
@@ -388,43 +384,49 @@ class EtwAppModel {
       utils.setTargetProperties(unenhanced, enhancedProvider);
       enabledProviders.push(unenhanced);
     }
+    return enabledProviders;
+  }
 
-    // argument must match protobuf message ProviderSettingsList
-    this.fetcher.postJson('UpdateProviders', { agentId: agentState.id }, { providerSettings: enabledProviders })
+  applyProviders(agentState) {
+    if (!agentState) {
+      return;
+    }
+    const opts = new AgentRawOptions();
+    opts.enabledProviders = this.getEnabledProvidersToApply(agentState);
+    this.fetcher.postJson('ApplyAgentOptions', { agentId: agentState.id }, opts)
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
-  resetProviders() {
-    const activeEntry = this.getActiveEntry();
-    if (!activeEntry) return;
-    _resetProviders(activeEntry);
+  resetProviders(entry) {
+    if (!entry) {
+      return;
+    }
+    _resetProviders(entry);
   }
 
-  get providersModified() {
-    const activeEntry = this.getActiveEntry();
-    if (!activeEntry) return false;
-    return !utils.targetEquals(activeEntry.current?.enabledProviders, activeEntry.state.enabledProviders);
+  getProvidersModified(entry) {
+    if (!entry) {
+      return false;
+    }
+    return !utils.targetEquals(entry.current?.enabledProviders, entry.state.enabledProviders);
   }
 
   //#endregion
 
   //#region Processing
 
-  clearFilter() {
-    const agentState = this.activeAgentState;
-    if (!agentState) return;
+  clearFilter(agentState) {
+    if (!agentState) {
+      return;
+    }
     agentState.processingModel.filter.clearDynamicParts();
   }
 
-  testFilter() {
-    const agentState = this.activeAgentState;
-    if (!agentState) return;
-
-    let dynamicParts = agentState.processingModel.getDynamicPartBodies();
-    // if the dynamic bodies add up to an empty string, then we clear the filter
-    const dynamicAggregate = dynamicParts.reduce((p, c) => ''.concat(p, c), '').trim();
-    if (!dynamicAggregate) dynamicParts = [];
-
+  testFilter(agentState) {
+    if (!agentState) {
+      return;
+    }
+    let dynamicParts = agentState.processingModel.getDynamicParts();
     // argument must match protobuf message TestFilterRequest
     this.fetcher.postJson('TestFilter', { agentId: agentState.id }, { dynamicParts })
       // result matches protobuf message BuildFilterResult
@@ -436,39 +438,40 @@ class EtwAppModel {
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
-  applyProcessing() {
-    const agentState = this.activeAgentState;
-    if (!agentState) return;
-
-    const processingOptions = agentState.processingModel.toProcessingOptions();
-
-    // argument must match protobuf message TestFilterRequest
-    this.fetcher.postJson('ApplyProcessingOptions', { agentId: agentState.id }, processingOptions)
-      // result matches protobuf message BuildFilterResult
+  applyProcessingOptions(agentState) {
+    if (!agentState) {
+      return;
+    }
+    const opts = new AgentRawOptions();
+    opts.dynamicFilterParts = agentState.processingModel.getDynamicParts();
+    this.fetcher.postJson('ApplyAgentOptions', { agentId: agentState.id }, opts)
       .then(result => {
+        // filterResult matches protobuf message BuildFilterResult
+        const filterResult = result.filterResult;
         const filterEditModel = agentState.processingModel.filter;
-        filterEditModel.refreshSourceLines(result.filterSource);
-        filterEditModel.diagnostics = result.diagnostics;
-        if (result.filterSource && (!result.diagnostics || !result.diagnostics.length)) {
-          agentState.processingState.filterSource = result.filterSource;
+        filterEditModel.refreshSourceLines(filterResult.filterSource);
+        filterEditModel.diagnostics = filterResult.diagnostics;
+        if (filterResult.filterSource && (!filterResult.diagnostics || !filterResult.diagnostics.length)) {
+          agentState.processingState.filterSource = filterResult.filterSource;
         }
       })
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
-  resetProcessing() {
-    const activeEntry = this.getActiveEntry();
-    if (!activeEntry) return;
-    _resetProcessing(activeEntry);
+  resetProcessingOptions(entry) {
+    if (!entry) {
+      return;
+    }
+    _resetProcessingOptions(entry);
   }
 
-  get processingModified() {
-    const activeEntry = this.getActiveEntry();
-    if (!activeEntry) return false;
-
-    const currState = activeEntry.current?.processingState;
-    const currParts = (new ProcessingModel(currState)).getDynamicPartBodies();
-    const stateParts = this.activeAgentState.processingModel.getDynamicPartBodies();
+  getProcessingModified(entry) {
+    if (!entry) {
+      return false;
+    }
+    const currState = entry.current?.processingState;
+    const currParts = (new ProcessingModel(currState?.filterSource)).getDynamicPartBodies();
+    const stateParts = entry.state.processingModel.getDynamicPartBodies();
     return !utils.targetEquals(currParts, stateParts);
   }
 

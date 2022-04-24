@@ -191,10 +191,10 @@ class EtwApp extends LitMvvmElement {
     return this.model.activeAgentTab === tabId ? 'active' : '';
   }
 
-  _toggleEtwEvents(agentState) {
-    if (agentState && agentState.isRunning) {
-      if (this.model.etwEventSource) this.model.stopEtwEvents();
-      else this.model.getEtwEvents();
+  _toggleEtwEvents(currentState) {
+    if (currentState && currentState.isRunning) {
+      if (this.model.etwEventSource) this.model.stopEtwEvents(currentState);
+      else this.model.getEtwEvents(currentState);
     }
   }
 
@@ -243,17 +243,17 @@ class EtwApp extends LitMvvmElement {
     fileDlg.click();
   }
 
-  _importAgentConfig(e, state) {
+  _importAgentConfig(e, entry) {
     const selectedFile = e.currentTarget.files[0];
     if (!selectedFile) return;
 
     selectedFile.text().then(txt => {
       const importObject = JSON.parse(txt);
       // we don't want to change agent-identifying properties
-      importObject.id = state.id;
-      importObject.site = state.site;
-      importObject.host = state.host;
-      this.model.setAgentState(importObject);
+      importObject.id = entry.state.id;
+      importObject.site = entry.state.site;
+      importObject.host = entry.state.host;
+      this.model.setAgentState(entry, importObject);
     });
   }
 
@@ -486,7 +486,7 @@ class EtwApp extends LitMvvmElement {
                   <a href="#">Configuration</a>
 
                   <input type="file"
-                    @change=${(e) => this._importAgentConfig(e, activeAgentState)}
+                    @change=${(e) => this._importAgentConfig(e, activeEntry)}
                     hidden />
                   <button class="ml-4 text-gray-300" @click=${(e) => this._importAgentConfigDialog(e)} title="Import Configuration">
                     <i class="fas fa-file-import"></i>
@@ -495,10 +495,10 @@ class EtwApp extends LitMvvmElement {
                     <i class="fas fa-file-export"></i>
                   </button>
 
-                  <button class="ml-4" @click=${() => this.model.applyAllConfiguration(activeAgentState)} title="Apply All">
+                  <button class="ml-4" @click=${() => this.model.applyAllOptions(activeAgentState)} title="Apply All">
                     <i class="fas fa-lg fa-check text-green-500"></i>
                   </button>
-                  <button class="ml-2" @click=${() => this.model.resetAllConfiguration(activeEntry?.current)} title="Reset All">
+                  <button class="ml-2" @click=${() => this.model.resetAllOptions(activeEntry)} title="Reset All">
                     <i class="fas fa-lg fa-times text-red-500"></i>
                   </button>
                 </div>

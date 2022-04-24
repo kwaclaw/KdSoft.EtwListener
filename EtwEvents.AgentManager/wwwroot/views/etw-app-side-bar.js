@@ -35,16 +35,17 @@ class EtwAppSideBar extends LitMvvmElement {
     else host.setAttribute('aria-expanded', 'true');
   }
 
-  _startEvents(agentState) {
-    if (agentState && !agentState?.isRunning) this.model.startEvents();
+  _startEvents(currentState) {
+    if (currentState && !currentState?.isRunning) this.model.startEvents(currentState);
   }
 
-  _stopEvents(agentState) {
-    if (agentState && agentState.isRunning) this.model.stopEvents();
+  _stopEvents(currentState) {
+    if (currentState && currentState.isRunning) this.model.stopEvents(currentState);
   }
 
-  _refreshStates() {
-    this.model.getState();
+  _refreshState() {
+    const activeAgentState = this.model.activeAgentState;
+    this.model.refreshState(activeAgentState);
   }
 
   //#region overrides
@@ -227,7 +228,7 @@ class EtwAppSideBar extends LitMvvmElement {
             <a class="text-white no-underline hover:text-white hover:no-underline" href="#">
               <span class="text-2xl pl-2 brand"><i class="brand"></i>KDS</span>
             </a>
-            <button class="text-blue-500 ml-auto fas fa-redo-alt" @click=${() => this._refreshStates()}></button>
+            <button class="text-blue-500 ml-auto fas fa-redo-alt" @click=${() => this._refreshState()}></button>
           <!-- </div> -->
         </div>
 
