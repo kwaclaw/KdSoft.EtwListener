@@ -319,14 +319,14 @@ class EtwAppModel {
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
-  getEtwEvents(currentState) {
-    if (!currentState) return;
+  getEtwEvents(agentState) {
+    if (!agentState) return;
 
     this.stopEtwEvents();
-    const evs = new EventSource(`Manager/GetEtwEvents?agentId=${currentState.id}`);
+    const evs = new EventSource(`Manager/GetEtwEvents?agentId=${agentState.id}`);
     this.etwEventSource = evs;
 
-    currentState.liveEvents = new RingBuffer(2048);
+    agentState.liveEvents = new RingBuffer(2048);
     let seqNo = 0;
     evs.onmessage = evt => {
       try {
@@ -335,7 +335,7 @@ class EtwAppModel {
           // eslint-disable-next-line no-plusplus
           etwBatch[indx]._seqNo = seqNo++;
         }
-        currentState.liveEvents.addItems(etwBatch);
+        agentState.liveEvents.addItems(etwBatch);
       } catch (err) {
         console.error(err);
       }

@@ -16,10 +16,10 @@
     "po2json": "^0.4.5"
   },
   "devDependencies": {
-    "autoprefixer": "10.4.4",
+    "autoprefixer": "10.4.5",
     "@tailwindcss/forms": "^0.5.0",
     "copy-node-modules": "^1.1.1",
-    "eslint": "^8.13.0",
+    "eslint": "^8.14.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.26.0",
     "move-cli": "^2.0.0",
