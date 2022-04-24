@@ -9,8 +9,6 @@ import './etw-app-side-bar.js';
 import './etw-agent.js';
 import './live-view.js';
 import * as utils from '../js/utils.js';
-import AgentState from '../js/agentState.js';
-import EventProvider from '../js/eventProvider.js';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
@@ -199,28 +197,10 @@ class EtwApp extends LitMvvmElement {
   }
 
   _exportAgentConfig(agentState) {
-    if (!agentState) return;
-
-    const exportObject = new AgentState();
-    utils.setTargetProperties(exportObject, agentState);
-
-    // fix up enabled providers to exclude extra properties
-    const enabledProviders = [];
-    for (const provider of agentState.enabledProviders) {
-      const exportProvider = new EventProvider();
-      utils.setTargetProperties(exportProvider, provider);
-      enabledProviders.push(exportProvider);
+    if (!agentState) {
+      return;
     }
-    exportObject.enabledProviders = enabledProviders;
-
-    for (const entry of Object.entries(agentState.eventSinks)) {
-      const sinkState = entry[1];
-      delete sinkState.error;
-      delete sinkState.configViewUrl;
-      delete sinkState.configModelUrl;
-      delete sinkState.expanded;
-    }
-
+    const exportObject = this.model.getAgentOptions(agentState);
     const exportString = JSON.stringify(exportObject, null, 2);
     const exportURL = `data:text/plain,${exportString}`;
 
@@ -228,7 +208,7 @@ class EtwApp extends LitMvvmElement {
     try {
       a.style.display = 'none';
       a.href = exportURL;
-      a.download = `${exportObject.id}.json`;
+      a.download = `${agentState.id}.json`;
       document.body.appendChild(a);
       a.click();
     } finally {
@@ -249,11 +229,7 @@ class EtwApp extends LitMvvmElement {
 
     selectedFile.text().then(txt => {
       const importObject = JSON.parse(txt);
-      // we don't want to change agent-identifying properties
-      importObject.id = entry.state.id;
-      importObject.site = entry.state.site;
-      importObject.host = entry.state.host;
-      this.model.setAgentState(entry, importObject);
+      this.model.setAgentOptions(entry.state, importObject);
     });
   }
 

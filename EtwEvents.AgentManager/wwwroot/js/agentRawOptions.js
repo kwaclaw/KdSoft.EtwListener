@@ -1,5 +1,4 @@
 ﻿
-// Should match the protobuf message AgentConfig
 class AgentRawOptions {
   constructor(enabledProviders, dynamicFilterParts, eventSinkProfiles, liveViewOptions) {
     this.enabledProviders = enabledProviders || null;

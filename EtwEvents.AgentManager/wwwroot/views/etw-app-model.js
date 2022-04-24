@@ -6,7 +6,6 @@ import EventSinkProfile from '../js/eventSinkProfile.js';
 import RingBuffer from '../js/ringBuffer.js';
 import * as utils from '../js/utils.js';
 import FetchHelper from '../js/fetchHelper.js';
-import AgentState from '../js/agentState.js';
 import AgentRawOptions from '../js/agentRawOptions.js';
 import LiveViewOptions from '../js/liveViewOptions.js';
 import ProcessingModel from './processing-model.js';
@@ -376,7 +375,7 @@ class EtwAppModel {
 
   //#region Providers
 
-  getEnabledProvidersToApply(agentState) {
+  getEnabledProviders(agentState) {
     // create "unenhanced" provider settings
     const enabledProviders = [];
     for (const enhancedProvider of agentState.enabledProviders) {
@@ -392,7 +391,7 @@ class EtwAppModel {
       return;
     }
     const opts = new AgentRawOptions();
-    opts.enabledProviders = this.getEnabledProvidersToApply(agentState);
+    opts.enabledProviders = this.getEnabledProviders(agentState);
     this.fetcher.postJson('ApplyAgentOptions', { agentId: agentState.id }, opts)
       .catch(error => window.etwApp.defaultHandleError(error));
   }
@@ -564,16 +563,40 @@ class EtwAppModel {
 
   //#endregion
 
+  getAgentOptions(agentState) {
+    const result = new AgentRawOptions();
+    result.enabledProviders = this.getEnabledProviders(agentState);
+    result.dynamicFilterParts = agentState.processingModel.getDynamicParts();
+    result.eventSinkProfiles = Object.entries(agentState.eventSinks).map(es => es[1].profile);
+    result.liveViewOptions = agentState.liveViewConfigModel.toOptions();
+    return result;
+  }
+
+  setAgentOptions(agentState, options) {
+    agentState.enabledProviders = options.enabledProviders;
+    agentState.processingModel.setDynamicParts(options.dynamicFilterParts);
+    const eventSinkStates = [];
+    for (const profile of options.eventSinkProfiles) {
+      const eventSinkState = { profile, status: undefined };
+      const sinkInfo = this.eventSinkInfos.find(
+        si => si.sinkType == profile.sinkType && si.version == profile.version
+      );
+      if (sinkInfo) {
+        eventSinkState.configViewUrl = sinkInfo.configViewUrl;
+        eventSinkState.configModelUrl = sinkInfo.configModelUrl;
+      }
+      eventSinkStates.push(eventSinkState);
+    }
+    agentState.eventSinks = eventSinkStates;
+    agentState.liveViewOptions = options.liveViewOptions;
+  }
+
   applyAllOptions(agentState) {
     if (!agentState) {
       return;
     }
-    const opts = new AgentRawOptions();
-    opts.enabledProviders = this.getEnabledProvidersToApply(agentState);
-    opts.dynamicFilterParts = agentState.processingModel.getDynamicParts();
-    opts.eventSinkProfiles = Object.entries(agentState.eventSinks).map(es => es[1].profile);
-    opts.liveViewOptions = agentState.liveViewConfigModel.toOptions();
-    this.fetcher.postJson('ApplyAgentOptions', { agentId: agentState.id }, opts)
+    const options = this.getAgentOptions(agentState);
+    this.fetcher.postJson('ApplyAgentOptions', { agentId: agentState.id }, options)
       .then(result => {
         // filterResult matches protobuf message BuildFilterResult
         const filterResult = result.filterResult;
