@@ -114,62 +114,11 @@ namespace KdSoft.EtwEvents.PushAgent
                         return;
                     _emptyFilterSource = SessionWorker.BuildFilterSource(emptyFilter);
                     break;
-                case Constants.UpdateProvidersEvent:
-                    // WithDiscardUnknownFields does currently not work, so we should fix this at source
-                    var providerSettingsList = ProviderSettingsList.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
-                    var providerSettings = providerSettingsList.ProviderSettings;
-                    if (providerSettings != null) {
-                        if (worker == null) {
-                            _sessionConfig.SaveProviderSettings(providerSettings);
-                        }
-                        else {
-                            worker.UpdateProviders(providerSettings);
-                        }
-                        await SendStateUpdate().ConfigureAwait(false);
-                    }
-                    break;
-                case Constants.ApplyProcessingOptionsEvent:
-                    // WithDiscardUnknownFields does currently not work, so we should fix this at source
-                    var processingOptions = string.IsNullOrEmpty(sse.Data) ? null : ProcessingOptions.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
-                    if (processingOptions == null)
-                        return;
-
-                    filterResult = new BuildFilterResult();
-                    // if we are not running, lets treat this like a filter test with saving
-                    if (worker == null) {
-                        filterResult = SessionWorker.TestFilter(processingOptions.Filter ?? new Filter());
-                        var processingState = new ProcessingState {
-                            FilterSource = filterResult.FilterSource,
-                        };
-                        bool saveFilterSource = filterResult.Diagnostics.Count == 0; // also true when clearing filter
-                        _sessionConfig.SaveProcessingState(processingState, saveFilterSource);
-                    }
-                    else {
-                        filterResult = worker.ApplyProcessingOptions(processingOptions);
-                    }
-
-                    await PostProtoMessage($"Agent/ApplyFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
-                    await SendStateUpdate().ConfigureAwait(false);
-                    break;
                 case Constants.TestFilterEvent:
                     // WithDiscardUnknownFields does currently not work, so we should fix this at source
                     var filter = string.IsNullOrEmpty(sse.Data) ? new Filter() : Filter.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
                     filterResult = SessionWorker.TestFilter(filter);
                     await PostProtoMessage($"Agent/TestFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
-                    break;
-                case Constants.UpdateEventSinksEvent:
-                    var sinkProfilesHolder = string.IsNullOrEmpty(sse.Data)
-                        ? null
-                        : EventSinkProfiles.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
-                    if (sinkProfilesHolder == null || sinkProfilesHolder.Profiles == null)
-                        return;
-                    if (worker == null) {
-                        _sessionConfig.SaveSinkProfiles(sinkProfilesHolder.Profiles);
-                    }
-                    else {
-                        await worker.UpdateEventChannels(sinkProfilesHolder.Profiles).ConfigureAwait(false);
-                    }
-                    await SendStateUpdate().ConfigureAwait(false);
                     break;
                 case Constants.CloseEventSinkEvent:
                     var sinkName = sse.Data;
@@ -203,13 +152,57 @@ namespace KdSoft.EtwEvents.PushAgent
                     }
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
-                case Constants.UpdateLiveViewOptionsEvent:
-                    // WithDiscardUnknownFields does currently not work, so we should fix this at source
-                    var liveViewOptions = LiveViewOptions.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
+                case Constants.ApplyAgentOptionsEvent:
+                    var agentOptions = string.IsNullOrEmpty(sse.Data) ? null : AgentOptions.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
+                    if (agentOptions == null)
+                        return;
+
+                    var applyResult = new ApplyAgentOptionsResult();
+
+                    if (agentOptions.HasEnabledProviders) {
+                        var providerSettings = agentOptions.EnabledProviders;
+                        if (worker == null) {
+                            _sessionConfig.SaveProviderSettings(providerSettings);
+                        }
+                        else {
+                            worker.UpdateProviders(providerSettings);
+                        }
+                    }
+
+                    var processingOptions = agentOptions.ProcessingOptions;
+                    if (processingOptions != null) {
+                        // if we are not running, lets treat this like a filter test with saving
+                        if (worker == null) {
+                            filterResult = SessionWorker.TestFilter(processingOptions.Filter ?? new Filter());
+                            var processingState = new ProcessingState {
+                                FilterSource = filterResult.FilterSource,
+                            };
+                            bool saveFilterSource = filterResult.Diagnostics.Count == 0; // also true when clearing filter
+                            _sessionConfig.SaveProcessingState(processingState, saveFilterSource);
+                        }
+                        else {
+                            filterResult = worker.ApplyProcessingOptions(processingOptions);
+                        }
+                        applyResult.FilterResult = filterResult;
+                    }
+
+                    if (agentOptions.HasEventSinkProfiles) {
+                        var eventSinkProfiles = agentOptions.EventSinkProfiles;
+                        if (worker == null) {
+                            _sessionConfig.SaveSinkProfiles(eventSinkProfiles);
+                        }
+                        else {
+                            await worker.UpdateEventChannels(eventSinkProfiles).ConfigureAwait(false);
+                        }
+                    }
+
+                    var liveViewOptions = agentOptions.LiveViewOptions;
                     if (liveViewOptions != null) {
                         _sessionConfig.SaveLiveViewOptions(liveViewOptions);
-                        await SendStateUpdate().ConfigureAwait(false);
                     }
+
+                    await PostProtoMessage($"Agent/ApplyAgentOptionsResult?eventId={sse.Id}", applyResult).ConfigureAwait(false);
+                    await SendStateUpdate().ConfigureAwait(false);
                     break;
                 default:
                     break;

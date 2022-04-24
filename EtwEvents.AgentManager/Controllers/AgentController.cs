@@ -126,8 +126,9 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         [HttpPost]
-        public IActionResult ApplyFilterResult(string eventId, [FromBody] JsonElement buildFilterResult) {
-            return CompleteResponse(eventId, buildFilterResult.GetRawText() ?? "{}");
+        public IActionResult ApplyAgentOptionsResult(string eventId, [FromBody] JsonElement applyResult) {
+            // passing the JSON right through
+            return CompleteResponse(eventId, applyResult.GetRawText() ?? "{}");
         }
 
         #endregion

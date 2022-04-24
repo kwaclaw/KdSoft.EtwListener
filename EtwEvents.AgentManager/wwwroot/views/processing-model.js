@@ -1,16 +1,15 @@
 ﻿import FilterEditModel from './filter-edit-model.js';
-import ProcessingOptions from '../js/processingOptions.js';
 
 class ProcessingModel {
-  constructor(processingState) {
-    this.refresh(processingState);
+  constructor(filterSource) {
+    this.refresh(filterSource);
   }
 
-  refresh(processingState) {
+  refresh(filterSource) {
     if (this.filter) {
-      this.filter.refresh(processingState.filterSource);
+      this.filter.refresh(filterSource);
     } else {
-      this.filter = new FilterEditModel(processingState.filterSource);
+      this.filter = new FilterEditModel(filterSource);
     }
   }
 
@@ -27,14 +26,11 @@ class ProcessingModel {
     return dynamicParts;
   }
 
-  toProcessingOptions() {
-    const result = new ProcessingOptions();
-
-    let dynamicParts = this.getDynamicPartBodies();
+  getDynamicParts() {
+    let result = this.getDynamicPartBodies();
     // if the dynamic bodies add up to an empty string, then we clear the filter
-    const dynamicAggregate = dynamicParts.reduce((p, c) => ''.concat(p, c), '').trim();
-    if (!dynamicAggregate) dynamicParts = [];
-    result.dynamicParts = dynamicParts;
+    const dynamicAggregate = result.reduce((p, c) => ''.concat(p, c), '').trim();
+    if (!dynamicAggregate) result = [];
 
     return result;
   }

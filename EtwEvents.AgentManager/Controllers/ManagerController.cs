@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Net;
@@ -8,7 +7,6 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Protobuf;
@@ -184,12 +182,6 @@ namespace KdSoft.EtwEvents.AgentManager
             return PostAgent(agentId, Constants.GetStateEvent, "");
         }
 
-        [HttpPost]
-        public IActionResult UpdateProviders(string agentId, [FromBody] JsonElement enabledProviders) {
-            // we are passing the JSON simply through, enabledProviders should match protobuf message ProviderSettingsList
-            return PostAgent(agentId, Constants.UpdateProvidersEvent, enabledProviders.GetRawText() ?? "{}");
-        }
-
         /// <summary>
         /// Dynamic filter parts passed from SPA client to agent.
         /// </summary>
@@ -212,73 +204,66 @@ namespace KdSoft.EtwEvents.AgentManager
             return CallAgent(agentId, Constants.TestFilterEvent, json, TimeSpan.FromSeconds(15));
         }
 
-        /// <summary>
-        /// Processing options passed from SPA client to agent.
-        /// </summary>
-        /// <param name="agentId">Agent Id</param>
-        /// <param name="optionsObj">JSON object like:
-        /// {
-        ///   "batchSize": 100,
-        ///   "maxWriteDelayMSecs": 400,
-        ///   "dynamicParts": [
-        ///     "int num = 0;"
-        ///     "return num > 0;"
-        ///   ]
-        /// } 
-        /// </param>
-        [HttpPost]
-        public Task<IActionResult> ApplyProcessingOptions(string agentId, [FromBody] JsonElement optionsObj) {
-            var dynamicParts = optionsObj.GetProperty("dynamicParts").EnumerateArray().Select(dp => dp.GetString()).ToImmutableArray();
-            var filter = dynamicParts.Length == 0
-                ? new EtwLogging.Filter()  // we are clearing the filter
-                : Filter.MergeFilterTemplate(dynamicParts); // WE are supplying the filter template
-            var processingOptions = new ProcessingOptions {
-                Filter = filter
-            };
-            var json = _jsonFormatter.Format(processingOptions);
-            return CallAgent(agentId, Constants.ApplyProcessingOptionsEvent, json, TimeSpan.FromSeconds(15));
-        }
-
-        [HttpPost]
-        public IActionResult UpdateEventSinks(string agentId, [FromBody] JsonArray eventSinkProfiles) {
+        AgentOptions BuildAgentOptions(JsonElement rawOptions) {
             var jsonSerializerOptions = _jsonOptions.Value.JsonSerializerOptions;
+            var result = new AgentOptions();
 
-            var profilesHolder = new List<JsonNode>();
-            // The credentials and options properties need to be converted back to JSON
-            foreach (var eventSinkProfile in eventSinkProfiles) {
-                if (eventSinkProfile == null)
-                    continue;
-
-                var opts = eventSinkProfile["options"];
-                var optsString = opts?.ToJsonString(jsonSerializerOptions);
-                eventSinkProfile["options"] = optsString;
-
-                var creds = eventSinkProfile["credentials"];
-                var credsString = creds?.ToJsonString();
-                eventSinkProfile["credentials"] = credsString;
-
-                profilesHolder.Add(eventSinkProfile);
+            var enabledProviders = rawOptions.GetProperty("enabledProviders");
+            if (enabledProviders.ValueKind == JsonValueKind.Array) {
+                result.HasEnabledProviders = true;
+                foreach (var enabledProvider in enabledProviders.EnumerateArray()) {
+                    if (enabledProvider.ValueKind != JsonValueKind.Object)
+                        continue;
+                    var provider = ProviderSetting.Parser.WithDiscardUnknownFields(true).ParseJson(enabledProvider.GetRawText());
+                    result.EnabledProviders.Add(provider);
+                }
             }
 
-            // build EventSinkProfiles message (protobuf)
-            var profilesMessage = new JsonObject();
-            var profiles = new JsonObject();
-            profilesMessage["profiles"] = profiles;
-
-            // a JsonArray owns its nodes, so we must first remove them before we can add them to the JsonObject
-            eventSinkProfiles.Clear();
-            foreach (var eventSinkProfile in profilesHolder) {
-                profiles[(string?)eventSinkProfile["name"] ?? "unknown"] = eventSinkProfile;
+            var dynamicFilterParts = rawOptions.GetProperty("dynamicFilterParts");
+            if (dynamicFilterParts.ValueKind == JsonValueKind.Array) {
+                var dynamicParts = dynamicFilterParts.EnumerateArray().Select(dp => dp.GetString()).ToImmutableArray();
+                var filter = dynamicParts.Length == 0
+                    ? new EtwLogging.Filter()  // we are clearing the filter
+                    : Filter.MergeFilterTemplate(dynamicParts); // WE are supplying the filter template
+                var processingOptions = new ProcessingOptions {
+                    Filter = filter
+                };
+                result.ProcessingOptions = processingOptions;
             }
 
-            var profilesMessageJson = profilesMessage.ToJsonString(jsonSerializerOptions);
-            return PostAgent(agentId, Constants.UpdateEventSinksEvent, profilesMessageJson ?? "");
+            var eventSinkProfiles = rawOptions.GetProperty("eventSinkProfiles");
+            if (eventSinkProfiles.ValueKind == JsonValueKind.Array) {
+                result.HasEventSinkProfiles = true;
+                foreach (var eventSinkProfile in eventSinkProfiles.EnumerateArray()) {
+                    if (eventSinkProfile.ValueKind != JsonValueKind.Object)
+                        continue;
+                    var profile = new EventSinkProfile();
+                    profile.Name = eventSinkProfile.GetProperty("name").GetString();
+                    profile.SinkType = eventSinkProfile.GetProperty("sinkType").GetString();
+                    profile.Version = eventSinkProfile.GetProperty("version").GetString();
+                    profile.BatchSize = eventSinkProfile.GetProperty("batchSize").GetUInt32();
+                    profile.MaxWriteDelayMSecs = eventSinkProfile.GetProperty("maxWriteDelayMSecs").GetUInt32();
+                    profile.PersistentChannel = eventSinkProfile.GetProperty("persistentChannel").GetBoolean();
+                    profile.Options = eventSinkProfile.GetProperty("options").ToString();
+                    profile.Credentials = eventSinkProfile.GetProperty("credentials").ToString();
+                    result.EventSinkProfiles.Add(profile.Name ?? "unknown", profile);
+                }
+            }
+
+            var liveViewOptions = rawOptions.GetProperty("liveViewOptions");
+            if (liveViewOptions.ValueKind == JsonValueKind.Object) {
+                var lvOptions = LiveViewOptions.Parser.WithDiscardUnknownFields(true).ParseJson(liveViewOptions.GetRawText());
+                result.LiveViewOptions = lvOptions;
+            }
+
+            return result;
         }
 
         [HttpPost]
-        public IActionResult UpdateLiveViewOptions(string agentId, [FromBody] JsonElement liveViewOptions) {
-            // we are passing the JSON simply through, liveViewOptions should match protobuf message LiveViewOptions
-            return PostAgent(agentId, Constants.UpdateLiveViewOptionsEvent, liveViewOptions.GetRawText() ?? "{}");
+        public Task<IActionResult> ApplyAgentOptions(string agentId, [FromBody] JsonElement rawOptions) {
+            var agentOptions = BuildAgentOptions(rawOptions);
+            var agentOptionsJson = _jsonFormatter.Format(agentOptions);
+            return CallAgent(agentId, Constants.ApplyAgentOptionsEvent, agentOptionsJson, TimeSpan.FromSeconds(15));
         }
 
         #endregion

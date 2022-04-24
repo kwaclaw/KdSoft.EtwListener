@@ -10,15 +10,12 @@
         public const string StopEvent = "Stop";
         public const string GetStateEvent = "GetState";
         public const string SetEmptyFilterEvent = "SetEmptyFilter";
-        public const string UpdateProvidersEvent = "UpdateProfiders";
-        public const string ApplyProcessingOptionsEvent = "ApplyProcessingOptions";
+        public const string ApplyAgentOptionsEvent = "ApplyAgentOptions";
         public const string TestFilterEvent = "TestFilter";
-        public const string UpdateEventSinksEvent = "UpdateEventSinks";
         public const string CloseEventSinkEvent = "CloseEventSink";
         public const string LiveViewSinkName = "##LiveViewSink";
         public const string StartLiveViewSinkEvent = "StartLiveViewSink";
         public const string StopLiveViewSinkEvent = "StopLiveViewSink";
-        public const string UpdateLiveViewOptionsEvent = "UpdateLiveViewOptions";
 
         public const string X500DistNameClaim = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/x500distinguishedname";
     }

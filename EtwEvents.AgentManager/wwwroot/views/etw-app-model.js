@@ -7,6 +7,7 @@ import RingBuffer from '../js/ringBuffer.js';
 import * as utils from '../js/utils.js';
 import FetchHelper from '../js/fetchHelper.js';
 import AgentState from '../js/agentState.js';
+import AgentRawOptions from '../js/agentRawOptions.js';
 import LiveViewOptions from '../js/liveViewOptions.js';
 import ProcessingModel from './processing-model.js';
 import LiveViewConfigModel from './live-view-config-model.js';
@@ -475,34 +476,36 @@ class EtwAppModel {
 
   //#region EventSink
 
-  updateEventSinks() {
-    const agentState = this.activeAgentState;
-    if (!agentState) return;
-
-    const sinkProfiles = Object.entries(agentState.eventSinks).map(es => es[1].profile);
-    this.fetcher.postJson('UpdateEventSinks', { agentId: agentState.id }, sinkProfiles)
+  updateEventSinks(agentState) {
+    if (!agentState) {
+      return;
+    }
+    const opts = new AgentRawOptions();
+    opts.eventSinkProfiles = Object.entries(agentState.eventSinks).map(es => es[1].profile);
+    this.fetcher.postJson('ApplyAgentOptions', { agentId: agentState.id }, opts)
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
-  resetEventSinks() {
-    const activeEntry = this.getActiveEntry();
-    if (!activeEntry) return;
-    _resetEventSinks(activeEntry);
+  resetEventSinks(entry) {
+    if (!entry) {
+      return;
+    }
+    _resetEventSinks(entry);
   }
 
-  get eventSinksModified() {
-    const activeEntry = this.getActiveEntry();
-    if (!activeEntry) return false;
-
-    const currProfiles = Object.entries(activeEntry.current?.eventSinks).map(es => es[1].profile);
-    const stateProfiles = Object.entries(this.activeAgentState.eventSinks).map(es => es[1].profile);
+  getEventSinksModified(entry) {
+    if (!entry) {
+      return false;
+    }
+    const currProfiles = Object.entries(entry.current?.eventSinks).map(es => es[1].profile);
+    const stateProfiles = Object.entries(entry.state.eventSinks).map(es => es[1].profile);
     return !utils.targetEquals(currProfiles, stateProfiles);
   }
 
-  addEventSink(name, sinkInfo) {
-    const agentState = this.activeAgentState;
-    if (!agentState) return;
-
+  addEventSink(agentState, name, sinkInfo) {
+    if (!agentState) {
+      return;
+    }
     const profile = new EventSinkProfile(name, sinkInfo.sinkType, sinkInfo.version);
     agentState.eventSinks[name] = {
       profile,
@@ -512,10 +515,8 @@ class EtwAppModel {
     };
   }
 
-  deleteEventSink(name) {
-    const agentState = this.activeAgentState;
+  deleteEventSink(agentState, name) {
     if (!agentState) return;
-
     delete agentState.eventSinks[name];
   }
 
@@ -523,45 +524,73 @@ class EtwAppModel {
 
   //#region Live View
 
-  applyLiveViewConfig() {
-    const agentState = this.activeAgentState;
-    if (!agentState) return;
-
-    const liveViewOptions = agentState.liveViewConfigModel.toOptions();
-    this.fetcher.postJson('UpdateLiveViewOptions', { agentId: agentState.id }, liveViewOptions)
+  applyLiveViewOptions(agentState) {
+    if (!agentState) {
+      return;
+    }
+    const opts = new AgentRawOptions();
+    opts.liveViewOptions = agentState.liveViewConfigModel.toOptions();
+    this.fetcher.postJson('ApplyAgentOptions', { agentId: agentState.id }, opts)
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
-  resetLiveViewConfig() {
-    const activeEntry = this.getActiveEntry();
-    if (!activeEntry) return;
-
-    const liveViewOptions = raw(activeEntry.current?.liveViewOptions) || new LiveViewOptions();
-    this.activeAgentState.liveViewConfigModel.refresh(liveViewOptions);
+  resetLiveViewOptions(entry) {
+    if (!entry) {
+      return;
+    }
+    const liveViewOptions = raw(entry.current?.liveViewOptions) || new LiveViewOptions();
+    entry.state.liveViewConfigModel.refresh(liveViewOptions);
   }
 
   // sync agent state with liveViewConfigModel; we don't want to trigger reactions here
-  updateLiveViewOptions(opts) {
-    const activeEntry = this.getActiveEntry();
-    if (!activeEntry) return false;
-    raw(activeEntry.state).liveViewOptions = opts;
+  updateLiveViewOptions(entry, opts) {
+    if (!entry) {
+      return false;
+    }
+    raw(entry.state).liveViewOptions = opts;
   }
 
   // this gets called typically from within render, so after liveViewConfigModel.refresh()!
-  get liveViewConfigModified() {
-    const activeEntry = this.getActiveEntry();
-    if (!activeEntry) return false;
-
-    const liveViewOptions = raw(activeEntry.state.liveViewConfigModel.toOptions());
-    return !utils.targetEquals(activeEntry.current?.liveViewOptions, liveViewOptions);
+  getLiveViewOptionsModified(entry) {
+    if (!entry) {
+      return false;
+    }
+    const liveViewOptions = raw(entry.state.liveViewConfigModel.toOptions());
+    return !utils.targetEquals(entry.current?.liveViewOptions, liveViewOptions);
   }
 
   //#endregion
 
-  resetAll() {
-    const activeEntry = this.getActiveEntry();
-    if (!activeEntry) return;
-    activeEntry.state = utils.clone(activeEntry.current || {});
+  applyAllOptions(agentState) {
+    if (!agentState) {
+      return;
+    }
+    const opts = new AgentRawOptions();
+    opts.enabledProviders = this.getEnabledProvidersToApply(agentState);
+    opts.dynamicFilterParts = agentState.processingModel.getDynamicParts();
+    opts.eventSinkProfiles = Object.entries(agentState.eventSinks).map(es => es[1].profile);
+    opts.liveViewOptions = agentState.liveViewConfigModel.toOptions();
+    this.fetcher.postJson('ApplyAgentOptions', { agentId: agentState.id }, opts)
+      .then(result => {
+        // filterResult matches protobuf message BuildFilterResult
+        const filterResult = result.filterResult;
+        if (filterResult) {
+          const filterEditModel = agentState.processingModel.filter;
+          filterEditModel.refreshSourceLines(filterResult.filterSource);
+          filterEditModel.diagnostics = filterResult.diagnostics;
+          if (filterResult.filterSource && (!filterResult.diagnostics || !filterResult.diagnostics.length)) {
+            agentState.processingState.filterSource = filterResult.filterSource;
+          }
+        }
+      })
+      .catch(error => window.etwApp.defaultHandleError(error));
+  }
+
+  resetAllOptions(entry) {
+    if (!entry || !entry.current) {
+      return;
+    }
+    this.setAgentState(entry, utils.clone(entry.current));
   }
 }
 

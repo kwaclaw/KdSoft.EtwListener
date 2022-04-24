@@ -7,14 +7,14 @@ import "google/protobuf/timestamp.proto";
 
 package KdSoft.EtwLogging;
 
-message ProviderSettingsList {
-  repeated ProviderSetting provider_settings = 1;
-}
-
 message ProviderSetting {
   string name = 1;
   TraceEventLevel level = 2;
   uint64 match_keywords = 3;
+}
+
+message ProviderSettingsList {
+  repeated ProviderSetting provider_settings = 1;
 }
 
 message EtwEvent {
@@ -139,7 +139,7 @@ message FilterSource {
 }
 
 message ProcessingState {
-  FilterSource filter_source = 3;
+  FilterSource filter_source = 1;
 }
 
 message EventSessionState {
@@ -149,9 +149,16 @@ message EventSessionState {
 }
 
 message ProcessingOptions {
-  Filter filter = 3;
+  Filter filter = 1;
 }
 
+message AgentOptions {
+  repeated ProviderSetting enabled_providers = 1;
+  bool has_enabled_providers = 2;
+  ProcessingOptions processing_options = 3;
+  map<string, EventSinkProfile> event_sink_profiles = 4;
+  bool has_event_sink_profiles = 5;
+  LiveViewOptions live_view_options = 6;
 }
 
 message LinePosition {
@@ -176,6 +183,10 @@ message CompileDiagnostic {
 message BuildFilterResult {
   repeated CompileDiagnostic diagnostics = 1;
   FilterSource filter_source = 2; 
+}
+
+message ApplyAgentOptionsResult {
+  BuildFilterResult filter_result = 1;
 }
 
 // Note: multiple enums in the same namespace cannot have duplicate value identifiers, so we prefix them;
