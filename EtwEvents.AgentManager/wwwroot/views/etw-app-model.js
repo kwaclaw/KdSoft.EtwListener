@@ -390,6 +390,9 @@ class EtwAppModel {
     if (!agentState) {
       return;
     }
+    // providers should be sorted to allow proper "modified" detection
+    agentState.enabledProviders.sort((a, b) => utils.compareIgnoreCase(a.name, b.name));
+
     const opts = new AgentRawOptions();
     opts.enabledProviders = this.getEnabledProviders(agentState);
     this.fetcher.postJson('ApplyAgentOptions', { agentId: agentState.id }, opts)
