@@ -403,6 +403,7 @@ class EtwAgent extends LitMvvmElement {
             .model=${this.model.sinkInfoCheckListModel}
             .getItemTemplate=${item => html`<div class="flex w-full"><span class="mr-1">${item.sinkType}</span><span class="ml-auto">(${item.version})</span></div>`}
             .attachInternals=${true}
+            show-checkboxes
             required
             tabindex=-1>
           </etw-checklist>
