@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -34,6 +35,7 @@ namespace KdSoft.EtwEvents.PushAgent
         readonly ILogger<ControlWorker> _logger;
         readonly JsonSerializerOptions _jsonOptions;
         readonly JsonFormatter _jsonFormatter;
+        readonly string _stoppedFilePath;
 
         IServiceScope? _sessionScope;
         IDisposable? _controlOptionsListener;
@@ -43,6 +45,8 @@ namespace KdSoft.EtwEvents.PushAgent
         SessionWorker? _sessionWorker;  // only valid when _sessionWorkerAvailable != 0
         int _sessionWorkerAvailable = 0;
         SessionWorker? SessionWorker => _sessionWorkerAvailable == 0 ? null : _sessionWorker!;
+
+        static readonly byte[] _emptyBytes = new byte[0];
 
         public ControlWorker(
             HostBuilderContext context,
@@ -68,6 +72,8 @@ namespace KdSoft.EtwEvents.PushAgent
             };
             var jsonSettings = JsonFormatter.Settings.Default.WithFormatDefaultValues(true).WithFormatEnumsAsIntegers(true);
             _jsonFormatter = new JsonFormatter(jsonSettings);
+
+            _stoppedFilePath = Path.Combine(_context.HostingEnvironment.ContentRootPath, ".stopped");
         }
 
         #region Control Channel
@@ -79,6 +85,7 @@ namespace KdSoft.EtwEvents.PushAgent
                         _logger?.LogInformation("Session already starting.");
                         return;
                     }
+                    File.Delete(_stoppedFilePath);
                     var started = await StartSessionWorker(default).ConfigureAwait(false);
                     await SendStateUpdate().ConfigureAwait(false);
                     return;
@@ -105,6 +112,8 @@ namespace KdSoft.EtwEvents.PushAgent
                     //
                     break;
                 case Constants.StopEvent:
+                    // simple way to create empty file
+                    File.WriteAllBytes(_stoppedFilePath, _emptyBytes);
                     var stopped = await StopSessionWorker(default).ConfigureAwait(false);
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
@@ -408,7 +417,9 @@ namespace KdSoft.EtwEvents.PushAgent
             }
 
             try {
-                await StartSessionWorker(default).ConfigureAwait(false);
+                if (!File.Exists(_stoppedFilePath)) {
+                    await StartSessionWorker(default).ConfigureAwait(false);
+                }
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Failure starting session.");
