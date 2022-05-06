@@ -10,6 +10,8 @@ function sinkConfigForm(sinkType) {
   switch (sinkType) {
     case 'ElasticSink':
       return 'elastic-sink-config';
+    case 'OpenSearchSink':
+      return 'opensearch-sink-config';
     case 'gRPCSink':
       return 'grpc-sink-config';
     case 'MongoSink':
@@ -27,6 +29,8 @@ function sinkConfigModel(sinkType) {
   switch (sinkType) {
     case 'ElasticSink':
       return 'elastic-sink-config-model';
+    case 'OpenSearchSink':
+      return 'opensearch-sink-config-model';
     case 'gRPCSink':
       return 'grpc-sink-config-model';
     case 'MongoSink':
