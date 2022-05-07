@@ -120,11 +120,11 @@ namespace KdSoft.EtwEvents.EventSinks
             if (bulkResponse.Success)
                 return true;
 
-            if (bulkResponse.TryGetServerError(out var error)) {
+            if (bulkResponse.TryGetServerError(out var error) && error.Error != null) {
                 throw new OpenSearchSinkException($"Error sending bulk response in {nameof(OpenSearchSink)}.", error);
             }
             else {
-                throw new EventSinkException(bulkResponse.DebugInformation, bulkResponse.OriginalException);
+                throw new OpenSearchSinkException(bulkResponse.DebugInformation, bulkResponse.OriginalException);
             }
         }
 

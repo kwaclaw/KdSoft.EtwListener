@@ -120,11 +120,11 @@ namespace KdSoft.EtwEvents.EventSinks
             if (bulkResponse.Success)
                 return true;
 
-            if (bulkResponse.TryGetServerError(out var error)) {
+            if (bulkResponse.TryGetServerError(out var error) && error.Error != null) {
                 throw new ElasticSinkException($"Error sending bulk response in {nameof(ElasticSink)}.", error);
             }
             else {
-                throw new EventSinkException(bulkResponse.DebugInformation, bulkResponse.OriginalException);
+                throw new ElasticSinkException(bulkResponse.DebugInformation, bulkResponse.OriginalException);
             }
         }
 
