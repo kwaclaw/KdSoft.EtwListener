@@ -111,7 +111,7 @@ namespace KdSoft.EtwEvents.Server
                         }
 
                         Volatile.Write(ref _lastWrittenMSecs, Environment.TickCount);
-                        _logger.LogInformation("Received batch with {eventCount} events.", batch.Events.Count);
+                        _logger.LogDebug("Received batch with {eventCount} events.", batch.Events.Count);
 
                         // this should not throw if event sink is implemented correctly
                         var success = await WriteBatchAsync(batch).ConfigureAwait(false);

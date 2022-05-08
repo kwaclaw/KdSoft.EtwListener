@@ -145,7 +145,7 @@ namespace KdSoft.EtwEvents.Server
                         }
 
                         if (batch.Events.Count > 0) {
-                            _logger.LogInformation("Received batch with {eventCount} events.", batch.Events.Count);
+                            _logger.LogDebug("Received batch with {eventCount} events.", batch.Events.Count);
                             bool success = await WriteBatchAsync(batch).ConfigureAwait(false);
                             if (success) {
                                 reader.Truncate();

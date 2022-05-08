@@ -82,7 +82,7 @@ namespace KdSoft.EtwEvents.PushAgent
             switch (sse.Event) {
                 case Constants.StartEvent:
                     if (_sessionWorkerAvailable != 0) {
-                        _logger?.LogInformation("Session already starting.");
+                        _logger?.LogDebug("Session already starting.");
                         return;
                     }
                     File.Delete(_stoppedFilePath);
@@ -91,7 +91,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     return;
                 case Constants.StopEvent:
                     if (_sessionWorkerAvailable == 0) {
-                        _logger?.LogInformation("Session already stopping.");
+                        _logger?.LogDebug("Session already stopping.");
                         return;
                     }
                     break;

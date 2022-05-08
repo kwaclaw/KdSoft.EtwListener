@@ -42,7 +42,9 @@ namespace KdSoft.EtwEvents.PushAgent
                 })
                 .ConfigureLogging((hostContext, loggingBuilder) => {
                     loggingBuilder.ClearProviders();
+#if DEBUG
                     loggingBuilder.AddConsole();
+#endif
                     loggingBuilder.AddRollingFileSink(opts => {
                         // make sure opts.Directory is an absolute path
                         opts.Directory = Path.Combine(hostContext.HostingEnvironment.ContentRootPath, opts.Directory);
