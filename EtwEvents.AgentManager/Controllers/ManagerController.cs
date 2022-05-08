@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Net;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -46,6 +47,14 @@ namespace KdSoft.EtwEvents.AgentManager
             this._jsonFormatter = jsonFormatter;
             this._jsonOptions = jsonOptions;
             this._logger = logger;
+        }
+
+        string UserInfo() {
+            var ident = this.User.Identity;
+            var name = ident?.Name ?? "anonymous";
+            var thumbPrintClaim = this.User.FindFirst(ClaimTypes.Thumbprint);
+            var thumbPrint = thumbPrintClaim != null ? $" ({thumbPrintClaim.Value})" : string.Empty;
+            return $"[{name}{thumbPrint}]";
         }
 
         [HttpGet]
@@ -169,11 +178,13 @@ namespace KdSoft.EtwEvents.AgentManager
 
         [HttpPost]
         public IActionResult Start(string agentId) {
+            _logger.LogInformation("{user}: Starting agent {agentid}.", UserInfo(), agentId);
             return PostAgent(agentId, Constants.StartEvent, "");
         }
 
         [HttpPost]
         public IActionResult Stop(string agentId) {
+            _logger.LogInformation("{user}: Stopping agent {agentid}.", UserInfo(), agentId);
             return PostAgent(agentId, Constants.StopEvent, "");
         }
 
@@ -201,6 +212,7 @@ namespace KdSoft.EtwEvents.AgentManager
                 ? new EtwLogging.Filter()  // we are clearing the filter
                 : Filter.MergeFilterTemplate(dynamicParts); // WE are supplying the filter template
             var json = _jsonFormatter.Format(filter);
+            _logger.LogInformation("{user}: Testing filter on agent {agentid}:\n{filter}", UserInfo(), agentId, json);
             return CallAgent(agentId, Constants.TestFilterEvent, json, TimeSpan.FromSeconds(15));
         }
 
@@ -263,6 +275,7 @@ namespace KdSoft.EtwEvents.AgentManager
         public Task<IActionResult> ApplyAgentOptions(string agentId, [FromBody] JsonElement rawOptions) {
             var agentOptions = BuildAgentOptions(rawOptions);
             var agentOptionsJson = _jsonFormatter.Format(agentOptions);
+            _logger.LogInformation("{user}: Setting agent options on agent {agentid}:\n{options}", UserInfo(), agentId, agentOptionsJson);
             return CallAgent(agentId, Constants.ApplyAgentOptionsEvent, agentOptionsJson, TimeSpan.FromSeconds(15));
         }
 
@@ -321,6 +334,8 @@ namespace KdSoft.EtwEvents.AgentManager
                 return StatusCode(pd.Status.Value, pd);
             }
 
+            _logger.LogInformation("{user}: Stopping live view on agent {agentid}.", UserInfo(), proxy.AgentId);
+
             // OkResult not right here, tries to set status code which is not allowed once the response has started
             return new EmptyResult();
         }
@@ -370,6 +385,8 @@ namespace KdSoft.EtwEvents.AgentManager
                 };
                 return StatusCode(pd.Status.Value, pd);
             }
+
+            _logger.LogInformation("{user}: Starting live view on agent {agentid}.", UserInfo(), agentId);
 
             if (Request.Headers[HeaderNames.Accept].Contains(Constants.EventStreamHeaderValue)) {
                 return await GetEtwEventStream(proxy, cancelToken).ConfigureAwait(false);

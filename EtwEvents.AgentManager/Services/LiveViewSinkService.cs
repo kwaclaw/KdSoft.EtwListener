@@ -41,7 +41,7 @@ namespace KdSoft.EtwEvents.AgentManager
             }
             catch (Exception ex) {
                 if (context.CancellationToken.IsCancellationRequested) {
-                    _logger.LogInformation("Live View event stream closed.");
+                    _logger.LogDebug("Live View event stream closed for agent {agent}.", agentId);
                     return new EtwEventResponse { EventsReceived = -1 };
                 }
                 _logger.LogError(ex, "Error processing Live View event stream.");

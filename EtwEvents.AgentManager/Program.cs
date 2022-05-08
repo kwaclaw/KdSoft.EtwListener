@@ -1,7 +1,10 @@
+using System.IO;
+using KdSoft.Logging;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace KdSoft.EtwEvents.AgentManager
 {
@@ -18,6 +21,16 @@ namespace KdSoft.EtwEvents.AgentManager
                         // we are overriding some of the settings that are already loaded
                         cfgBuilder.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
                         cfgBuilder.AddCommandLine(args);
+                    });
+                    webBuilder.ConfigureLogging((hostContext, loggingBuilder) => {
+                        loggingBuilder.ClearProviders();
+#if DEBUG
+                        loggingBuilder.AddConsole();
+#endif
+                        loggingBuilder.AddRollingFileSink(opts => {
+                            // make sure opts.Directory is an absolute path
+                            opts.Directory = Path.Combine(hostContext.HostingEnvironment.ContentRootPath, opts.Directory);
+                        });
                     });
                     webBuilder.UseStartup<Startup>();
                     webBuilder.ConfigureKestrel((context, options) => {
