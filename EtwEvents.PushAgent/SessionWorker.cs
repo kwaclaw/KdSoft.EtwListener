@@ -37,8 +37,8 @@ namespace KdSoft.EtwEvents.PushAgent
         readonly JsonSerializerOptions _jsonOptions;
 
         static readonly IRetryStrategy _defaultRetryStrategy = new BackoffRetryStrategy(
-            TimeSpan.FromMilliseconds(200),
-            TimeSpan.FromSeconds(15),
+            TimeSpan.FromSeconds(2),
+            TimeSpan.FromSeconds(30),
             TimeSpan.FromHours(2),
             forever: true
         );
