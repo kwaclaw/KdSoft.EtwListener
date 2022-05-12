@@ -7,18 +7,18 @@ namespace KdSoft.EtwEvents
     /// Proxy for <see cref="IEventSink"/> that handles sink failures on WriteAsync()
     /// by closing/disposing of the event sink, and re-creating it on the next call to WriteAsync().
     /// </summary>
-    public class EventSinkRetryProxy: IEventSink, IEventSinkStatus
+    public class EventSinkRetryProxy: IEventSink, IEventSinkStatus<RetryStatus>
     {
         readonly string _sinkId;
         readonly string _options;
         readonly string _credentials;
         readonly IEventSinkFactory _sinkFactory;
         readonly EventSinkLoadContext? _loadContext;
-        string _siteName;
+        readonly string _siteName;
         readonly ILoggerFactory _loggerFactory;
         readonly ILogger<EventSinkRetryProxy> _logger;
         readonly AsyncRetrier<bool> _retrier;
-        readonly ValueHolder<int, TimeSpan, long> _retryHolder;
+        readonly ValueHolder<RetryStatus> _retryHolder;
         readonly TaskCompletionSource<bool> _tcs;
 
         IEventSink? _sink;
@@ -61,7 +61,7 @@ namespace KdSoft.EtwEvents
             _tcs = new TaskCompletionSource<bool>();
             _logger = loggerFactory.CreateLogger<EventSinkRetryProxy>();
             _retrier = new AsyncRetrier<bool>(r => r, retryStrategy);
-            _retryHolder = new ValueHolder<int, TimeSpan, long>();
+            _retryHolder = new ValueHolder<RetryStatus>();
         }
 
         public async ValueTask DisposeAsync() {
@@ -125,20 +125,22 @@ namespace KdSoft.EtwEvents
                 await sink.RunTask.WaitAsync(EventSinkTimeout).ConfigureAwait(false);
             }
             catch (TimeoutException tex) {
-                LastError = tex;
+                _retryHolder.Value.LastError = tex;
                 _logger.LogError(tex, "Event sink {sinkId} timed out.", _sinkId);
             }
             catch (OperationCanceledException cex) {
-                LastError = cex;
+                _retryHolder.Value.LastError = cex;
                 _logger.LogError("Event sink {sinkId} was cancelled.", _sinkId);
             }
             catch (Exception ex) {
-                LastError = ex;
+                _retryHolder.Value.LastError = ex;
                 _logger.LogError(ex, "Event sink {sinkId} failed.", _sinkId);
             }
             finally {
                 await sink.DisposeAsync().ConfigureAwait(false);
             }
+
+            RaiseChangedEvent();
             return false;
         }
 
@@ -197,9 +199,11 @@ namespace KdSoft.EtwEvents
         public ValueTask<bool> WriteAsync(EtwEventBatch evtBatch) {
             if (_disposing > 0)
                 return ValueTask.FromResult(false);
-            LastError = null;
-            _retryStartTime = default(DateTimeOffset);
-            _retryHolder.Reset();
+
+            if (_retryHolder.Value != _cleanStatus) {
+                _retryHolder.Reset();
+                RaiseChangedEvent();
+            }
             return _retrier.ExecuteAsync(WriteBatchAsync, evtBatch, _retryHolder);
         }
 
@@ -207,22 +211,14 @@ namespace KdSoft.EtwEvents
 
         #region IEventSinkStatus
 
-        public Exception? LastError { get; private set; }
+        static readonly RetryStatus _cleanStatus = new RetryStatus();
 
-        public int NumRetries => _retryHolder.Value1;
+        public RetryStatus Status => _retryHolder.Value;
 
-        DateTimeOffset _retryStartTime;
-        public DateTimeOffset RetryStartTime {
-            get {
-                // we must retrieve this value as soon as possible after a failed write
-                var holderValue3 = Interlocked.Read(ref _retryHolder.Value3);
-                long retryTicks = _retryStartTime.Ticks;
-                Interlocked.MemoryBarrier();
-                if (retryTicks == 0) {
-                    _retryStartTime = new DateTimeOffset(holderValue3, TimeSpan.Zero);
-                }
-                return _retryStartTime;
-            }
+        public event Action? Changed;
+
+        protected virtual void RaiseChangedEvent() {
+            Changed?.Invoke();
         }
 
         #endregion

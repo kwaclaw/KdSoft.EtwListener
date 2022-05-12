@@ -154,28 +154,28 @@ namespace EtwEvents.Tests
         public async Task Retrier() {
             var retryStrategy = new BackoffRetryStrategy(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(800), 20);
             var retrier = new AsyncRetrier<bool>(r => r, retryStrategy);
-            var retryHolder = new ValueHolder<int, TimeSpan, long>();
+            var retryHolder = new ValueHolder<RetryStatus>();
 
             // op.Execute always fails
             var op = new Operation(int.MaxValue);
             var result = await retrier.ExecuteAsync(op.Execute, retryHolder).ConfigureAwait(false);
-            _output.WriteLine($"Retrier with {retryHolder.Value1} retries, all failing, duration: {retryStrategy.TotalDelay}");
+            _output.WriteLine($"Retrier with {retryHolder.Value.NumRetries} retries, all failing, duration: {retryStrategy.TotalDelay}");
             Assert.False(result);
-            Assert.Equal(retryHolder.Value1, retryStrategy.TotalRetries);
+            Assert.Equal(retryHolder.Value.NumRetries, retryStrategy.TotalRetries);
 
             // op.Execute succeeds after 10 counts - before retrier gives up
             op = new Operation(10);
             result = await retrier.ExecuteAsync(op.Execute, retryHolder).ConfigureAwait(false);
-            _output.WriteLine($"Retrier with {retryHolder.Value1} retries, 10 failing, duration: {retryStrategy.TotalDelay}");
+            _output.WriteLine($"Retrier with {retryHolder.Value.NumRetries} retries, 10 failing, duration: {retryStrategy.TotalDelay}");
             Assert.True(result);
-            Assert.Equal(retryHolder.Value1, retryStrategy.TotalRetries);
+            Assert.Equal(retryHolder.Value.NumRetries, retryStrategy.TotalRetries);
 
             // op.Execute succeeds after 21 counts - after retrier gives up
             op = new Operation(21);
             result = await retrier.ExecuteAsync(op.Execute, retryHolder).ConfigureAwait(false);
-            _output.WriteLine($"Retrier with {retryHolder.Value1} retries, 21 failing, duration: {retryStrategy.TotalDelay}");
+            _output.WriteLine($"Retrier with {retryHolder.Value.NumRetries} retries, 21 failing, duration: {retryStrategy.TotalDelay}");
             Assert.False(result);
-            Assert.Equal(retryHolder.Value1, retryStrategy.TotalRetries);
+            Assert.Equal(retryHolder.Value.NumRetries, retryStrategy.TotalRetries);
         }
 
         #endregion

@@ -1,26 +1,27 @@
 ﻿using System;
-using KdSoft.EtwLogging;
 
 namespace KdSoft.EtwEvents
 {
     /// <summary>
-    /// Describes status of an <see cref="IEventSink">event sink</see>.
+    /// Provides an event to be notified of status changes.
     /// </summary>
     public interface IEventSinkStatus
     {
         /// <summary>
-        /// Number of retries since last successful <see cref="IEventSink.WriteAsync(EtwEventBatch)"/>.
+        /// Triggered when the event sink's status changes.
         /// </summary>
-        int NumRetries { get; }
+        event Action Changed;
+    }
 
+    /// <summary>
+    /// Gives access to the event sink's status and provides an event to be notified of status changes.
+    /// </summary>
+    /// <typeparam name="S">Type of Status to return.</typeparam>
+    public interface IEventSinkStatus<S>: IEventSinkStatus where S : IEquatable<S>
+    {
         /// <summary>
-        /// Time of first retry since last successful <see cref="IEventSink.WriteAsync(EtwEventBatch)"/>, if applicable.
+        /// Returns event sink status.
         /// </summary>
-        DateTimeOffset RetryStartTime { get; }
-
-        /// <summary>
-        /// Last exception thrown by <see cref="IEventSink.WriteAsync(EtwEventBatch)"/>.
-        /// </summary>
-        Exception? LastError { get; }
+        S Status { get; }
     }
 }

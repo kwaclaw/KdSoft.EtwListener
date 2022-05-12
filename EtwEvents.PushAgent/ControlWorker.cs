@@ -255,15 +255,18 @@ namespace KdSoft.EtwEvents.PushAgent
                     }
                 }
                 else if (activeChannels.TryGetValue(profile.Name, out var active)) {
-                    var status = active.SinkStatus;
-                    if (status != null) {
+                    if (active.SinkStatus != null) {
+                        var status = active.SinkStatus.Status;
                         var sinkError = status.LastError?.GetBaseException().Message;
                         if (sinkError != null)
                             sinkStatus.LastError = sinkError;
                         if (status.NumRetries > 0)
                             sinkStatus.NumRetries = (uint)status.NumRetries;
-                        if (status.RetryStartTime != default(DateTimeOffset))
-                            sinkStatus.RetryStartTime = pb.WellKnownTypes.Timestamp.FromDateTimeOffset(status.RetryStartTime);
+                        // make sure access to status.RetryStartTicks is thread-safe
+                        var retryStartTicks = Interlocked.Read(ref status.RetryStartTicks);
+                        var retryStartTime = new DateTimeOffset(retryStartTicks, TimeSpan.Zero);
+                        if (retryStartTime != default(DateTimeOffset))
+                            sinkStatus.RetryStartTime = pb.WellKnownTypes.Timestamp.FromDateTimeOffset(retryStartTime);
                     }
                 }
                 var state = new EventSinkState { Profile = profile, Status = sinkStatus };

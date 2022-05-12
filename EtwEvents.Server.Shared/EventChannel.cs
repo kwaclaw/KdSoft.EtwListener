@@ -61,7 +61,7 @@ namespace KdSoft.EtwEvents.Server
 
         public Task? RunTask { get; private set; }
 
-        public IEventSinkStatus? SinkStatus => _sink as IEventSinkStatus;
+        public IEventSinkStatus<RetryStatus>? SinkStatus => _sink as IEventSinkStatus<RetryStatus>;
 
         public void StartProcessing(Action<Task> continuation, CancellationToken stoppingToken) {
             if (RunTask != null) {

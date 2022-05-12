@@ -32,7 +32,7 @@
         async ValueTask<T> ExecuteAsyncAsync(
             ValueTask<T> task,
             Func<int, TimeSpan, ValueTask<T>> callback,
-            ValueHolder<int, TimeSpan, long>? retryHolder
+            ValueHolder<RetryStatus>? retryHolder
         ) {
             var result = await task.ConfigureAwait(false);
             while (!_succeeded(result)) {
@@ -40,9 +40,10 @@
                     return result;
                 if (_retryStrategy.NextDelay(out var delay, out var count)) {
                     if (retryHolder != null) {
-                        retryHolder.Value1 = count;
-                        retryHolder.Value2 = delay;
-                        retryHolder.Value3 = DateTimeOffset.UtcNow.Ticks;
+                        retryHolder.Value.NumRetries = count;
+                        retryHolder.Value.NextDelay = delay;
+                        // make sure access to  retryHolder.Value.RetryStartTicks is thread-safe
+                        Interlocked.Exchange(ref retryHolder.Value.RetryStartTicks, DateTimeOffset.UtcNow.Ticks);
                     }
                     await Task.Delay(delay).ConfigureAwait(false);
                     result = await callback(count, delay).ConfigureAwait(false);
@@ -60,7 +61,7 @@
         /// <param name="callback">Callback to retry.</param>
         /// <param name="retryHolder">Holds retry information.</param>
         /// <returns>Callback result.</returns>
-        public ValueTask<T> ExecuteAsync(Func<int, TimeSpan, ValueTask<T>> callback, ValueHolder<int, TimeSpan, long>? retryHolder = null) {
+        public ValueTask<T> ExecuteAsync(Func<int, TimeSpan, ValueTask<T>> callback, ValueHolder<RetryStatus>? retryHolder = null) {
             // check fast path (sync completion)
             var task = callback(0, default);
             if (task.IsCompleted) {
@@ -82,7 +83,7 @@
             ValueTask<T> task,
             Func<P, int, TimeSpan, ValueTask<T>> callback,
             P arg,
-            ValueHolder<int, TimeSpan, long>? retryHolder
+            ValueHolder<RetryStatus>? retryHolder
         ) {
             var result = await task.ConfigureAwait(false);
             while (!_succeeded(result)) {
@@ -90,9 +91,10 @@
                     return result;
                 if (_retryStrategy.NextDelay(out var delay, out var count)) {
                     if (retryHolder != null) {
-                        retryHolder.Value1 = count;
-                        retryHolder.Value2 = delay;
-                        retryHolder.Value3 = DateTimeOffset.UtcNow.Ticks;
+                        retryHolder.Value.NumRetries = count;
+                        retryHolder.Value.NextDelay = delay;
+                        // make sure access to  retryHolder.Value.RetryStartTicks is thread-safe
+                        Interlocked.Exchange(ref retryHolder.Value.RetryStartTicks, DateTimeOffset.UtcNow.Ticks);
                     }
                     await Task.Delay(delay).ConfigureAwait(false);
                     result = await callback(arg, count, delay).ConfigureAwait(false);
@@ -115,7 +117,7 @@
         public ValueTask<T> ExecuteAsync<P>(
             Func<P, int, TimeSpan, ValueTask<T>> callback,
             P arg,
-            ValueHolder<int, TimeSpan, long>? retryHolder = null
+            ValueHolder<RetryStatus>? retryHolder = null
         ) {
             // check fast path (sync completion)
             var task = callback(arg, 0, default);
@@ -139,7 +141,7 @@
             Func<P, Q, int, TimeSpan, ValueTask<T>> callback,
             P argP,
             Q argQ,
-            ValueHolder<int, TimeSpan, long>? retryHolder
+            ValueHolder<RetryStatus>? retryHolder
         ) {
             var result = await task.ConfigureAwait(false);
             while (!_succeeded(result)) {
@@ -147,9 +149,10 @@
                     return result;
                 if (_retryStrategy.NextDelay(out var delay, out var count)) {
                     if (retryHolder != null) {
-                        retryHolder.Value1 = count;
-                        retryHolder.Value2 = delay;
-                        retryHolder.Value3 = DateTimeOffset.UtcNow.Ticks;
+                        retryHolder.Value.NumRetries = count;
+                        retryHolder.Value.NextDelay = delay;
+                        // make sure access to  retryHolder.Value.RetryStartTicks is thread-safe
+                        Interlocked.Exchange(ref retryHolder.Value.RetryStartTicks, DateTimeOffset.UtcNow.Ticks);
                     }
                     await Task.Delay(delay).ConfigureAwait(false);
                     result = await callback(argP, argQ, count, delay).ConfigureAwait(false);
@@ -175,7 +178,7 @@
             Func<P, Q, int, TimeSpan, ValueTask<T>> callback,
             P argP,
             Q argQ,
-            ValueHolder<int, TimeSpan, long>? retryHolder = null
+            ValueHolder<RetryStatus>? retryHolder = null
         ) {
             // check fast path (sync completion)
             var task = callback(argP, argQ, 0, default);
