@@ -4,6 +4,7 @@ using System.IO;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Channels;
 using KdSoft.EtwEvents.Server;
 using KdSoft.Logging;
 using Microsoft.AspNetCore.DataProtection;
@@ -87,6 +88,11 @@ namespace KdSoft.EtwEvents.PushAgent
                             provider.GetRequiredService<ILogger<EventSinkService>>()
                         );
                     });
+                    services.AddSingleton(Channel.CreateUnbounded<ControlEvent>(new UnboundedChannelOptions {
+                        AllowSynchronousContinuations = false,
+                        SingleReader = true,
+                        SingleWriter = false
+                    }));
                     services.AddSingleton<ControlConnector>();
                     services.AddScoped<SessionWorker>();
                     services.AddHostedService<ControlWorker>();

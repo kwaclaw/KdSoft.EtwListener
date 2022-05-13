@@ -388,14 +388,16 @@ namespace KdSoft.EtwEvents.PushAgent
         }
 
         void ControlOptionsChanged(ControlOptions opts, CancellationToken stoppingToken) {
-            try {
-                if (!object.Equals(opts, _controlConnector.CurrentOptions)) {
-                    _controlConnector.Start(opts, ProcessEvent, stoppingToken);
-                    _logger.LogInformation("Restarting ControlEvents with new options.");
-                }
-            }
-            catch (Exception ex) {
-                _logger.LogError(ex, "Cannot restart ControlEvents.");
+            if (!object.Equals(opts, _controlConnector.CurrentOptions)) {
+                var processTask = _controlConnector.Start(opts, ProcessEvent, stoppingToken)
+                    .ContinueWith(t => {
+                        if (t.IsFaulted)
+                            _logger.LogError(t.Exception, "Failure restarting ControlEvents with new options.");
+                        else if (t.IsCanceled)
+                            _logger.LogInformation("Restarting ControlEvents canceled.");
+                        else
+                            _logger.LogInformation("Restarting ControlEvents with new options.");
+                    });
             }
         }
 
@@ -410,7 +412,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     }
                 });
                 _controlOptionsListener = _controlOptions.OnChange(opts => ControlOptionsChanged(opts, stoppingToken));
-                _controlConnector.Start(_controlOptions.CurrentValue, ProcessEvent, stoppingToken);
+                await _controlConnector.Start(_controlOptions.CurrentValue, ProcessEvent, stoppingToken).ConfigureAwait(false);
             }
             catch (Exception ex) {
                 _cancelRegistration.Dispose();

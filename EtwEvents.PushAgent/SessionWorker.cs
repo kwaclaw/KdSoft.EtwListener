@@ -9,6 +9,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Google.Protobuf.Collections;
 using KdSoft.EtwEvents.Server;
@@ -28,6 +29,7 @@ namespace KdSoft.EtwEvents.PushAgent
         readonly SessionConfig _sessionConfig;
         readonly IOptions<EventQueueOptions> _eventQueueOptions;
         readonly SocketsHttpHandler _httpHandler;
+        readonly Channel<ControlEvent> _controlChannel;
         readonly EventSinkService _sinkService;
         readonly IConfiguration _config;
         readonly ILoggerFactory _loggerFactory;
@@ -43,6 +45,8 @@ namespace KdSoft.EtwEvents.PushAgent
             forever: true
         );
 
+        static readonly ControlEvent GetStateMessage = new ControlEvent { Event = Constants.GetStateEvent };
+
         public SessionConfig SessionConfig => _sessionConfig;
 
         RealTimeTraceSession? _session;
@@ -52,6 +56,7 @@ namespace KdSoft.EtwEvents.PushAgent
             SessionConfig sessionConfig,
             IOptions<EventQueueOptions> eventQueueOptions,
             SocketsHttpHandler httpHandler,
+            Channel<ControlEvent> controlChannel,
             EventSinkService sinkService,
             IConfiguration config,
             ILoggerFactory loggerFactory
@@ -59,6 +64,7 @@ namespace KdSoft.EtwEvents.PushAgent
             this._sessionConfig = sessionConfig;
             this._eventQueueOptions = eventQueueOptions;
             this._httpHandler = httpHandler;
+            this._controlChannel = controlChannel;
             this._sinkService = sinkService;
             this._config = config;
             this._loggerFactory = loggerFactory;
@@ -314,12 +320,21 @@ namespace KdSoft.EtwEvents.PushAgent
             }
 
             EventChannel? newChannel = null;
-            var sinkProxy = await sinkProfile.CreateRetryProxy(_sinkService, retryStrategy ?? _defaultRetryStrategy, GetSiteName(), _loggerFactory).ConfigureAwait(false);
+            var sinkProxy = await sinkProfile.CreateRetryProxy(
+                _sinkService, retryStrategy ?? _defaultRetryStrategy, GetSiteName(), _loggerFactory).ConfigureAwait(false);
             try {
                 newChannel = _eventProcessor.AddChannel(sinkProfile.Name, sinkProxy, CreateChannel);
                 if (isPersistent) {
                     _sessionConfig.SaveSinkProfile(sinkProfile);
                 }
+                sinkProxy.Changed += () => {
+                    if (_eventProcessor.ActiveEventChannels.ContainsKey(sinkProfile.Name))   {
+                        var couldWrite = _controlChannel.Writer.TryWrite(GetStateMessage);
+                        if (!couldWrite) {
+                            _logger?.LogError("Error in {method}. Could not write event {event} to control channel.", "Changed Handler", GetStateMessage.Event);
+                        }
+                    }
+                };
             }
             catch (Exception ex) {
                 if (newChannel == null) {
