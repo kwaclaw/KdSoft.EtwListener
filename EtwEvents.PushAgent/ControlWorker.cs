@@ -264,9 +264,9 @@ namespace KdSoft.EtwEvents.PushAgent
                             sinkStatus.NumRetries = (uint)status.NumRetries;
                         // make sure access to status.RetryStartTicks is thread-safe
                         var retryStartTicks = Interlocked.Read(ref status.RetryStartTicks);
-                        var retryStartTime = new DateTimeOffset(retryStartTicks, TimeSpan.Zero);
-                        if (retryStartTime != default(DateTimeOffset))
-                            sinkStatus.RetryStartTime = pb.WellKnownTypes.Timestamp.FromDateTimeOffset(retryStartTime);
+                        if (retryStartTicks != 0) {
+                            sinkStatus.RetryStartTime = ProtoUtils.TimeStampFromUtcTicks(retryStartTicks);
+                        }
                     }
                 }
                 var state = new EventSinkState { Profile = profile, Status = sinkStatus };
