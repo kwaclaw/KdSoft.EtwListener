@@ -409,17 +409,15 @@ namespace KdSoft.EtwEvents.PushAgent
             return true;
         }
 
-        void ControlOptionsChanged(ControlOptions opts, CancellationToken stoppingToken) {
-            if (!object.Equals(opts, _controlConnector.CurrentOptions)) {
-                var processTask = _controlConnector.Start(opts, ProcessEvent, stoppingToken)
-                    .ContinueWith(t => {
-                        if (t.IsFaulted)
-                            _logger.LogError(t.Exception, "Failure restarting ControlEvents with new options.");
-                        else if (t.IsCanceled)
-                            _logger.LogInformation("Restarting ControlEvents canceled.");
-                        else
-                            _logger.LogInformation("Restarting ControlEvents with new options.");
-                    });
+        async Task ControlOptionsChanged(ControlOptions opts, CancellationToken stoppingToken) {
+            try {
+                if (!object.Equals(opts, _controlConnector.CurrentOptions)) {
+                    await _controlConnector.StartAsync(opts, stoppingToken).ConfigureAwait(false);
+                    _channel.Writer.TryWrite(ControlConnector.GetStateMessage);
+                }
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error on {method}.", nameof(ControlOptionsChanged));
             }
         }
 
@@ -433,12 +431,13 @@ namespace KdSoft.EtwEvents.PushAgent
                         _logger.LogError(ex, "Failure stopping session.");
                     }
                 });
-                _controlOptionsListener = _controlOptions.OnChange(opts => ControlOptionsChanged(opts, stoppingToken));
-                await _controlConnector.Start(_controlOptions.CurrentValue, ProcessEvent, stoppingToken).ConfigureAwait(false);
+                _controlOptionsListener = _controlOptions.OnChange(async opts => await ControlOptionsChanged(opts, stoppingToken).ConfigureAwait(false));
+                await _controlConnector.StartAsync(_controlOptions.CurrentValue, stoppingToken).ConfigureAwait(false);
             }
             catch (Exception ex) {
                 _cancelRegistration.Dispose();
                 _controlOptionsListener?.Dispose();
+                _controlConnector.Dispose();
                 _logger.LogError(ex, "Failure running service.");
                 return;
             }

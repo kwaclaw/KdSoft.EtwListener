@@ -45,8 +45,6 @@ namespace KdSoft.EtwEvents.PushAgent
             forever: true
         );
 
-        static readonly ControlEvent GetStateMessage = new ControlEvent { Event = Constants.GetStateEvent };
-
         public SessionConfig SessionConfig => _sessionConfig;
 
         RealTimeTraceSession? _session;
@@ -329,9 +327,9 @@ namespace KdSoft.EtwEvents.PushAgent
                 }
                 sinkProxy.Changed += () => {
                     if (_eventProcessor.ActiveEventChannels.ContainsKey(sinkProfile.Name))   {
-                        var couldWrite = _controlChannel.Writer.TryWrite(GetStateMessage);
+                        var couldWrite = _controlChannel.Writer.TryWrite(ControlConnector.GetStateMessage);
                         if (!couldWrite) {
-                            _logger?.LogError("Error in {method}. Could not write event {event} to control channel.", "Changed Handler", GetStateMessage.Event);
+                            _logger?.LogError("Error in {method}. Could not write event {event} to control channel.", "Changed Handler", ControlConnector.GetStateMessage.Event);
                         }
                     }
                 };

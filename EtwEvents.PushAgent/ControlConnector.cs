@@ -11,14 +11,14 @@ namespace KdSoft.EtwEvents.PushAgent
 {
     class ControlConnector: IDisposable
     {
+        public static readonly ControlEvent GetStateMessage = new ControlEvent { Event = Constants.GetStateEvent };
+
         readonly SocketsHttpHandler _httpHandler;
         readonly Channel<ControlEvent> _channel;
         readonly ILogger<ControlConnector> _logger;
         readonly TaskCompletionSource _tcs;
-        readonly object _syncObj = new object();
 
-        EventSource? _eventSource;
-        CancellationTokenRegistration _cancelRegistration;
+        ControlContext? _controlContext;
 
         public ControlConnector(
             SocketsHttpHandler httpHandler,
@@ -35,25 +35,9 @@ namespace KdSoft.EtwEvents.PushAgent
         // this Task will only terminate when the last sseTask terminates!
         public Task RunTask => _tcs.Task;
 
-        void CloseEventSource(EventSource evt, Task sseTask) {
-            sseTask.ContinueWith(st => {
-                if (st.IsFaulted && st.Exception != null) {
-                    _tcs.TrySetException(st.Exception);
-                }
-                else if (st.IsCanceled) {
-                    _tcs.TrySetCanceled();
-                }
-                else {
-                    _tcs.TrySetResult();
-                }
-
-            });
-            evt.Close();
-        }
-
         public ControlOptions? CurrentOptions { get; private set; }
 
-        public async Task Start(ControlOptions opts, Func<ControlEvent, Task> processEvent, CancellationToken stoppingToken) {
+        EventSource ConfigureEventSource(ControlOptions opts) {
             var evtUri = new Uri(opts.Uri, "Agent/GetEvents");
             var cfgBuilder = Configuration.Builder(evtUri).HttpMessageHandler(_httpHandler);
             if (opts.InitialRetryDelay != null)
@@ -65,47 +49,34 @@ namespace KdSoft.EtwEvents.PushAgent
             var config = cfgBuilder.Build();
 
             var evt = new EventSource(config);
-            Task? sseTask = null;
+            evt.MessageReceived += (s, e) => EventReceived(e);
+            evt.Error += EventError;
+            evt.Opened += EventSourceStateChanged;
+            evt.Closed += EventSourceStateChanged;
 
-            lock (_syncObj) {
-                var oldEventSource = _eventSource;
-                if (oldEventSource != null) {
-                    _cancelRegistration.Dispose();
-                    oldEventSource.Close();
-                    oldEventSource.Dispose();
-                }
-
-                evt.MessageReceived += (s, e) => EventReceived(e);
-                evt.Error += EventError;
-                evt.Opened += EventSourceStateChanged;
-                evt.Closed += EventSourceStateChanged;
-
-                CancellationTokenRegistration registration = default;
-                try {
-                    sseTask = evt.StartAsync();
-                    registration = stoppingToken.Register(() => CloseEventSource(evt, sseTask));
-                    _cancelRegistration = registration;
-                    _eventSource = evt;
-                    CurrentOptions = opts;
-                }
-                catch (Exception ex) {
-                    registration.Dispose();
-                    evt.Dispose();
-                    _cancelRegistration = default;
-                    _eventSource = null;
-                    _logger?.LogError(ex, "Error starting EventSource.");
-                }
-            }
-
-            if (sseTask != null) {
-                var processTask = ProcessEvents(processEvent, stoppingToken);
-                await sseTask.ConfigureAwait(false);
-                await processTask.ConfigureAwait(false);
-            }
+            return evt;
         }
 
+        /// <summary>
+        /// Starts or restarts the SSE connection.
+        /// </summary>
+        /// <param name="opts">Options for the EventSource.</param>
+        /// <param name="stoppingToken">CancellationToken to stop the connector for good.</param>
+        public async Task<bool> StartAsync(ControlOptions opts, CancellationToken stoppingToken) {
+            var evt = ConfigureEventSource(opts);
+            var controlContext = new ControlContext(evt, _logger);
+
+            var oldContext = Interlocked.Exchange(ref _controlContext, controlContext);
+            if (oldContext != null) {
+                await oldContext.StopAsync().ConfigureAwait(false);
             }
 
+            var registration = stoppingToken.Register(async () => await controlContext.StopAsync(_tcs));
+            if (!controlContext.Start(registration)) {
+                registration.Dispose();
+                return false;
+            }
+            return true;
         }
 
         void EventReceived(MessageReceivedEventArgs e) {
@@ -146,11 +117,10 @@ namespace KdSoft.EtwEvents.PushAgent
 
         public void Dispose() {
             try {
-                lock (_syncObj) {
-                    var evt = _eventSource;
-                    if (evt != null) {
-                        evt.Dispose();
-                    }
+                var context = Interlocked.Exchange(ref _controlContext, null);
+                if (context != null) {
+                    context.Source.Dispose();
+                    context.CancelRegistration.Dispose();
                 }
             }
             finally {
