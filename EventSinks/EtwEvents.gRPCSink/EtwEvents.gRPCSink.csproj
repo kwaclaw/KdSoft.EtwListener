@@ -14,8 +14,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Grpc.Net.Client" Version="2.45.0" />
-    <PackageReference Include="Grpc.Tools" Version="2.45.0">
+    <PackageReference Include="Grpc.Net.Client" Version="2.46.0" />
+    <PackageReference Include="Grpc.Tools" Version="2.46.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
