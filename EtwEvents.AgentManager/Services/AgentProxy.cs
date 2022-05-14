@@ -147,7 +147,7 @@ namespace KdSoft.EtwEvents.AgentManager
 
             bool finished = true;
             try {
-                Volatile.Write(ref _connected, 99);
+                Interlocked.Increment(ref _connected);
                 await foreach (var sse in _channel.Reader.ReadAllAsync(linkedToken).ConfigureAwait(false)) {
                     if (sse.Event == Constants.CloseEvent) {
                         _channel.Writer.TryComplete();
@@ -173,7 +173,7 @@ namespace KdSoft.EtwEvents.AgentManager
                 finished = false;
             }
             finally {
-                Volatile.Write(ref _connected, 0);
+                Interlocked.Decrement(ref _connected);
             }
 
             return finished;
