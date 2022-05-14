@@ -12,6 +12,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Google.Protobuf;
 using KdSoft.EtwEvents.Server;
@@ -30,6 +31,7 @@ namespace KdSoft.EtwEvents.PushAgent
         readonly IServiceProvider _services;
         readonly SocketsHttpHandler _httpHandler;
         readonly ControlConnector _controlConnector;
+        readonly Channel<ControlEvent> _channel;
         readonly IOptionsMonitor<ControlOptions> _controlOptions;
         readonly SessionConfig _sessionConfig;
         readonly ILogger<ControlWorker> _logger;
@@ -53,6 +55,7 @@ namespace KdSoft.EtwEvents.PushAgent
             IServiceProvider services,
             SocketsHttpHandler httpHandler,
             ControlConnector controlConnector,
+            Channel<ControlEvent> channel,
             IOptionsMonitor<ControlOptions> controlOptions,
             SessionConfig sessionConfig,
             ILogger<ControlWorker> logger
@@ -61,6 +64,7 @@ namespace KdSoft.EtwEvents.PushAgent
             this._services = services;
             this._httpHandler = httpHandler;
             this._controlConnector = controlConnector;
+            this._channel = channel;
             this._controlOptions = controlOptions;
             this._sessionConfig = sessionConfig;
             this._logger = logger;
@@ -312,6 +316,24 @@ namespace KdSoft.EtwEvents.PushAgent
             return PostProtoMessage("Agent/UpdateState", state);
         }
 
+        async Task<bool> ProcessEvents(CancellationToken stoppingToken) {
+            bool finished = true;
+            try {
+                await foreach (var sse in _channel.Reader.ReadAllAsync(stoppingToken).ConfigureAwait(false)) {
+                    await ProcessEvent(sse).ConfigureAwait(false);
+                    if (stoppingToken.IsCancellationRequested) {
+                        finished = false;
+                        break;
+                    }
+                }
+            }
+            catch (OperationCanceledException) {
+                finished = false;
+            }
+
+            return finished;
+        }
+
         #endregion
 
         #region Lifecycle
@@ -437,7 +459,14 @@ namespace KdSoft.EtwEvents.PushAgent
                 _logger.LogError(ex, "Error sending update to agent.");
             }
 
-            // this task ends only when EventSource is shut down, e.g. calling EventSource.Close()
+            try {
+                await ProcessEvents(stoppingToken).ConfigureAwait(false);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error processing control events.");
+            }
+
+            // this task ends only when the stoppingToken is triggered
             await _controlConnector.RunTask.ConfigureAwait(false);
         }
 

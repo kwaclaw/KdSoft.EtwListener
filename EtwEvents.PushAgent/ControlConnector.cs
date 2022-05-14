@@ -104,28 +104,8 @@ namespace KdSoft.EtwEvents.PushAgent
             }
         }
 
-        public async Task<bool> ProcessEvents(Func<ControlEvent, Task> processEvent, CancellationToken stoppingToken) {
-            bool finished = true;
-            try {
-                await foreach (var sse in _channel.Reader.ReadAllAsync(stoppingToken).ConfigureAwait(false)) {
-                    if (sse.Event == Constants.CloseEvent) {
-                        _channel.Writer.TryComplete();
-                    }
-                    else {
-                        await processEvent(sse).ConfigureAwait(false);
-                    }
-
-                    if (stoppingToken.IsCancellationRequested) {
-                        finished = false;
-                        break;
-                    }
-                }
-            }
-            catch (OperationCanceledException) {
-                finished = false;
             }
 
-            return finished;
         }
 
         void EventReceived(MessageReceivedEventArgs e) {
@@ -138,11 +118,17 @@ namespace KdSoft.EtwEvents.PushAgent
                 else {
                     _logger?.LogInformation("{method}: {eventName}-{lastEventId}, {messageData}", nameof(EventReceived), e.EventName, lastEventIdStr, messageDataStr);
                 }
-                var controlEvent = new ControlEvent { Event = e.EventName, Id = e.Message.LastEventId ?? "", Data = e.Message.Data ?? "" };
-                var couldWrite =_channel.Writer.TryWrite(controlEvent);
-                if (!couldWrite) {
-                    _logger?.LogError("Error in {method}. Could not write event {event} to control channel, event data:\n{data}",
-                        nameof(EventReceived), controlEvent.Event, controlEvent.Data);
+
+                if (e.EventName == Constants.CloseEvent) {
+                    _channel.Writer.TryComplete();
+                }
+                else {
+                    var controlEvent = new ControlEvent { Event = e.EventName, Id = e.Message.LastEventId ?? "", Data = e.Message.Data ?? "" };
+                    var couldWrite = _channel.Writer.TryWrite(controlEvent);
+                    if (!couldWrite) {
+                        _logger?.LogError("Error in {method}. Could not write event {event} to control channel, event data:\n{data}",
+                            nameof(EventReceived), controlEvent.Event, controlEvent.Data);
+                    }
                 }
             }
             catch (Exception ex) {
