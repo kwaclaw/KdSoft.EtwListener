@@ -15,25 +15,41 @@ import tailwindStyles from '../styles/tailwind-styles.js';
 import gridStyles from '../styles/kdsoft-grid-styles.js';
 
 const tabBase = {
-  'text-gray-300': true,
   'pt-3': true,
   'pb-2': true,
   'px-6': true,
   block: true,
-  'hover:text-blue-400': true,
   'focus:outline-none': true
+};
+
+const certInfoBase = {
+  ...tabBase,
+  'ml-auto': true
 };
 
 const tabClassList = {
   tabActive: {
     ...tabBase,
-    'bg-gray-700': true,
     'text-blue-400': true,
+    'hover:text-blue-400': true,
+    'bg-gray-700': true,
     'border-b-2': true,
     'font-medium': true,
     'border-blue-500': true
   },
-  tabInactive: tabBase,
+  tabInactive: {
+    ...tabBase,
+    'text-gray-300': true,
+    'hover:text-blue-400': true
+  },
+  certInfo: {
+    ...certInfoBase,
+    'text-gray-300': true
+  },
+  certInfoWarning: {
+    ...certInfoBase,
+    'text-red-500': true
+  }
 };
 
 class EtwApp extends LitMvvmElement {
@@ -435,6 +451,7 @@ class EtwApp extends LitMvvmElement {
 
     const agentConfigTabType = this._tabClassType('agent-config');
     const agentLiveViewTabType = this._tabClassType('agent-live-view');
+    const certInfoClassType = (window.clientCertLifeDays < 31) ? tabClassList.certInfoWarning : tabClassList.certInfo;
 
     const isRunning = activeEntry?.current?.isRunning;
     const isLive = !!this.model.etwEventSource;
@@ -485,8 +502,8 @@ class EtwApp extends LitMvvmElement {
                   <button class="ml-2 ${sinkClass}" @click=${() => this._toggleEtwEvents(activeEntry)} title="View Events">
                     <i class="fas fa-eye"></i>
                   </button>
-
                 </div>
+
               </nav>
 
               <div id="agent">
@@ -540,6 +557,7 @@ class EtwApp extends LitMvvmElement {
             `
           }
           <div class="flex p-2 border bg-gray-800 text-white">&copy; Karl Waclawek
+            <span class=${classMap(certInfoClassType)}>Client certificate expires in: ${window.clientCertLifeDays} days</span>
             <button class="ml-auto" @click=${this._showErrors}>
               ${this.model.fetchErrors.count()} ${i18n.__('Errors')}
             </button>

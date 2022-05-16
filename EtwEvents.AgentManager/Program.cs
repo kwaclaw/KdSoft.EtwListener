@@ -41,13 +41,15 @@ namespace KdSoft.EtwEvents.AgentManager
                                 if (chain != null) {
                                     var clientThumbprint = context.Configuration["ClientValidation:RootCertificateThumbprint"];
                                     foreach (var chainElement in chain.ChainElements) {
-                                        if (chainElement.Certificate.Thumbprint.ToUpperInvariant() == clientThumbprint?.ToUpperInvariant())
+                                        if (chainElement.Certificate.Thumbprint.ToUpperInvariant() == clientThumbprint?.ToUpperInvariant()) {
                                             return true;
+                                        }
                                     }
                                     var agentThumbprint = context.Configuration["AgentValidation:RootCertificateThumbprint"];
                                     foreach (var chainElement in chain.ChainElements) {
-                                        if (chainElement.Certificate.Thumbprint.ToUpperInvariant() == agentThumbprint?.ToUpperInvariant())
+                                        if (chainElement.Certificate.Thumbprint.ToUpperInvariant() == agentThumbprint?.ToUpperInvariant()) {
                                             return true;
+                                        }
                                     }
                                 }
                                 return false;

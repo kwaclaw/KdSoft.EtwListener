@@ -54,6 +54,10 @@
     }
     </script>
 
+    <script>
+        window.clientCertLifeDays = @(Model.ClientCertLifeSpan?.TotalDays.ToString("F0") ?? "null");
+    </script>
+
     <script type="module" src="./index.js"></script>
 }
 

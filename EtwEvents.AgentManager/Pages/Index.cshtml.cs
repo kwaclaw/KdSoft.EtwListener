@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.RazorPages;
+﻿using System;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 
 namespace KdSoft.EtwEvents.WebClient.Pages
@@ -13,6 +14,16 @@ namespace KdSoft.EtwEvents.WebClient.Pages
 
         public void OnGet() {
 
+        }
+
+        public TimeSpan? ClientCertLifeSpan {
+            get {
+                var expiryDate = HttpContext.Connection.ClientCertificate?.NotAfter;
+                if (expiryDate != null) {
+                    return expiryDate.Value - DateTime.Now;
+                }
+                return null;
+            }
         }
 
         //public string ResourceBase64() {
