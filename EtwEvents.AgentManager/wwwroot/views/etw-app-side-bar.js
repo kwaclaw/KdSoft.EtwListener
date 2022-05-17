@@ -184,10 +184,16 @@ class EtwAppSideBar extends LitMvvmElement {
     const onlyModified = entry.modified && !entry.disconnected;
     const playClass = entry.current?.isRunning ? '' : 'text-green-500';
     const stopClass = entry.current?.isRunning ? 'text-red-500' : '';
+    const clientCertLifeDays = Math.floor(entry.current?.clientCertLifeSpan?.seconds / 86400);
+    const clientCertWarningActive = clientCertLifeDays < window.certExpiryWarningDays;
+    const clientCertWarning = `Agent certificate expires in ${clientCertLifeDays} days`;
+
     return html`
       <kdsoft-expander class="w-full" .scheduler=${this.scheduler}>
         <div part="header" slot="header" class="flex items-baseline pr-1 text-white bg-gray-500">
           <label class="pl-1 font-bold text-xl">${entry.state.id}</label>
+          <span id="cert-warning" class="ml-2 fa fas fa-exclamation-triangle text-red-500"
+            title=${clientCertWarning} ?hidden=${!clientCertWarningActive}></span>
           <span class="ml-auto">
             <span class="mr-4">
               ${onlyModified ? html`<button class="mr-1 text-yellow-800 fas fa-pencil-alt"></button>` : nothing}
@@ -207,6 +213,8 @@ class EtwAppSideBar extends LitMvvmElement {
           <div class="pl-1">${entry.state.site}</div>
           <label class="pl-1 font-bold">Host</label>
           <div class="pl-1">${entry.state.host}</div>
+          <label class="pl-1 font-bold">Certificate</label>
+          <div class="pl-1">${clientCertLifeDays} days</div>
         </div>
       </kdsoft-expander>
     `;

@@ -451,7 +451,7 @@ class EtwApp extends LitMvvmElement {
 
     const agentConfigTabType = this._tabClassType('agent-config');
     const agentLiveViewTabType = this._tabClassType('agent-live-view');
-    const certInfoClassType = (window.clientCertLifeDays < 31) ? tabClassList.certInfoWarning : tabClassList.certInfo;
+    const certInfoClassType = (window.clientCertLifeDays < window.certExpiryWarningDays) ? tabClassList.certInfoWarning : tabClassList.certInfo;
 
     const isRunning = activeEntry?.current?.isRunning;
     const isLive = !!this.model.etwEventSource;
@@ -557,7 +557,7 @@ class EtwApp extends LitMvvmElement {
             `
           }
           <div class="flex p-2 border bg-gray-800 text-white">&copy; Karl Waclawek
-            <span class=${classMap(certInfoClassType)}>Client certificate expires in: ${window.clientCertLifeDays} days</span>
+            <span class=${classMap(certInfoClassType)}>User certificate expires in ${window.clientCertLifeDays} days</span>
             <button class="ml-auto" @click=${this._showErrors}>
               ${this.model.fetchErrors.count()} ${i18n.__('Errors')}
             </button>

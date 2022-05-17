@@ -56,6 +56,7 @@
 
     <script>
         window.clientCertLifeDays = @(Model.ClientCertLifeSpan?.TotalDays.ToString("F0") ?? "null");
+        window.certExpiryWarningDays = @(Model.CertExpiryWarningDays);
     </script>
 
     <script type="module" src="./index.js"></script>
