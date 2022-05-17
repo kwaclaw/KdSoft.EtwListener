@@ -2,6 +2,7 @@ syntax = "proto3";
 
 //import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
 //import "google/protobuf/any.proto";
 //import "google/protobuf/wrappers.proto";
 
@@ -84,22 +85,23 @@ message AgentState {
   string id = 1;
   string site = 2;
   string host = 3;
+  google.protobuf.Duration client_cert_life_span = 4;
 
   /// <summary>
   /// Indicates if the session has started and has not ended yet.
   /// </summary>
-  bool is_running = 4;
+  bool is_running = 5;
 
   /// <summary>
   /// Indicates if session has started and then stopped.
   /// Would indicate <c>false</c> if session has not started yet.
   /// </summary>
-  bool is_stopped = 5;
+  bool is_stopped = 6;
 
-  repeated ProviderSetting enabled_providers = 6;
-  ProcessingState processing_state = 7;
-  map<string, EventSinkState> event_sinks = 8;
-  LiveViewOptions live_view_options = 9;
+  repeated ProviderSetting enabled_providers = 7;
+  ProcessingState processing_state = 8;
+  map<string, EventSinkState> event_sinks = 9;
+  LiveViewOptions live_view_options = 10;
 }
 
 message AgentStates {

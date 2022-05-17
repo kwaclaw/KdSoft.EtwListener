@@ -15,6 +15,7 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
 using KdSoft.EtwEvents.Server;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.DependencyInjection;
@@ -300,6 +301,11 @@ namespace KdSoft.EtwEvents.PushAgent
                 processingState.FilterSource = _emptyFilterSource;
 
             var clientCert = (_httpHandler.SslOptions.ClientCertificates as X509Certificate2Collection)?.First();
+            var clientCertLifeSpan = new Duration();
+            if (clientCert != null) {
+                var lifeSpan = clientCert.NotAfter - DateTime.Now;
+                clientCertLifeSpan = Duration.FromTimeSpan(lifeSpan);
+            }
 
             var state = new AgentState {
                 EnabledProviders = { enabledProviders },
@@ -307,6 +313,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 Id = string.Empty,  // will be filled in on server using the client certificate
                 Host = Dns.GetHostName(),
                 Site = clientCert?.GetNameInfo(X509NameType.SimpleName, false) ?? "<Undefined>",
+                ClientCertLifeSpan = clientCertLifeSpan,
                 IsRunning = isRunning,
                 IsStopped = !isRunning,
                 EventSinks = { eventSinkStates },
