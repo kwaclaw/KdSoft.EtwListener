@@ -184,8 +184,9 @@ class EtwAppSideBar extends LitMvvmElement {
     const onlyModified = entry.modified && !entry.disconnected;
     const playClass = entry.current?.isRunning ? '' : 'text-green-500';
     const stopClass = entry.current?.isRunning ? 'text-red-500' : '';
-    const clientCertLifeDays = Math.floor(entry.current?.clientCertLifeSpan?.seconds / 86400);
-    const clientCertWarningActive = clientCertLifeDays < window.certExpiryWarningDays;
+    const lifeSecs = entry.current?.clientCertLifeSpan?.seconds;
+    const clientCertLifeDays = typeof(lifeSecs) === 'number' ? Math.floor(lifeSecs / 86400) : Number.NaN;
+    const clientCertWarningActive = !Number.isNaN(clientCertLifeDays) && (clientCertLifeDays < window.certExpiryWarningDays);
     const clientCertWarning = `Agent certificate expires in ${clientCertLifeDays} days`;
 
     return html`
@@ -214,7 +215,7 @@ class EtwAppSideBar extends LitMvvmElement {
           <label class="pl-1 font-bold">Host</label>
           <div class="pl-1">${entry.state.host}</div>
           <label class="pl-1 font-bold">Certificate</label>
-          <div class="pl-1">${clientCertLifeDays} days</div>
+          <div class="pl-1">${Number.isNaN(clientCertLifeDays) ? '??' : clientCertLifeDays } days</div>
         </div>
       </kdsoft-expander>
     `;

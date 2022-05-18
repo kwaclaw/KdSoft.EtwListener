@@ -23,7 +23,9 @@ const tabBase = {
 };
 
 const certInfoBase = {
-  ...tabBase,
+  'px-6': true,
+  block: true,
+  'focus:outline-none': true,
   'ml-auto': true
 };
 
