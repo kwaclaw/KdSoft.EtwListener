@@ -2,6 +2,7 @@
 Setlocal enabledelayedexpansion
 
 :: Prerequisite: OpenSSL >= 3.0 must be installed - see https://slproweb.com/products/Win32OpenSSL.html
+::               or see https://kb.firedaemon.com/support/solutions/articles/4000121705
 
 :: Example: MakeKdSoftServerCert.cmd -dns sales.my-company.com -email karl@kd-soft.net
 

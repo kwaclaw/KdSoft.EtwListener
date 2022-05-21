@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Elasticsearch.Net" Version="7.17.1" />
+    <PackageReference Include="Elasticsearch.Net" Version="7.17.2" />
   </ItemGroup>
 
   <ItemGroup>

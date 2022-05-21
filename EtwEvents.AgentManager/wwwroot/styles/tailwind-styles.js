@@ -483,6 +483,9 @@ Ensure the default browser behavior of the \`hidden\` attribute.
 .mr-1 {
   margin-right: 0.25rem;
 }
+.ml-2 {
+  margin-left: 0.5rem;
+}
 .mr-4 {
   margin-right: 1rem;
 }
@@ -491,9 +494,6 @@ Ensure the default browser behavior of the \`hidden\` attribute.
 }
 .ml-4 {
   margin-left: 1rem;
-}
-.ml-2 {
-  margin-left: 0.5rem;
 }
 .mr-2 {
   margin-right: 0.5rem;
@@ -747,13 +747,13 @@ Ensure the default browser behavior of the \`hidden\` attribute.
   --tw-text-opacity: 1;
   color: rgb(59 130 246 / var(--tw-text-opacity));
 }
-.text-gray-300 {
-  --tw-text-opacity: 1;
-  color: rgb(209 213 219 / var(--tw-text-opacity));
-}
 .text-blue-400 {
   --tw-text-opacity: 1;
   color: rgb(96 165 250 / var(--tw-text-opacity));
+}
+.text-gray-300 {
+  --tw-text-opacity: 1;
+  color: rgb(209 213 219 / var(--tw-text-opacity));
 }
 .text-yellow-300 {
   --tw-text-opacity: 1;
