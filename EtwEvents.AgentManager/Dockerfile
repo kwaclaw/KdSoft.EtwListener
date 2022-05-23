@@ -42,10 +42,10 @@ FROM build AS publish
 RUN dotnet publish "EtwEvents.AgentManager.csproj" -c Release -o /app/publish
 
 FROM base AS final
-# need custom root certificate in dev and prod images
-WORKDIR /usr/local/share/ca-certificates
-COPY ["./EtwEvents.AgentManager/certificates/Kd-Soft.crt", "./"]
-RUN update-ca-certificates
+# need custom root certificate only in dev image, for production we install it at run time (run-docker.cmd)
+#WORKDIR /usr/local/share/ca-certificates
+#COPY ["./EtwEvents.AgentManager/certificates/Kd-Soft.crt", "./"]
+#RUN update-ca-certificates
 WORKDIR /app
 COPY ["./EventSinks/Deploy", "./EventSinks"]
 COPY --from=publish /app/publish .
