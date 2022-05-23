@@ -39,7 +39,7 @@ We neeed to mount some directories required by Asp.NET 6.0 into pre-determined p
 
 #### Server Certificate arguments
 
-- Obtain  a server certificate, or generate your own (based on the **Kd-Soft.cer** CA certificate). It must be in PKCS12 format.
+- Obtain  a server certificate, or generate your own (based on a custom CA certificate). It must be in PKCS12 format.
 
 - Place it in a directory and mount that directory into the docker container:
    e.g. `--mount type=bind,src=c:/apps/certificates//,dst=/app/certs/,readonly`
@@ -47,8 +47,16 @@ We neeed to mount some directories required by Asp.NET 6.0 into pre-determined p
 - Override the certificate path in `appsettings.json`
   e.g. `-e "Kestrel:Endpoints:Https:Certificate:Path=/app/certs/server-cert.p12"`
 
-- Override the certificate password in `appsettings.json` (or save it as user secret)
+- Override the certificate password in `appsettings.json` (or pass it to "docker run")
   e.g. `-e "Kestrel:Endpoints:Https:Certificate:Password=?????????"`
+
+#### If Needed - Custom Root Certificate
+
+- You server certificate may depend on a custom root certificate, or intermediate CA certificate.
+- Once the container (e.g. MyContainer) is up and running, copy and install the root certificate, like in this example:
+  `docker cp "C:/MyCerts/Kd-Soft.crt" MyContainer:"/usr/local/share/ca-certificates"`
+  `docker exec -dt -w "/usr/local/share/ca-certificates" MyContainer update-ca-certificates`
+- See also run-docker.cmd
 
 #### Event Sink arguments
 
@@ -64,33 +72,37 @@ We neeed to mount some directories required by Asp.NET 6.0 into pre-determined p
 Detailed instructions are out of scope, but there is plenty of documentation online.
 
 **Note about Docker Desktop**:
+
 - When you are using Docker Desktop, then by default the firewall blocks incoming requests, look for rules named "Docker Desktop Backend".
 - Disable 'Block' rules, enable 'Allow' rules, also for Public networks.
 - It is recommended to use a user-defined bridge network instead of the default:
   - pass `--network my-net` argument to docker run,
   - or call `docker network connect my-net my-container`
 
-
 ### Client Authentication
 
-Both, the user accessing the agent manager, and the ETW agent accessing the agent manager are considered clients that need to be authenticated. We use client certificates for both.
-
-We must use a the same self-signed root certificate mentioned above (**Kd-Soft.cer**), as client authentication certificates are provided by us. 
+Both, the user accessing the agent manager, and the ETW agent accessing the agent manager are considered clients that need to be authenticated.
+We use client certificates for both.
 
 - The client certificate must be configured to support client authorization.
+- The client certificate presented by the PushAgent will be authenticated if the DN contains role=etw-pushagent.
+- The client certificate presented by the AgentManager user will be authenticated if the DN contains role=etw-manager.
+- If a client certificate does not have the role above, it can be authenticated by being listed in the AuthorizedCommonNames setting (see below).
 
-- On a Windows client, the self-signed root certificate must be installed in the "**Local Computer\Personal**" folder of the local certificate storage.
+(for the PushAgent client) or the value etw-manager (for the AgentManager user).
 
-- On a Linux client it depends on the distribution. A popular way is:
+- If needed, a custom root certificate must be installed.
   
-  - copy `Kd-Soft.cer` to `/usr/local/share/ca-certificates/`
-  - run `update-ca-certificates` with the proper permissions (root)
+  - On a Windows client, the optional root certificate must be installed in the "**Local Computer\Trusted Root Certification Authorities**" folder of the local certificate storage.
+  - On a Linux client it depends on the distribution. A popular way is:
+    - copy `Kd-Soft.crt` to `/usr/local/share/ca-certificates/`
+    - run `update-ca-certificates` with the proper permissions (root)
 
 - A useful tool for creating certificates is [XCA](https://www.hohnstaedt.de/xca/).
 
-- We also have OpenSSL scripts in the `EtwEvents.PushAgent/certificates` directory
+- We also have OpenSSL scripts in the `EtwEvents.AgentManager/certificates` directory
 
-- We specify authorized users/agents in `appsettings.json`, in the **ClientValidation** or **AgentValidation** section, e.g.:
+- We specify authorized users/agents in `appsettings.json`, in the **ClientValidation** and **AgentValidation** section, e.g.:
   
   ```json
   "ClientValidation": {
