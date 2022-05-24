@@ -43,15 +43,22 @@
 
 ### Client Authentication
 
-We can use a self-signed root certificate, as client authentication certificates are provided by us. 
-
-- The self-signed root certificate must be installed in the "**Local Computer\Trusted Root Certification Authorities**" folder of the local certificate storage. It can be installed by dragging it onto `tools\InstallRootCert.cmd`.
-
+The ETW PushAgent authenticates itself to the AgentManager using a client certificate.
 - The client certificate must be configured to support client authorization.
+- The client certificate presented by the PushAgent will be authorized if the DN contains role=etw-pushagent.
+- If the client certificate does not have the role above, it can be auithorized by being listed in the AuthorizedCommonNames setting of the AgentManager.
 
-- We can create client certificates using the script `certificates\MakeKdSoftClientCert.cmd`.
-  
-  - Another useful tool for creating certificates is [XCA](https://www.hohnstaedt.de/xca/)
+- If needed, a custom root certificate must be installed.
+  - On a Windows client, the optional root certificate must be installed in the "**Local Computer\Trusted Root Certification Authorities**" folder of the local certificate storage.
+  - On a Linux client it depends on the distribution. A popular way is:
+    - copy `Kd-Soft.crt` to `/usr/local/share/ca-certificates/`
+    - run `update-ca-certificates` with the proper permissions (root)
+- If we have a root certificate with its private key, then we can create client certificates.
+  - Modify the script `certificates\MakeKdSoftClientCert.cmd` by replacing "Kd-Soft.crt" and "Kd-Soft.key" with the file names for your root certificate.
+
+- Our scripts in `EtwEvents.PushAgent/certificates`require OpenSSL 3.0 installed.
+  - see https://slproweb.com/products/Win32OpenSSL.html or https://kb.firedaemon.com/support/solutions/articles/4000121705.
+- A useful GUI tool for creating certificates is [XCA](https://www.hohnstaedt.de/xca/).
 
 When a certificate is provided, then the installer will set the certificate's thumprint in `appsettings.Local.json`, in the **Control** section:
 

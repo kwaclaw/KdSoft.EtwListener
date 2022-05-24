@@ -7,7 +7,9 @@
   1) A client certificate, required on new installations, can be re-used on updates.
      - The client certificate must be copied into this directory (once unzipped).
      - The certificate must be a PKCS12 certificate with a `.p12` file extension.
-     - It must be a proper client certificate and must have the DN component `role=etw-pushagent`.
+     - One of these applies:
+        - Use a client certificate where the subject (DN) includes "role=etw-pushagent" 
+        - Use a client certificate where the Common Name (CN) is listed in the Agent Manager's appsettings.json under AgentValidation
      - The installer will use the first matching client certificate it can find in this directory.
   2) The Https URL for the agent manager (which controls the agent service).
 
