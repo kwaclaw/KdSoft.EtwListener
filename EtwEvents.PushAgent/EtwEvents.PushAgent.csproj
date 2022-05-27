@@ -36,7 +36,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="6.0.5" />
-    <PackageReference Include="Microsoft.FASTER.Core" Version="2.0.4" />
+    <PackageReference Include="Microsoft.FASTER.Core" Version="2.0.5" />
   </ItemGroup>
 
   <ItemGroup>

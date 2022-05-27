@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="Grpc.AspNetCore.Server" Version="2.46.0" />
-    <PackageReference Include="Grpc.Tools" Version="2.46.1">
+    <PackageReference Include="Grpc.Tools" Version="2.46.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
