@@ -6,9 +6,12 @@ import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-s
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
 import appStyles from '../styles/etw-app-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
+import dialogStyles from '../styles/dialog-polyfill-styles.js';
 import '../components/etw-checklist.js';
 import * as utils from '../js/utils.js';
 import LiveViewConfigModel from './live-view-config-model.js';
+
+const dialogClass = utils.html5DialogSupported ? '' : 'fixed';
 
 function getPayloadColumnListItemTemplate(item) {
   return html`
@@ -38,6 +41,14 @@ class LiveViewConfig extends LitMvvmElement {
   }
 
   _addPayloadColumnClick() {
+    const dlg = this.renderRoot.getElementById('dlg-add-payload-col');
+    dlg.querySelector('form').reset();
+    dlg.showModal();
+  }
+
+  _okAddPayloadCol(e) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
     const r = this.renderRoot;
     const nameInput = r.getElementById('payload-field');
     const labelInput = r.getElementById('payload-label');
@@ -52,6 +63,14 @@ class LiveViewConfig extends LitMvvmElement {
     nameInput.value = null;
     labelInput.value = null;
     typeSelect.value = 'string';
+
+    const dlg = e.currentTarget.closest('dialog');
+    dlg.close();
+  }
+
+  _cancelAddPayloadCol(e) {
+    const dlg = e.currentTarget.closest('dialog');
+    dlg.close();
   }
 
   _deletePayloadColumnClick(e) {
@@ -98,9 +117,11 @@ class LiveViewConfig extends LitMvvmElement {
       checkboxStyles,
       fontAwesomeStyles,
       appStyles,
+      utils.html5DialogSupported ? dialogStyles : css``,
       css`
         :host {
           display: block;
+          position: relative;
         }
 
         #general {
@@ -124,25 +145,31 @@ class LiveViewConfig extends LitMvvmElement {
           position: relative;
           display: flex;
           flex-direction: column;
-          flex-grow: 1;
           align-items: stretch;
           height: 100%;
         }
 
         #payload-cols {
-          flex-grow: 1;
+          flex: 1;
           height: 100%;
         }
 
-        #payload-fields {
-          flex-grow: 1;
-          margin-top: 0.5rem;
+        #dlg-add-payload-col form {
           display: grid;
-          grid-template-columns: auto auto auto;
-          grid-gap: 5px;
+          grid-template-columns: auto auto;
+          background: rgba(255,255,255,0.3);
+          row-gap: 5px;
+          column-gap: 10px;
         }
       `,
     ];
+  }
+
+  firstRendered() {
+    const payloadDlg = this.renderRoot.getElementById('dlg-add-payload-col');
+    if (!utils.html5DialogSupported) {
+      dialogPolyfill.registerDialog(payloadDlg);
+    }
   }
 
   render() {
@@ -157,7 +184,7 @@ class LiveViewConfig extends LitMvvmElement {
           </etw-checklist>
         </div>
         <div id="payload-cols-wrapper">
-          <div class="flex mb-1">
+          <div class="flex mb-1 pr-2">
             <label for="payload-cols">Payload Columns</label>
             <span class="self-center ml-auto text-gray-500 fas fa-lg fa-plus cursor-pointer select-none"
               @click=${this._addPayloadColumnClick}>
@@ -168,17 +195,30 @@ class LiveViewConfig extends LitMvvmElement {
             .getItemTemplate=${this._getPayloadColumnListItemTemplate}
             allow-drag-drop show-checkboxes>
           </etw-checklist>
-          <div id="payload-fields" class="pt-4 pb-1">
-            <!-- <label class="mr-4" for="payload-field">New</label> -->
-            <input id="payload-field" type="text" form=""
-              placeholder="field name" required @blur=${this._payloadFieldBlur} />
-            <input id="payload-label" type="text" form="" placeholder="field label" required />
+        </div>
+      </div>
+
+      <dialog id="dlg-add-payload-col" class="${dialogClass}">
+        <form name="add-payload-col" @submit=${(e) => this._okAddPayloadCol(e)} @reset=${this._cancelAddPayloadCol}>
+          <label for="payload-field">Field</label>
+          <input id="payload-field" type="text" placeholder="field name" required @blur=${this._payloadFieldBlur} />
+          <label for="payload-label">Label</label>
+          <input id="payload-label" type="text" placeholder="field label" required />
+          <label for="payload-type">Field Type</label>
             <select id="payload-type">
               ${LiveViewConfigModel.columnType.map(ct => html`<option>${ct}</option>`)}
             </select>
+          <span></span>
+          <div class="flex flex-wrap ml-auto mt-2 bt-1">
+            <button type="submit" class="py-1 px-2 ml-auto" title="Add">
+              <i class="fas fa-lg fa-check text-green-500"></i>
+            </button>
+            <button type="reset" class="py-1 px-2" title="Cancel">
+              <i class="fas fa-lg fa-times text-red-500"></i>
+            </button>
           </div>
-        </div>
-      </div>
+        </form>
+      </dialog>
     `;
     return result;
   }
