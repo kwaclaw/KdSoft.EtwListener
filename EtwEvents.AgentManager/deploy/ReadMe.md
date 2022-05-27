@@ -1,6 +1,6 @@
 ## Installing ETW AgentManager as Windows Service
 
-- The installer is shipped as a zip archive, with this file in it.
+- The installer is typically shipped as a zip archive, with this file in it.
 
 - In addition you will also require a server certificate (required on new installations, can be re-used on updates):
   
@@ -35,15 +35,13 @@ One of these applies:
   
   - Note: this will override/replace settings in appsettings.json, but it is not possible to remove existing settings.
 
-- This example will add Brandon Lewis as an authorized to use the agent manager:
+- This example will add John Doe as an authorized user for the agent manager (common name of certificate must be "John Doe"):
   
   ```json
   "ClientValidation": {
     "RootCertificateThumbprint": "d87dce532fb17cabd3804e77d7f344ec4e49c80f",
     "AuthorizedCommonNames": [
-      "Karl Waclawek",
-      "Tom Chandler",
-      "Brandon Lewis"
+      "John Doe"
     ]
   },
   ```

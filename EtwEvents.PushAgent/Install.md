@@ -6,6 +6,7 @@
 ## Install Package
 
 - After preparing the install package, copy the project folder `deploy` to a (temporary) location on the target system.
+  - It is recommended to distribute the `deploy` folder as a zip archive.
 - If applicable, check that the publish profile's target framework is installed.
 - On a new installation
   - Edit the included `appsettings.Local.json` according to the local requirements (see [Local Configuration](#local-configuration) below).
@@ -20,9 +21,9 @@
   - It can be installed by dragging it onto `tools\InstallClientPfx.cmd`, but it will be auto-detected and installed by the installer anyway.
   - The settings in `appsettings[.Local].json` must match the certificate (see [Client Authentication](#client-authentication) below), 
     but that is handled by the installer.
-- Finally, run `InstallService.cmd -installDir <target directory> -url <manager URL>` as administrator (it will prompt for elevation if necessary):
-  - <target directory> and <manager URL> are both optional, the script will prompt for them if not provided.
-  - On an existing installation the <target directory> should probably match the existing install directory.
+- Finally, run `InstallService.cmd (it will prompt for elevation if necessary):
+  - The script will prompt for the `<target directory>` and `<manager URL>`.
+  - On an existing installation the `<target directory>` should probably match the existing install directory.
   - This will install the application as a windows service called "Etw PushAgent".
 
 ### Local Configuration
@@ -46,7 +47,7 @@
 The ETW PushAgent authenticates itself to the AgentManager using a client certificate.
 - The client certificate must be configured to support client authorization.
 - The client certificate presented by the PushAgent will be authorized if the DN contains role=etw-pushagent.
-- If the client certificate does not have the role above, it can be auithorized by being listed in the AuthorizedCommonNames setting of the AgentManager.
+- If the client certificate does not have the role above, it can be authorized by being listed in the AuthorizedCommonNames setting of the AgentManager.
 
 - If needed, a custom root certificate must be installed.
   - On a Windows client, the optional root certificate must be installed in the "**Local Computer\Trusted Root Certification Authorities**" folder of the local certificate storage.
