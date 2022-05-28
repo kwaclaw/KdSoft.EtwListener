@@ -39,3 +39,7 @@ The agent manager is a web site that allows for configuring, starting and stoppi
 * The agent manager does not connect to the agents, it is the agents' responsibility to connect to the agent manager.
 * For build and run instructions, see [ReadMe.md](./EtwEvents.AgentManager/ReadMe.md).
 * Installation can be done using Docker, or as described in [Install.md](./EtwEvents.AgentManager/Install.md) and [deploy/ReadMe.md](./EtwEvents.AgentManager/deploy/ReadMe.md).
+
+### UI Overview
+
+![AgentManager.png](./doc/AgentManager.png)
