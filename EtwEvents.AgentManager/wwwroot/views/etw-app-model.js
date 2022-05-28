@@ -142,15 +142,18 @@ function _updateAgentsMap(agentsMap, agentStates) {
       entry = { state: newState, current: state };
       Object.defineProperty(entry, 'modified', {
         get() {
-          // we ignore the properties isRunning and isStopped for comparison
+          // we ignore the properties isRunning, isStopped, and clientCertLifeSpan for comparison
           const rawState = raw(entry.state);
           const oldIsRunning = rawState.isRunning;
           const oldIsStopped = rawState.isStopped;
+          const oldClientCertLifeSpan = rawState.clientCertLifeSpan;
           rawState.isRunning = entry.current.isRunning;
           rawState.isStopped = entry.current.isStopped;
-          const result = !utils.targetEquals(entry.current, rawState);
+          rawState.clientCertLifeSpan = entry.current.clientCertLifeSpan;
+          const result = !utils.targetEquals(raw(entry.current), rawState);
           rawState.isRunning = oldIsRunning;
           rawState.isStopped = oldIsStopped;
+          rawState.clientCertLifeSpan = oldClientCertLifeSpan;
           return result;
         }
       });
