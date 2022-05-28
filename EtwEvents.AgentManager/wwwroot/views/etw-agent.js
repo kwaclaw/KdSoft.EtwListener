@@ -204,15 +204,15 @@ class EtwAgent extends LitMvvmElement {
         }
         
         #main {
-          height: auto;
-          width: 100%;
+          height: 100%;
+          width: auto;
           position: relative;
-
-          display: grid;
-          grid-template-columns: fit-content(600px) auto;
-          grid-gap: 1em;
-          justify-items: stretch;
-          overflow-y: auto;
+          //columns: 2 auto;
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-start;
+          align-items: center;
+          flex-wrap: wrap;
         }
 
         form {
@@ -228,25 +228,11 @@ class EtwAgent extends LitMvvmElement {
           border-width: 1px;
         }
 
-        #providers {
+        #main > form {
+          width: 100%;
           max-width: 600px;
-        }
-
-        #event-sinks {
-          max-width: 600px;
-        }
-
-        #live-view {
-          max-width: 600px;
-        }
-
-        #processing {
-          grid-column: 2;
-          grid-row: 1 / 3;
-        }
-
-        #processingEdit {
-          margin: 10px;
+          break-inside: avoid;
+          margin: 0.75rem;
         }
 
         #sinktype-ddown {
@@ -310,26 +296,23 @@ class EtwAgent extends LitMvvmElement {
 
         <form id="processing" class="max-w-full border"  @change=${e => this._processingFieldChange(e, activeAgentState)}>
           <div class="flex my-2 pr-2">
-            <span class="font-semibold ${this.model.getProcessingModified(activeEntry) ? 'italic text-red-500' : ''}">Processing</span>
+            <span class="font-semibold ${this.model.getProcessingModified(activeEntry) ? 'italic text-red-500' : ''}">Filter</span>
           </div>
-          <div id="processingEdit">
-            <label for="filterEdit">Filter</label>
-            <filter-edit id="filterEdit" class="p-2" .model=${processingModel.filter}></filter-edit>
-            <hr class="my-3" />
-            <div class="flex flex-wrap mt-2 bt-1">
-              <button type="button" class="py-1 px-2" @click=${() => this.model.testFilter(activeAgentState)} title="Test">
-                <i class="fas fa-lg fa-vial" style="color:orange"></i>
-              </button>
-              <button type="button" class="py-1 px-2" @click=${() => this.model.clearFilter(activeAgentState)} title="Clear">
-                <i class="fas fa-lg fa-ban text-gray-500"></i>
-              </button>
-              <button type="button" class="py-1 px-2 ml-auto" @click=${() => this.model.applyProcessingOptions(activeAgentState)} title="Apply">
-                <i class="fas fa-lg fa-check text-green-500"></i>
-              </button>
-              <button type="button" class="py-1 px-2" @click=${() => this.model.resetProcessingOptions(activeEntry)} title="Reset to Current">
-                <i class="fas fa-lg fa-times text-red-500"></i>
-              </button>
-            </div>
+          <filter-edit id="filterEdit" class="p-2" .model=${processingModel.filter}></filter-edit>
+          <hr class="my-3" />
+          <div class="flex flex-wrap mt-2 bt-1">
+            <button type="button" class="py-1 px-2" @click=${() => this.model.testFilter(activeAgentState)} title="Test">
+              <i class="fas fa-lg fa-vial" style="color:orange"></i>
+            </button>
+            <button type="button" class="py-1 px-2" @click=${() => this.model.clearFilter(activeAgentState)} title="Clear">
+              <i class="fas fa-lg fa-ban text-gray-500"></i>
+            </button>
+            <button type="button" class="py-1 px-2 ml-auto" @click=${() => this.model.applyProcessingOptions(activeAgentState)} title="Apply">
+              <i class="fas fa-lg fa-check text-green-500"></i>
+            </button>
+            <button type="button" class="py-1 px-2" @click=${() => this.model.resetProcessingOptions(activeEntry)} title="Reset to Current">
+              <i class="fas fa-lg fa-times text-red-500"></i>
+            </button>
           </div>
         </form> 
 
@@ -371,7 +354,7 @@ class EtwAgent extends LitMvvmElement {
           </div>
         </form>
 
-        <form id="live-view" class="">
+        <form id="live-view" class="border">
           <div class="flex my-2 pr-2">
             <span class="font-semibold ${this.model.getLiveViewOptionsModified(activeEntry) ? 'italic text-red-500' : ''}">Live View</span>
           </div>
