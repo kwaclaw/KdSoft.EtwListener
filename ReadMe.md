@@ -21,14 +21,14 @@ A typical deployment example with Elastic Search as log destination:
 An agent is a Windows service that can make outging network connections.
 - It is always connected to the agent manager configured during the install.
 - Depending on configuration, the agent can also connect to an external endpoint to send the log events to.
-- For installation instructions, see [Install.md](./EtwEvents.PushAgent/Install.md) and [deploy/ReadMe.md](./EtwEvents.PushAgent/deploy/ReadMe.md).
+- For installation instructions, see [Install.md](EtwEvents.PushAgent/Install.md) and [deploy/ReadMe.md](EtwEvents.PushAgent/deploy/ReadMe.md).
 
 ## Agent Manager
 
 The agent manager is a web site that allows for configuring, starting and stopping connected agents.
 - The agent manager does not connect to the agents, it is the agents' responsibility to connect to the agent manager.
-- For build and run instructions, see [ReadMe.md](./EtwEvents.AgentManager/ReadMe.md).
-- Installation can be done using Docker, or as described in [Install.md](./EtwEvents.AgentManager/Install.md) and [deploy/ReadMe.md](./EtwEvents.AgentManager/deploy/ReadMe.md).
+- For build and run instructions, see [ReadMe.md](EtwEvents.AgentManager/ReadMe.md).
+- Installation can be done using Docker, or as described in [Install.md](EtwEvents.AgentManager/Install.md) and [deploy/ReadMe.md](EtwEvents.AgentManager/deploy/ReadMe.md).
 
 ### UI Overview
 
