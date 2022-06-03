@@ -685,9 +685,6 @@ Ensure the default browser behavior of the \`hidden\` attribute.
 .pb-2 {
   padding-bottom: 0.5rem;
 }
-.pt-4 {
-  padding-top: 1rem;
-}
 .pb-1 {
   padding-bottom: 0.25rem;
 }
