@@ -14,7 +14,7 @@ Agents communicate with the agent manager by establishing an SSE (Server Sent Ev
 - All authentication between Agent and Agent Manager, as well as between User and Agent Manager is based on the use of client certificates.
 
 A typical deployment example with Elastic Search as log destination:
-![ETW Events.png](./doc/ETW%20Events.png)
+![ETW Events.png](doc/ETW%20Events.png)
 
 ## Agent
 
@@ -42,11 +42,12 @@ The UI consists of two main sections, a side bar and a main pane for configurati
 
   All configurations settings can be applied to the running agent and will take effect as soon as possible.
 
-![AgentManager.png](./doc/AgentManager.png)
+![AgentManager.png](doc/AgentManager.png)
 
 - Side Bar:
   - The agent can be started (green triangle) or stopped (red square).
   - Expanding an agent entry shows more details for the agent, including how long the agent's client certificate is still valid.
+
 - Main pane - configuration:
   - The *ETW Providers* section has these fields:
     - The provider's' "well-known" name, or the provider's' GUID.
@@ -67,6 +68,7 @@ The UI consists of two main sections, a side bar and a main pane for configurati
     - There are standard columns for the standard fields in an ETW event.
     - There are *Payload* columns that are specific to each event type.
     - The live view is meant for testing the configuration, it is not intended as a proper event sink.
+
 - Footer
   - Shows how long the user's client certificate is still valid.
   - If any errors in communicating with an agent occurred then the error number will be > 0 and clicking on the Errors label will slide up a list of errors.
