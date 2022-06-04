@@ -48,6 +48,14 @@ class EtwAppSideBar extends LitMvvmElement {
     this.model.refreshState(activeAgentState);
   }
 
+  _searchTextChanged(e) {
+    const searchText = e.currentTarget.value;
+    const regex = new RegExp(searchText, 'i');
+    this.agentChecklistModel.filter = item => {
+      return regex.test(item.state.id);
+    };
+  }
+
   //#region overrides
 
   /* eslint-disable indent, no-else-return */
@@ -241,6 +249,11 @@ class EtwAppSideBar extends LitMvvmElement {
           <!-- </div> -->
         </div>
 
+        <input id="agent-search"
+          type="text"
+          placeholder="search agents"
+          class="p-1"
+          @input="${this._searchTextChanged}" />
         <etw-checklist id="agents" class="text-black"
           .model=${this.agentChecklistModel}
           .scheduler=${this.scheduler}
