@@ -39,6 +39,16 @@ namespace KdSoft.EtwEvents.PushAgent
             this._runtimeAssemblyPaths = Directory.GetFiles(RuntimeEnvironment.GetRuntimeDirectory(), "*.dll");
         }
 
+        static EventSinkService() {
+            // Shared assemblies should be loaded before requested by the EventSinkLoadContext, because
+            // otherwise they would be loaded using default probing which requires the version to match.
+            var ex = new EventSinkException(); // (for IEventSinkFactory)
+            var bs = global::Google.Protobuf.ByteString.Empty;
+            var rs = new RetryStatus(); // (for IEventFilter)
+            var batch = new EtwEventBatch();
+            // more? ILogger should be loaded due to the contructor
+        }
+
         public Type? GetEventSinkFactoryType(DirectoryInfo evtSinkDirInfo, string sinkType, string version) {
             var assemblyPaths = new HashSet<string>(_runtimeAssemblyPaths, StringComparer.CurrentCultureIgnoreCase);
             // see https://docs.microsoft.com/en-us/dotnet/core/tutorials/creating-app-with-plugin-support 
