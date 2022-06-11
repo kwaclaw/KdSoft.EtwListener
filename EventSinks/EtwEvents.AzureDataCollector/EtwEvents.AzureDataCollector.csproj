@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\eventSink.targets" />
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <VersionPrefix>1.0.1</VersionPrefix>
+    <LangVersion>Latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <RootNamespace>KdSoft.EtwEvents.EventSinks</RootNamespace>
+    <AssemblyName>KdSoft.EtwEvents.AzureDataCollectorSink</AssemblyName>
+    <SinkName>DataCollectorSink</SinkName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- see https://docs.microsoft.com/en-us/dotnet/core/tutorials/creating-app-with-plugin-support -->
+    <ProjectReference Include="..\..\EtwEvents.Shared.EventSink\EtwEvents.Shared.EventSink.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\..\EtwEvents.Shared\EtwEvents.Shared.csproj" />
+  </ItemGroup>
+
+</Project>
