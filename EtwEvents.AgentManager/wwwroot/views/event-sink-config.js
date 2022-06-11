@@ -20,6 +20,8 @@ function sinkConfigForm(sinkType) {
       return 'rolling-file-sink-config';
     case 'SeqSink':
       return 'seq-sink-config';
+    case 'DataCollectorSink':
+      return 'data-collector-sink-config';
     default:
       throw new Error(`No configuration form for '${sinkType}'.`);
   }
@@ -39,6 +41,8 @@ function sinkConfigModel(sinkType) {
       return 'rolling-file-sink-config-model';
     case 'SeqSink':
       return 'seq-sink-config-model';
+    case 'DataCollectorSink':
+      return 'data-collector-sink-config-model';
     default:
       throw new Error(`No configuration model for '${sinkType}'.`);
   }

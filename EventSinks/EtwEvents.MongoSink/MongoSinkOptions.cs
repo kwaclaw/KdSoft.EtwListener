@@ -6,6 +6,11 @@ namespace KdSoft.EtwEvents.EventSinks
 {
     public class MongoSinkOptions
     {
+        public MongoSinkOptions() {
+            EventFilterFields = ImmutableArray<string>.Empty;
+            PayloadFilterFields = ImmutableArray<string>.Empty;
+        }
+
         public MongoSinkOptions(string origin, string replicaSet, string database, string collection, IEnumerable<string> eventFilterFields, IEnumerable<string> payloadFilterFields) : this() {
             this.Origin = origin;
             this.ReplicaSet = replicaSet;
@@ -13,11 +18,6 @@ namespace KdSoft.EtwEvents.EventSinks
             this.Collection = collection;
             this.EventFilterFields.AddRange(eventFilterFields);
             this.PayloadFilterFields.AddRange(payloadFilterFields);
-        }
-
-        public MongoSinkOptions() {
-            EventFilterFields = ImmutableArray<string>.Empty;
-            PayloadFilterFields = ImmutableArray<string>.Empty;
         }
 
         public string Origin { get; set; } = string.Empty;

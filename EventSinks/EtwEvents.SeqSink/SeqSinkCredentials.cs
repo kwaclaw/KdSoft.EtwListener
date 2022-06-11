@@ -3,6 +3,7 @@
     public class SeqSinkCredentials
     {
         public SeqSinkCredentials() { }
+
         public SeqSinkCredentials(string apiKey) : this() {
             this.ApiKey = apiKey;
         }

@@ -2,8 +2,8 @@
 {
     public class ElasticSinkCredentials
     {
-        public ElasticSinkCredentials() {
-        }
+        public ElasticSinkCredentials() { }
+
         public ElasticSinkCredentials(string user, string password) : this() {
             this.User = user;
             this.Password = password;

@@ -2,8 +2,8 @@
 {
     public class MongoSinkCredentials
     {
-        public MongoSinkCredentials() {
-        }
+        public MongoSinkCredentials() { }
+
         public MongoSinkCredentials(string database, string user, string password) : this() {
             this.Database = database;
             this.User = user;

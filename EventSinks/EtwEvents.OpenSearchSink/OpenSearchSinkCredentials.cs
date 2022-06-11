@@ -2,8 +2,8 @@
 {
     public class OpenSearchSinkCredentials
     {
-        public OpenSearchSinkCredentials() {
-        }
+        public OpenSearchSinkCredentials() { }
+
         public OpenSearchSinkCredentials(string user, string password) : this() {
             this.User = user;
             this.Password = password;

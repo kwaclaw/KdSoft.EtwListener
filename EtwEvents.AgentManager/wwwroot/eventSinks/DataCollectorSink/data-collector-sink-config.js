@@ -3,7 +3,7 @@ import { Queue, priorities } from '@nx-js/queue-util';
 import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
 import * as utils from '../../js/utils.js';
 
-class SeqSinkConfig extends LitMvvmElement {
+class DataCollectorSinkConfig extends LitMvvmElement {
   constructor() {
     super();
     this.scheduler = window.renderScheduler;
@@ -83,10 +83,12 @@ class SeqSinkConfig extends LitMvvmElement {
           <fieldset>
             <legend>Options</legend>
             <div>
-              <label for="serverUrl">Server Url</label>
-              <input type="url" id="serverUrl" name="serverUrl" size="50" .value=${opts.serverUrl} required></input>
-              <label for="proxyAddress">Proxy Address</label>
-              <input type="url" id="proxyAddress" name="proxyAddress" .value=${opts.proxyAddress}></input>
+              <label for="customerId">Customer Id</label>
+              <input type="text" id="customerId" name="customerId" .value=${opts.customerId} required maxlength="100"></input>
+              <label for="logType">Log Type</label>
+              <input type="text" id="logType" name="logType" .value=${opts.logType}></input>
+              <label for="resourceId">Resource Id</label>
+              <input type="text" id="resourceId" name="resourceId" .value=${opts.resourceId}></input>
             </div>
           </fieldset>
         </section>
@@ -94,8 +96,8 @@ class SeqSinkConfig extends LitMvvmElement {
           <fieldset>
             <legend>Credentials</legend>
             <div>
-              <label for="apiKey">Api Key</label>
-              <input type="password" id="apiKey" name="apiKey" .value=${creds.apiKey}></input>
+              <label for="sharedKey">Shared Key</label>
+              <input type="password" id="sharedKey" name="sharedKey" .value=${creds.sharedKey} required></input>
             </div>
           </fieldset>
         </section>
@@ -105,8 +107,8 @@ class SeqSinkConfig extends LitMvvmElement {
   }
 }
 
-window.customElements.define('seq-sink-config', SeqSinkConfig);
+window.customElements.define('data-collector-sink-config', DataCollectorSinkConfig);
 
-const tag = model => html`<seq-sink-config .model=${model}></seq-sink-config>`;
+const tag = model => html`<data-collector-sink-config .model=${model}></data-collector-sink-config>`;
 
 export default tag;

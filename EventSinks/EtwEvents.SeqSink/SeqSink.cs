@@ -149,9 +149,8 @@ namespace KdSoft.EtwEvents.EventSinks
             _bufferWriter.Write(_newLine.Span);
         }
 
-        async Task<bool> FlushAsyncInternal(ReadOnlyMemory<byte> eventBatch) {
-            var minSeqLevel = await PostAsync(_http, _requestUri, eventBatch).ConfigureAwait(false);
-            _bufferWriter.Clear();
+        async Task<bool> FlushAsyncInternal(ReadOnlyMemory<byte> evtBatchBytes) {
+            var minSeqLevel = await PostAsync(_http, _requestUri, evtBatchBytes).ConfigureAwait(false);
             if (minSeqLevel != null) {
                 this._maxTraceEventLevel = FromSeqLogLevel(minSeqLevel.Value);
             }
@@ -162,18 +161,22 @@ namespace KdSoft.EtwEvents.EventSinks
             if (IsDisposed || RunTask.IsCompleted)
                 return false;
             try {
+                _bufferWriter.Clear();
                 foreach (var evt in evtBatch.Events) {
                     WriteEventJson(evt);
                 }
                 // flush
-                var eventBatch = _bufferWriter.WrittenMemory;
-                if (eventBatch.IsEmpty)
+                var evtBatchBytes = _bufferWriter.WrittenMemory;
+                if (evtBatchBytes.IsEmpty)
                     return true;
-                return await FlushAsyncInternal(eventBatch).ConfigureAwait(false);
+                return await FlushAsyncInternal(evtBatchBytes).ConfigureAwait(false);
             }
             catch (Exception ex) {
                 _tcs.TrySetException(ex);
                 return false;
+            }
+            finally {
+                _bufferWriter.Clear();
             }
         }
 

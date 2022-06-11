@@ -34,5 +34,29 @@ namespace KdSoft.EtwLogging
 
             jsonWriter.WriteEndObject();
         }
+
+
+        // Summary:
+        //     A name for the event. This is simply the concatenation of the task and opcode
+        //     names (separated by a /). If the event has no opcode, then the event name is
+        //     just the task name. See TraceEvent.EventName
+        internal string _eventName;
+        public string EventName {
+            get {
+                if (_eventName == null) {
+                    string text = TaskName;
+                    // eventNameIsJustTaskName: (text == "EventWriteString") || (text == "EventID(" + Id.ToString() + ")");
+                    if (Opcode == 0 || string.IsNullOrEmpty(OpcodeName) || (text == "EventWriteString") || (text == "EventID(" + Id.ToString() + ")")) {
+                        _eventName = text;
+                    }
+                    else {
+                        _eventName = text + "/" + OpcodeName;
+                    }
+                }
+
+                return _eventName;
+            }
+        }
+
     }
 }
