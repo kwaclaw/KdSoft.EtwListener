@@ -23,6 +23,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using pb = global::Google.Protobuf;
+using fu = KdSoft.EtwEvents.FilterUtils;
 
 namespace KdSoft.EtwEvents.PushAgent
 {
@@ -126,7 +127,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     var emptyFilter = string.IsNullOrEmpty(sse.Data) ? null : Filter.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
                     if (emptyFilter == null)
                         return;
-                    _emptyFilterSource = SessionWorker.BuildFilterSource(emptyFilter);
+                    _emptyFilterSource = fu.BuildFilterSource(emptyFilter);
                     break;
                 case Constants.TestFilterEvent:
                     // WithDiscardUnknownFields does currently not work, so we should fix this at source

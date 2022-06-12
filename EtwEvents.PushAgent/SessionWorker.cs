@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Channels;
@@ -20,7 +18,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using cat = Microsoft.CodeAnalysis.Text;
+using fu = KdSoft.EtwEvents.FilterUtils;
 
 namespace KdSoft.EtwEvents.PushAgent
 {
@@ -102,112 +100,12 @@ namespace KdSoft.EtwEvents.PushAgent
 
         #region Processing
 
-        public static (string? source, List<string> markers) BuildTemplateSource(Filter filter) {
-            var sb = new StringBuilder();
-            var markers = new List<string>();
-            if (filter.FilterParts.Count == 0) {
-                return (null, markers);
-            }
-            int indx = 0;
-            foreach (var filterPart in filter.FilterParts) {
-                var partName = filterPart.Name?.Trim();
-                if (string.IsNullOrEmpty(partName)) {
-                    return (null, markers);
-                }
-                if (partName.StartsWith("template", StringComparison.OrdinalIgnoreCase)) {
-                    sb.Append(filterPart.Code);
-                }
-                else {
-                    var marker = $"\u001D{indx++}";
-                    sb.Append(marker);
-                    markers.Add(marker);
-                }
-            }
-
-            var source = sb.ToString();
-            if (string.IsNullOrWhiteSpace(source)) {
-                source = null;
-            }
-            return (source, markers);
-        }
-
-        public static List<cat.TextChange> BuildSourceChanges(string initSource, IList<string> markers, Filter filter) {
-            var sb = new StringBuilder();
-            int indx = 0;
-            var partChanges = new List<cat.TextChange>(markers.Count);
-            foreach (var filterPart in filter.FilterParts) {
-                var partName = filterPart.Name?.Trim();
-                if (string.IsNullOrEmpty(partName) || partName.StartsWith("template", StringComparison.OrdinalIgnoreCase)) {
-                    continue;
-                }
-
-                int insertionIndex = initSource.IndexOf(markers[indx++], StringComparison.Ordinal);
-                sb.Clear();
-
-                partChanges.Add(new cat.TextChange(new cat.TextSpan(insertionIndex, 2), filterPart.Code));
-            }
-            return partChanges;
-        }
-
-        public static (cat.SourceText? sourceText, IReadOnlyList<cat.TextChangeRange>? dynamicRanges) BuildSourceText(Filter filter) {
-            (cat.SourceText? sourceText, IReadOnlyList<cat.TextChangeRange>? dynamicRanges) result;
-
-            var (templateSource, markers) = BuildTemplateSource(filter);
-            if (templateSource == null)
-                return (null, null);
-
-            var partChanges = BuildSourceChanges(templateSource, markers, filter);
-            Debug.Assert(partChanges.Count == markers.Count);
-            if (partChanges.Count == 0)
-                return (null, null);
-
-            var initSourceText = cat.SourceText.From(templateSource);
-            result.sourceText = initSourceText.WithChanges(partChanges);
-            result.dynamicRanges = result.sourceText.GetChangeRanges(initSourceText);
-
-            return result;
-        }
-
-        public static IReadOnlyList<cat.LinePositionSpan> GetPartLineSpans(cat.SourceText sourceText, IReadOnlyList<cat.TextChangeRange> dynamicRanges) {
-            var result = new cat.LinePositionSpan[dynamicRanges.Count];
-            int offset = 0;
-            var lines = sourceText.Lines;
-            for (int indx = 0; indx < dynamicRanges.Count; indx++) {
-                var newLen = dynamicRanges[indx].NewLength;
-                var span = new cat.TextSpan(dynamicRanges[indx].Span.Start + offset, newLen);
-                result[indx] = lines.GetLinePositionSpan(span);
-
-                offset += newLen - 2;
-            }
-            return result;
-        }
-
-        public static FilterSource BuildFilterSource(cat.SourceText sourceText, IReadOnlyList<cat.TextChangeRange> dynamicRanges, Filter filter) {
-            var dynamicLineSpans = GetPartLineSpans(sourceText, dynamicRanges!);
-            var dynamicParts = filter.FilterParts.Where(fp => fp.Name.StartsWith("dynamic", StringComparison.OrdinalIgnoreCase)).ToList();
-            return new FilterSource { TemplateVersion = filter.TemplateVersion }
-                .AddSourceLines(sourceText.Lines)
-                .AddDynamicLineSpans(dynamicLineSpans, dynamicParts);
-        }
-
-        public static FilterSource? BuildFilterSource(Filter filter) {
-            var (sourceText, dynamicRanges) = BuildSourceText(filter);
-            if (sourceText == null)
-                return null;
-
-            var dynamicLineSpans = GetPartLineSpans(sourceText, dynamicRanges!);
-            var dynamicParts = filter.FilterParts.Where(fp => fp.Name.StartsWith("dynamic", StringComparison.OrdinalIgnoreCase)).ToList();
-            return new FilterSource { TemplateVersion = filter.TemplateVersion }
-                .AddSourceLines(sourceText.Lines)
-                .AddDynamicLineSpans(dynamicLineSpans, dynamicParts);
-        }
-
         public static BuildFilterResult TestFilter(Filter filter) {
             var result = new BuildFilterResult();
 
             // an empty filter is OK
             if (filter.FilterParts.Count > 0) {
-                var (sourceText, dynamicRanges) = BuildSourceText(filter);
+                var (sourceText, dynamicRanges) = fu.BuildSourceText(filter);
                 if (sourceText == null) {
                     var diagnostic = Diagnostic.Create(
                         "FL1000", "Filter", "Input filter not well formed.", DiagnosticSeverity.Error, DiagnosticSeverity.Error, true, 0
@@ -217,7 +115,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 else {
                     var diagnostics = RealTimeTraceSession.TestFilter(sourceText);
                     result.AddDiagnostics(diagnostics);
-                    result.FilterSource = BuildFilterSource(sourceText, dynamicRanges!, filter);
+                    result.FilterSource = fu.BuildFilterSource(sourceText, dynamicRanges!, filter);
                 }
             }
 
@@ -231,7 +129,7 @@ namespace KdSoft.EtwEvents.PushAgent
             var result = new BuildFilterResult();
 
             if (options.Filter.FilterParts.Count > 0) {
-                var (sourceText, dynamicRanges) = BuildSourceText(options.Filter);
+                var (sourceText, dynamicRanges) = fu.BuildSourceText(options.Filter);
                 if (sourceText == null) {
                     var diagnostic = Diagnostic.Create(
                         "FL1000", "Filter", "Input filter not well formed.", DiagnosticSeverity.Error, DiagnosticSeverity.Error, true, 0
@@ -241,7 +139,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 else {
                     var diagnostics = ses.SetFilter(sourceText, _config);
                     result.AddDiagnostics(diagnostics);
-                    result.FilterSource = BuildFilterSource(sourceText, dynamicRanges!, options.Filter);
+                    result.FilterSource = fu.BuildFilterSource(sourceText, dynamicRanges!, options.Filter);
                 }
             }
             else {
