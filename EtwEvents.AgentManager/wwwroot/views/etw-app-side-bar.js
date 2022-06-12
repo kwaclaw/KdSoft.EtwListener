@@ -181,6 +181,14 @@ class EtwAppSideBar extends LitMvvmElement {
           background-color: inherit;
         }
 
+        #agents::part(cert-warning) {
+          visibility: hidden;
+        }
+
+        #agents::part(cert-warning).warning-active {
+          visibility: visible;
+        }
+
         .fa-lg.fa-eye, .fa-lg.fa-file-archive {
           min-width: 2em;
         }
@@ -195,14 +203,15 @@ class EtwAppSideBar extends LitMvvmElement {
     const lifeSecs = entry.current?.clientCertLifeSpan?.seconds;
     const clientCertLifeDays = typeof(lifeSecs) === 'number' ? Math.floor(lifeSecs / 86400) : Number.NaN;
     const clientCertWarningActive = !Number.isNaN(clientCertLifeDays) && (clientCertLifeDays < window.certExpiryWarningDays);
-    const clientCertWarning = `Agent certificate expires in ${clientCertLifeDays} days`;
+    const clientCertWarning = clientCertWarningActive ? `Agent certificate expires in ${clientCertLifeDays} days` : '';
+    // we need to target this class through a part: e.g. "#agents::part(cert-warning)", as it is inside a shadow root
+    const warningActive = clientCertWarningActive ? 'warning-active' : '';
 
     return html`
       <kdsoft-expander class="w-full" .scheduler=${this.scheduler}>
         <div part="header" slot="header" class="flex items-baseline pr-1 text-white bg-gray-500">
           <label class="pl-1 font-bold text-xl">${entry.state.id}</label>
-          <span id="cert-warning" class="ml-2 fa fas fa-exclamation-triangle text-red-500"
-            title=${clientCertWarning} ?hidden=${!clientCertWarningActive}></span>
+          <span part="cert-warning" class="ml-2 fa fas fa-exclamation-triangle text-red-500 ${warningActive}" title=${clientCertWarning}></span>
           <span class="ml-auto">
             <span class="mr-4">
               ${onlyModified ? html`<button class="mr-1 text-yellow-800 fas fa-pencil-alt"></button>` : nothing}
