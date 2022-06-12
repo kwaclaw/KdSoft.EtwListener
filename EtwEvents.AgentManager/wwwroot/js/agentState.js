@@ -9,7 +9,7 @@ class AgentState {
     this.isStopped = false;
     this.clientCertLifeSpan = null;
     this.enabledProviders = enabledProviders || [];
-    this.processingState = processingState || {};
+    this.processingState = processingState || { filterSource: {} };
     this.eventSinks = eventSinks || {};
     this.liveViewOptions = liveViewOptions || {};
   }

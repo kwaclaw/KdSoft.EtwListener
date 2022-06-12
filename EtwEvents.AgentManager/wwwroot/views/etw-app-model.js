@@ -38,54 +38,63 @@ function _enhanceProviderState(provider) {
 
 // adds view models and view related methods to agent state
 function _enhanceAgentState(agentState, eventSinkInfos) {
-  for (const provider of agentState.enabledProviders) {
-    _enhanceProviderState(provider);
-  }
-
-  if (!agentState.addProvider) {
-    agentState.addProvider = (name, level) => {
-      const newProvider = _enhanceProviderState({ name, level, matchKeywords: 0 });
-      agentState.enabledProviders.splice(0, 0, newProvider);
-      agentState.enabledProviders.forEach(p => {
-        p.expanded = false;
-      });
-      newProvider.expanded = true;
-    };
-  }
-
-  if (!agentState.removeProvider) {
-    agentState.removeProvider = name => {
-      const index = agentState.enabledProviders.findIndex(p => p.name === name);
-      if (index >= 0) agentState.enabledProviders.splice(index, 1);
-    };
-  }
-
-  if (!(agentState.processingModel instanceof ProcessingModel)) {
-    agentState.processingModel = new ProcessingModel(agentState.processingState.filterSource);
-  } else {
-    agentState.processingModel.refresh(agentState.processingState.filterSource);
-  }
-
-  for (const sinkStateEntry of Object.entries(agentState.eventSinks)) {
-    const sinkState = sinkStateEntry[1];
-    const sinkInfo = eventSinkInfos.find(
-      si => si.sinkType == sinkState.profile.sinkType && si.version == sinkState.profile.version
-    );
-    if (sinkInfo) {
-      sinkState.configViewUrl = sinkInfo.configViewUrl;
-      sinkState.configModelUrl = sinkInfo.configModelUrl;
+  try {
+    for (const provider of agentState.enabledProviders) {
+      _enhanceProviderState(provider);
     }
-  }
 
-  // liveViewOptions should not trigger reactions to avoid recursion
-  const liveViewOptions = raw(agentState.liveViewOptions) || new LiveViewOptions();
-  if (!(agentState.liveViewConfigModel instanceof LiveViewConfigModel)) {
-    agentState.liveViewConfigModel = new LiveViewConfigModel(liveViewOptions);
-  } else {
-    agentState.liveViewConfigModel.refresh(liveViewOptions);
-  }
+    if (!agentState.addProvider) {
+      agentState.addProvider = (name, level) => {
+        const newProvider = _enhanceProviderState({ name, level, matchKeywords: 0 });
+        agentState.enabledProviders.splice(0, 0, newProvider);
+        agentState.enabledProviders.forEach(p => {
+          p.expanded = false;
+        });
+        newProvider.expanded = true;
+      };
+    }
 
-  return agentState;
+    if (!agentState.removeProvider) {
+      agentState.removeProvider = name => {
+        const index = agentState.enabledProviders.findIndex(p => p.name === name);
+        if (index >= 0) agentState.enabledProviders.splice(index, 1);
+      };
+    }
+
+    if (!(agentState.processingModel instanceof ProcessingModel)) {
+      agentState.processingState ||= { filterSource: {} };
+      agentState.processingModel = new ProcessingModel(agentState.processingState.filterSource);
+    } else {
+      agentState.processingModel.refresh(agentState.processingState.filterSource);
+    }
+
+    for (const sinkStateEntry of Object.entries(agentState.eventSinks)) {
+      const sinkState = sinkStateEntry[1];
+      const sinkInfo = eventSinkInfos.find(
+        si => si.sinkType == sinkState.profile.sinkType && si.version == sinkState.profile.version
+      );
+      if (sinkInfo) {
+        sinkState.configViewUrl = sinkInfo.configViewUrl;
+        sinkState.configModelUrl = sinkInfo.configModelUrl;
+      }
+    }
+
+    // liveViewOptions should not trigger reactions to avoid recursion
+    const liveViewOptions = raw(agentState.liveViewOptions) || new LiveViewOptions();
+    if (!(agentState.liveViewConfigModel instanceof LiveViewConfigModel)) {
+      agentState.liveViewConfigModel = new LiveViewConfigModel(liveViewOptions);
+    } else {
+      agentState.liveViewConfigModel.refresh(liveViewOptions);
+    }
+
+    return agentState;
+  }
+  catch (error) {
+    console.error(error);
+    // prevent infinite recursion via re-rendering etw-app.js
+    window.queueMicrotask(() => window.etwApp.model.handleAppError(error));
+    return null;
+  }
 }
 
 // we need to update the array (list) of agents in place, because we have external references (e.g. checklist)
@@ -108,6 +117,7 @@ function _updateAgentsList(agentsList, agentsMap) {
 }
 
 function _convertEventSinkProfiles(agentState) {
+  agentState.eventSinks ||= {};
   for (const [name, sinkState] of Object.entries(agentState.eventSinks)) {
     const sinkProfile = sinkState.profile;
     sinkProfile.options = JSON.parse(sinkProfile.options);
@@ -130,6 +140,7 @@ function _updateAgentsMap(agentsMap, agentStates) {
   // agentStates have unique ids (case-insensitive) - //TODO server culture vs local culture?
   for (const state of (agentStates || [])) {
     // providers should be sorted to allow proper "modified" detection
+    state.enabledProviders ||= [];
     state.enabledProviders.sort((a, b) => utils.compareIgnoreCase(a.name, b.name));
 
     // convert eventSinkProfile.options/credentials from a JSON string to a JSON object
@@ -274,6 +285,16 @@ class EtwAppModel {
     rawThis._errorTimeout = window.setTimeout(() => { this.showLastError = false; }, 9000);
   }
 
+  handleAppError(error) {
+    if (error && error instanceof Error) {
+      error = { title: `JS: ${error.message || 'application error'}` };
+    } else if (!error || typeof error !== 'object') {
+      error = { title: `JS: ${error || 'application error'}` };
+    }
+
+    this.handleFetchError(error);
+  }
+
   keepErrorsOpen() {
     const rawThis = raw(this);
     if (rawThis._errorTimeout) {
@@ -283,9 +304,10 @@ class EtwAppModel {
 
   //#region Agents
 
+  get agents() { return this._agents; }
+
   getActiveEntry() { return raw(this)._agentsMap.get(this.activeAgentId); }
 
-  get agents() { return this._agents; }
   get activeAgentState() {
     const activeEntry = this.getActiveEntry();
     if (!activeEntry) return null;
