@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
+using fu = KdSoft.EtwEvents.FilterUtils;
 
 namespace KdSoft.EtwEvents.AgentManager
 {
@@ -27,7 +28,17 @@ namespace KdSoft.EtwEvents.AgentManager
         public AgentProxy(string agentId, Channel<ControlEvent> channel, ILogger logger) {
             this._channel = channel;
             this._logger = logger;
-            this._state = new AgentState { Id = agentId };
+            // the default state should have reasonable default properties
+            var emptyFilter = Filter.MergeFilterTemplate();
+            var emptyFilterSource = fu.BuildFilterSource(emptyFilter);
+            this._state = new AgentState {
+                Id = agentId,
+                Host = "<Pending>",
+                Site = "<Pending>",
+                ClientCertLifeSpan = new Google.Protobuf.WellKnownTypes.Duration(),
+                ProcessingState = new ProcessingState { FilterSource = emptyFilterSource },
+                LiveViewOptions = new LiveViewOptions()
+            };
             this._pendingResponses = new Dictionary<string, TaskCompletionSource<string>>();
         }
 

@@ -62,7 +62,13 @@ function _enhanceAgentState(agentState, eventSinkInfos) {
     }
 
     if (!(agentState.processingModel instanceof ProcessingModel)) {
-      agentState.processingState ||= { filterSource: {} };
+      agentState.processingState ||= {
+        filterSource: {
+          templateVersion: 0,
+          sourceLines: [],
+          dynamicLineSpans: []
+        }
+      };
       agentState.processingModel = new ProcessingModel(agentState.processingState.filterSource);
     } else {
       agentState.processingModel.refresh(agentState.processingState.filterSource);
