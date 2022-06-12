@@ -135,38 +135,39 @@ namespace KdSoft.EtwEvents.EventSinks
             }
         }
 
-        static void WriteEventJson(Utf8JsonWriter jsonWriter, EtwEvent evt) {
-            jsonWriter.WriteStartObject();
+        void WriteEventJson(EtwEvent evt) {
+            _jsonWriter.WriteStartObject();
 
-            jsonWriter.WriteString("providerName", evt.ProviderName);
-            jsonWriter.WriteNumber("channel", evt.Channel);
-            jsonWriter.WriteNumber("id", evt.Id);
-            jsonWriter.WriteNumber("keywords", evt.Keywords);
-            jsonWriter.WriteString("level", evt.Level.ToString());
-            jsonWriter.WriteNumber("opcode", evt.Opcode);
-            jsonWriter.WriteString("opcodeName", evt.OpcodeName);
-            jsonWriter.WriteString("taskName", evt.TaskName);
+            _jsonWriter.WriteString("site", _context.SiteName);
+            _jsonWriter.WriteString("providerName", evt.ProviderName);
+            _jsonWriter.WriteNumber("channel", evt.Channel);
+            _jsonWriter.WriteNumber("id", evt.Id);
+            _jsonWriter.WriteNumber("keywords", evt.Keywords);
+            _jsonWriter.WriteString("level", evt.Level.ToString());
+            _jsonWriter.WriteNumber("opcode", evt.Opcode);
+            _jsonWriter.WriteString("opcodeName", evt.OpcodeName);
+            _jsonWriter.WriteString("taskName", evt.TaskName);
             if (evt.TimeStamp == null)
-                jsonWriter.WriteString("timeStamp", DateTimeOffset.UtcNow.ToString("o"));
+                _jsonWriter.WriteString("timeStamp", DateTimeOffset.UtcNow.ToString("o"));
             else {
-                jsonWriter.WriteString("timeStamp", evt.TimeStamp.ToDateTimeOffset().ToString("o"));
+                _jsonWriter.WriteString("timeStamp", evt.TimeStamp.ToDateTimeOffset().ToString("o"));
             }
-            jsonWriter.WriteNumber("version", evt.Version);
+            _jsonWriter.WriteNumber("version", evt.Version);
 
-            jsonWriter.WriteStartObject("payload");
+            _jsonWriter.WriteStartObject("payload");
             foreach (var payload in evt.Payload) {
-                jsonWriter.WriteString(payload.Key, payload.Value);
+                _jsonWriter.WriteString(payload.Key, payload.Value);
             }
-            jsonWriter.WriteEndObject();
+            _jsonWriter.WriteEndObject();
 
-            jsonWriter.WriteEndObject();
+            _jsonWriter.WriteEndObject();
         }
 
         void WriteEventBatchJson(EtwEventBatch evtBatch) {
             _jsonWriter.Reset();
             _jsonWriter.WriteStartArray();
             foreach (var evt in evtBatch.Events) {
-                WriteEventJson(_jsonWriter, evt);
+                WriteEventJson(evt);
             }
             _jsonWriter.WriteEndArray();
             _jsonWriter.Flush();

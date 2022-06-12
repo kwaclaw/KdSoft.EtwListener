@@ -36,13 +36,15 @@ namespace KdSoft.EtwEvents.EventSinks
                 http.DefaultRequestHeaders.Add("Accept", "application/json");
                 http.DefaultRequestHeaders.Add("time-generated-field", TimeStampField);
 
+                // the Log-Type header should indicate the type of record, that is, the set of fields in the event
                 var logType = options.LogType;
                 if (string.IsNullOrWhiteSpace(logType))
-                    logType = context.SiteName;
+                    logType = "Default";
                 // replace invalid characters with '_'
-                if (logType != null) {
-                    logType = Regex.Replace(logType, "[^A-Za-z0-9_]", "_");
-                }
+                logType = Regex.Replace(logType, "[^A-Za-z0-9_]", "_");
+                // enforce max length constraint by trimming extra length
+                if (logType.Length > 100)
+                    logType = logType.Substring(0, 100);
                 http.DefaultRequestHeaders.Add("Log-Type", logType);
 
                 if (!string.IsNullOrWhiteSpace(options.ResourceId))

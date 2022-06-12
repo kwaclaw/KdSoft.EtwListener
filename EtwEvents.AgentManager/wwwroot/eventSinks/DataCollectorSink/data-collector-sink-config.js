@@ -23,6 +23,14 @@ class DataCollectorSinkConfig extends LitMvvmElement {
     this.model.credentials[e.target.name] = utils.getFieldValue(e.target);
   }
 
+  _logTypeInvalid(e) {
+    if (e.currentTarget.validity.patternMismatch) {
+      e.currentTarget.setCustomValidity(`Log Type can only include letters, numbers, and '_'.`);
+    } else {
+      e.currentTarget.setCustomValidity('');
+    }
+  }
+
   // first event when model is available
   beforeFirstRender() {
     //
@@ -86,7 +94,7 @@ class DataCollectorSinkConfig extends LitMvvmElement {
               <label for="customerId">Customer Id</label>
               <input type="text" id="customerId" name="customerId" .value=${opts.customerId} required maxlength="100"></input>
               <label for="logType">Log Type</label>
-              <input type="text" id="logType" name="logType" .value=${opts.logType}></input>
+              <input type="text" id="logType" name="logType" required pattern="[A-Za-z0-9_]*" .value=${opts.logType} @invalid=${this._logTypeInvalid}></input>
               <label for="resourceId">Resource Id</label>
               <input type="text" id="resourceId" name="resourceId" .value=${opts.resourceId}></input>
             </div>
