@@ -2,13 +2,13 @@
 
 import { html, nothing } from 'lit';
 import { classMap } from 'lit/directives/class-map.js';
-import { repeat } from 'lit/directives/repeat.js';
 import { Queue, priorities } from '@nx-js/queue-util';
 import { LitMvvmElement, css, BatchScheduler } from '@kdsoft/lit-mvvm';
 import './etw-app-side-bar.js';
 import './etw-agent.js';
 import './live-view.js';
-import * as utils from '../js/utils.js';
+import './etw-error-list.js';
+import './error-count.js';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
@@ -134,7 +134,7 @@ class EtwApp extends LitMvvmElement {
   _errSizeDown(e) {
     if (e.buttons !== 1) return;
 
-    this._errorResizeEl = this.renderRoot.getElementById('error-resizable');
+    this._errorResizeEl = this.renderRoot.getElementById('error-list');
     this.model.keepErrorsOpen();
 
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -168,19 +168,6 @@ class EtwApp extends LitMvvmElement {
     this._errorResizeEl = null;
     e.currentTarget.releasePointerCapture(e.pointerId);
     e.currentTarget.onpointermove = null;
-  }
-
-  _errorGridDown(e) {
-    this.model.keepErrorsOpen();
-  }
-
-  _errorDetailClick(e) {
-    e.currentTarget.classList.toggle('show-detail');
-  }
-
-  _closeError() {
-    this.model.showErrors = false;
-    this.model.showLastError = false;
   }
 
   // assumes error is problem details object - see https://tools.ietf.org/html/rfc7807
@@ -401,48 +388,6 @@ class EtwApp extends LitMvvmElement {
           width: 100%;
           cursor: n-resize;
         }
-
-        #error-resizable {
-          position: relative;
-          height: var(--error-height, 0px);
-        }
-
-        #error-grid {
-          box-sizing: border-box;
-          position: absolute;
-          left: 0;
-          right: 0;
-          top: 0;
-          bottom: 0;
-          grid-template-columns: fit-content(18em) 1fr;
-        }
-
-        #error-close {
-          position: sticky;
-          top: 0;
-          justify-self: end;
-          grid-column: 1/-1;
-        }
-
-        #error-grid .kds-row > div {
-          background-color: #feb2b2;
-        }
-
-        #error-grid .kds-row > pre {
-          grid-column: 1/-1;
-          margin-left: 3em;
-          padding: 8px 4px;
-          outline: 1px solid #c8c8c8;
-          overflow: hidden;
-          white-space: nowrap;
-          text-overflow: ellipsis;
-        }
-
-        #error-grid .kds-row > .show-detail {
-          max-height: 300px;
-          overflow: scroll;
-          white-space: pre;
-        }
       `
     ];
   }
@@ -463,7 +408,6 @@ class EtwApp extends LitMvvmElement {
       <style>
         :host {
           --side-bar-width: ${this.model.sideBarWidth};
-          --error-height: ${this.model.errorHeight};
         }
       </style>
       <div id="container">
@@ -524,44 +468,14 @@ class EtwApp extends LitMvvmElement {
             ? nothing
             : html`
               <div id="error-resize" @pointerdown=${this._errSizeDown} @pointerup=${this._errSizeUp}></div>
-
-              <div id="error-resizable">
-                <div id="error-grid" class="kds-container px-2 pt-0 pb-2" @pointerdown=${this._errorGridDown}>
-                <button id="error-close" class="p-1 text-gray-500" @click=${this._closeError}>
-                  <span aria-hidden="true" class="fas fa-lg fa-times"></span>
-                </button>
-                ${repeat(
-                  this.model.fetchErrors.reverseItemIterator(),
-                  item => item.sequenceNo,
-                  item => {
-                    if (item instanceof Error) {
-                      return html`
-                        <div class="kds-row">
-                          <div>${item.timeStamp}</div>
-                          <div>${item.name}: ${item.message}</div>
-                          ${item.fileName ? html`<div>${item.fileName} (${item.lineNumber}:${item.columnNumber})</div>` : ''}
-                          ${item.stack ? html`<pre @click=${this._errorDetailClick}>${item.stack}</pre>` : ''}
-                        </div>
-                      `;
-                    } else {
-                      return html`
-                        <div class="kds-row">
-                          <div>${item.timeStamp}</div>
-                          <div>${item.title}</div>
-                          <pre @click=${this._errorDetailClick}>${item.detail}</pre>
-                        </div>
-                      `;
-                    }
-                  }
-                )}
-                </div>
-              </div>
+              <etw-error-list id="error-list" .model=${this.model}></etw-error-list>
             `
           }
           <div class="flex p-2 border bg-gray-800 text-white">&copy; Karl Waclawek
             <span class=${classMap(certInfoClassType)}>User certificate expires in ${window.clientCertLifeDays} days</span>
             <button class="ml-auto" @click=${this._showErrors}>
-              ${this.model.fetchErrors.count()} ${i18n.__('Errors')}
+              <!-- using a web component with independent render scheduling prevents rendering recursion when errors happen during rendering -->
+              <error-count .model=${this.model}></error-count>
             </button>
           </div>
         </footer>
