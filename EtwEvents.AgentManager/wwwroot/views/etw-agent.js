@@ -235,6 +235,10 @@ class EtwAgent extends LitMvvmElement {
           margin: 0.75rem;
         }
 
+        #main > form#processing {
+          max-width: 1200px;
+        }
+
         #sinktype-ddown {
           min-width: 12rem;
         }
@@ -294,28 +298,6 @@ class EtwAgent extends LitMvvmElement {
           </div>
         </form>
 
-        <form id="processing" class="max-w-full border"  @change=${e => this._processingFieldChange(e, activeAgentState)}>
-          <div class="flex my-2 pr-2">
-            <span class="font-semibold ${this.model.getProcessingModified(activeEntry) ? 'italic text-red-500' : ''}">Filter</span>
-          </div>
-          <filter-edit id="filterEdit" class="p-2" .model=${processingModel.filter}></filter-edit>
-          <hr class="my-3" />
-          <div class="flex flex-wrap mt-2 bt-1">
-            <button type="button" class="py-1 px-2" @click=${() => this.model.testFilter(activeAgentState)} title="Test">
-              <i class="fas fa-lg fa-vial" style="color:orange"></i>
-            </button>
-            <button type="button" class="py-1 px-2" @click=${() => this.model.clearFilter(activeAgentState)} title="Clear">
-              <i class="fas fa-lg fa-ban text-gray-500"></i>
-            </button>
-            <button type="button" class="py-1 px-2 ml-auto" @click=${() => this.model.applyProcessingOptions(activeAgentState)} title="Apply">
-              <i class="fas fa-lg fa-check text-green-500"></i>
-            </button>
-            <button type="button" class="py-1 px-2" @click=${() => this.model.resetProcessingOptions(activeEntry)} title="Reset to Current">
-              <i class="fas fa-lg fa-times text-red-500"></i>
-            </button>
-          </div>
-        </form> 
-
         <form id="event-sinks" class="border">
           <div class="flex my-2 pr-2">
             <span class="font-semibold ${this.model.getEventSinksModified(activeEntry) ? 'italic text-red-500' : ''}">Event Sinks</span>
@@ -372,6 +354,28 @@ class EtwAgent extends LitMvvmElement {
             </button>
           </div>
         </form>
+
+        <form id="processing" class="border"  @change=${e => this._processingFieldChange(e, activeAgentState)}>
+          <div class="flex my-2 pr-2">
+            <span class="font-semibold ${this.model.getProcessingModified(activeEntry) ? 'italic text-red-500' : ''}">Filter</span>
+          </div>
+          <filter-edit id="filterEdit" class="p-2" .model=${processingModel.filter}></filter-edit>
+          <hr class="my-3" />
+          <div class="flex flex-wrap mt-2 bt-1">
+            <button type="button" class="py-1 px-2" @click=${() => this.model.testFilter(activeAgentState)} title="Test">
+              <i class="fas fa-lg fa-vial" style="color:orange"></i>
+            </button>
+            <button type="button" class="py-1 px-2" @click=${() => this.model.clearFilter(activeAgentState)} title="Clear">
+              <i class="fas fa-lg fa-ban text-gray-500"></i>
+            </button>
+            <button type="button" class="py-1 px-2 ml-auto" @click=${() => this.model.applyProcessingOptions(activeAgentState)} title="Apply">
+              <i class="fas fa-lg fa-check text-green-500"></i>
+            </button>
+            <button type="button" class="py-1 px-2" @click=${() => this.model.resetProcessingOptions(activeEntry)} title="Reset to Current">
+              <i class="fas fa-lg fa-times text-red-500"></i>
+            </button>
+          </div>
+        </form> 
 
       </div>
 
