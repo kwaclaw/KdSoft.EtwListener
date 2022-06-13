@@ -46,7 +46,7 @@ namespace KdSoft.EtwEvents.PushAgent
             var bs = global::Google.Protobuf.ByteString.Empty;
             var rs = new RetryStatus(); // (for IEventFilter)
             var batch = new EtwEventBatch();
-            // more? ILogger should be loaded due to the contructor
+            // more? ILogger should get loaded in the contructor
         }
 
         public Type? GetEventSinkFactoryType(DirectoryInfo evtSinkDirInfo, string sinkType, string version) {

@@ -2,8 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+    <VersionPrefix>1.0.1</VersionPrefix>
     <RootNamespace>KdSoft.EtwEvents</RootNamespace>
-    <AssemblyName>KdSoft.EtwEvents.Shared.EventSinkInterfaces</AssemblyName>
+    <AssemblyName>KdSoft.EtwEvents.Shared.EventSink</AssemblyName>
     <LangVersion>Latest</LangVersion>
     <Nullable>enable</Nullable>
   </PropertyGroup>
