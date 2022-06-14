@@ -157,7 +157,7 @@ class ProviderConfig extends LitMvvmElement {
             <span class="${timesClasses} ml-auto mr-2" @click=${this._deleteClicked}></span>
             <span class="${chevronClasses}" @click=${this._expandClicked}></span>
           </header>
-          <div class="mt-2 relative" ?hidden=${!expanded}>
+          <div class="mt-2 relative ${expanded ? '' : 'hidden'}">
             <div class="provider pl-8 pb-1">
               <fieldset>
                 <label class="text-gray-600" for="level">Level</label>

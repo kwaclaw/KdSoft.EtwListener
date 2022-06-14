@@ -239,9 +239,9 @@ class EventSinkConfig extends LitMvvmElement {
           <span class="${chevronClasses}" @click=${this._expandClicked}></span>
         </header>
 
-        <form class="relative" ?hidden=${!expanded}>
+        <form class="relative ${expanded ? '' : 'hidden'}">
           <div id="form-header">
-            <pre ?hidden=${!status?.lastError}><textarea
+            <pre class="${status?.lastError ? '' : 'hidden'}><textarea
               class="my-2 w-full border-2 border-red-500 focus:outline-none focus:border-red-700"
             >${retryMessage}${status?.lastError}</textarea></pre>
 
