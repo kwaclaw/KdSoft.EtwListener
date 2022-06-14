@@ -90,10 +90,15 @@ namespace KdSoft.EtwEvents.AgentManager
             var jsonSerializerOptions = _jsonOptions.Value.JsonSerializerOptions;
 
             var changes = _agentProxyManager.GetAgentStateChanges();
-            await foreach (var change in changes.WithCancellation(cancelToken).ConfigureAwait(false)) {
-                var statusJson = JsonSerializer.Serialize(change, jsonSerializerOptions);
-                await resp.WriteAsync($"data:{statusJson}\n\n", cancelToken).ConfigureAwait(false);
-                await resp.Body.FlushAsync(cancelToken).ConfigureAwait(false);
+            try {
+                await foreach (var change in changes.WithCancellation(cancelToken).ConfigureAwait(false)) {
+                    var statusJson = JsonSerializer.Serialize(change, jsonSerializerOptions);
+                    await resp.WriteAsync($"data:{statusJson}\n\n", cancelToken).ConfigureAwait(false);
+                    await resp.Body.FlushAsync(cancelToken).ConfigureAwait(false);
+                }
+            }
+            catch (OperationCanceledException) {
+                _logger.LogInformation("{user}: Disconnected from agent state updates.", UserInfo());
             }
 
             // OkResult not right here, tries to set status code which is not allowed once the response has started
