@@ -95,15 +95,18 @@ namespace KdSoft.EtwEvents.PushAgent
                     var started = await StartSessionWorker(default).ConfigureAwait(false);
                     await SendStateUpdate().ConfigureAwait(false);
                     return;
+
                 case Constants.StopEvent:
                     if (_sessionWorkerAvailable == 0) {
                         _logger?.LogDebug("Session already stopping.");
                         return;
                     }
                     break;
+
                 case Constants.GetStateEvent:
                     await SendStateUpdate().ConfigureAwait(false);
                     return;
+
                 default:
                     break;
             }
@@ -114,39 +117,60 @@ namespace KdSoft.EtwEvents.PushAgent
             BuildFilterResult filterResult;
 
             switch (sse.Event) {
-                case "ChangeLogLevel":
-                    //
+                case Constants.ResetEvent:
+                    // simple way to create empty file
+                    File.WriteAllBytes(_stoppedFilePath, _emptyBytes);
+                    _ = await StopSessionWorker(default).ConfigureAwait(false);
+
+                    var emptySettings = new pb.Collections.RepeatedField<ProviderSetting>();
+                    _sessionConfig.SaveProviderSettings(emptySettings);
+
+                    var emptyState = new ProcessingState();
+                    _sessionConfig.SaveProcessingState(emptyState, true);
+
+                    var emptySinks = new pb.Collections.MapField<string, EventSinkProfile>();
+                    _sessionConfig.SaveSinkProfiles(emptySinks);
+
+                    var emptyOptions = new LiveViewOptions();
+                    _sessionConfig.SaveLiveViewOptions(emptyOptions);
+
+                    await SendStateUpdate().ConfigureAwait(false);
                     break;
+
                 case Constants.StopEvent:
                     // simple way to create empty file
                     File.WriteAllBytes(_stoppedFilePath, _emptyBytes);
                     var stopped = await StopSessionWorker(default).ConfigureAwait(false);
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
+
                 case Constants.SetEmptyFilterEvent:
                     var emptyFilter = string.IsNullOrEmpty(sse.Data) ? null : Filter.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
                     if (emptyFilter == null)
                         return;
                     _emptyFilterSource = fu.BuildFilterSource(emptyFilter);
                     break;
+
                 case Constants.TestFilterEvent:
                     // WithDiscardUnknownFields does currently not work, so we should fix this at source
                     var filter = string.IsNullOrEmpty(sse.Data) ? new Filter() : Filter.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
                     filterResult = SessionWorker.TestFilter(filter);
                     await PostProtoMessage($"Agent/TestFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
                     break;
-                case Constants.CloseEventSinkEvent:
-                    var sinkName = sse.Data;
-                    if (sinkName == null)
-                        return;
-                    if (worker == null) {
-                        _sessionConfig.DeleteSinkProfile(sinkName);
-                    }
-                    else {
-                        await worker.CloseEventChannel(sinkName).ConfigureAwait(false);
-                    }
-                    await SendStateUpdate().ConfigureAwait(false);
-                    break;
+
+                //case Constants.CloseEventSinkEvent:
+                //    var sinkName = sse.Data;
+                //    if (sinkName == null)
+                //        return;
+                //    if (worker == null) {
+                //        _sessionConfig.DeleteSinkProfile(sinkName);
+                //    }
+                //    else {
+                //        await worker.CloseEventChannel(sinkName).ConfigureAwait(false);
+                //    }
+                //    await SendStateUpdate().ConfigureAwait(false);
+                //    break;
+
                 case Constants.StartLiveViewSinkEvent:
                     var managerSinkProfile = string.IsNullOrEmpty(sse.Data)
                         ? null
@@ -161,12 +185,14 @@ namespace KdSoft.EtwEvents.PushAgent
                     }
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
+
                 case Constants.StopLiveViewSinkEvent:
                     if (worker != null) {
                         await worker.CloseEventChannel(Constants.LiveViewSinkName).ConfigureAwait(false);
                     }
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
+
                 case Constants.ApplyAgentOptionsEvent:
                     var agentOptions = string.IsNullOrEmpty(sse.Data) ? null : AgentOptions.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
                     if (agentOptions == null)
@@ -219,6 +245,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     await PostProtoMessage($"Agent/ApplyAgentOptionsResult?eventId={sse.Id}", applyResult).ConfigureAwait(false);
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
+
                 default:
                     break;
             }
