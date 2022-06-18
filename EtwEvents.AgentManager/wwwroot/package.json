@@ -12,14 +12,14 @@
     "@nx-js/queue-util": "^1.1.1",
     "dialog-polyfill": "^0.5.6",
     "gettext.js": "^1.1.1",
-    "lit": "^2.2.5",
+    "lit": "^2.2.6",
     "po2json": "^0.4.5"
   },
   "devDependencies": {
     "autoprefixer": "10.4.7",
     "@tailwindcss/forms": "^0.5.2",
     "copy-node-modules": "^1.1.1",
-    "eslint": "^8.17.0",
+    "eslint": "^8.18.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.26.0",
     "move-cli": "^2.0.0",
@@ -28,7 +28,7 @@
     "postcss-copy": "^7.1.0",
     "postcss-import": "^14.1.0",
     "shx": "^0.3.4",
-    "tailwindcss": "^3.1.2"
+    "tailwindcss": "^3.1.3"
   },
   "scripts": {
     "wrap-css": "node node_modules/@kdsoft/lit-mvvm-components/scripts/wrap-css.mjs",
