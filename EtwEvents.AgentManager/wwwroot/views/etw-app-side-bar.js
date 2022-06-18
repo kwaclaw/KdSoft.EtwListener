@@ -43,6 +43,10 @@ class EtwAppSideBar extends LitMvvmElement {
     if (currentState && currentState.isRunning) this.model.stopEvents(currentState);
   }
 
+  _resetAgent(currentState) {
+    if (currentState) this.model.resetAgent(currentState);
+  }
+
   _refreshState() {
     const activeAgentState = this.model.activeAgentState;
     this.model.refreshState(activeAgentState);
@@ -217,6 +221,9 @@ class EtwAppSideBar extends LitMvvmElement {
               ${onlyModified ? html`<button class="mr-1 text-yellow-800 fas fa-pencil-alt"></button>` : nothing}
               ${entry.disconnected ? html`<i class="text-red-800 fas fa-unlink"></i>` : nothing}
             </span>
+            <button class="mr-3" @click=${() => this._resetAgent(entry.current)} title="Reset Agent">
+              <i class="fas fa-power-off"></i>
+            </button>
             <button class="mr-1 ${playClass}" @click=${() => this._startEvents(entry.current)} title="Start Session">
               <i class="fas fa-play"></i>
             </button>

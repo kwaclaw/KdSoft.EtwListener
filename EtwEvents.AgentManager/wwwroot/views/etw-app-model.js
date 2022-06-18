@@ -350,6 +350,12 @@ class EtwAppModel {
       .catch(error => window.etwApp.defaultHandleError(error));
   }
 
+  resetAgent(currentState) {
+    if (!currentState) return;
+    this.fetcher.postJson('Reset', { agentId: currentState.id })
+      .catch(error => window.etwApp.defaultHandleError(error));
+  }
+
   getEtwEvents(agentState) {
     if (!agentState) return;
 

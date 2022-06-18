@@ -198,6 +198,11 @@ namespace KdSoft.EtwEvents.AgentManager
             return PostAgent(agentId, Constants.GetStateEvent, "");
         }
 
+        [HttpPost]
+        public IActionResult Reset(string agentId) {
+            return PostAgent(agentId, Constants.ResetEvent, "");
+        }
+
         /// <summary>
         /// Dynamic filter parts passed from SPA client to agent.
         /// </summary>
