@@ -37,23 +37,24 @@ namespace KdSoft.EtwEvents.AgentManager
                         options.Limits.MinRequestBodyDataRate = null;
                         options.ConfigureHttpsDefaults(opts => {
                             opts.ClientCertificateMode = ClientCertificateMode.RequireCertificate;
-                            opts.ClientCertificateValidation = (cert, chain, errors) => {
-                                if (chain != null) {
-                                    var clientThumbprint = context.Configuration["ClientValidation:RootCertificateThumbprint"];
-                                    foreach (var chainElement in chain.ChainElements) {
-                                        if (chainElement.Certificate.Thumbprint.ToUpperInvariant() == clientThumbprint?.ToUpperInvariant()) {
-                                            return true;
-                                        }
-                                    }
-                                    var agentThumbprint = context.Configuration["AgentValidation:RootCertificateThumbprint"];
-                                    foreach (var chainElement in chain.ChainElements) {
-                                        if (chainElement.Certificate.Thumbprint.ToUpperInvariant() == agentThumbprint?.ToUpperInvariant()) {
-                                            return true;
-                                        }
-                                    }
-                                }
-                                return false;
-                            };
+                            // currently we don't constrain validation to our own custom root certificate
+                            //opts.ClientCertificateValidation = (cert, chain, errors) => {
+                            //    if (chain != null) {
+                            //        var clientThumbprint = context.Configuration["ClientValidation:RootCertificateThumbprint"];
+                            //        foreach (var chainElement in chain.ChainElements) {
+                            //            if (chainElement.Certificate.Thumbprint.ToUpperInvariant() == clientThumbprint?.ToUpperInvariant()) {
+                            //                return true;
+                            //            }
+                            //        }
+                            //        var agentThumbprint = context.Configuration["AgentValidation:RootCertificateThumbprint"];
+                            //        foreach (var chainElement in chain.ChainElements) {
+                            //            if (chainElement.Certificate.Thumbprint.ToUpperInvariant() == agentThumbprint?.ToUpperInvariant()) {
+                            //                return true;
+                            //            }
+                            //        }
+                            //    }
+                            //    return false;
+                            //};
                         });
                     });
                 })

@@ -1,7 +1,7 @@
-using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
@@ -50,39 +50,29 @@ namespace KdSoft.EtwEvents.AgentManager
             services.AddAuthorization();
             services.AddAuthentication(CertificateAuthenticationDefaults.AuthenticationScheme).AddCertificate(options => {
                 options.AllowedCertificateTypes = CertificateTypes.Chained;
-                // my custom certificates can't be checked, so they would not be validated
+                // my custom certificates can't be checked for revocation (online or offline), so they would not validate
                 options.RevocationMode = X509RevocationMode.NoCheck;
                 // my custom certificates may not have the enhanced key usage flags set
-                options.ValidateCertificateUse = false;
+                //options.ValidateCertificateUse = false;
                 options.Events = new CertificateAuthenticationEvents {
                     //OnAuthenticationFailed = context => {
                     //    return Task.CompletedTask;
                     //},
                     OnCertificateValidated = context => {
-                        var roleSet = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
-                        var identity = context.Principal?.Identity as ClaimsIdentity;
+                        var authService = context.HttpContext.RequestServices.GetService<AuthorizationService>();
                         // ClaimsIdentity.Name here is the certificate's Subject Common Name (CN)
-                        if (identity != null && identity.Name != null) {
-                            string? certRole = context.ClientCertificate.GetSubjectRole()?.ToLowerInvariant();
-                            if (certRole != null) {
-                                if (certRole.Equals("etw-pushagent")) {
-                                    roleSet.Add(Role.Agent.ToString());
+                        var names = context.Principal?.Identities.Select(id => id.Name ?? "") ?? Enumerable.Empty<string>();
+                        var roleSet = authService!.GetRoles(context.ClientCertificate, names);
+                        if (roleSet.Count > 0) {
+                            // create role claims
+                            var primaryIdentity = context.Principal?.Identity as ClaimsIdentity;
+                            if (primaryIdentity != null) {
+                                foreach (var role in roleSet) {
+                                    primaryIdentity?.AddClaim(new Claim(ClaimTypes.Role, role.ToString()));
                                 }
-                                else if (certRole.Equals("etw-manager")) {
-                                    roleSet.Add(Role.Manager.ToString());
-                                }
                             }
-                            var roleService = context.HttpContext.RequestServices.GetService<RoleService>();
-                            var roles = roleService!.GetRoles(identity.Name);
-                            foreach (var role in roles) {
-                                roleSet.Add(role.ToString());
-                            }
-                            foreach (var role in roleSet) {
-                                identity.AddClaim(new Claim(ClaimTypes.Role, role));
-                            }
-                        }
-                        if (roleSet.Count > 0)
                             context.Success();
+                        }
                         else
                             context.Fail("Not authorized.");
                         return Task.CompletedTask;
@@ -90,11 +80,11 @@ namespace KdSoft.EtwEvents.AgentManager
                 };
             });
 
-            // add user role service
+            // add user role/authorization service
             //TODO make this react to a reload of the config file
             var authorizedAgents = Configuration.GetSection("AgentValidation:AuthorizedCommonNames").Get<HashSet<string>>();
             var authorizedUsers = Configuration.GetSection("ClientValidation:AuthorizedCommonNames").Get<HashSet<string>>();
-            services.AddSingleton(new RoleService(authorizedAgents, authorizedUsers));
+            services.AddSingleton(new AuthorizationService(authorizedAgents, authorizedUsers));
 
             services.Configure<CookiePolicyOptions>(options => {
                 // This lambda determines whether user consent for non-essential cookies is needed for a given request.
@@ -157,7 +147,7 @@ namespace KdSoft.EtwEvents.AgentManager
             });
 
             services.AddGrpc(opts => {
-                opts.Interceptors.Add<AuthInterceptor>(authorizedAgents ?? new HashSet<string>());
+                opts.Interceptors.Add<AuthInterceptor>();
             });
         }
 

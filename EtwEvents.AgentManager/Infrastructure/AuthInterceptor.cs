@@ -1,17 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
+using KdSoft.EtwEvents.AgentManager;
 
 namespace KdSoft.EtwEvents
 {
     public class AuthInterceptor: Interceptor
     {
-        readonly ISet<string> _authorizedNames;
+        readonly AuthorizationService _authService;
 
-        public AuthInterceptor(ISet<string> authorizedNames) {
-            this._authorizedNames = authorizedNames;
+        public AuthInterceptor(AuthorizationService authService) {
+            this._authService = authService;
         }
 
         void CheckAuthorized(ServerCallContext context) {
@@ -20,21 +21,14 @@ namespace KdSoft.EtwEvents
 
             var clientCert = context.GetHttpContext()?.Connection.ClientCertificate;
             if (clientCert != null) {
-                string? certRole = clientCert.GetSubjectRole();
-                if (certRole != null && certRole.Equals("etw-pushagent", System.StringComparison.OrdinalIgnoreCase)) {
+                var names = context.AuthContext.PeerIdentity.Select(id => id.Value ?? "") ?? Enumerable.Empty<string>();
+                var roleSet = _authService.GetRoles(clientCert, names);
+                if (roleSet.Contains(Role.Agent)) {
                     return;
                 }
             }
 
-            // if we don't have the right role, check for explicit authorization by name
-            if (context.AuthContext.IsPeerAuthenticated) {
-                foreach (var peer in context.AuthContext.PeerIdentity) {
-                    if (_authorizedNames.Contains(peer.Value))
-                        return;
-                }
-            }
-
-            throw new RpcException(new Status(StatusCode.PermissionDenied, "Unauthorized Certificate"));
+            throw new RpcException(new Status(StatusCode.PermissionDenied, "Unauthorized or missing Certificate"));
         }
 
         public override Task<TResponse> UnaryServerHandler<TRequest, TResponse>(TRequest request, ServerCallContext context, UnaryServerMethod<TRequest, TResponse> continuation) {
