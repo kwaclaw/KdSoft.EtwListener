@@ -3,7 +3,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
-using shared = KdSoft.EtwEvents;
 
 namespace KdSoft.EtwEvents.PushAgent
 {
@@ -15,11 +14,11 @@ namespace KdSoft.EtwEvents.PushAgent
 
             X509Certificate2? clientCert = null;
             if (certOptions.Thumbprint.Length > 0) {
-                clientCert = shared.Utils.GetCertificate(certOptions.Location, certOptions.Thumbprint, string.Empty);
+                clientCert = CertUtils.GetCertificate(certOptions.Location, certOptions.Thumbprint, string.Empty);
             }
             if (clientCert == null && certOptions.SubjectRole.Length > 0) {
-                var clientCerts = shared.Utils.GetCertificates(certOptions.Location, shared.Utils.ClientAuthentication, crt => {
-                    var match = shared.Utils.SubjectRoleRegex.Match(crt.Subject);
+                var clientCerts = CertUtils.GetCertificates(certOptions.Location, CertUtils.ClientAuthentication, crt => {
+                    var match = CertUtils.SubjectRoleRegex.Match(crt.Subject);
                     if (match.Success) {
                         var certRole = match.Groups["role"].Value;
                         if (certRole != null && certRole.Equals(certOptions.SubjectRole, System.StringComparison.OrdinalIgnoreCase))
@@ -30,7 +29,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 clientCert = clientCerts.FirstOrDefault();
             }
             if (clientCert == null && certOptions.SubjectCN.Length > 0) {
-                clientCert = shared.Utils.GetCertificate(certOptions.Location, string.Empty, certOptions.SubjectCN);
+                clientCert = CertUtils.GetCertificate(certOptions.Location, string.Empty, certOptions.SubjectCN);
             }
 
             return clientCert;

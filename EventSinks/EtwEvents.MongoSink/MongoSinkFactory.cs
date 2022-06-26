@@ -30,9 +30,9 @@ namespace KdSoft.EtwEvents.EventSinks
                 }
                 else {
                     connectionUrl = options.GetConnectionUrl();
-                    var cert = Utils.GetCertificate(StoreLocation.CurrentUser, string.Empty, creds.CertificateCommonName);
+                    var cert = CertUtils.GetCertificate(StoreLocation.CurrentUser, string.Empty, creds.CertificateCommonName);
                     if (cert == null)
-                        cert = Utils.GetCertificate(StoreLocation.LocalMachine, string.Empty, creds.CertificateCommonName);
+                        cert = CertUtils.GetCertificate(StoreLocation.LocalMachine, string.Empty, creds.CertificateCommonName);
                     if (cert == null)
                         throw new ArgumentException($"Cannot find certificate for common name '{creds.CertificateCommonName}'.");
                     // if provided the user name would have to match the certificate's Subject DN exactly

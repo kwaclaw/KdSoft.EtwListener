@@ -49,7 +49,7 @@ namespace KdSoft.EtwEvents.EventSinks
                 var config = new ConnectionConfiguration(connectionPool);
 
                 if (!string.IsNullOrEmpty(creds.SubjectCN)) {
-                    var clientCert = Utils.GetCertificate(StoreLocation.LocalMachine, "", creds.SubjectCN);
+                    var clientCert = CertUtils.GetCertificate(StoreLocation.LocalMachine, "", creds.SubjectCN);
                     if (clientCert != null)
                         config.ClientCertificate(clientCert);
                 }

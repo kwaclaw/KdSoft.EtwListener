@@ -1,7 +1,4 @@
 ﻿using System.Reflection;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
-using System.Text.RegularExpressions;
 
 namespace KdSoft.EtwEvents
 {
@@ -117,107 +114,6 @@ namespace KdSoft.EtwEvents
                 .Select(ft => (sinkType: GetEventSinkType(ft, sinkAttributeType), version: ft.Assembly.GetName().Version?.ToString()))
                 .Where(est => est.sinkType != null);
 #nullable enable
-        }
-
-        /// <summary>
-        /// Checks if a certificate supports a given enhanced key usage.
-        /// </summary>
-        /// <param name="cert">Certificate to check.</param>
-        /// <param name="oid">Oid identifier for enhanced key usage.</param>
-        /// <remarks>If a certificate has no EKUs, then it supports all of them.</remarks>
-        public static bool SupportsEnhancedKeyUsage(this X509Certificate2 cert, string oid) {
-            var ekuCount = 0;
-            foreach (var ext in cert.Extensions) {
-                var eku = ext as X509EnhancedKeyUsageExtension;
-                if (eku != null) {
-                    ekuCount++;
-                    if (eku.Oid?.Value == oid)
-                        return true;
-                }
-            }
-            // if no ekus are present then all are present
-            return ekuCount == 0;
-        }
-
-        /// <summary>
-        /// Get certificate from certificate store based on thumprint or subject common name.
-        /// If multiple certificates match then the one with the newest NotBefore date is returned.
-        /// </summary>
-        /// <param name="location">Store location.</param>
-        /// <param name="thumbprint">Certificate thumprint to look for. Takes precedence over subjectCN when both are specified.</param>
-        /// <param name="subjectCN">Subject common name to look for.</param>
-        /// <param name="ekus">Enhanced key usage identifiers, all of which the certificate must support.</param>
-        /// <returns>Matching certificate, or <c>null</c> if none was found.</returns>
-        public static X509Certificate2? GetCertificate(StoreLocation location, string thumbprint, string subjectCN, params string[] ekus) {
-            if (thumbprint.Length == 0 && subjectCN.Length == 0)
-                return null;
-
-            // find matching certificate, use thumbprint if available, otherwise use subject common name (CN)
-            using (var store = new X509Store(location)) {
-                store.Open(OpenFlags.ReadOnly);
-                X509Certificate2? cert = null;
-                if (thumbprint.Length > 0) {
-                    var certs = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, true);
-                    if (certs.Count > 0)
-                        cert = certs.OrderByDescending(cert => cert.NotBefore).First();
-                }
-                else {
-                    var certs = store.Certificates.Find(X509FindType.FindBySubjectName, subjectCN, true);
-                    foreach (var matchingCert in certs) {
-                        // X509NameType.SimpleName extracts CN from subject (common name)
-                        var cn = matchingCert.GetNameInfo(X509NameType.SimpleName, false);
-                        if (string.Equals(cn, subjectCN, StringComparison.InvariantCultureIgnoreCase)) {
-                            var matchesEkus = true;
-                            foreach (var oid in ekus) {
-                                matchesEkus = matchesEkus && matchingCert.SupportsEnhancedKeyUsage(oid);
-                            }
-                            if (matchesEkus) {
-                                if (cert == null)
-                                    cert = matchingCert;
-                                else if (cert.NotBefore < matchingCert.NotBefore)
-                                    cert = matchingCert;
-                            }
-                        }
-                    }
-                }
-                return cert;
-            }
-        }
-
-        // it seems that the same DN component can be encoded by OID or OID's friendly name, e.g. "OID.2.5.4.72" or "role"
-        public static Regex SubjectRoleRegex = new Regex(@"(OID\.2\.5\.4\.72|\.2\.5\.4\.72|role)\s*=\s*(?<role>[^,=]*)\s*(,|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-        public static string? GetSubjectRole(this X509Certificate2 cert) {
-            string? certRole = null;
-            var match = Utils.SubjectRoleRegex.Match(cert.Subject);
-            if (match.Success) {
-                certRole = match.Groups["role"].Value;
-            }
-            return certRole;
-        }
-
-        public const string ClientAuthentication = "1.3.6.1.5.5.7.3.2";
-        public const string ServerAuthentication = "1.3.6.1.5.5.7.3.1";
-
-        /// <summary>
-        /// Get certificates from certificate store based on application policy OID and predicate callback.
-        /// The resulting collections is ordered by descending NotBefore date.
-        /// </summary>
-        /// <param name="location">Store location.</param>
-        /// <param name="policyOID">Application policy OID to look for, e.g. Client Authentication (1.3.6.1.5.5.7.3.2). Required.</param>
-        /// <param name="predicate">Callback to check certificate against a condition. Optional.</param>
-        /// <returns>Matching certificates, or an empty collection if none are found.</returns>
-        public static IEnumerable<X509Certificate2> GetCertificates(StoreLocation location, string policyOID, Predicate<X509Certificate2> predicate) {
-            if (policyOID.Length == 0)
-                return Enumerable.Empty<X509Certificate2>();
-
-            using (var store = new X509Store(location)) {
-                store.Open(OpenFlags.ReadOnly);
-                var certs = store.Certificates.Find(X509FindType.FindByApplicationPolicy, policyOID, true);
-                if (certs.Count == 0 || predicate == null)
-                    return certs.OrderByDescending(cert => cert.NotBefore);
-                return certs.Where(crt => predicate(crt)).OrderByDescending(cert => cert.NotBefore);
-            }
         }
     }
 }
