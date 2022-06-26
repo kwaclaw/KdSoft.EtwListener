@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="Grpc.AspNetCore.Server" Version="2.46.0" />
-    <PackageReference Include="Grpc.Tools" Version="2.46.3">
+    <PackageReference Include="Grpc.Tools" Version="2.47.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -30,7 +30,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="6.0.0" />
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.15.1" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.16.1" />
     <PackageReference Include="OrchardCore.Localization.Core" Version="1.4.0" />
   </ItemGroup>
   
