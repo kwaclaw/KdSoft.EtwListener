@@ -222,7 +222,7 @@ class EtwAppSideBar extends LitMvvmElement {
               ${entry.disconnected ? html`<i class="text-red-800 fas fa-unlink"></i>` : nothing}
             </span>
             <button class="mr-3" @click=${() => this._resetAgent(entry.current)} title="Reset Agent">
-              <i class="fas fa-power-off"></i>
+              <i class="fas fa-arrow-rotate-left"></i>
             </button>
             <button class="mr-1 ${playClass}" @click=${() => this._startEvents(entry.current)} title="Start Session">
               <i class="fas fa-play"></i>
