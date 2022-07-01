@@ -108,6 +108,13 @@ namespace KdSoft.EtwEvents
             }
         }
 
+        /// <summary>
+        /// Returns <see cref="X509ChainPolicy"/> that can be used for client certificate validation.
+        /// </summary>
+        /// <param name="checkRevocation">Indicates if the certificate chain must be checked for revocation.
+        ///     The default is <c>false</c>. Should not be turned on for self-signed certificates,
+        ///     as they cannot be checked for revocation.</param>
+        /// <returns></returns>
         public static X509ChainPolicy GetClientCertPolicy(bool checkRevocation = false) {
             var result = new X509ChainPolicy();
             // Enhanced Key Usage: Client Validation
@@ -115,6 +122,37 @@ namespace KdSoft.EtwEvents
             if (!checkRevocation)
                 result.RevocationMode = X509RevocationMode.NoCheck;
             return result;
+        }
+
+        /// <summary>
+        /// Determines if the certificate is self signed.
+        /// </summary>
+        /// <param name="certificate">The <see cref="X509Certificate2"/> to check.</param>
+        /// <returns><c>true</c> if the certificate is self signed, <c>false</c> otherwise.</returns>
+        public static bool IsSelfSigned(this X509Certificate2 certificate) {
+            var subjectRaw = certificate.SubjectName.RawData;
+            var issuerRaw = certificate.IssuerName.RawData;
+            return subjectRaw.SequenceEqual(issuerRaw);
+        }
+
+        /// <summary>
+        /// Install the certificate in the LocalMachine scope, selecting the store based on the certificate type.
+        /// </summary>
+        /// <param name="certificate">The <see cref="X509Certificate2"/> to install.</param>
+        public static void InstallMachineCertificate(X509Certificate2 certificate) {
+            var storeName = StoreName.My;
+            var basicConstraintExt = certificate.Extensions["2.5.29.19"] as X509BasicConstraintsExtension;
+            if (basicConstraintExt != null) {
+                if (basicConstraintExt.CertificateAuthority) {
+                    if (certificate.IsSelfSigned())
+                        storeName = StoreName.Root;  // root CA
+                    else
+                        storeName = StoreName.CertificateAuthority;  // intermediateCA
+                }
+            }
+            using var store = new X509Store(storeName, StoreLocation.LocalMachine);
+            store.Open(OpenFlags.ReadWrite);
+            store.Add(certificate);
         }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using System;
+using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using KdSoft.EtwEvents;
+using Microsoft.DotNet.PlatformAbstractions;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -66,6 +68,47 @@ namespace EtwEvents.Tests
                 }
             }
             store.Close();
+        }
+
+        [Fact]
+        public void InstallCerts() {
+            var filesPath = Path.Combine(TestUtils.ProjectDir!, "Files");
+            var rootCert = new X509Certificate2(Path.Combine(filesPath, "Kd-Soft.crt"));
+
+            // first uninstall
+            using (var store = new X509Store(StoreName.Root, StoreLocation.LocalMachine)) {
+                store.Open(OpenFlags.ReadWrite);
+                store.Remove(rootCert);
+            }
+
+            // cert should not validate without root cert
+            var serverCert = new X509Certificate2(Path.Combine(filesPath, "server.kd-soft.net.p12"), "humpty_dumpty", X509KeyStorageFlags.PersistKeySet);
+            var serverChain = new X509Chain { ChainPolicy = new X509ChainPolicy { RevocationMode = X509RevocationMode.NoCheck} };
+            bool valid = serverChain.Build(serverCert);
+            if (!valid) {
+                foreach (var cst in serverChain.ChainStatus) {
+                    _output.WriteLine("{0}: {1}", cst.Status, cst.StatusInformation);
+                }
+            }
+            Assert.False(valid);
+
+            var clientCert = new X509Certificate2(Path.Combine(filesPath, "client.p12"), "humpty_dumpty", X509KeyStorageFlags.PersistKeySet);
+            var clientChain = new X509Chain { ChainPolicy = new X509ChainPolicy { RevocationMode = X509RevocationMode.NoCheck } };
+            valid = clientChain.Build(clientCert);
+            if (!valid) {
+                foreach (var cst in clientChain.ChainStatus) {
+                    _output.WriteLine("{0}: {1}", cst.Status, cst.StatusInformation);
+                }
+            }
+            Assert.False(valid);
+
+            CertUtils.InstallMachineCertificate(rootCert);
+
+            valid = serverChain.Build(serverCert);
+            Assert.True(valid);
+
+            valid = clientChain.Build(clientCert);
+            Assert.True(valid);
         }
     }
 }
