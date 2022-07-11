@@ -108,7 +108,12 @@ function buildUrl(route, url, params) {
 
 function buildGetOptions(options, acceptType) {
   const opts = clone(defaultOptions);
-  if (options) Object.assign(opts, options);
+  if (options) {
+    // Object.assign does not process nested objects the same way, so we need to do it explicitly
+    const optsHeaders = Object.assign(opts.headers, options.headers || {});
+    Object.assign(opts, options);
+    opts.headers = optsHeaders;
+  }
   opts.method = 'GET';
   if (acceptType) Object.assign(opts.headers, { Accept: acceptType });
   return opts;
@@ -116,7 +121,12 @@ function buildGetOptions(options, acceptType) {
 
 function buildPostOptions(options, contentType) {
   const opts = clone(defaultOptions);
-  if (options) Object.assign(opts, options);
+  if (options) {
+    // Object.assign does not process nested objects the same way, so we need to do it explicitly
+    const optsHeaders = Object.assign(opts.headers, options.headers || {});
+    Object.assign(opts, options);
+    opts.headers = optsHeaders;
+  }
   opts.method = 'POST';
   if (contentType) Object.assign(opts.headers, { 'Content-Type': contentType });
   return opts;
