@@ -58,6 +58,10 @@
     <ProjectReference Include="..\EventSinks\EtwEvents.gRPCSink\EtwEvents.gRPCSink.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="AgentCerts\" />
+  </ItemGroup>
+
   <!-- This seems to be the only way top clean the Publish directory before publishing -->
   <Target Name="ClearPublishDir" BeforeTargets="PrepareForPublish">
     <Message Importance="high" Text="Cleaning out publish directory..." />

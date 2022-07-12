@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security.Claims;
@@ -17,6 +19,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using OrchardCore.Localization;
 
 namespace KdSoft.EtwEvents.AgentManager
@@ -148,6 +151,14 @@ namespace KdSoft.EtwEvents.AgentManager
 
             services.AddGrpc(opts => {
                 opts.Interceptors.Add<AuthInterceptor>();
+            });
+
+            services.AddHostedService<FileCleanupService>(provider => {
+                var certDir = Path.Combine(_env.ContentRootPath, "AgentCerts");
+                var fileExpiry = TimeSpan.FromDays(Configuration.GetValue<int>("PendingCertExpiryDays", 7));
+                var checkPeriod = TimeSpan.FromMinutes(Configuration.GetValue<int>("PendingCertCheckMinutes", 360));
+                var logger = provider.GetRequiredService<ILogger<FileCleanupService>>();
+                return new FileCleanupService(new DirectoryInfo(certDir), fileExpiry, checkPeriod, logger);
             });
         }
 
