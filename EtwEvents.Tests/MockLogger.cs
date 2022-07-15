@@ -79,4 +79,11 @@ namespace EtwEvents.Tests
             _formattedEntries.Add(builder.ToString());
         }
     }
+
+    class MockLogger<T>: MockLogger, ILogger<T>
+    {
+        public MockLogger(IExternalScopeProvider? externalScopeProvider) : base(typeof(T).Name, externalScopeProvider) {
+            //
+        }
+    }
 }
