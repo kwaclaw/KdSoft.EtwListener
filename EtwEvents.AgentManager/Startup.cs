@@ -160,6 +160,12 @@ namespace KdSoft.EtwEvents.AgentManager
                 var logger = provider.GetRequiredService<ILogger<FileCleanupService>>();
                 return new FileCleanupService(new DirectoryInfo(certDir), fileExpiry, checkPeriod, logger);
             });
+
+            services.AddHostedService<AgentCertificateWatcher>(provider => {
+                var certDir = Path.Combine(_env.ContentRootPath, "AgentCerts");
+                var logger = provider.GetRequiredService<ILogger<AgentCertificateWatcher>>();
+                return new AgentCertificateWatcher(new DirectoryInfo(certDir), logger);
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {

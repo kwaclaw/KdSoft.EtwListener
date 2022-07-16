@@ -28,4 +28,8 @@
     <ProjectReference Include="..\EventSinks\EtwEvents.RollingFileSink\EtwEvents.RollingFileSink.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Certs\" />
+  </ItemGroup>
+
 </Project>

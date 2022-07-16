@@ -95,7 +95,7 @@ namespace KdSoft.EtwEvents
         /// <param name="policyOID">Application policy OID to look for, e.g. Client Authentication (1.3.6.1.5.5.7.3.2). Required.</param>
         /// <param name="predicate">Callback to check certificate against a condition. Optional.</param>
         /// <returns>Matching certificates, or an empty collection if none are found.</returns>
-        public static IEnumerable<X509Certificate2> GetCertificates(StoreLocation location, string policyOID, Predicate<X509Certificate2> predicate) {
+        public static IEnumerable<X509Certificate2> GetCertificates(StoreLocation location, string policyOID, Predicate<X509Certificate2>? predicate) {
             if (policyOID.Length == 0)
                 return Enumerable.Empty<X509Certificate2>();
 
@@ -114,11 +114,25 @@ namespace KdSoft.EtwEvents
         /// <param name="checkRevocation">Indicates if the certificate chain must be checked for revocation.
         ///     The default is <c>false</c>. Should not be turned on for self-signed certificates,
         ///     as they cannot be checked for revocation.</param>
-        /// <returns></returns>
         public static X509ChainPolicy GetClientCertPolicy(bool checkRevocation = false) {
             var result = new X509ChainPolicy();
             // Enhanced Key Usage: Client Validation
-            result.ApplicationPolicy.Add(Oid.FromOidValue("1.3.6.1.5.5.7.3.2", OidGroup.EnhancedKeyUsage));
+            result.ApplicationPolicy.Add(Oid.FromOidValue(ClientAuthentication, OidGroup.EnhancedKeyUsage));
+            if (!checkRevocation)
+                result.RevocationMode = X509RevocationMode.NoCheck;
+            return result;
+        }
+
+        /// <summary>
+        /// Returns <see cref="X509ChainPolicy"/> that can be used for server certificate validation.
+        /// </summary>
+        /// <param name="checkRevocation">Indicates if the certificate chain must be checked for revocation.
+        ///     The default is <c>false</c>. Should not be turned on for self-signed certificates,
+        ///     as they cannot be checked for revocation.</param>
+        public static X509ChainPolicy GetServerCertPolicy(bool checkRevocation = false) {
+            var result = new X509ChainPolicy();
+            // Enhanced Key Usage: Client Validation
+            result.ApplicationPolicy.Add(Oid.FromOidValue(ServerAuthentication, OidGroup.EnhancedKeyUsage));
             if (!checkRevocation)
                 result.RevocationMode = X509RevocationMode.NoCheck;
             return result;
@@ -147,7 +161,7 @@ namespace KdSoft.EtwEvents
                     if (certificate.IsSelfSigned())
                         storeName = StoreName.Root;  // root CA
                     else
-                        storeName = StoreName.CertificateAuthority;  // intermediateCA
+                        storeName = StoreName.CertificateAuthority;  // intermediate CA
                 }
             }
             using var store = new X509Store(storeName, StoreLocation.LocalMachine);
