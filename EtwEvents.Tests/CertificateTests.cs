@@ -140,6 +140,7 @@ namespace EtwEvents.Tests
                     fileCount += 1;
                 }
             }
+
             await certMgr.StartAsync(System.Threading.CancellationToken.None);
 
             await Task.Delay(waitTime);
@@ -153,7 +154,7 @@ namespace EtwEvents.Tests
 
             await Task.Delay(waitTime);
 
-            Assert.Equal(certMgr.Certificates.Count, fileCount / 2);
+            Assert.Equal(fileCount / 2, certMgr.Certificates.Count);
 
             foreach (var line in logger.FormattedEntries) {
                 _output.WriteLine(line);
