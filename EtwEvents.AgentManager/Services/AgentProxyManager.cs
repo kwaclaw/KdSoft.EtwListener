@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace KdSoft.EtwEvents.AgentManager
 {
-    public class AgentProxyManager
+    public class AgentProxyManager: IDisposable
     {
         readonly int _keepAliveMSecs;
         readonly ConcurrentDictionary<string, AgentProxy> _proxies;
@@ -22,16 +22,21 @@ namespace KdSoft.EtwEvents.AgentManager
         public static ControlEvent CloseMessage = new ControlEvent { Event = Constants.CloseEvent };
         public static ControlEvent GetStateMessage = new ControlEvent { Event = Constants.GetStateEvent };
 
-        public AgentProxyManager(IConfiguration config, ILogger<AgentProxy> logger) {
-            var keepAlivePeriod = TimeSpan.TryParse(config?["ControlChannel:KeepAlivePeriod"], out var reapPeriod) ? reapPeriod : TimeSpan.FromSeconds(20);
-            this._keepAliveMSecs = (int)keepAlivePeriod.TotalMilliseconds;
-            this._keepAliveTimer = new Timer(KeepAlive, this, keepAlivePeriod, keepAlivePeriod);
+        public AgentProxyManager(TimeSpan keepAlivePeriod, ILogger<AgentProxy> logger) {
+            _keepAliveMSecs = (int)keepAlivePeriod.TotalMilliseconds;
+            _keepAliveTimer = new Timer(KeepAlive, this, keepAlivePeriod, keepAlivePeriod);
             this._logger = logger;
             _proxies = new ConcurrentDictionary<string, AgentProxy>();
-            this._changeNotifier = new AggregatingNotifier<AgentStates>(GetAgentStates);
+            _changeNotifier = new AggregatingNotifier<AgentStates>(GetAgentStates);
+        }
+
+        public AgentProxyManager(IConfiguration config, ILogger<AgentProxy> logger)
+            : this(TimeSpan.TryParse(config?["ControlChannel:KeepAlivePeriod"], out var reapPeriod) ? reapPeriod : TimeSpan.FromSeconds(20), logger) {
+            //
         }
 
         public void Dispose() {
+            _keepAliveTimer.Dispose();
             foreach (var entry in _proxies) {
                 entry.Value.TryComplete();
             }
