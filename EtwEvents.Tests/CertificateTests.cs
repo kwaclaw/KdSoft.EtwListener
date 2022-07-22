@@ -37,7 +37,7 @@ namespace EtwEvents.Tests
             //X509Certificate2 certificate = collection[0];
             //X509Certificate2UI.DisplayCertificate(certificate);
 
-            var certs = CertUtils.GetCertificates(StoreLocation.LocalMachine, CertUtils.ClientAuthentication, null);
+            var certs = CertUtils.GetCertificates(StoreLocation.LocalMachine, CertUtils.ClientAuthentication, (Predicate<X509Certificate2>?)null);
             foreach (var certificate in certs) {
                 _output.WriteLine("{0}======================= CERTIFICATE ======================={0}", Environment.NewLine);
 
@@ -125,14 +125,18 @@ namespace EtwEvents.Tests
             var certsDir = new DirectoryInfo(Path.Combine(TestUtils.ProjectDir!, "Certs"));
             var filesDir = new DirectoryInfo(Path.Combine(TestUtils.ProjectDir!, "Files"));
 
-            var logger = new MockLogger<AgentCertificateWatcher>(null);
-            using var certMgr = new AgentCertificateWatcher(certsDir, logger);
+            var proxyLogger = new MockLogger<AgentProxy>(null);
+            var proxyMgr = new AgentProxyManager(TimeSpan.FromSeconds(20), proxyLogger);
+            var certlogger = new MockLogger<AgentCertificateWatcher>(null);
+            using var certMgr = new AgentCertificateWatcher(filesDir, proxyMgr, certlogger);
 
             var waitTime = certMgr.SettleTime + TimeSpan.FromSeconds(2);
             int fileCount = 0;
             foreach (var file in certsDir.GetFiles()) {
                 file.Delete();
             }
+
+            await Task.Delay(TimeSpan.FromSeconds(2));
 
             foreach (var file in filesDir.GetFiles()) {
                 if (file.Name.Contains("-1")) {
@@ -143,7 +147,7 @@ namespace EtwEvents.Tests
 
             await certMgr.StartAsync(System.Threading.CancellationToken.None);
 
-            await Task.Delay(waitTime);
+            //await Task.Delay(waitTime);
 
             foreach (var file in filesDir.GetFiles()) {
                 if (file.Name.Contains("-2")) {
@@ -154,10 +158,40 @@ namespace EtwEvents.Tests
 
             await Task.Delay(waitTime);
 
-            Assert.Equal(fileCount / 2, certMgr.Certificates.Count);
-
-            foreach (var line in logger.FormattedEntries) {
+            foreach (var line in certlogger.FormattedEntries) {
                 _output.WriteLine(line);
+            }
+
+            Assert.Equal(fileCount, certMgr.Certificates.Count);
+        }
+
+        [Fact]
+        public async Task CertContentTypes() {
+            var filesDir = new DirectoryInfo(Path.Combine(TestUtils.ProjectDir!, "Files"));
+
+            var proxyLogger = new MockLogger<AgentProxy>(null);
+            var proxyMgr = new AgentProxyManager(TimeSpan.FromSeconds(20), proxyLogger);
+            var certlogger = new MockLogger<AgentCertificateWatcher>(null);
+            using var certMgr = new AgentCertificateWatcher(filesDir, proxyMgr, certlogger);
+
+            var waitTime = certMgr.SettleTime + TimeSpan.FromSeconds(2);
+            await certMgr.StartAsync(System.Threading.CancellationToken.None);
+            await Task.Delay(waitTime);
+
+            foreach (var certEntry in certMgr.Certificates) {
+                var cert = certEntry.Value.Item1;
+                var ct = X509Certificate2.GetCertContentType(cert.GetRawCertData());
+                _output.WriteLine($"{certEntry.Value.Item2}: {ct}");
+            }
+            _output.WriteLine("========================");
+            foreach (var file in filesDir.GetFiles()) {
+                try {
+                    var ct = X509Certificate2.GetCertContentType(file.FullName);
+                    _output.WriteLine($"{file.Name}: {ct}");
+                }
+                catch (Exception ex) {
+                    _output.WriteLine($"{file.Name}: {ex.Message}");
+                }
             }
         }
     }
