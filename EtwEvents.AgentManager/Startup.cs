@@ -164,7 +164,8 @@ namespace KdSoft.EtwEvents.AgentManager
             services.AddHostedService<AgentCertificateWatcher>(provider => {
                 var certDir = Path.Combine(_env.ContentRootPath, "AgentCerts");
                 var logger = provider.GetRequiredService<ILogger<AgentCertificateWatcher>>();
-                return new AgentCertificateWatcher(new DirectoryInfo(certDir), logger);
+                var proxyMgr = provider.GetRequiredService<AgentProxyManager>();
+                return new AgentCertificateWatcher(new DirectoryInfo(certDir), proxyMgr, logger);
             });
         }
 

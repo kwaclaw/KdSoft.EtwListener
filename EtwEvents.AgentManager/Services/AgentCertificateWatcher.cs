@@ -2,6 +2,7 @@
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,6 +15,7 @@ namespace KdSoft.EtwEvents.AgentManager
     public class AgentCertificateWatcher: BackgroundService
     {
         readonly DirectoryInfo _dirInfo;
+        readonly AgentProxyManager _agentProxyMgr;
         readonly ILogger<AgentCertificateWatcher> _logger;
         readonly FileChangeDetector _fileChangeDetector;
 
@@ -27,8 +29,9 @@ namespace KdSoft.EtwEvents.AgentManager
 
         public readonly TimeSpan SettleTime = TimeSpan.FromSeconds(5);
 
-        public AgentCertificateWatcher(DirectoryInfo dirInfo, ILogger<AgentCertificateWatcher> logger) {
+        public AgentCertificateWatcher(DirectoryInfo dirInfo, AgentProxyManager agentProxyMgr, ILogger<AgentCertificateWatcher> logger) {
             this._dirInfo = dirInfo;
+            this._agentProxyMgr = agentProxyMgr;
             this._logger = logger;
             var nf = NotifyFilters.LastWrite | NotifyFilters.FileName;
             var searchPatterns = pemPatterns.AddRange(pfxPatterns);
@@ -39,17 +42,23 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         public X509Certificate2 LoadCertificate(string filePath) {
-            var ext = Path.GetExtension(filePath).ToLower();
-            switch (ext) {
-                case ".pem":
-                case ".crt":
-                case ".cer":
-                    return X509Certificate2.CreateFromPemFile(filePath);
-                case ".pfx":
-                case ".p12":
+            X509ContentType contentType;
+            try {
+                contentType = X509Certificate2.GetCertContentType(filePath);
+            }
+            catch (CryptographicException) {
+                contentType = X509ContentType.Unknown;
+            }
+            switch (contentType) {
+                // we assume it is a PEM certificate with the unencrypted private key included
+                case X509ContentType.Unknown:
+                    return X509Certificate2.CreateFromPemFile(filePath, filePath);
+                case X509ContentType.Cert:
+                    return new X509Certificate2(filePath);
+                case X509ContentType.Pfx:
                     return new X509Certificate2(filePath, (string?)null, X509KeyStorageFlags.PersistKeySet);
                 default:
-                    throw new ArgumentException($"Unregognized certificate file extension: {ext}", nameof(filePath));
+                    throw new ArgumentException($"Unrecognized certificate type in file: {filePath}");
             }
         }
 
@@ -95,6 +104,36 @@ namespace KdSoft.EtwEvents.AgentManager
             }
             Interlocked.MemoryBarrier();
             _certificates = certs;
+        }
+
+        // we should these types of results:
+        // 1) Cert received and checked and installed OK - can remove file
+        // 2) Agent not connected, call pending - leave file in place, retry later
+        // 3) Some transient call error (e.g. network) - leave file in place, retry later
+        // 4) Some terminal call error (e.g. data format) - failure, remove file
+        // 5) Call successful, but cert invalid (terminal error) - failure, remove file
+        // 6) Call successful, but cert not installed for some temporary reason (e.g. root cert missing) - leave file, retry later
+        async Task<bool> CallAgentAsync(string agentId, X509Certificate2 cert, TimeSpan timeout) {
+            if (_agentProxyMgr.TryGetProxy(agentId, out var proxy)) {
+                var evt = new ControlEvent {
+                    Id = proxy.GetNextEventId().ToString(),
+                    Event = Constants.InstallCertEvent,
+                    Data = cert.GetRawCertDataString()
+                };
+                var cts = new CancellationTokenSource(timeout);
+                try {
+                    var resultJson = await proxy.CallAsync(evt.Id, evt, cts.Token).ConfigureAwait(false);
+                    if (resultJson != null) {
+                        //TODO deserialize and check for errors
+                    }
+                    return true;
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "Error in {method}", nameof(CallAgentAsync));
+                    return false;
+                }
+            }
+            return false;
         }
 
         void FileChangeError(object sender, ErrorEventArgs e) => _logger.LogError(e.GetException(), "Error in {class}", nameof(FileChangeDetector));
