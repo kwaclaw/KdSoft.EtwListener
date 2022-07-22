@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Channels;
@@ -61,18 +60,7 @@ namespace KdSoft.EtwEvents.PushAgent
                         opts.BaseDirectory = Path.Combine(hostContext.HostingEnvironment.ContentRootPath, opts.BaseDirectory);
                     });
                     services.AddSingleton<SessionConfig>();
-                    services.AddSingleton(provider => {
-                        var options = provider.GetRequiredService<IOptions<ControlOptions>>();
-                        var clientCert = Utils.GetClientCertificate(options.Value.ClientCertificate);
-                        if (clientCert == null)
-                            throw new ArgumentException("Cannot find client certificate based on specified options.", nameof(options.Value.ClientCertificate));
-                        return clientCert;
-                    });
-                    services.AddSingleton(provider => {
-                        var clientCert = provider.GetRequiredService<X509Certificate2>();
-                        var handler = Utils.CreateHttpHandler(clientCert);
-                        return handler;
-                    });
+                    services.AddSingleton<SocketsHandlerCache>();
                     services.AddSingleton(provider => new TraceSessionManager(TimeSpan.FromMinutes(3)));
                     services.AddSingleton(provider => {
                         var eventSinksDirPath = Path.Combine(hostContext.HostingEnvironment.ContentRootPath, EventSinksDirectory);
@@ -84,7 +72,7 @@ namespace KdSoft.EtwEvents.PushAgent
                             hostContext.HostingEnvironment.ContentRootPath,
                             EventSinksDirectory,
                             options,
-                            provider.GetRequiredService<SocketsHttpHandler>(),
+                            provider.GetRequiredService<SocketsHandlerCache>(),
                             provider.GetRequiredService<ILogger<EventSinkService>>()
                         );
                     });

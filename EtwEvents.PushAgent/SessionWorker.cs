@@ -26,7 +26,7 @@ namespace KdSoft.EtwEvents.PushAgent
     {
         readonly SessionConfig _sessionConfig;
         readonly IOptions<EventQueueOptions> _eventQueueOptions;
-        readonly SocketsHttpHandler _httpHandler;
+        readonly SocketsHandlerCache _httpHandlerFactory;
         readonly Channel<ControlEvent> _controlChannel;
         readonly EventSinkService _sinkService;
         readonly IConfiguration _config;
@@ -51,7 +51,7 @@ namespace KdSoft.EtwEvents.PushAgent
         public SessionWorker(
             SessionConfig sessionConfig,
             IOptions<EventQueueOptions> eventQueueOptions,
-            SocketsHttpHandler httpHandler,
+            SocketsHandlerCache httpHandlerFactory,
             Channel<ControlEvent> controlChannel,
             EventSinkService sinkService,
             IConfiguration config,
@@ -59,7 +59,7 @@ namespace KdSoft.EtwEvents.PushAgent
         ) {
             this._sessionConfig = sessionConfig;
             this._eventQueueOptions = eventQueueOptions;
-            this._httpHandler = httpHandler;
+            this._httpHandlerFactory = httpHandlerFactory;
             this._controlChannel = controlChannel;
             this._sinkService = sinkService;
             this._config = config;
@@ -75,7 +75,7 @@ namespace KdSoft.EtwEvents.PushAgent
         }
 
         string GetSiteName() {
-            var clientCert = (_httpHandler.SslOptions.ClientCertificates as X509Certificate2Collection)?.First();
+            var clientCert = (_httpHandlerFactory.Handler.SslOptions.ClientCertificates as X509Certificate2Collection)?.First();
             return clientCert?.GetNameInfo(X509NameType.SimpleName, false) ?? "<Undefined>";
         }
 

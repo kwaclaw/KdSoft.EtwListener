@@ -18,12 +18,14 @@ using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using KdSoft.EtwEvents.Server;
 using KdSoft.EtwLogging;
+using KdSoft.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using pb = global::Google.Protobuf;
 using fu = KdSoft.EtwEvents.FilterUtils;
+using System.Security.Cryptography;
 
 namespace KdSoft.EtwEvents.PushAgent
 {
@@ -31,7 +33,7 @@ namespace KdSoft.EtwEvents.PushAgent
     {
         readonly HostBuilderContext _context;
         readonly IServiceProvider _services;
-        readonly SocketsHttpHandler _httpHandler;
+        readonly SocketsHandlerCache _httpHandlerFactory;
         readonly ControlConnector _controlConnector;
         readonly Channel<ControlEvent> _channel;
         readonly IOptionsMonitor<ControlOptions> _controlOptions;
@@ -55,7 +57,7 @@ namespace KdSoft.EtwEvents.PushAgent
         public ControlWorker(
             HostBuilderContext context,
             IServiceProvider services,
-            SocketsHttpHandler httpHandler,
+            SocketsHandlerCache httpHandlerFactory,
             ControlConnector controlConnector,
             Channel<ControlEvent> channel,
             IOptionsMonitor<ControlOptions> controlOptions,
@@ -64,7 +66,7 @@ namespace KdSoft.EtwEvents.PushAgent
         ) {
             this._context = context;
             this._services = services;
-            this._httpHandler = httpHandler;
+            this._httpHandlerFactory = httpHandlerFactory;
             this._controlConnector = controlConnector;
             this._channel = channel;
             this._controlOptions = controlOptions;
@@ -256,7 +258,7 @@ namespace KdSoft.EtwEvents.PushAgent
             var postUri = new Uri(opts.Uri, path);
             var httpMsg = new HttpRequestMessage(HttpMethod.Post, postUri) { Content = content };
 
-            using var http = new HttpClient(_httpHandler, false);
+            using var http = new HttpClient(_httpHandlerFactory.Handler, false);
             var response = await http.SendAsync(httpMsg).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
         }
@@ -328,7 +330,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 || processingState.FilterSource.TemplateVersion < (_emptyFilterSource?.TemplateVersion ?? 0))
                 processingState.FilterSource = _emptyFilterSource;
 
-            var clientCert = (_httpHandler.SslOptions.ClientCertificates as X509Certificate2Collection)?.First();
+            var clientCert = (_httpHandlerFactory.Handler.SslOptions.ClientCertificates as X509Certificate2Collection)?.First();
             var clientCertLifeSpan = new Duration();
             if (clientCert != null) {
                 var lifeSpan = clientCert.NotAfter - DateTime.Now;
