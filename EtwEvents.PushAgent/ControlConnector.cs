@@ -13,7 +13,7 @@ namespace KdSoft.EtwEvents.PushAgent
     {
         public static readonly ControlEvent GetStateMessage = new ControlEvent { Event = Constants.GetStateEvent };
 
-        readonly SocketsHandlerCache _httpHandlerFactory;
+        readonly SocketsHandlerCache _httpHandlerCache;
         readonly Channel<ControlEvent> _channel;
         readonly ILogger<ControlConnector> _logger;
         readonly TaskCompletionSource _tcs;
@@ -21,12 +21,12 @@ namespace KdSoft.EtwEvents.PushAgent
         ControlContext? _controlContext;
 
         public ControlConnector(
-            SocketsHandlerCache httpHandlerFactory,
+            SocketsHandlerCache httpHandlerCache,
             Channel<ControlEvent> channel,
             IOptionsMonitor<ControlOptions> controlOptions,
             ILogger<ControlConnector> logger
          ) {
-            this._httpHandlerFactory = httpHandlerFactory;
+            this._httpHandlerCache = httpHandlerCache;
             this._channel = channel;
             this._logger = logger;
             _tcs = new TaskCompletionSource();
@@ -39,7 +39,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
         EventSource ConfigureEventSource(ControlOptions opts) {
             var evtUri = new Uri(opts.Uri, "Agent/GetEvents");
-            var cfgBuilder = Configuration.Builder(evtUri).HttpMessageHandler(_httpHandlerFactory.Handler);
+            var cfgBuilder = Configuration.Builder(evtUri).HttpMessageHandler(_httpHandlerCache.Handler);
             if (opts.InitialRetryDelay != null)
                 cfgBuilder.InitialRetryDelay(opts.InitialRetryDelay.Value);
             if (opts.MaxRetryDelay != null)

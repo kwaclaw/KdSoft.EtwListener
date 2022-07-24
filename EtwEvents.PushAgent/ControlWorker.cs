@@ -33,7 +33,7 @@ namespace KdSoft.EtwEvents.PushAgent
     {
         readonly HostBuilderContext _context;
         readonly IServiceProvider _services;
-        readonly SocketsHandlerCache _httpHandlerFactory;
+        readonly SocketsHandlerCache _httpHandlerCache;
         readonly ControlConnector _controlConnector;
         readonly Channel<ControlEvent> _channel;
         readonly IOptionsMonitor<ControlOptions> _controlOptions;
@@ -57,7 +57,7 @@ namespace KdSoft.EtwEvents.PushAgent
         public ControlWorker(
             HostBuilderContext context,
             IServiceProvider services,
-            SocketsHandlerCache httpHandlerFactory,
+            SocketsHandlerCache httpHandlerCache,
             ControlConnector controlConnector,
             Channel<ControlEvent> channel,
             IOptionsMonitor<ControlOptions> controlOptions,
@@ -66,7 +66,7 @@ namespace KdSoft.EtwEvents.PushAgent
         ) {
             this._context = context;
             this._services = services;
-            this._httpHandlerFactory = httpHandlerFactory;
+            this._httpHandlerCache = httpHandlerCache;
             this._controlConnector = controlConnector;
             this._channel = channel;
             this._controlOptions = controlOptions;
@@ -258,7 +258,7 @@ namespace KdSoft.EtwEvents.PushAgent
             var postUri = new Uri(opts.Uri, path);
             var httpMsg = new HttpRequestMessage(HttpMethod.Post, postUri) { Content = content };
 
-            using var http = new HttpClient(_httpHandlerFactory.Handler, false);
+            using var http = new HttpClient(_httpHandlerCache.Handler, false);
             var response = await http.SendAsync(httpMsg).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
         }
@@ -330,7 +330,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 || processingState.FilterSource.TemplateVersion < (_emptyFilterSource?.TemplateVersion ?? 0))
                 processingState.FilterSource = _emptyFilterSource;
 
-            var clientCert = (_httpHandlerFactory.Handler.SslOptions.ClientCertificates as X509Certificate2Collection)?.First();
+            var clientCert = (_httpHandlerCache.Handler.SslOptions.ClientCertificates as X509Certificate2Collection)?.First();
             var clientCertLifeSpan = new Duration();
             if (clientCert != null) {
                 var lifeSpan = clientCert.NotAfter - DateTime.Now;

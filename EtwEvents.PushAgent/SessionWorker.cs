@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Threading;
@@ -26,7 +25,7 @@ namespace KdSoft.EtwEvents.PushAgent
     {
         readonly SessionConfig _sessionConfig;
         readonly IOptions<EventQueueOptions> _eventQueueOptions;
-        readonly SocketsHandlerCache _httpHandlerFactory;
+        readonly SocketsHandlerCache _httpHandlerCache;
         readonly Channel<ControlEvent> _controlChannel;
         readonly EventSinkService _sinkService;
         readonly IConfiguration _config;
@@ -51,7 +50,7 @@ namespace KdSoft.EtwEvents.PushAgent
         public SessionWorker(
             SessionConfig sessionConfig,
             IOptions<EventQueueOptions> eventQueueOptions,
-            SocketsHandlerCache httpHandlerFactory,
+            SocketsHandlerCache httpHandlerCache,
             Channel<ControlEvent> controlChannel,
             EventSinkService sinkService,
             IConfiguration config,
@@ -59,7 +58,7 @@ namespace KdSoft.EtwEvents.PushAgent
         ) {
             this._sessionConfig = sessionConfig;
             this._eventQueueOptions = eventQueueOptions;
-            this._httpHandlerFactory = httpHandlerFactory;
+            this._httpHandlerCache = httpHandlerCache;
             this._controlChannel = controlChannel;
             this._sinkService = sinkService;
             this._config = config;
@@ -75,7 +74,7 @@ namespace KdSoft.EtwEvents.PushAgent
         }
 
         string GetSiteName() {
-            var clientCert = (_httpHandlerFactory.Handler.SslOptions.ClientCertificates as X509Certificate2Collection)?.First();
+            var clientCert = (_httpHandlerCache.Handler.SslOptions.ClientCertificates as X509Certificate2Collection)?.First();
             return clientCert?.GetNameInfo(X509NameType.SimpleName, false) ?? "<Undefined>";
         }
 

@@ -19,7 +19,7 @@ namespace KdSoft.EtwEvents.PushAgent
         readonly string _rootPath;
         readonly string _eventSinksDir;
         readonly IOptions<ControlOptions> _controlOptions;
-        readonly SocketsHandlerCache _httpHandlerFactory;
+        readonly SocketsHandlerCache _httpHandlerCache;
         readonly ILogger<EventSinkService> _logger;
         readonly string[] _runtimeAssemblyPaths;
         const string SinkAssemblyFilter = "*Sink.dll";
@@ -28,13 +28,13 @@ namespace KdSoft.EtwEvents.PushAgent
             string rootPath,
             string eventSinksDir,
             IOptions<ControlOptions> controlOptions,
-            SocketsHandlerCache httpHandlerFactory,
+            SocketsHandlerCache httpHandlerCache,
             ILogger<EventSinkService> logger
         ) {
             this._rootPath = rootPath;
             this._eventSinksDir = eventSinksDir;
             this._controlOptions = controlOptions;
-            this._httpHandlerFactory = httpHandlerFactory;
+            this._httpHandlerCache = httpHandlerCache;
             this._logger = logger;
             this._runtimeAssemblyPaths = Directory.GetFiles(RuntimeEnvironment.GetRuntimeDirectory(), "*.dll");
         }
@@ -139,7 +139,7 @@ namespace KdSoft.EtwEvents.PushAgent
             var zipTempFilename = Path.Combine(tempDir, randFile);
 
             try {
-                using var http = new HttpClient(_httpHandlerFactory.Handler, false);
+                using var http = new HttpClient(_httpHandlerCache.Handler, false);
                 using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
                 response.EnsureSuccessStatusCode();
 
