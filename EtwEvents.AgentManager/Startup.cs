@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Google.Protobuf;
@@ -61,19 +59,15 @@ namespace KdSoft.EtwEvents.AgentManager
                     //OnAuthenticationFailed = context => {
                     //    return Task.CompletedTask;
                     //},
+                    OnChallenge = (context) => {  // invoked for each client certificate?
+                        //var clientCert = context.HttpContext.Connection.ClientCertificate;
+                        return Task.CompletedTask;
+                    },
                     OnCertificateValidated = context => {
                         var authService = context.HttpContext.RequestServices.GetService<AuthorizationService>();
-                        // ClaimsIdentity.Name here is the certificate's Subject Common Name (CN)
-                        var names = context.Principal?.Identities.Select(id => id.Name ?? "") ?? Enumerable.Empty<string>();
-                        var roleSet = authService!.GetRoles(context.ClientCertificate, names);
-                        if (roleSet.Count > 0) {
-                            // create role claims
-                            var primaryIdentity = context.Principal?.Identity as ClaimsIdentity;
-                            if (primaryIdentity != null) {
-                                foreach (var role in roleSet) {
-                                    primaryIdentity?.AddClaim(new Claim(ClaimTypes.Role, role.ToString()));
-                                }
-                            }
+                        var success = authService!.AuthorizePrincipal(context.Principal!, context.ClientCertificate, Role.Agent, Role.Manager);
+                        
+                        if (success) {
                             context.Success();
                         }
                         else
@@ -83,11 +77,15 @@ namespace KdSoft.EtwEvents.AgentManager
                 };
             });
 
+            // thess sections will be monitored for changes, so we cannot use Bind()
+            services.Configure<ClientValidationOptions>(Configuration.GetSection("AgentValidation"));
+            services.Configure<AgentValidationOptions>(Configuration.GetSection("AgentValidation"));
+
             // add user role/authorization service
             //TODO make this react to a reload of the config file
-            var authorizedAgents = Configuration.GetSection("AgentValidation:AuthorizedCommonNames").Get<HashSet<string>>();
-            var authorizedUsers = Configuration.GetSection("ClientValidation:AuthorizedCommonNames").Get<HashSet<string>>();
-            services.AddSingleton(new AuthorizationService(authorizedAgents, authorizedUsers));
+            //var authorizedAgents = Configuration.GetSection("AgentValidation:AuthorizedCommonNames").Get<HashSet<string>>();
+            //var authorizedUsers = Configuration.GetSection("ClientValidation:AuthorizedCommonNames").Get<HashSet<string>>();
+            services.AddSingleton<AuthorizationService>();
 
             services.Configure<CookiePolicyOptions>(options => {
                 // This lambda determines whether user consent for non-essential cookies is needed for a given request.

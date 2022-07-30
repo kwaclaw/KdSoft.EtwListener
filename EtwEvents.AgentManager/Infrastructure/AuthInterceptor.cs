@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
@@ -21,9 +20,8 @@ namespace KdSoft.EtwEvents
 
             var clientCert = context.GetHttpContext()?.Connection.ClientCertificate;
             if (clientCert != null) {
-                var names = context.AuthContext.PeerIdentity.Select(id => id.Value ?? "") ?? Enumerable.Empty<string>();
-                var roleSet = _authService.GetRoles(clientCert, names);
-                if (roleSet.Contains(Role.Agent)) {
+                var authorized = _authService.AuthorizePeerIdentity(context.AuthContext.PeerIdentity, clientCert, Role.Agent);
+                if (authorized) {
                     return;
                 }
             }

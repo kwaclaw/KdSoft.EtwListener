@@ -37,6 +37,7 @@ namespace KdSoft.EtwEvents.AgentManager
                         options.Limits.MinRequestBodyDataRate = null;
                         options.ConfigureHttpsDefaults(opts => {
                             opts.ClientCertificateMode = ClientCertificateMode.RequireCertificate;
+                            opts.CheckCertificateRevocation = false;
                             // currently we don't constrain validation to our own custom root certificate
                             //opts.ClientCertificateValidation = (cert, chain, errors) => {
                             //    if (chain != null) {
