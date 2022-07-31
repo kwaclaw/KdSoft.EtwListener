@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 namespace KdSoft.EtwEvents.PushAgent
 {
     /// <summary>
-    /// Caches <see cref="SocketsHttpHandler"/> instyance until explicitly invalidated.
+    /// Caches <see cref="SocketsHttpHandler"/> instance until explicitly invalidated.
     /// Recreates it on next access. Required to change client certificates on the fly.
     /// </summary>
     class SocketsHandlerCache
@@ -22,7 +22,7 @@ namespace KdSoft.EtwEvents.PushAgent
             var clientCerts = Utils.GetClientCertificates(_options.CurrentValue.ClientCertificate);
             if (clientCerts.Count == 0)
                 throw new ArgumentException("Cannot find a client certificate based on specified options.", nameof(_options.CurrentValue.ClientCertificate));
-            var handler = Utils.CreateHttpHandler(clientCerts[0]);
+            var handler = Utils.CreateHttpHandler(clientCerts.ToArray());
             return handler;
         }
 

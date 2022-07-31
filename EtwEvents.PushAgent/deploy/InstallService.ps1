@@ -107,7 +107,8 @@ function Update-AppSettings {
     }
 
     if ($clientCert) {
-        $jsonObject.Control.ClientCertificate | Add-Member -Force -MemberType NoteProperty -Name 'Thumbprint' -Value $clientCert.ThumbPrint
+        $subjectCN = $clientCert.GetNameInfo('SimpleName', $false)
+        $jsonObject.Control.ClientCertificate | Add-Member -Force -MemberType NoteProperty -Name 'SubjectCN' -Value $subjectCN
     } else {
         # if no client certificate is supplied, we add the SubjectRole property so that an already installed certificate can be matched
         $jsonObject.Control.ClientCertificate | Add-Member -Force -MemberType NoteProperty -Name 'SubjectRole' -Value 'etw-pushagent'

@@ -11,6 +11,7 @@
         - Use a client certificate where the subject (DN) includes "role=etw-pushagent" 
         - Use a client certificate where the Common Name (CN) is listed in the Agent Manager's appsettings.json under AgentValidation
      - The installer will use the first matching client certificate it can find in this directory.
+     - The Control::ClientCertificate::SubjectCN property in appsettings.local.json will be set to the client certificate's Common Name'
   2) The Https URL for the agent manager (which controls the agent service).
 
 - Steps:

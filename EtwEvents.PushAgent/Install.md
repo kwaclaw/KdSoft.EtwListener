@@ -10,7 +10,7 @@
 - If applicable, check that the publish profile's target framework is installed.
 - On a new installation
   - Edit the included `appsettings.Local.json` according to the local requirements (see [Local Configuration](#local-configuration) below).
-  - It is not necessary to enter the agent manager URL or certificate thumbprint, as they can be entered when running `InstallService.cmd`.
+  - It is not necessary to enter the agent manager URL or certificate subject CN, as are handled by running `InstallService.cmd`.
 - On an existing installation:
   - Take note of the current install directory, if it needs to stay the same
   - Update the current `appsettings.Local.json` file if changes are desired.
@@ -61,7 +61,7 @@ The ETW PushAgent authenticates itself to the AgentManager using a client certif
   - see https://slproweb.com/products/Win32OpenSSL.html or https://kb.firedaemon.com/support/solutions/articles/4000121705.
 - A useful GUI tool for creating certificates is [XCA](https://www.hohnstaedt.de/xca/).
 
-When a certificate is provided, then the installer will set the certificate's thumprint in `appsettings.Local.json`, in the **Control** section:
+When a certificate is provided, then the installer will set the certificate's SubjectCN in `appsettings.Local.json`, in the **Control** section:
 
 ```json
   "Control": {
@@ -69,6 +69,6 @@ When a certificate is provided, then the installer will set the certificate's th
     "ClientCertificate": {
       "Location": "LocalMachine",
       "SubjectRole": "etw-pushagent",
-      "Thumbprint": "XXXX..." (optional)
+      "SubjectCN": "XXXX..." (optional)
     }
 ```
