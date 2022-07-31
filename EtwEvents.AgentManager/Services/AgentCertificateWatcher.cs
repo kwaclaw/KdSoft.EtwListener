@@ -33,7 +33,7 @@ namespace KdSoft.EtwEvents.AgentManager
             this._dirInfo = dirInfo;
             this._agentProxyMgr = agentProxyMgr;
             this._logger = logger;
-            var nf = NotifyFilters.LastWrite | NotifyFilters.FileName;
+            var nf = NotifyFilters.FileName | NotifyFilters.CreationTime | NotifyFilters.LastWrite | NotifyFilters.Size;
             var searchPatterns = pemPatterns.AddRange(pfxPatterns);
             _fileChangeDetector = new FileChangeDetector(dirInfo.FullName, searchPatterns, false, nf, SettleTime);
             _fileChangeDetector.FileChanged += FileChanged;
@@ -141,9 +141,9 @@ namespace KdSoft.EtwEvents.AgentManager
         // each type of change within the settle time is accumulated in the RenamedEventArgs argument!
         void FileChanged(object sender, RenamedEventArgs e) {
             // deletion (including renaming)
-            var isDeleted = (e.OldName != null && e.Name != e.OldName)
+            var isDeletedOrRenamed = (e.OldName != null && e.Name != e.OldName)
                 || ((e.ChangeType & WatcherChangeTypes.Deleted) == WatcherChangeTypes.Deleted && e.Name == null);
-            if (isDeleted) {
+            if (isDeletedOrRenamed) {
                 var deleted = _certificates
                     .Where(entry => string.Equals(entry.Value.Item2, e.OldName, StringComparison.CurrentCultureIgnoreCase))
                     .FirstOrDefault();
@@ -151,7 +151,7 @@ namespace KdSoft.EtwEvents.AgentManager
                     ImmutableInterlocked.TryRemove(ref _certificates, deleted.Key, out _);
                 }
             }
-            // any other change
+            // if the file still exists
             if (e.Name != null) {
                 var newCert = LoadCertificate(e.FullPath);
                 var newValue = (newCert, e.Name);

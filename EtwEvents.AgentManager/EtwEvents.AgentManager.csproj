@@ -21,7 +21,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="KdSoft.Logging" Version="1.1.2" />
-    <PackageReference Include="KdSoft.Utils" Version="4.0.1" />
+    <PackageReference Include="KdSoft.Utils" Version="4.0.2" />
     <PackageReference Include="KdSoft.Utils.Portable" Version="4.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Certificate" Version="6.0.7" />
     <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="6.0.7" />

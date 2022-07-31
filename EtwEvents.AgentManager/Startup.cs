@@ -78,7 +78,7 @@ namespace KdSoft.EtwEvents.AgentManager
             });
 
             // thess sections will be monitored for changes, so we cannot use Bind()
-            services.Configure<ClientValidationOptions>(Configuration.GetSection("AgentValidation"));
+            services.Configure<ClientValidationOptions>(Configuration.GetSection("ClientValidation"));
             services.Configure<AgentValidationOptions>(Configuration.GetSection("AgentValidation"));
 
             // add user role/authorization service
