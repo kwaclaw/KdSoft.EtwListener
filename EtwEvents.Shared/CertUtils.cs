@@ -1,5 +1,6 @@
 ﻿using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace KdSoft.EtwEvents
@@ -198,6 +199,68 @@ namespace KdSoft.EtwEvents
             using var store = new X509Store(storeName, StoreLocation.LocalMachine);
             store.Open(OpenFlags.ReadWrite);
             store.Add(certificate);
+        }
+
+        static AsymmetricAlgorithm? GetPrivateKey(X509Certificate2 cert, out bool isRSA) {
+            const string RSA = "1.2.840.113549.1.1.1";
+            const string ECC = "1.2.840.10045.2.1";
+            isRSA = false;
+            switch (cert.PublicKey.Oid.Value) {
+                case RSA:
+                    isRSA = true;
+                    return cert.GetRSAPrivateKey();
+                case ECC:
+                    return cert.GetECDsaPrivateKey();
+                default:
+                    return null;
+            }
+        }
+
+        static void ExportToPEM(StringBuilder builder, X509Certificate2 cert, bool exportPrivateKey) {
+            if (exportPrivateKey) {
+                var privateKey = GetPrivateKey(cert, out var isRSA);
+                if (privateKey is not null) {
+                    if (isRSA && privateKey is RSA rsaKey) {
+                        rsaKey.ExportParameters(true);
+                        var rsaKeyPEM = PemEncoding.Write("RSA PRIVATE KEY", rsaKey.ExportRSAPrivateKey());
+                        //var rsaKeyPEM = PemEncoding.Write("RSA PRIVATE KEY", rsaKey.ExportPkcs8PrivateKey());
+                        builder.Append(rsaKeyPEM).AppendLine();
+                    }
+                    else if (privateKey is ECDsa ecdsaKey) {
+                        ecdsaKey.ExportParameters(true);
+                        ecdsaKey.ExportExplicitParameters(true);
+                        var ecdsaKeyPEM = PemEncoding.Write("ECP PRIVATE KEY", ecdsaKey.ExportECPrivateKey());
+                        //var ecdsaKeyPEM = PemEncoding.Write("ECP PRIVATE KEY", ecdsaKey.ExportPkcs8PrivateKey());
+                        builder.Append(ecdsaKeyPEM).AppendLine();
+                    }
+                }
+            }
+            var certPEM = PemEncoding.Write("CERTIFICATE", cert.GetRawCertData());
+            builder.Append(certPEM);
+        }
+
+        /// <summary>
+        /// Export a certificate to a PEM format string.
+        /// </summary>
+        /// <param name="cert">The certificate to export.</param>
+        /// <returns>A PEM encoded string.</returns>
+        public static string ExportToPEM(X509Certificate2 cert, bool exportPrivateKey = true) {
+            StringBuilder builder = new StringBuilder();
+            ExportToPEM(builder, cert, exportPrivateKey);
+            return builder.ToString();
+        }
+
+        /// <summary>
+        /// Export multiple certificates to a PEM format string.
+        /// </summary>
+        /// <param name="certs">The certificates to export.</param>
+        /// <returns>A PEM encoded string.</returns>
+        public static string ExportToPEM(IEnumerable<X509Certificate2> certs, bool exportPrivateKey = true) {
+            StringBuilder builder = new StringBuilder();
+            foreach (var cert in certs) {
+                ExportToPEM(builder, cert, exportPrivateKey);
+            }
+            return builder.ToString();
         }
     }
 }
