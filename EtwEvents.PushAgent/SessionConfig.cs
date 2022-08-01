@@ -21,7 +21,7 @@ namespace KdSoft.EtwEvents.PushAgent
         public SessionConfig(HostBuilderContext context, IDataProtectionProvider provider, ILogger<SessionConfig> logger) {
             this._context = context;
             this._logger = logger;
-            this._dataProtector = provider.CreateProtector("sink-credentials");
+            _dataProtector = provider.CreateProtector("sink-credentials");
             var jsonSettings = JsonFormatter.Settings.Default.WithFormatDefaultValues(true).WithFormatEnumsAsIntegers(true);
             _jsonFormatter = new JsonFormatter(jsonSettings);
 
@@ -87,7 +87,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     : new Dictionary<string, EventSinkProfile>(EventSinkProfiles.Parser.ParseJson(sinkOptionsJson).Profiles, StringComparer.CurrentCultureIgnoreCase);
                 foreach (var profile in profiles.Values) {
                     if (profile.Credentials.StartsWith('*')) {
-                        var rawCredentials = this._dataProtector.Unprotect(profile.Credentials.Substring(1));
+                        var rawCredentials = _dataProtector.Unprotect(profile.Credentials.Substring(1));
                         profile.Credentials = rawCredentials;
                     }
                 }
@@ -108,7 +108,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 foreach (var profileEntry in clonedProfiles) {
                     var clonedProfile = profileEntry.Value.Clone();
                     if (!clonedProfile.Credentials.StartsWith('*')) {
-                        var protectedCredentials = this._dataProtector.Protect(clonedProfile.Credentials);
+                        var protectedCredentials = _dataProtector.Protect(clonedProfile.Credentials);
                         clonedProfile.Credentials = $"*{protectedCredentials}";
                     }
                     clonedProfiles[profileEntry.Key] = clonedProfile;

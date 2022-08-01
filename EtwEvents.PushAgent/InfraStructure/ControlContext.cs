@@ -11,8 +11,8 @@ namespace KdSoft.EtwEvents.PushAgent
         readonly ILogger? _logger;
 
         public ControlContext(EventSource source, ILogger? logger) {
-            this.Source = source;
-            this._logger = logger;
+            Source = source;
+            _logger = logger;
         }
 
         public EventSource Source { get; }
@@ -51,7 +51,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 _logger?.LogError(ex, "Error starting EventSource.");
                 return false;
             }
-            this.CancelRegistration = cancelRegistration;
+            CancelRegistration = cancelRegistration;
             return true;
         }
     }

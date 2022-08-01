@@ -149,7 +149,7 @@ namespace KdSoft.EtwEvents.PushAgent
             var processingState = new ProcessingState {
                 FilterSource = result.FilterSource,
             };
-            bool saveFilterSource = result.Diagnostics.Count == 0;  // also true when clearing filter
+            var saveFilterSource = result.Diagnostics.Count == 0;  // also true when clearing filter
             _sessionConfig.SaveProcessingState(processingState, saveFilterSource);
             return result;
         }
@@ -223,7 +223,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     _sessionConfig.SaveSinkProfile(sinkProfile);
                 }
                 sinkProxy.Changed += () => {
-                    if (_eventProcessor.ActiveEventChannels.ContainsKey(sinkProfile.Name))   {
+                    if (_eventProcessor.ActiveEventChannels.ContainsKey(sinkProfile.Name)) {
                         var couldWrite = _controlChannel.Writer.TryWrite(ControlConnector.GetStateMessage);
                         if (!couldWrite) {
                             _logger?.LogError("Error in {method}. Could not write event {event} to control channel.", "Changed Handler", ControlConnector.GetStateMessage.Event);
@@ -266,7 +266,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 var logger = _loggerFactory.CreateLogger<RealTimeTraceSession>();
                 var sessionName = Constants.TraceSessionNamePrefix + "_" + GetSiteName();
                 var session = new RealTimeTraceSession(sessionName, TimeSpan.MaxValue, logger, false);
-                this._session = session;
+                _session = session;
 
                 stoppingToken.Register(() => {
                     var ses = _session;

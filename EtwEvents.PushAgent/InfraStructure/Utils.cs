@@ -27,7 +27,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     var match = CertUtils.SubjectRoleRegex.Match(crt.Subject);
                     if (match.Success) {
                         var certRole = match.Groups["role"].Value;
-                        if (certRole != null && certRole.Equals(certOptions.SubjectRole, System.StringComparison.OrdinalIgnoreCase))
+                        if (certRole != null && certRole.Equals(certOptions.SubjectRole, StringComparison.OrdinalIgnoreCase))
                             return true;
                     }
                     return false;
