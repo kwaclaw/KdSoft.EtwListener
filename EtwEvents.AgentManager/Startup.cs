@@ -66,7 +66,7 @@ namespace KdSoft.EtwEvents.AgentManager
                     OnCertificateValidated = context => {
                         var authService = context.HttpContext.RequestServices.GetService<AuthorizationService>();
                         var success = authService!.AuthorizePrincipal(context.Principal!, context.ClientCertificate, Role.Agent, Role.Manager);
-                        
+
                         if (success) {
                             context.Success();
                         }
@@ -159,12 +159,13 @@ namespace KdSoft.EtwEvents.AgentManager
                 return new FileCleanupService(new DirectoryInfo(certDir), fileExpiry, checkPeriod, logger);
             });
 
-            services.AddHostedService<AgentCertificateWatcher>(provider => {
+            services.AddSingleton<AgentCertificateWatcher>(provider => {
                 var certDir = Path.Combine(_env.ContentRootPath, "AgentCerts");
                 var logger = provider.GetRequiredService<ILogger<AgentCertificateWatcher>>();
                 var proxyMgr = provider.GetRequiredService<AgentProxyManager>();
                 return new AgentCertificateWatcher(new DirectoryInfo(certDir), proxyMgr, logger);
             });
+            services.AddHostedService<AgentCertificateWatcher>(provider => provider.GetRequiredService<AgentCertificateWatcher>());
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {

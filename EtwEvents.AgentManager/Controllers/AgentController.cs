@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Security.Claims;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,17 +23,20 @@ namespace KdSoft.EtwEvents.AgentManager
     {
         readonly AgentProxyManager _agentProxyManager;
         readonly EventSinkProvider _evtSinkProvider;
+        readonly AgentCertificateWatcher _certWatcher;
         readonly JsonFormatter _jsonFormatter;
         readonly ILogger<AgentController> _logger;
 
         public AgentController(
             AgentProxyManager agentProxyManager,
             EventSinkProvider evtSinkProvider,
+            AgentCertificateWatcher certWatcher,
             JsonFormatter jsonFormatter,
             ILogger<AgentController> logger
         ) {
             this._agentProxyManager = agentProxyManager;
             this._evtSinkProvider = evtSinkProvider;
+            this._certWatcher = certWatcher;
             this._jsonFormatter = jsonFormatter;
             this._logger = logger;
         }
@@ -46,10 +48,16 @@ namespace KdSoft.EtwEvents.AgentManager
             // on initial EventSource (SSE) connect we store the Uri and client certificate information
             // (used in the HTTP request) in the AgentProxy instance, for later use in configuring a gRPCSink
             agentProxy.ManagerUri = $"{Request.Scheme}://{Request.Host}";
-            var certThumprint = User.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.Thumbprint)?.Value ?? "";
-            agentProxy.ClientCertThumbprint = certThumprint;
-            var certDistName = User.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.X500DistinguishedName)?.Value ?? "";
-            agentProxy.ClientCertDN = certDistName;
+            //var certThumprint = User.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.Thumbprint)?.Value ?? "";
+            //agentProxy.ClientCertThumbprint = certThumprint;
+            //var certDistName = User.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.X500DistinguishedName)?.Value ?? "";
+            //agentProxy.ClientCertDN = certDistName;
+            var clientCert = HttpContext.Connection.ClientCertificate;
+            if (clientCert != null) {
+                agentProxy.ClientCertThumbprint = clientCert.Thumbprint;
+                agentProxy.ClientCertDN = clientCert.Subject;
+                _certWatcher.TryRemoveCertificate(clientCert);
+            }
 
             var emptyFilter = Filter.MergeFilterTemplate();
             var emptyFilterEvent = new ControlEvent {
@@ -58,6 +66,16 @@ namespace KdSoft.EtwEvents.AgentManager
                 Data = _jsonFormatter.Format(emptyFilter)
             };
             agentProxy.Post(emptyFilterEvent);
+
+            // this would cause an recursive loop because it triggers an agent reconnect
+            //if (_certWatcher.GetNewCertificate(agentId, out var newCert)) {
+            //    var certEvent = new ControlEvent {
+            //        Event = Constants.InstallCertEvent,
+            //        Id = agentProxy.GetNextEventId().ToString(),
+            //        Data = newCert.GetRawCertDataString()
+            //    };
+            //    agentProxy.Post(certEvent);
+            //}
 
             // initial agent state update
             agentProxy.Post(AgentProxyManager.GetStateMessage);
@@ -147,6 +165,22 @@ namespace KdSoft.EtwEvents.AgentManager
             // AgentState.ID must always match the authenticated identity
             state.Id = agentId;
             agentProxy.SetState(state);
+
+            if (state.LastCertInstall?.Error == CertificateError.None) {
+                var clientCert = HttpContext.Connection.ClientCertificate;
+                if (clientCert != null) {
+                    _certWatcher.TryRemoveCertificate(clientCert);
+                }
+            }
+
+            if (_certWatcher.GetNewCertificate(agentId, out var newCert)) {
+                var certEvent = new ControlEvent {
+                    Event = Constants.InstallCertEvent,
+                    Id = agentProxy.GetNextEventId().ToString(),
+                    Data = newCert.GetRawCertDataString()
+                };
+                agentProxy.Post(certEvent);
+            }
 
             await _agentProxyManager.PostAgentStateChange().ConfigureAwait(false);
             return Ok();

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -63,16 +64,45 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         /// <summary>
-        /// Removes certificate from loaded certificates.
+        /// Removes certificate from loaded certificates. Identity comparison based on thumbprint.
+        /// Typically called when new certificate is first authorized: e.g. agent connects, agent sends state update.
         /// </summary>
-        /// <param name="commonName">Common name to identify certificate.</param>
         /// <param name="cert">Certificate to remove.</param>
         /// <returns><c>true</c> if certificate was successfully removed, <c>false</c> otherwise.</returns>
-        public bool TryRemoveCertificate(string commonName, out X509Certificate2 cert) {
+        public bool TryRemoveCertificate(X509Certificate2 cert) {
+            string commonName = cert.GetNameInfo(X509NameType.SimpleName, false);
             (X509Certificate2, string) entry;
-            var result = ImmutableInterlocked.TryRemove(ref _certificates, commonName, out entry);
-            cert = entry.Item1;
-            return result;
+            if (_certificates.TryGetValue(commonName, out entry)) {
+                if (entry.Item1.Thumbprint.ToLower() == cert.Thumbprint.ToLower()) {
+                    var result = ImmutableInterlocked.TryRemove(ref _certificates, commonName, out entry);
+                    if (result) {
+                        try {
+                            File.Delete(entry.Item2);
+                        }
+                        catch (Exception ex) {
+                            _logger.LogError(ex, "Error in {method}: {file}", nameof(TryRemoveCertificate), entry.Item2);
+                        }
+                    }
+                    return result;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Prepares control event for push agent. Called when push agent connects.
+        /// </summary>
+        /// <param name="agentId"></param>
+        /// <param name="eventId"></param>
+        /// <returns></returns>
+        public bool GetNewCertificate(string agentId, [NotNullWhen(true)] out X509Certificate2? cert) {
+            if (_certificates.TryGetValue(agentId, out var certEntry)) {
+                cert = certEntry.Item1;
+            }
+            else {
+                cert = null;
+            }
+            return cert is not null;
         }
 
         /// <summary>
@@ -106,34 +136,31 @@ namespace KdSoft.EtwEvents.AgentManager
             _certificates = certs;
         }
 
-        // we should these types of results:
-        // 1) Cert received and checked and installed OK - can remove file
-        // 2) Agent not connected, call pending - leave file in place, retry later
-        // 3) Some transient call error (e.g. network) - leave file in place, retry later
-        // 4) Some terminal call error (e.g. data format) - failure, remove file
-        // 5) Call successful, but cert invalid (terminal error) - failure, remove file
-        // 6) Call successful, but cert not installed for some temporary reason (e.g. root cert missing) - leave file, retry later
-        async Task<bool> CallAgentAsync(string agentId, X509Certificate2 cert, TimeSpan timeout) {
+        /// <summary>
+        /// Tries to post new control event to pushagent, when push agent is connected.
+        /// </summary>
+        bool PostCertificateToAgent(string agentId, X509Certificate2 cert) {
             if (_agentProxyMgr.TryGetProxy(agentId, out var proxy)) {
                 var evt = new ControlEvent {
                     Id = proxy.GetNextEventId().ToString(),
                     Event = Constants.InstallCertEvent,
                     Data = cert.GetRawCertDataString()
                 };
-                var cts = new CancellationTokenSource(timeout);
-                try {
-                    var resultJson = await proxy.CallAsync(evt.Id, evt, cts.Token).ConfigureAwait(false);
-                    if (resultJson != null) {
-                        //TODO deserialize and check for errors
-                    }
-                    return true;
-                }
-                catch (Exception ex) {
-                    _logger.LogError(ex, "Error in {method}", nameof(CallAgentAsync));
-                    return false;
-                }
+                return proxy.Post(evt);
             }
             return false;
+        }
+
+        /// <summary>
+        /// Tries to post new certificate to agent, otherwise saves the certificate for later when agent connects.
+        /// </summary>
+        void ProcessUpdatedCertificate(string certFilePath) {
+            var newCert = LoadCertificate(certFilePath);
+            var newKey = newCert.GetNameInfo(X509NameType.SimpleName, false);
+            // track the certificate so we can remove the file once we get a successful update from the agent
+            var newValue = (newCert, certFilePath);
+            _ = ImmutableInterlocked.AddOrUpdate(ref _certificates, newKey, newValue, (k, v) => newValue);
+            var posted = PostCertificateToAgent(newKey, newCert);
         }
 
         void FileChangeError(object sender, ErrorEventArgs e) => _logger.LogError(e.GetException(), "Error in {class}", nameof(FileChangeDetector));
@@ -153,10 +180,7 @@ namespace KdSoft.EtwEvents.AgentManager
             }
             // if the file still exists
             if (e.Name != null) {
-                var newCert = LoadCertificate(e.FullPath);
-                var newValue = (newCert, e.Name);
-                var newKey = newCert.GetNameInfo(X509NameType.SimpleName, false);
-                _ = ImmutableInterlocked.AddOrUpdate(ref _certificates, newKey, newValue, (k, v) => newValue);
+                ProcessUpdatedCertificate(e.FullPath);
             }
         }
 
