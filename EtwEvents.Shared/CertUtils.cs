@@ -15,11 +15,13 @@ namespace KdSoft.EtwEvents
         public static bool SupportsEnhancedKeyUsage(this X509Certificate2 cert, string oid) {
             var ekuCount = 0;
             foreach (var ext in cert.Extensions) {
-                var eku = ext as X509EnhancedKeyUsageExtension;
-                if (eku != null) {
-                    ekuCount++;
-                    if (eku.Oid?.Value == oid)
-                        return true;
+                var ekus = ext as X509EnhancedKeyUsageExtension;
+                if (ekus is not null) {
+                    foreach (var eku in ekus.EnhancedKeyUsages) {
+                        ekuCount++;
+                        if (eku.Value == oid)
+                            return true;
+                    }
                 }
             }
             // if no ekus are present then all are present
