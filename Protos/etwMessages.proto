@@ -102,6 +102,7 @@ message AgentState {
   ProcessingState processing_state = 8;
   map<string, EventSinkState> event_sinks = 9;
   LiveViewOptions live_view_options = 10;
+  InstallCertResult last_cert_install = 11;
 }
 
 message AgentStates {
@@ -191,6 +192,12 @@ message ApplyAgentOptionsResult {
   BuildFilterResult filter_result = 1;
 }
 
+message InstallCertResult {
+  google.protobuf.Timestamp install_time = 1;
+  CertificateError error = 2;
+  string error_message = 3;
+}
+
 // Note: multiple enums in the same namespace cannot have duplicate value identifiers, so we prefix them;
 //       the C# code generator will remove these prefixes if they match the enum name
 enum TraceEventLevel {
@@ -219,4 +226,12 @@ enum CompileDiagnosticSeverity {
   CompileDiagnosticSeverity_WARNING = 2;
   //     Something not allowed by the rules of the language or other authority.
   CompileDiagnosticSeverity_ERROR = 3;
+}
+
+enum CertificateError {
+  CertificateError_NONE = 0;
+  CertificateError_INVALID = 1;
+  CertificateError_INSTALL = 2;
+  CertificateError_CRYPTO = 3;
+  CertificateError_OTHER = 4;
 }
