@@ -254,7 +254,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     var installed = await InstallPemCertificate(sse.Data).ConfigureAwait(false);
 
                     // this could lead to infinite recursion if the installed certificate is not picked up on reconnect
-                    //await SendStateUpdate().ConfigureAwait(false);
+                    await SendStateUpdate().ConfigureAwait(false);
                     break;
 
                 default:
@@ -276,7 +276,11 @@ namespace KdSoft.EtwEvents.PushAgent
                     foreach (var cst in ch.ChainStatus) {
                         sb.AppendLine($"{cst.Status}: {cst.StatusInformation}");
                     }
-                    _lastCertInstall = new InstallCertResult { Error = CertificateError.Invalid, ErrorMessage = sb.ToString() };
+                    _lastCertInstall = new InstallCertResult {
+                        Error = CertificateError.Invalid,
+                        ErrorMessage = sb.ToString(),
+                        Thumbprint = cert.Thumbprint
+                    };
                 }
                 else {
                     CertUtils.InstallMachineCertificate(cert);
@@ -293,7 +297,7 @@ namespace KdSoft.EtwEvents.PushAgent
                         _lastCertInstall = new InstallCertResult { Thumbprint = cert.Thumbprint };
                     }
                     else {
-                        _lastCertInstall = new InstallCertResult { Error = CertificateError.Install };
+                        _lastCertInstall = new InstallCertResult { Error = CertificateError.Install, Thumbprint = cert.Thumbprint };
                     }
                 }
             }

@@ -67,13 +67,13 @@ namespace KdSoft.EtwEvents.AgentManager
         /// Removes certificate from loaded certificates. Identity comparison based on thumbprint.
         /// Typically called when new certificate is first authorized: e.g. agent connects, agent sends state update.
         /// </summary>
-        /// <param name="cert">Certificate to remove.</param>
+        /// <param name="commonName">Subject CN of certificate to remove.</param>
+        /// <param name="thumbPrint">Thumbprint of certificate to remove.</param>
         /// <returns><c>true</c> if certificate was successfully removed, <c>false</c> otherwise.</returns>
-        public bool TryRemoveCertificate(X509Certificate2 cert) {
-            string commonName = cert.GetNameInfo(X509NameType.SimpleName, false);
+        public bool TryRemoveCertificate(string commonName, string thumbPrint) {
             (X509Certificate2, string) entry;
             if (_certificates.TryGetValue(commonName, out entry)) {
-                if (entry.Item1.Thumbprint.ToLower() == cert.Thumbprint.ToLower()) {
+                if (entry.Item1.Thumbprint.ToLower() == thumbPrint.ToLower()) {
                     var result = ImmutableInterlocked.TryRemove(ref _certificates, commonName, out entry);
                     if (result) {
                         try {

@@ -56,7 +56,8 @@ namespace KdSoft.EtwEvents.AgentManager
             if (clientCert != null) {
                 agentProxy.ClientCertThumbprint = clientCert.Thumbprint;
                 agentProxy.ClientCertDN = clientCert.Subject;
-                _certWatcher.TryRemoveCertificate(clientCert);
+                // in case the client certificate is the sames as the one that was last installed
+                _certWatcher.TryRemoveCertificate(agentId, clientCert.Thumbprint);
             }
 
             var emptyFilter = Filter.MergeFilterTemplate();
@@ -166,22 +167,25 @@ namespace KdSoft.EtwEvents.AgentManager
             state.Id = agentId;
             agentProxy.SetState(state);
 
-            if (state.LastCertInstall?.Error == CertificateError.None) {
-                var clientCert = HttpContext.Connection.ClientCertificate;
-                if (clientCert != null) {
-                    _certWatcher.TryRemoveCertificate(clientCert);
-                }
+            // Note: the currently used client certificate may not be the sames as the one that was last installed
+            var thumbprint = state.LastCertInstall?.Thumbprint.ToLower();
+            if (thumbprint is not null) {
+                _certWatcher.TryRemoveCertificate(agentId, thumbprint);
             }
 
             if (_certWatcher.GetNewCertificate(agentId, out var newCert)) {
-                var certPEM = CertUtils.ExportToPEM(newCert);
-                certPEM = certPEM.ReplaceLineEndings("\ndata:");
-                var certEvent = new ControlEvent {
-                    Event = Constants.InstallCertEvent,
-                    Id = agentProxy.GetNextEventId().ToString(),
-                    Data = certPEM,
-                };
-                agentProxy.Post(certEvent);
+                // if we have just installed the certificate then we don't need to install it again
+                var currentCertThumprint = HttpContext.Connection.ClientCertificate?.Thumbprint.ToLower();
+                if (newCert.Thumbprint.ToLower() != thumbprint && currentCertThumprint != thumbprint) {
+                    var certPEM = CertUtils.ExportToPEM(newCert);
+                    certPEM = certPEM.ReplaceLineEndings("\ndata:");
+                    var certEvent = new ControlEvent {
+                        Event = Constants.InstallCertEvent,
+                        Id = agentProxy.GetNextEventId().ToString(),
+                        Data = certPEM,
+                    };
+                    agentProxy.Post(certEvent);
+                }
             }
 
             await _agentProxyManager.PostAgentStateChange().ConfigureAwait(false);
