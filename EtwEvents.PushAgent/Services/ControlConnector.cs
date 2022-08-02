@@ -87,7 +87,8 @@ namespace KdSoft.EtwEvents.PushAgent
                     _logger?.LogDebug("{method}: {eventName}-{lastEventId}, {messageData}", nameof(EventReceived), e.EventName, lastEventIdStr, messageDataStr);
                 }
                 else {
-                    _logger?.LogInformation("{method}: {eventName}-{lastEventId}, {messageData}", nameof(EventReceived), e.EventName, lastEventIdStr, messageDataStr);
+                    var dataStr = e.EventName == Constants.InstallCertEvent ? "" : messageDataStr;
+                    _logger?.LogInformation("{method}: {eventName}-{lastEventId}, {messageData}", nameof(EventReceived), e.EventName, lastEventIdStr, dataStr);
                 }
 
                 if (e.EventName == Constants.CloseEvent) {
@@ -98,7 +99,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     var couldWrite = _channel.Writer.TryWrite(controlEvent);
                     if (!couldWrite) {
                         _logger?.LogError("Error in {method}. Could not write event {event} to control channel, event data:\n{data}",
-                            nameof(EventReceived), controlEvent.Event, controlEvent.Data);
+                            nameof(EventReceived), controlEvent.Event, e.EventName == Constants.InstallCertEvent ? "" : controlEvent.Data);
                     }
                 }
             }
