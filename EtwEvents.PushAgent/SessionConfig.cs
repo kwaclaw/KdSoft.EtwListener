@@ -46,11 +46,11 @@ namespace KdSoft.EtwEvents.PushAgent
             var certificate = ((X509Certificate2Collection)_httpHandlerCache.Handler.SslOptions.ClientCertificates!).First();
             var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             // need to change the key directory whenever the certificate changes (we won't change the data protection certificate at runtime)
-            var keyDirectory = Path.Combine(appDataPath, nameof(KdSoft.EtwEvents.PushAgent), $"Keys-{certificate.Thumbprint}");
+            var keyDirectory = Path.Combine(appDataPath, nameof(PushAgent), $"Keys-{certificate.Thumbprint}");
             var dataProtectionProvider = DataProtectionProvider.Create(
                 new DirectoryInfo(keyDirectory),
                 dpBuilder => {
-                    dpBuilder.SetApplicationName(nameof(KdSoft.EtwEvents.PushAgent));
+                    dpBuilder.SetApplicationName(nameof(PushAgent));
                 },
                 certificate
             );
