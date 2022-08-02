@@ -174,10 +174,12 @@ namespace KdSoft.EtwEvents.AgentManager
             }
 
             if (_certWatcher.GetNewCertificate(agentId, out var newCert)) {
+                var certPEM = CertUtils.ExportToPEM(newCert);
+                certPEM = certPEM.ReplaceLineEndings("\ndata:");
                 var certEvent = new ControlEvent {
                     Event = Constants.InstallCertEvent,
                     Id = agentProxy.GetNextEventId().ToString(),
-                    Data = newCert.GetRawCertDataString()
+                    Data = certPEM,
                 };
                 agentProxy.Post(certEvent);
             }

@@ -57,7 +57,7 @@ namespace KdSoft.EtwEvents.AgentManager
                 case X509ContentType.Cert:
                     return new X509Certificate2(filePath);
                 case X509ContentType.Pfx:
-                    return new X509Certificate2(filePath, (string?)null, X509KeyStorageFlags.PersistKeySet);
+                    return new X509Certificate2(filePath, (string?)null, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
                 default:
                     throw new ArgumentException($"Unrecognized certificate type in file: {filePath}");
             }
@@ -141,10 +141,12 @@ namespace KdSoft.EtwEvents.AgentManager
         /// </summary>
         bool PostCertificateToAgent(string agentId, X509Certificate2 cert) {
             if (_agentProxyMgr.TryGetProxy(agentId, out var proxy)) {
+                var certPEM = CertUtils.ExportToPEM(cert);
+                certPEM = certPEM.ReplaceLineEndings("\ndata:");
                 var evt = new ControlEvent {
                     Id = proxy.GetNextEventId().ToString(),
                     Event = Constants.InstallCertEvent,
-                    Data = cert.GetRawCertDataString()
+                    Data = certPEM,
                 };
                 return proxy.Post(evt);
             }
