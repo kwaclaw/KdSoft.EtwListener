@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Net.Mime;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
@@ -18,14 +19,12 @@ using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using KdSoft.EtwEvents.Server;
 using KdSoft.EtwLogging;
-using KdSoft.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using pb = global::Google.Protobuf;
 using fu = KdSoft.EtwEvents.FilterUtils;
-using System.Security.Cryptography;
+using pb = Google.Protobuf;
 
 namespace KdSoft.EtwEvents.PushAgent
 {
@@ -47,6 +46,7 @@ namespace KdSoft.EtwEvents.PushAgent
         IDisposable? _controlOptionsListener;
         CancellationTokenRegistration _cancelRegistration;
         FilterSource? _emptyFilterSource;
+        InstallCertResult _lastCertInstall = new InstallCertResult();
 
         SessionWorker? _sessionWorker;  // only valid when _sessionWorkerAvailable != 0
         int _sessionWorkerAvailable = 0;
@@ -220,7 +220,7 @@ namespace KdSoft.EtwEvents.PushAgent
                             var processingState = new ProcessingState {
                                 FilterSource = filterResult.FilterSource,
                             };
-                            bool saveFilterSource = filterResult.Diagnostics.Count == 0; // also true when clearing filter
+                            var saveFilterSource = filterResult.Diagnostics.Count == 0; // also true when clearing filter
                             _sessionConfig.SaveProcessingState(processingState, saveFilterSource);
                         }
                         else {
@@ -248,9 +248,62 @@ namespace KdSoft.EtwEvents.PushAgent
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
 
+                case Constants.InstallCertEvent:
+                    if (string.IsNullOrEmpty(sse.Data))
+                        return;
+                    var installed = await InstallPemCertificate(sse.Data).ConfigureAwait(false);
+
+                    // this could lead to infinite recursion if the installed certificate is not picked up on reconnect
+                    //await SendStateUpdate().ConfigureAwait(false);
+                    break;
+
                 default:
                     break;
             }
+        }
+
+        async Task<bool> InstallPemCertificate(string pemData) {
+            bool success = false;
+            try {
+                var ephemeralCert = X509Certificate2.CreateFromPem(pemData, pemData);
+                //NOTE: we can only import the private key as a persisted key if we export/import to Pkcs12.
+                //      because X509Certificate2.CreateFromPem does not allow setting the KeyStorageFlags
+                var cert = new X509Certificate2(ephemeralCert.Export(X509ContentType.Pkcs12, ""), "", X509KeyStorageFlags.PersistKeySet);
+                var ch = new X509Chain { ChainPolicy = CertUtils.GetClientCertPolicy() };
+                success = ch.Build(cert);
+                if (!success) {
+                    var sb = new StringBuilder();
+                    foreach (var cst in ch.ChainStatus) {
+                        sb.AppendLine($"{cst.Status}: {cst.StatusInformation}");
+                    }
+                    _lastCertInstall = new InstallCertResult { Error = CertificateError.Invalid, ErrorMessage = sb.ToString() };
+                }
+                else {
+                    CertUtils.InstallMachineCertificate(cert);
+                    var clientCerts = Utils.GetClientCertificates(_controlOptions.CurrentValue.ClientCertificate);
+                    var certPrint = cert.Thumbprint.ToLower();
+                    success = clientCerts.FindIndex(c => c.Thumbprint.ToLower() == certPrint) >= 0;
+                    if (success) {
+                        // we need to use the new certificate everywhere
+                        _httpHandlerCache.Refresh();
+                        // we need to load and resave protected data with the new certificate
+                        _sessionConfig.UpdateDataProtection();
+                        // and we need to restart the control connection
+                        await _controlConnector.StartAsync(_controlOptions.CurrentValue, _cancelRegistration.Token).ConfigureAwait(false);
+                        _lastCertInstall = new InstallCertResult { Thumbprint = cert.Thumbprint };
+                    }
+                    else {
+                        _lastCertInstall = new InstallCertResult { Error = CertificateError.Install };
+                    }
+                }
+            }
+            catch (CryptographicException cex) {
+                _lastCertInstall = new InstallCertResult { Error = CertificateError.Crypto, ErrorMessage = cex.Message };
+            }
+            catch (Exception ex) {
+                _lastCertInstall = new InstallCertResult { Error = CertificateError.Other, ErrorMessage = ex.Message };
+            }
+            return success;
         }
 
         async Task PostMessage(string path, HttpContent content) {
@@ -265,11 +318,11 @@ namespace KdSoft.EtwEvents.PushAgent
 
         Task PostJsonMessage<T>(string path, T content) {
             var mediaType = new MediaTypeHeaderValue(MediaTypeNames.Application.Json);
-            var httpContent = JsonContent.Create<T>(content, mediaType, _jsonOptions);
+            var httpContent = JsonContent.Create(content, mediaType, _jsonOptions);
             return PostMessage(path, httpContent);
         }
 
-        Task PostProtoMessage<T>(string path, T content) where T : pb::IMessage<T> {
+        Task PostProtoMessage<T>(string path, T content) where T : IMessage<T> {
             var httpContent = new StringContent(_jsonFormatter.Format(content), Encoding.UTF8, MediaTypeNames.Application.Json);
             return PostMessage(path, httpContent);
         }
@@ -282,7 +335,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
             foreach (var profileEntry in profiles) {
                 var profile = profileEntry.Value;
-                EventSinkStatus sinkStatus = new EventSinkStatus();
+                var sinkStatus = new EventSinkStatus();
                 if (failedChannels.TryGetValue(profile.Name, out var failed)) {
                     var sinkError = failed.RunTask?.Exception?.GetBaseException().Message;
                     if (sinkError != null) {
@@ -318,7 +371,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
             var isRunning = _sessionWorkerAvailable != 0;
             if (isRunning && SessionWorker != null) {
-                enabledProviders = ses?.EnabledProviders.ToImmutableList() ?? ImmutableList<EtwLogging.ProviderSetting>.Empty;
+                enabledProviders = ses?.EnabledProviders.ToImmutableList() ?? ImmutableList<ProviderSetting>.Empty;
             }
             else {
                 enabledProviders = _sessionConfig.State.ProviderSettings.ToImmutableList();
@@ -349,18 +402,24 @@ namespace KdSoft.EtwEvents.PushAgent
                 EventSinks = { eventSinkStates },
                 ProcessingState = processingState,
                 LiveViewOptions = _sessionConfig.State.LiveViewOptions,
+                LastCertInstall = _lastCertInstall
             };
             return PostProtoMessage("Agent/UpdateState", state);
         }
 
         async Task<bool> ProcessEvents(CancellationToken stoppingToken) {
-            bool finished = true;
+            var finished = true;
             try {
                 await foreach (var sse in _channel.Reader.ReadAllAsync(stoppingToken).ConfigureAwait(false)) {
-                    await ProcessEvent(sse).ConfigureAwait(false);
-                    if (stoppingToken.IsCancellationRequested) {
-                        finished = false;
-                        break;
+                    try {
+                        await ProcessEvent(sse).ConfigureAwait(false);
+                        if (stoppingToken.IsCancellationRequested) {
+                            finished = false;
+                            break;
+                        }
+                    }
+                    catch (Exception ex) {
+                        _logger.LogError(ex, "Error processing control event.");
                     }
                 }
             }
@@ -384,7 +443,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 var oldScope = Interlocked.CompareExchange(ref _sessionScope, scope, null);
                 if (oldScope != null) { // should not happen
                     oldScope.Dispose();
-                    Interlocked.Exchange<IServiceScope?>(ref _sessionScope, null);
+                    Interlocked.Exchange(ref _sessionScope, null);
                     return false;
                 }
 
@@ -393,7 +452,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 var workerStartTask = sessionWorker.StartAsync(cancelToken);
 
                 // if the new background service has already stopped, clean up and exit
-                if (object.ReferenceEquals(workerStartTask, sessionWorker.ExecuteTask)) {
+                if (ReferenceEquals(workerStartTask, sessionWorker.ExecuteTask)) {
                     scope.Dispose();
                     return false;
                 }
@@ -402,9 +461,9 @@ namespace KdSoft.EtwEvents.PushAgent
                 _ = sessionWorker.ExecuteTask
                     .ContinueWith(swt => {
                         Interlocked.Exchange(ref _sessionWorkerAvailable, 0);
-                        var oldScope = Interlocked.CompareExchange<IServiceScope?>(ref this._sessionScope, null, scope);
+                        var oldScope = Interlocked.CompareExchange(ref _sessionScope, null, scope);
                         oldScope?.Dispose();
-                        Interlocked.CompareExchange(ref this._sessionWorker, null, sessionWorker);
+                        Interlocked.CompareExchange(ref _sessionWorker, null, sessionWorker);
                     }, TaskContinuationOptions.ExecuteSynchronously)
                     .ContinueWith(async swt => {
                         try {
@@ -448,7 +507,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
         async Task ControlOptionsChanged(ControlOptions opts, CancellationToken stoppingToken) {
             try {
-                if (!object.Equals(opts, _controlConnector.CurrentOptions)) {
+                if (!Equals(opts, _controlConnector.CurrentOptions)) {
                     await _controlConnector.StartAsync(opts, stoppingToken).ConfigureAwait(false);
                     _channel.Writer.TryWrite(ControlConnector.GetStateMessage);
                 }
@@ -468,6 +527,7 @@ namespace KdSoft.EtwEvents.PushAgent
                         _logger.LogError(ex, "Failure stopping session.");
                     }
                 });
+                // start ControlConnector
                 _controlOptionsListener = _controlOptions.OnChange(async opts => await ControlOptionsChanged(opts, stoppingToken).ConfigureAwait(false));
                 await _controlConnector.StartAsync(_controlOptions.CurrentValue, stoppingToken).ConfigureAwait(false);
             }

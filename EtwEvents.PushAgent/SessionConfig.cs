@@ -1,32 +1,72 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using Google.Protobuf;
 using KdSoft.EtwLogging;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace KdSoft.EtwEvents.PushAgent
 {
     class SessionConfig
     {
         readonly HostBuilderContext _context;
+        readonly SocketsHandlerCache _httpHandlerCache;
         readonly ILogger<SessionConfig> _logger;
-        readonly IDataProtector _dataProtector;
+        readonly IOptions<ControlOptions> _options;
         readonly JsonFormatter _jsonFormatter;
+        readonly object dpSync = new object();
 
+        const string DataProtectionPurpose = "sink-credentials";
+
+        IDataProtectionProvider _dpProvider;
         bool _stateAvailable;
 
-        public SessionConfig(HostBuilderContext context, IDataProtectionProvider provider, ILogger<SessionConfig> logger) {
+        public SessionConfig(HostBuilderContext context, SocketsHandlerCache httpHandlerCache, IOptions<ControlOptions> options, ILogger<SessionConfig> logger) {
             this._context = context;
+            this._httpHandlerCache = httpHandlerCache;
             this._logger = logger;
-            _dataProtector = provider.CreateProtector("sink-credentials");
+            this._options = options;
+
             var jsonSettings = JsonFormatter.Settings.Default.WithFormatDefaultValues(true).WithFormatEnumsAsIntegers(true);
             _jsonFormatter = new JsonFormatter(jsonSettings);
 
+            _dpProvider = InitializeDataProtection();
+
             LoadSessionState();
             LoadSinkProfiles();
+        }
+
+        // https://docs.microsoft.com/en-us/aspnet/core/security/data-protection/configuration/non-di-scenarios?view=aspnetcore-6.0
+        IDataProtectionProvider InitializeDataProtection() {
+            var certificate = ((X509Certificate2Collection)_httpHandlerCache.Handler.SslOptions.ClientCertificates!).First();
+            var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            // need to change the key directory whenever the certificate changes (we won't change the data protection certificate at runtime)
+            var keyDirectory = Path.Combine(appDataPath, nameof(KdSoft.EtwEvents.PushAgent), $"Keys-{certificate.Thumbprint}");
+            var dataProtectionProvider = DataProtectionProvider.Create(
+                new DirectoryInfo(keyDirectory),
+                dpBuilder => {
+                    dpBuilder.SetApplicationName(nameof(KdSoft.EtwEvents.PushAgent));
+                },
+                certificate
+            );
+
+            return dataProtectionProvider;
+        }
+
+        /// <summary>
+        /// Update data protection when the certificate should change.
+        /// </summary>
+        public void UpdateDataProtection() {
+            lock (dpSync) {
+                LoadSinkProfiles();
+                _dpProvider = InitializeDataProtection();
+                SaveSinkProfiles(_sinkProfiles);
+            }
         }
 
         public JsonFormatter JsonFormatter => _jsonFormatter;
@@ -87,8 +127,17 @@ namespace KdSoft.EtwEvents.PushAgent
                     : new Dictionary<string, EventSinkProfile>(EventSinkProfiles.Parser.ParseJson(sinkOptionsJson).Profiles, StringComparer.CurrentCultureIgnoreCase);
                 foreach (var profile in profiles.Values) {
                     if (profile.Credentials.StartsWith('*')) {
-                        var rawCredentials = _dataProtector.Unprotect(profile.Credentials.Substring(1));
-                        profile.Credentials = rawCredentials;
+                        try {
+                            lock (dpSync) {
+                                var dataProtector = _dpProvider.CreateProtector(DataProtectionPurpose);
+                                var rawCredentials = dataProtector.Unprotect(profile.Credentials.Substring(1));
+                                profile.Credentials = rawCredentials;
+                            }
+                        }
+                        catch (Exception ex) {
+                            profile.Credentials = "{}";
+                            _logger.LogError(ex, "Error unprotecting event sink credentials.");
+                        }
                     }
                 }
                 _sinkProfiles = profiles;
@@ -108,8 +157,11 @@ namespace KdSoft.EtwEvents.PushAgent
                 foreach (var profileEntry in clonedProfiles) {
                     var clonedProfile = profileEntry.Value.Clone();
                     if (!clonedProfile.Credentials.StartsWith('*')) {
-                        var protectedCredentials = _dataProtector.Protect(clonedProfile.Credentials);
-                        clonedProfile.Credentials = $"*{protectedCredentials}";
+                        lock (dpSync) {
+                            var dataProtector = _dpProvider.CreateProtector(DataProtectionPurpose);
+                            var protectedCredentials = dataProtector.Protect(clonedProfile.Credentials);
+                            clonedProfile.Credentials = $"*{protectedCredentials}";
+                        }
                     }
                     clonedProfiles[profileEntry.Key] = clonedProfile;
                 }

@@ -84,16 +84,6 @@ namespace KdSoft.EtwEvents.PushAgent
                     services.AddSingleton<ControlConnector>();
                     services.AddScoped<SessionWorker>();
                     services.AddHostedService<ControlWorker>();
-
-                    var keyDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), nameof(KdSoft.EtwEvents.PushAgent), "Keys");
-                    var dpBuilder = services.AddDataProtection(opts => {
-                        opts.ApplicationDiscriminator = nameof(KdSoft.EtwEvents.PushAgent);
-                    }).PersistKeysToFileSystem(
-                        new DirectoryInfo(keyDirectory)
-                    );
-                    var provider = services.BuildServiceProvider();
-                    var clientCert = provider.GetRequiredService<X509Certificate2>();
-                    dpBuilder.ProtectKeysWithCertificate(clientCert);
                 });
     }
 }

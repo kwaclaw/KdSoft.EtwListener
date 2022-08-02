@@ -196,6 +196,7 @@ message InstallCertResult {
   google.protobuf.Timestamp install_time = 1;
   CertificateError error = 2;
   string error_message = 3;
+  string thumbprint = 4;
 }
 
 // Note: multiple enums in the same namespace cannot have duplicate value identifiers, so we prefix them;
