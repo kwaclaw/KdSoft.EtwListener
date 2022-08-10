@@ -291,7 +291,10 @@ namespace KdSoft.EtwEvents.PushAgent
                         // we need to use the new certificate everywhere
                         _httpHandlerCache.Refresh();
                         // we need to load and resave protected data with the new certificate
-                        _sessionConfig.UpdateDataProtection();
+                        _sessionConfig.UpdateDataProtection(new DataCertOptions {
+                            Location = StoreLocation.LocalMachine,
+                            Thumbprint = certPrint
+                        });
                         // and we need to restart the control connection
                         await _controlConnector.StartAsync(_controlOptions.CurrentValue, _cancelRegistration.Token).ConfigureAwait(false);
                         _lastCertInstall = new InstallCertResult { Thumbprint = cert.Thumbprint };

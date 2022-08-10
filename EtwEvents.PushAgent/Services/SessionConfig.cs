@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using Google.Protobuf;
 using KdSoft.EtwLogging;
 using Microsoft.AspNetCore.DataProtection;
@@ -18,41 +21,84 @@ namespace KdSoft.EtwEvents.PushAgent
         readonly SocketsHandlerCache _httpHandlerCache;
         readonly ILogger<SessionConfig> _logger;
         readonly IOptions<ControlOptions> _options;
+        readonly IOptionsMonitor<DataProtectionOptions> _dataOptionsMonitor;
         readonly JsonFormatter _jsonFormatter;
+        readonly JsonSerializerOptions _jsonOptions;
         readonly object dpSync = new object();
 
         const string DataProtectionPurpose = "sink-credentials";
+        const string localSettingsFile = "appsettings.Local.json";
 
         IDataProtectionProvider _dpProvider;
         bool _stateAvailable;
 
-        public SessionConfig(HostBuilderContext context, SocketsHandlerCache httpHandlerCache, IOptions<ControlOptions> options, ILogger<SessionConfig> logger) {
+        public SessionConfig(
+            HostBuilderContext context,
+            SocketsHandlerCache httpHandlerCache,
+            IOptions<ControlOptions> options,
+            IOptionsMonitor<DataProtectionOptions> dataOptionsMonitor,
+            ILogger<SessionConfig> logger
+        ) {
             this._context = context;
             this._httpHandlerCache = httpHandlerCache;
             this._logger = logger;
             this._options = options;
+            this._dataOptionsMonitor = dataOptionsMonitor;
 
             var jsonSettings = JsonFormatter.Settings.Default.WithFormatDefaultValues(true).WithFormatEnumsAsIntegers(true);
             _jsonFormatter = new JsonFormatter(jsonSettings);
 
-            _dpProvider = InitializeDataProtection();
+            _jsonOptions = new JsonSerializerOptions {
+                Converters = { new JsonStringEnumConverter() }
+            };
+
+            _dpProvider = InitializeDataProtection(_dataOptionsMonitor.CurrentValue.Certificate);
 
             LoadSessionState();
             LoadSinkProfiles();
         }
 
+        void SaveDataProtectionOptions(DataProtectionOptions dataProtectionOptions) {
+            var jsonFile = Path.Combine(_context.HostingEnvironment.ContentRootPath, localSettingsFile);
+            JsonObject doc;
+            try {
+                var json = File.ReadAllText(jsonFile) ?? "{}";
+                doc = JsonObject.Parse(json)?.AsObject() ?? new JsonObject();
+            }
+            catch (IOException) {
+                doc = new JsonObject();
+            }
+            catch (JsonException) {
+                doc = new JsonObject();
+            }
+            var dataProtectionNode = JsonSerializer.SerializeToNode(dataProtectionOptions, _jsonOptions);
+            doc["DataProtection"] = dataProtectionNode;
+            File.WriteAllText(jsonFile, doc.ToJsonString());
+        }
+
         // https://docs.microsoft.com/en-us/aspnet/core/security/data-protection/configuration/non-di-scenarios?view=aspnetcore-6.0
-        IDataProtectionProvider InitializeDataProtection() {
-            var certificate = ((X509Certificate2Collection)_httpHandlerCache.Handler.SslOptions.ClientCertificates!).First();
+        // When appsettings.Local.json is missing, there is no data protection thumbprint stored in it, then load
+        // the first client certificate and store its thumbprint so it can be used in future startup processing.
+        // On startup, compare the stored thumprint to the first client certificate's thumbprint, and if different,
+        // re-encode with the new certificate and store the new thumbprint.
+        // Do the same at runtime when the client certs change.
+        IDataProtectionProvider InitializeDataProtection(DataCertOptions certOptions) {
+            var dataCertificate = CertUtils.GetCertificate(certOptions.Location, certOptions.Thumbprint, "");
+            var clientCertificate = ((X509Certificate2Collection)_httpHandlerCache.Handler.SslOptions.ClientCertificates!).First();
+            if (dataCertificate is null || (clientCertificate.Thumbprint.ToLower() != certOptions.Thumbprint.ToLower())) {
+                certOptions.Thumbprint = clientCertificate.Thumbprint;
+                SaveDataProtectionOptions(new DataProtectionOptions { Certificate = certOptions });
+                dataCertificate = clientCertificate;
+            }
             var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             // need to change the key directory whenever the certificate changes (we won't change the data protection certificate at runtime)
-            var keyDirectory = Path.Combine(appDataPath, nameof(PushAgent), $"Keys-{certificate.Thumbprint}");
+            var keyDirectory = Path.Combine(appDataPath, nameof(PushAgent), $"Keys-{dataCertificate.Thumbprint}");
             var dataProtectionProvider = DataProtectionProvider.Create(
                 new DirectoryInfo(keyDirectory),
                 dpBuilder => {
                     dpBuilder.SetApplicationName(nameof(PushAgent));
                 },
-                certificate
+                dataCertificate
             );
 
             return dataProtectionProvider;
@@ -61,10 +107,11 @@ namespace KdSoft.EtwEvents.PushAgent
         /// <summary>
         /// Update data protection when the certificate should change.
         /// </summary>
-        public void UpdateDataProtection() {
+        public void UpdateDataProtection(DataCertOptions newCertOptions) {
             lock (dpSync) {
                 LoadSinkProfiles();
-                _dpProvider = InitializeDataProtection();
+                SaveDataProtectionOptions(new DataProtectionOptions { Certificate = newCertOptions });
+                _dpProvider = InitializeDataProtection(newCertOptions);
                 SaveSinkProfiles(_sinkProfiles);
             }
         }

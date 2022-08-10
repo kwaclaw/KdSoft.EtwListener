@@ -11,6 +11,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="appsettings.Local.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Update="deploy/**/*">
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
@@ -46,6 +50,12 @@
 
   <ItemGroup>
     <Folder Include="EventSinks\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="appsettings.Local.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <!-- This seems to be the only way top clean the Publish directory before publishing -->

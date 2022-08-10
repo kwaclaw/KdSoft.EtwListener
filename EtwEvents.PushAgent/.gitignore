@@ -2,3 +2,4 @@ EventQueue/
 EventSinks/
 certificates/tmp/
 certificates/out/
+appsettings.Local.json
