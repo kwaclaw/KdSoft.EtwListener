@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+    <AssemblyName>KdSoft.EtwEvents.Protobuf.Shared</AssemblyName>
+    <RootNamespace>KdSoft.EtwLogging</RootNamespace>
     <LangVersion>Latest</LangVersion>
     <Nullable>enable</Nullable>
   </PropertyGroup>
