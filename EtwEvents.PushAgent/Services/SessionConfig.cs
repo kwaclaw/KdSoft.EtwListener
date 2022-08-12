@@ -86,8 +86,11 @@ namespace KdSoft.EtwEvents.PushAgent
             var dataCertificate = CertUtils.GetCertificate(certOptions.Location, certOptions.Thumbprint, "");
             var clientCertificate = ((X509Certificate2Collection)_httpHandlerCache.Handler.SslOptions.ClientCertificates!).First();
             if (dataCertificate is null || (clientCertificate.Thumbprint.ToLower() != certOptions.Thumbprint.ToLower())) {
-                certOptions.Thumbprint = clientCertificate.Thumbprint;
-                SaveDataProtectionOptions(new DataProtectionOptions { Certificate = certOptions });
+                var clientCertOptions = new DataCertOptions {
+                    Thumbprint = clientCertificate.Thumbprint,
+                    Location = certOptions.Location,
+                };
+                SaveDataProtectionOptions(new DataProtectionOptions { Certificate = clientCertOptions });
                 dataCertificate = clientCertificate;
             }
             var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
@@ -96,7 +99,7 @@ namespace KdSoft.EtwEvents.PushAgent
             var dataProtectionProvider = DataProtectionProvider.Create(
                 new DirectoryInfo(keyDirectory),
                 dpBuilder => {
-                    dpBuilder.SetApplicationName(nameof(PushAgent));
+                    dpBuilder.SetApplicationName("KdSoft.EtwEvents.PushAgent");
                 },
                 dataCertificate
             );
