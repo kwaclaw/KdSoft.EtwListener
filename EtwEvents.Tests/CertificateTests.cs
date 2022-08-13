@@ -128,7 +128,7 @@ namespace EtwEvents.Tests
             var proxyLogger = new MockLogger<AgentProxy>(null);
             var proxyMgr = new AgentProxyManager(TimeSpan.FromSeconds(20), proxyLogger);
             var certlogger = new MockLogger<AgentCertificateWatcher>(null);
-            using var certMgr = new AgentCertificateWatcher(filesDir, proxyMgr, certlogger);
+            using var certMgr = new AgentCertificateWatcher(certsDir, proxyMgr, certlogger);
 
             var waitTime = certMgr.SettleTime + TimeSpan.FromSeconds(2);
             int fileCount = 0;
