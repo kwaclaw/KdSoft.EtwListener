@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Net;
@@ -31,6 +32,7 @@ namespace KdSoft.EtwEvents.AgentManager
     {
         readonly AgentProxyManager _agentProxyManager;
         readonly EventSinkProvider _evtSinkProvider;
+        readonly CertificateFileService _agentCertFileService;
         readonly IOptions<JsonOptions> _jsonOptions;
         readonly JsonFormatter _jsonFormatter;
         readonly ILogger<ManagerController> _logger;
@@ -38,12 +40,14 @@ namespace KdSoft.EtwEvents.AgentManager
         public ManagerController(
             AgentProxyManager agentProxyManager,
             EventSinkProvider evtSinkProvider,
+            CertificateFileService agentCertFileService,
             JsonFormatter jsonFormatter,
             IOptions<JsonOptions> jsonOptions,
             ILogger<ManagerController> logger
         ) {
             this._agentProxyManager = agentProxyManager;
             this._evtSinkProvider = evtSinkProvider;
+            this._agentCertFileService = agentCertFileService;
             this._jsonFormatter = jsonFormatter;
             this._jsonOptions = jsonOptions;
             this._logger = logger;
@@ -61,6 +65,47 @@ namespace KdSoft.EtwEvents.AgentManager
         public IActionResult GetEventSinkInfos() {
             var result = _evtSinkProvider.GetEventSinkInfos().Select(si => si.Item1);
             return Ok(result);
+        }
+
+        public class FilesModel
+        {
+            public List<FormFile>? Files { get; set; }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UploadAgentCerts([FromForm] FilesModel model, CancellationToken cancelToken) {
+            if (model is null || model.Files is null) {
+                _logger.LogError("Error in {method}, files not specified.", nameof(UploadAgentCerts));
+                var problemDetails = new ProblemDetails {
+                    Status = (int)HttpStatusCode.BadRequest,
+                    Instance = null,
+                    Title = "Invalid arguments",
+                };
+                return StatusCode(problemDetails.Status.Value, problemDetails);
+            }
+
+            StringBuilder? sb = null;
+            foreach (var formFile in model.Files) {
+                try {
+                    await _agentCertFileService.SaveAsync(formFile, cancelToken).ConfigureAwait(false);
+                }
+                catch (Exception ex) {
+                    if (sb is null)
+                        sb = new StringBuilder();
+                    sb.AppendLine($"{formFile.FileName}: {ex.Message}");
+                    _logger.LogError(ex, "Error saving uploaded file {file}.", formFile.FileName);
+                }
+            }
+            if (sb is not null) {
+                var problemDetails = new ProblemDetails {
+                    Status = (int)HttpStatusCode.InternalServerError,
+                    Instance = null,
+                    Title = "Could not save some files.",
+                    Detail = sb.ToString()
+                };
+                return StatusCode(problemDetails.Status.Value, problemDetails);
+            }
+            return Ok();
         }
 
         HttpResponse SetupSSEResponse() {
