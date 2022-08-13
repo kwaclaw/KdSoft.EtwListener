@@ -151,13 +151,14 @@ namespace KdSoft.EtwEvents.AgentManager
                 opts.Interceptors.Add<AuthInterceptor>();
             });
 
-            services.AddHostedService<FileCleanupService>(provider => {
+            services.AddSingleton<CertificateFileService>(provider => {
                 var certDir = Path.Combine(_env.ContentRootPath, "AgentCerts");
                 var fileExpiry = TimeSpan.FromDays(Configuration.GetValue<int>("PendingCertExpiryDays", 7));
                 var checkPeriod = TimeSpan.FromMinutes(Configuration.GetValue<int>("PendingCertCheckMinutes", 360));
-                var logger = provider.GetRequiredService<ILogger<FileCleanupService>>();
-                return new FileCleanupService(new DirectoryInfo(certDir), fileExpiry, checkPeriod, logger);
+                var logger = provider.GetRequiredService<ILogger<CertificateFileService>>();
+                return new CertificateFileService(new DirectoryInfo(certDir), fileExpiry, checkPeriod, logger);
             });
+            services.AddHostedService<CertificateFileService>(provider => provider.GetRequiredService<CertificateFileService>());
 
             services.AddSingleton<AgentCertificateWatcher>(provider => {
                 var certDir = Path.Combine(_env.ContentRootPath, "AgentCerts");
