@@ -83,9 +83,9 @@ namespace KdSoft.EtwEvents.EventSinks
             return ValueTask.CompletedTask;
         }
 
-        static readonly byte[]  _keyBuffer = new byte[256];
-        static readonly byte[]  _msgBuffer = new byte[256];
-        static readonly byte[]  _hashBuffer = new byte[64];
+        static readonly byte[] _keyBuffer = new byte[256];
+        static readonly byte[] _msgBuffer = new byte[256];
+        static readonly byte[] _hashBuffer = new byte[64];
 
         public static string SignatureHash(string message, string secret) {
             var encoding = new ASCIIEncoding();

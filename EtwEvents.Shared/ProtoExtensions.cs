@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Diagnostics;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.Diagnostics.Tracing;

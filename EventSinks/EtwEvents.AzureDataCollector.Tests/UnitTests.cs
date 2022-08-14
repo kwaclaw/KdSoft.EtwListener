@@ -18,8 +18,7 @@ namespace EtwEvents.AzureDataCollector.Tests
         record struct EventSinkContext(string SiteName, ILogger Logger): IEventSinkContext;
 
         [Fact]
-        public async void Test1()
-        {
+        public async void Test1() {
             var opts = new DataCollectorSinkOptions {
                 CustomerId = "1ce7293d-adc8-4fab-b242-04a15bfb8f1b",
                 LogType = "etw_analytics_demo"

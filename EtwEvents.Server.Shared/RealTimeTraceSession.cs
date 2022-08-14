@@ -178,7 +178,7 @@ namespace KdSoft.EtwEvents.Server
                     _logger.LogError(t.Exception, "Error in {sessionType} '{sessionName}'.", nameof(RealTimeTraceSession), sessionName);
                 else if (t.IsCanceled)
                     _logger.LogWarning("Cancelled {sessionType} '{sessionName}'.", nameof(RealTimeTraceSession), sessionName);
-                 return t.Result;
+                return t.Result;
             }, TaskContinuationOptions.ExecuteSynchronously);
 
             return continuedTask;

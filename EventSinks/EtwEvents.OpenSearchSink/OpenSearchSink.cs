@@ -4,10 +4,10 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenSearch.Net;
 using Google.Protobuf;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Logging;
+using OpenSearch.Net;
 
 namespace KdSoft.EtwEvents.EventSinks
 {

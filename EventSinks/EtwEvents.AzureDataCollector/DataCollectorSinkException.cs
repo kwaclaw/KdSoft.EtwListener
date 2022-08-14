@@ -6,7 +6,7 @@ namespace KdSoft.EtwEvents.EventSinks
     [Serializable]
     public class DataCollectorSinkException: EventSinkException
     {
-        public DataCollectorSinkException(HttpStatusCode statusCode) : base() { 
+        public DataCollectorSinkException(HttpStatusCode statusCode) : base() {
             this.StatusCode = statusCode;
         }
         public DataCollectorSinkException(HttpStatusCode statusCode, string message) : base(message) {

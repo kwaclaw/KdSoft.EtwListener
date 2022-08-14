@@ -1,11 +1,9 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using KdSoft.EtwEvents;
 using KdSoft.EtwEvents.AgentManager;
-using Microsoft.DotNet.PlatformAbstractions;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -92,7 +90,7 @@ namespace EtwEvents.Tests
 
             // cert should not validate without root cert
             var serverCert = new X509Certificate2(Path.Combine(filesPath, "server.kd-soft.net.p12"), "humpty_dumpty", X509KeyStorageFlags.PersistKeySet);
-            var serverChain = new X509Chain { ChainPolicy = new X509ChainPolicy { RevocationMode = X509RevocationMode.NoCheck} };
+            var serverChain = new X509Chain { ChainPolicy = new X509ChainPolicy { RevocationMode = X509RevocationMode.NoCheck } };
             bool valid = serverChain.Build(serverCert);
             if (!valid) {
                 foreach (var cst in serverChain.ChainStatus) {

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Net;
@@ -65,11 +64,6 @@ namespace KdSoft.EtwEvents.AgentManager
         public IActionResult GetEventSinkInfos() {
             var result = _evtSinkProvider.GetEventSinkInfos().Select(si => si.Item1);
             return Ok(result);
-        }
-
-        public class FilesModel
-        {
-            public List<FormFile>? Files { get; set; }
         }
 
         [HttpPost]
