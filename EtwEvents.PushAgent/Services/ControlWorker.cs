@@ -404,6 +404,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 Host = Dns.GetHostName(),
                 Site = clientCert?.GetNameInfo(X509NameType.SimpleName, false) ?? "<Undefined>",
                 ClientCertLifeSpan = clientCertLifeSpan,
+                ClientCertThumbprint = clientCert?.Thumbprint,
                 IsRunning = isRunning,
                 IsStopped = !isRunning,
                 EventSinks = { eventSinkStates },

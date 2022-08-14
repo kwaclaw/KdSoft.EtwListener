@@ -86,23 +86,24 @@ message AgentState {
   string site = 2;
   string host = 3;
   google.protobuf.Duration client_cert_life_span = 4;
+  string client_cert_thumbprint = 5;
 
   /// <summary>
   /// Indicates if the session has started and has not ended yet.
   /// </summary>
-  bool is_running = 5;
+  bool is_running = 6;
 
   /// <summary>
   /// Indicates if session has started and then stopped.
   /// Would indicate <c>false</c> if session has not started yet.
   /// </summary>
-  bool is_stopped = 6;
+  bool is_stopped = 7;
 
-  repeated ProviderSetting enabled_providers = 7;
-  ProcessingState processing_state = 8;
-  map<string, EventSinkState> event_sinks = 9;
-  LiveViewOptions live_view_options = 10;
-  InstallCertResult last_cert_install = 11;
+  repeated ProviderSetting enabled_providers = 8;
+  ProcessingState processing_state = 9;
+  map<string, EventSinkState> event_sinks = 10;
+  LiveViewOptions live_view_options = 11;
+  InstallCertResult last_cert_install = 12;
 }
 
 message AgentStates {

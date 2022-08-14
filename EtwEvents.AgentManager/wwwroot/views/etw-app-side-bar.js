@@ -251,7 +251,7 @@ class EtwAppSideBar extends LitMvvmElement {
           <div class="pl-1">${entry.state.site}</div>
           <label class="pl-1 font-bold">Host</label>
           <div class="pl-1">${entry.state.host}</div>
-          <label class="pl-1 font-bold">Certificate</label>
+          <label class="pl-1 font-bold" title=${entry.current?.clientCertThumbprint}>Certificate</label>
           <div class="pl-1">${Number.isNaN(clientCertLifeDays) ? '??' : clientCertLifeDays } days</div>
         </div>
       </kdsoft-expander>
