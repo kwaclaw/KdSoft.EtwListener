@@ -73,7 +73,7 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         [HttpPost]
-        public async Task<IActionResult> UploadAgentCerts([FromForm] FilesModel model, CancellationToken cancelToken) {
+        public async Task<IActionResult> UploadAgentCerts([FromForm] IFormCollection model, CancellationToken cancelToken) {
             if (model is null || model.Files is null) {
                 _logger.LogError("Error in {method}, files not specified.", nameof(UploadAgentCerts));
                 var problemDetails = new ProblemDetails {
@@ -92,7 +92,7 @@ namespace KdSoft.EtwEvents.AgentManager
                 catch (Exception ex) {
                     if (sb is null)
                         sb = new StringBuilder();
-                    sb.AppendLine($"{formFile.FileName}: {ex.Message}");
+                    sb.AppendLine($"\t{formFile.FileName}");
                     _logger.LogError(ex, "Error saving uploaded file {file}.", formFile.FileName);
                 }
             }
@@ -100,7 +100,7 @@ namespace KdSoft.EtwEvents.AgentManager
                 var problemDetails = new ProblemDetails {
                     Status = (int)HttpStatusCode.InternalServerError,
                     Instance = null,
-                    Title = "Could not save some files.",
+                    Title = "Could not save some files:",
                     Detail = sb.ToString()
                 };
                 return StatusCode(problemDetails.Status.Value, problemDetails);

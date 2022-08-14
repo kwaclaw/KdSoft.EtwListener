@@ -54,7 +54,8 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         public async Task SaveAsync(IFormFile formFile, CancellationToken cancelToken) {
-            var filePath = Path.Combine(_dirInfo.FullName, formFile.FileName);
+            var checkedName = Path.GetFileName(formFile.FileName);
+            var filePath = Path.Combine(_dirInfo.FullName, checkedName);
             using (var fs = File.Create(filePath)) {
                 await formFile.CopyToAsync(fs, cancelToken);
             }
