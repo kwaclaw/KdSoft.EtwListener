@@ -658,6 +658,11 @@ class EtwAppModel {
     }
     this.setAgentState(entry, utils.clone(entry.current));
   }
+
+  uploadAgentCerts(fileData) {
+    return this.fetcher.postFormMultipart('UploadAgentCerts', null, fileData)
+      .catch(error => window.etwApp.defaultHandleError(error));
+  }
 }
 
 export default EtwAppModel;

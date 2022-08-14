@@ -52,6 +52,19 @@ class EtwAppSideBar extends LitMvvmElement {
     this.model.refreshState(activeAgentState);
   }
 
+  _uploadCerts(e) {
+    const input = e.currentTarget;
+    const data = new FormData();
+    for (const file of input.files) {
+      data.append(file.name, file);
+    }
+    this.model.uploadAgentCerts(data)
+      .then(() => {
+        // clear to prevent change event from not happening
+        input.value = null;
+      });
+  }
+
   _searchTextChanged(e) {
     const searchText = e.currentTarget.value;
     const regex = new RegExp(searchText, 'i');
@@ -205,7 +218,7 @@ class EtwAppSideBar extends LitMvvmElement {
     const playClass = entry.current?.isRunning ? '' : 'text-green-500';
     const stopClass = entry.current?.isRunning ? 'text-red-500' : '';
     const lifeSecs = entry.current?.clientCertLifeSpan?.seconds;
-    const clientCertLifeDays = typeof(lifeSecs) === 'number' ? Math.floor(lifeSecs / 86400) : Number.NaN;
+    const clientCertLifeDays = typeof lifeSecs === 'number' ? Math.floor(lifeSecs / 86400) : Number.NaN;
     const clientCertWarningActive = !Number.isNaN(clientCertLifeDays) && (clientCertLifeDays < window.certExpiryWarningDays);
     const clientCertWarning = clientCertWarningActive ? `Agent certificate expires in ${clientCertLifeDays} days` : '';
     // we need to target this class through a part: e.g. "#agents::part(cert-warning)", as it is inside a shadow root
@@ -261,7 +274,12 @@ class EtwAppSideBar extends LitMvvmElement {
             <a class="text-white no-underline hover:text-white hover:no-underline" href="#">
               <span class="text-2xl pl-2 brand"><i class="brand"></i>KDS</span>
             </a>
-            <button class="text-blue-500 ml-auto fas fa-redo-alt" @click=${() => this._refreshState()}></button>
+            <input id="upload-cert" type="file" class="invisible"
+              accept=".pem,.p12,.pfx,.crt" multiple @change=${(e) => this._uploadCerts(e)} />
+            <label for="upload-cert" class="flex items-center text-orange-500 ml-auto" title="Upload Agent Certificates">
+              <i class="fas fa-upload"></i>
+            </label>
+            <button class="text-blue-500 ml-2 fas fa-redo-alt" @click=${() => this._refreshState()} title="Refresh"></button>
           <!-- </div> -->
         </div>
 
