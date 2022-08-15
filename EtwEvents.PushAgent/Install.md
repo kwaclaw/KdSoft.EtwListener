@@ -10,13 +10,13 @@
 - If applicable, check that the publish profile's target framework is installed.
 - On a new installation
   - Edit the included `appsettings.Local.json` according to the local requirements (see [Local Configuration](#local-configuration) below).
-  - It is not necessary to enter the agent manager URL or certificate subject CN, as are handled by running `InstallService.cmd`.
+  - It is not necessary to enter the agent manager URL or certificate subject CN, as this is handled by running `InstallService.cmd`.
 - On an existing installation:
   - Take note of the current install directory, if it needs to stay the same
   - Update the current `appsettings.Local.json` file if changes are desired.
 - Check that the proper client certificate for the site is copied to the deploy directory (see [Client Authentication](#client-authentication) below).
   - It must include the private key.
-  - It must have the role attribute (OID: 2.5.4.72): "etw-pushagent" .
+  - It should have the role attribute (OID: 2.5.4.72): "etw-pushagent" .
   - It must be signed by a root certificate accessible to the AgentManager web site.
   - It can be installed by dragging it onto `tools\InstallClientPfx.cmd`, but it will be auto-detected and installed by the installer anyway.
   - The settings in `appsettings[.Local].json` must match the certificate (see [Client Authentication](#client-authentication) below), 
@@ -68,7 +68,7 @@ When a certificate is provided, then the installer will set the certificate's Su
     "Uri": "https://agent-manager.kd-soft.net:5300",
     "ClientCertificate": {
       "Location": "LocalMachine",
-      "SubjectRole": "etw-pushagent",
+      "SubjectRole": "etw-pushagent", (optional)
       "SubjectCN": "XXXX..." (optional)
     }
 ```
