@@ -68,15 +68,9 @@ namespace KdSoft.EtwEvents.AgentManager
             };
             agentProxy.Post(emptyFilterEvent);
 
-            // this would cause an recursive loop because it triggers an agent reconnect
-            //if (_certWatcher.GetNewCertificate(agentId, out var newCert)) {
-            //    var certEvent = new ControlEvent {
-            //        Event = Constants.InstallCertEvent,
-            //        Id = agentProxy.GetNextEventId().ToString(),
-            //        Data = newCert.GetRawCertDataString()
-            //    };
-            //    agentProxy.Post(certEvent);
-            //}
+            // this could cause an recursive loop because it triggers an agent reconnect;
+            // it is the agent's responsibility to *not* perform the install and re-connect if the certificate is already installed
+            var updated = CheckCertificateUpdate(agentProxy);
 
             // initial agent state update
             agentProxy.Post(AgentProxyManager.GetStateMessage);
@@ -154,6 +148,35 @@ namespace KdSoft.EtwEvents.AgentManager
 
         #region Requests from Agent
 
+        bool CheckCertificateUpdate(AgentProxy agentProxy) {
+            var state = agentProxy.GetState();
+
+            // Note: the currently used client certificate may not be the sames as the one that was last installed
+            //       because the certificate selection login in the agent may not prefer the last installed certificate
+            var lastInstalledThumbprint = state.LastCertInstall.Error == CertificateError.None ? state.LastCertInstall?.Thumbprint.ToLower() : null;
+            if (lastInstalledThumbprint is not null) {
+                _certWatcher.TryRemoveCertificate(agentProxy.AgentId, lastInstalledThumbprint);
+            }
+
+            if (_certWatcher.GetNewCertificate(agentProxy.AgentId, out var newCert)) {
+                var currentCertThumprint = HttpContext.Connection.ClientCertificate?.Thumbprint.ToLower();
+                var newCertThumbprint = newCert.Thumbprint.ToLower();
+                // if the new certificate matches the last installed one or the current one, then don't install it
+                if (newCertThumbprint != lastInstalledThumbprint && newCertThumbprint != currentCertThumprint) {
+                    var certPEM = CertUtils.ExportToPEM(newCert);
+                    certPEM = certPEM.ReplaceLineEndings("\ndata:");
+                    var certEvent = new ControlEvent {
+                        Event = Constants.InstallCertEvent,
+                        Id = agentProxy.GetNextEventId().ToString(),
+                        Data = certPEM,
+                    };
+                    return agentProxy.Post(certEvent);
+
+                }
+            }
+            return false;
+        }
+
         [HttpPost]
         public async Task<IActionResult> UpdateState([FromBody] JsonElement stateObj) {
             var agentId = User.Identity?.Name;
@@ -167,26 +190,9 @@ namespace KdSoft.EtwEvents.AgentManager
             state.Id = agentId;
             agentProxy.SetState(state);
 
-            // Note: the currently used client certificate may not be the sames as the one that was last installed
-            var thumbprint = state.LastCertInstall?.Thumbprint.ToLower();
-            if (thumbprint is not null) {
-                _certWatcher.TryRemoveCertificate(agentId, thumbprint);
-            }
-
-            if (_certWatcher.GetNewCertificate(agentId, out var newCert)) {
-                // if we have just installed the certificate then we don't need to install it again
-                var currentCertThumprint = HttpContext.Connection.ClientCertificate?.Thumbprint.ToLower();
-                if (newCert.Thumbprint.ToLower() != thumbprint && currentCertThumprint != thumbprint) {
-                    var certPEM = CertUtils.ExportToPEM(newCert);
-                    certPEM = certPEM.ReplaceLineEndings("\ndata:");
-                    var certEvent = new ControlEvent {
-                        Event = Constants.InstallCertEvent,
-                        Id = agentProxy.GetNextEventId().ToString(),
-                        Data = certPEM,
-                    };
-                    agentProxy.Post(certEvent);
-                }
-            }
+            // this could cause an recursive loop because it triggers an agent reconnect;
+            // it is the agent's responsibility to *not* perform the install and re-connect if the certificate is already installed
+            var updated = CheckCertificateUpdate(agentProxy);
 
             await _agentProxyManager.PostAgentStateChange().ConfigureAwait(false);
             return Ok();
