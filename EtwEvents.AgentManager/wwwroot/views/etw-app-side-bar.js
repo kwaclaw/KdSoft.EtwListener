@@ -275,7 +275,7 @@ class EtwAppSideBar extends LitMvvmElement {
               <span class="text-2xl pl-2 brand"><i class="brand"></i>KDS</span>
             </a>
             <input id="upload-cert" type="file" class="invisible"
-              accept=".pem,.p12,.pfx,.crt" multiple @change=${(e) => this._uploadCerts(e)} />
+              accept=".crt,.pem,.pfx,application/pkix-cert,application/x-pkcs12" multiple @change=${(e) => this._uploadCerts(e)} />
             <label for="upload-cert" class="flex items-center text-orange-500 ml-auto" title="Upload Agent Certificates">
               <i class="fas fa-upload"></i>
             </label>

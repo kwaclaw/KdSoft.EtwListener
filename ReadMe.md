@@ -91,7 +91,7 @@ Occasionally, and agent's certificate will expire. When that time approaches, a 
 - Certificates must conform to these requirements:
   - The Subject Common Name must match the agent's name as displayed in the UI (as it reflects the current certificate's Subject Common Name).
   - If the certificate has the *role* attribute (OID 2.5.4.72) in the Subject set to "etw-pushagent" it will be authorized automatically, otherwise it's Common Name will need to be listed in appsettings.json.
-  - The following file extensions are recognized: .pem, .crt, .pfx, .p12 .
+  - The following file extensions are recognized: .pem, .crt, .pfx, .p12 and .cer.
   - If the file is PEM encoded then the private key must be unencrypted.
   - If the file is PKCS#12 encoded, then the password (for the private key) must be empty/blank.
   - Should a certificate not disappear from the the AgentCerts folder after a few minutes then check the AgentManager's current log file for the reason.
