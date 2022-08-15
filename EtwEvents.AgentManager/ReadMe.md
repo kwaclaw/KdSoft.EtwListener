@@ -85,15 +85,16 @@ Both, the user accessing the agent manager, and the ETW agent accessing the agen
 We use client certificates for both.
 
 - The client certificate must be configured to support client authorization.
-- The client certificate presented by the PushAgent will be authenticated if the DN contains role=etw-pushagent.
-- The client certificate presented by the AgentManager user will be authenticated if the DN contains role=etw-manager (for the PushAgent client) or rol=etw-manager (for the AgentManager user).
-- If a client certificate does not have the role above, it can be authenticated by being listed in the AuthorizedCommonNames setting (see below).
+- The client certificate presented by the PushAgent will be authorized if the DN contains role=etw-pushagent.
+- The client certificate presented by the AgentManager user will be authorized if the DN contains role=etw-manager (for the PushAgent client) or rol=etw-manager (for the AgentManager user).
+- If a client certificate does not have the role above, it can be authorized by being listed in the AuthorizedCommonNames setting (see below).
 
 - If needed, a custom root certificate must be installed.
   - On a Windows client, the optional root certificate must be installed in the "**Local Computer\Trusted Root Certification Authorities**" folder of the local certificate storage.
   - On a Linux client it depends on the distribution. A popular way is:
     - copy `Kd-Soft.crt` to `/usr/local/share/ca-certificates/`
     - run `update-ca-certificates` with the proper permissions (root)
+  - We can restrict validation to those client certificates that are derived from the custom root certificate - see below.
 
 - A useful GUI tool for creating certificates is [XCA](https://www.hohnstaedt.de/xca/).
 - We also have OpenSSL scripts in the `EtwEvents.AgentManager/certificates` directory, they require OpenSSL 3.0 installed.
@@ -103,7 +104,8 @@ We use client certificates for both.
   
   ```json
   "ClientValidation": {
-    "RootCertificateThumbprint": "d87dce532fb17cabd3804e77d7f344ec4e49c80f",
+    // when specified then we only accept certificates derived from this root certificate
+    "RootCertificateThumbprint": "",
     // this is only checked when the agent's certificate does not have role=etw-manager
     "AuthorizedCommonNames": [
       "Karl Waclawek",
@@ -111,7 +113,8 @@ We use client certificates for both.
     ]
   },
   "AgentValidation": {
-    "RootCertificateThumbprint": "d87dce532fb17cabd3804e77d7f344ec4e49c80f",
+    // when specified then we only accept certificates derived from this root certificate
+    "RootCertificateThumbprint": "",
     // this is only checked when the agent's certificate does not have role=etw-pushagent
     "AuthorizedCommonNames": []
   }
