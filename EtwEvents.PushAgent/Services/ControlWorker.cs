@@ -264,6 +264,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
         async Task<bool> InstallPemCertificate(string pemData) {
             bool success = false;
+            var installTime = Timestamp.FromDateTimeOffset(DateTimeOffset.UtcNow);
             try {
                 var ephemeralCert = X509Certificate2.CreateFromPem(pemData, pemData);
                 //NOTE: we can only import the private key as a persisted key if we export/import to Pkcs12.
@@ -279,36 +280,48 @@ namespace KdSoft.EtwEvents.PushAgent
                     _lastCertInstall = new InstallCertResult {
                         Error = CertificateError.Invalid,
                         ErrorMessage = sb.ToString(),
-                        Thumbprint = cert.Thumbprint
+                        Thumbprint = cert.Thumbprint,
+                        InstallTime = installTime
                     };
                 }
                 else {
-                    CertUtils.InstallMachineCertificate(cert);
+                    // Is the certificate already installed? If yes, don't reconnect.
                     var clientCerts = Utils.GetClientCertificates(_controlOptions.CurrentValue.ClientCertificate);
                     var certPrint = cert.Thumbprint.ToLower();
-                    success = clientCerts.FindIndex(c => c.Thumbprint.ToLower() == certPrint) >= 0;
-                    if (success) {
-                        // we need to use the new certificate everywhere
-                        _httpHandlerCache.Refresh();
-                        // we need to load and resave protected data with the new certificate
-                        _sessionConfig.UpdateDataProtection(new DataCertOptions {
-                            Location = StoreLocation.LocalMachine,
-                            Thumbprint = certPrint
-                        });
-                        // and we need to restart the control connection
-                        await _controlConnector.StartAsync(_controlOptions.CurrentValue, _cancelRegistration.Token).ConfigureAwait(false);
-                        _lastCertInstall = new InstallCertResult { Thumbprint = cert.Thumbprint };
+                    var alreadyInstalled = clientCerts.FindIndex(c => c.Thumbprint.ToLower() == certPrint) >= 0;
+
+                    if (alreadyInstalled) {
+                        _lastCertInstall = new InstallCertResult { Thumbprint = cert.Thumbprint, InstallTime = installTime };
                     }
                     else {
-                        _lastCertInstall = new InstallCertResult { Error = CertificateError.Install, Thumbprint = cert.Thumbprint };
+                        CertUtils.InstallMachineCertificate(cert);
+                        clientCerts = Utils.GetClientCertificates(_controlOptions.CurrentValue.ClientCertificate);
+                        success = clientCerts.FindIndex(c => c.Thumbprint.ToLower() == certPrint) >= 0;
+                        if (success) {
+                            // we need to use the new certificate everywhere
+                            _httpHandlerCache.Refresh();
+                            // we need to load and resave protected data with the new certificate
+                            _sessionConfig.UpdateDataProtection(new DataCertOptions {
+                                Location = StoreLocation.LocalMachine,
+                                Thumbprint = certPrint
+                            });
+                            // and we need to restart the control connection
+                            await _controlConnector.StartAsync(_controlOptions.CurrentValue, _cancelRegistration.Token).ConfigureAwait(false);
+                            _lastCertInstall = new InstallCertResult { Thumbprint = cert.Thumbprint, InstallTime = installTime };
+                        }
+                        else {
+                            _lastCertInstall = new InstallCertResult { Error = CertificateError.Install, Thumbprint = cert.Thumbprint, InstallTime = installTime };
+                        }
                     }
                 }
             }
             catch (CryptographicException cex) {
-                _lastCertInstall = new InstallCertResult { Error = CertificateError.Crypto, ErrorMessage = cex.Message };
+                success = false;
+                _lastCertInstall = new InstallCertResult { Error = CertificateError.Crypto, ErrorMessage = cex.Message, InstallTime = installTime };
             }
             catch (Exception ex) {
-                _lastCertInstall = new InstallCertResult { Error = CertificateError.Other, ErrorMessage = ex.Message };
+                success = false;
+                _lastCertInstall = new InstallCertResult { Error = CertificateError.Other, ErrorMessage = ex.Message, InstallTime = installTime };
             }
             return success;
         }
