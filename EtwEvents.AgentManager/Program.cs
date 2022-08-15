@@ -40,7 +40,7 @@ namespace KdSoft.EtwEvents.AgentManager
                             opts.CheckCertificateRevocation = false;
                             // if a root certificate thumprint is specified then constrain validation to that specific root certificate
                             var rootCertThumbprint = context.Configuration["ClientValidation:RootCertificateThumbprint"];
-                            if (string.IsNullOrEmpty(rootCertThumbprint)) {
+                            if (!string.IsNullOrEmpty(rootCertThumbprint)) {
                                 opts.ClientCertificateValidation = (cert, chain, errors) => {
                                     if (chain != null) {
                                         var clientThumbprint = context.Configuration["ClientValidation:RootCertificateThumbprint"];
