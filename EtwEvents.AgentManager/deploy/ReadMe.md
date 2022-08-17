@@ -39,6 +39,7 @@ One of these applies:
   
   ```json
   "ClientValidation": {
+    // optional, only set when a specific root certificate must be used for client authorization
     "RootCertificateThumbprint": "d87dce532fb17cabd3804e77d7f344ec4e49c80f",
     "AuthorizedCommonNames": [
       "John Doe"
