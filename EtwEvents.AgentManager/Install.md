@@ -14,10 +14,13 @@
   - Take note of the current install directory, if it needs to stay the same
   - Update the current `appsettings.Local.json` file if changes are desired.
 - Check that the proper server certificate for the agent manager is copied to the deploy directory.
-  - It must include the private key.
-  - It must be signed by a root certificate accessible to the AgentManager web site.
+  - It must include the private key, and it must be a PKCS12 encoded file with the ".p12" file extension.
+  - It must be signed by a root/intermediate certificate accessible to the AgentManager web site.
+    - If custom root/intermediate certificates need to be installed as well, then they must be copied to the deploy directory too.
+    - They must **not** contain the private key, and their file extension must be ".cer".
   - It can be installed by dragging it onto `tools\InstallServerPfx.cmd`, but it will be auto-detected and installed by the installer anyway.
   - The settings in `appsettings[.Local].json` must match the certificate, but that is handled by the installer.
+
 - Finally, run `InstallService.cmd as administrator (it will prompt for elevation if necessary):
   - The script will prompt for the `<target directory>`.
   - On an existing installation the `<target directory>` should probably match the existing install directory.
@@ -48,7 +51,8 @@ The User and the ETW PushAgent authenticate themselves to the AgentManager using
 - If the client certificate does not have the apprpriate role, it can be authorized by having its common name listed in the AuthorizedCommonNames setting of the AgentManager:
 ```json
   "ClientValidation": {
-    "RootCertificateThumbprint": "d87dce532fb17cabd3804e77d7f344ec4e49c80f",
+    // when specified then we only accept certificates derived from this root certificate
+    "RootCertificateThumbprint": "",
     // this is only checked when the agent's certificate does not have role=etw-manager
     "AuthorizedCommonNames": [
       "Karl Waclawek",
@@ -56,9 +60,12 @@ The User and the ETW PushAgent authenticate themselves to the AgentManager using
     ]
   },
   "AgentValidation": {
-    "RootCertificateThumbprint": "d87dce532fb17cabd3804e77d7f344ec4e49c80f",
+    // when specified then we only accept certificates derived from this root certificate
+    "RootCertificateThumbprint": "",
     // this is only checked when the agent's certificate does not have role=etw-pushagent
     "AuthorizedCommonNames": []
   },
 
   ```
+- To create client certificates, check the scripts in the `EtwEvents.PushAgent/certificates` folder.
+  - They need to be modified for the individual install scenario.

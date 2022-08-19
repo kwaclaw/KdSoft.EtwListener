@@ -34,5 +34,4 @@ REM use single quotes for PowerShell arguments containing blanks
 PowerShell -ExecutionPolicy Bypass .\InstallService.ps1 -sourceDir . -targetDir '%targetDir%' ^
     -file 'KdSoft.EtwEvents.AgentManager.exe' -port 50300
 
-popd
 pause

@@ -1,4 +1,4 @@
-﻿param(
+param(
     [Parameter(mandatory=$true)][String]$sourceDir,
     [Parameter(mandatory=$true)][String]$targetDir,
     [Parameter(mandatory=$true)][String]$file,
@@ -100,19 +100,20 @@ function Update-AppSettings {
 $sourceDirPath = [System.IO.Path]::GetFullPath($sourceDir)
 $targetDirPath = [System.IO.Path]::GetFullPath($targetDir)
 
-# install root certificate
-Write-Host Importing root certificate
-$rootCertPath = [System.IO.Path]::Combine($sourceDirPath, "Kd-Soft.cer")
-Import-Certificate -FilePath $rootCertPath -CertStoreLocation Cert:\LocalMachine\Root
+# install root/signing certificates (chain)
+Write-Host Importing root certificate chain
+foreach ($caFile in Get-ChildItem -Path $sourceDirPath -Filter '*.cer') {
+    Import-Certificate -FilePath $caFile.FullName -CertStoreLocation Cert:\LocalMachine\Root
+}
 
 # process first server certificate
 Write-Host
-Write-Host Checking server certificates
+Write-Host Checking PKCS12 certificates
 $serverCert = $null
 foreach ($serverCertFile in Get-ChildItem -Path . -Filter '*.p12') {
-    $serverCert = Import-Cert $serverCertFile cert:\LocalMachine\My
+    $serverCert = Import-Cert $serverCertFile Cert:\LocalMachine\My
     if ($serverCert) {
-        Write-Host Using server certificate $serverCertFile
+        Write-Host Imported certificate $serverCertFile
         break
     }
 }
