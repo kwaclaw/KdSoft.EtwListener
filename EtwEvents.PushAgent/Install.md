@@ -15,9 +15,11 @@
   - Take note of the current install directory, if it needs to stay the same
   - Update the current `appsettings.Local.json` file if changes are desired.
 - Check that the proper client certificate for the site is copied to the deploy directory (see [Client Authentication](#client-authentication) below).
-  - It must include the private key.
+  - It must include the private key, and it must be a PKCS12 encoded file with the ".p12" file extension.
   - It should have the role attribute (OID: 2.5.4.72): "etw-pushagent" .
-  - It must be signed by a root certificate accessible to the AgentManager web site.
+  - It must be signed by a root/intermediate certificate accessible to the PushAgent installation.
+    - If custom root/intermediate certificates need to be installed as well, then they must be copied to the deploy directory too.
+    - They must **not** contain the private key, and their file extension must be ".cer".
   - It can be installed by dragging it onto `tools\InstallClientPfx.cmd`, but it will be auto-detected and installed by the installer anyway.
   - The settings in `appsettings[.Local].json` must match the certificate (see [Client Authentication](#client-authentication) below), 
     but that is handled by the installer.
@@ -48,14 +50,17 @@ The ETW PushAgent authenticates itself to the AgentManager using a client certif
 - The client certificate must be configured to support client authorization.
 - The client certificate presented by the PushAgent will be authorized if the DN contains role=etw-pushagent.
 - If the client certificate does not have the role above, it can be authorized by being listed in the AuthorizedCommonNames setting of the AgentManager.
+- To create client certificates, check the scripts in the `EtwEvents.PushAgent/certificates` folder.
+  - They need to be modified for the individual install scenario.
 
-- If needed, a custom root certificate must be installed.
+- If needed, custom root and  signing (intermediate CA) certificates (if desired) must be installed.
   - On a Windows client, the optional root certificate must be installed in the "**Local Computer\Trusted Root Certification Authorities**" folder of the local certificate storage.
+  - On a Windows client, the optional signing certificate must be installed in the "**Local Computer\Intermediate Certification Authorities**" folder of the local certificate storage.
   - On a Linux client it depends on the distribution. A popular way is:
     - copy `Kd-Soft.crt` to `/usr/local/share/ca-certificates/`
     - run `update-ca-certificates` with the proper permissions (root)
-- If we have a root certificate with its private key, then we can create client certificates.
-  - Modify the script `certificates\MakeKdSoftClientCert.cmd` by replacing "Kd-Soft.crt" and "Kd-Soft.key" with the file names for your root certificate.
+- If we have a root or signing certificate with its private key, then we can create client certificates.
+  - Modify the script `certificates\MakeKdSoftClientCert.cmd` by replacing "Kd-Soft.crt" and "Kd-Soft.key" with the file names for your root/signing certificate.
 
 - Our scripts in `EtwEvents.PushAgent/certificates`require OpenSSL 3.0 installed.
   - see https://slproweb.com/products/Win32OpenSSL.html or https://kb.firedaemon.com/support/solutions/articles/4000121705.

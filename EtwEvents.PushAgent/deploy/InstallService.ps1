@@ -1,4 +1,4 @@
-﻿param(
+param(
     [Parameter(mandatory=$true)][String]$sourceDir,
     [Parameter(mandatory=$true)][String]$targetDir,
     [Parameter(mandatory=$true)][String]$file,
@@ -125,22 +125,22 @@ function Update-AppSettings {
 $sourceDirPath = [System.IO.Path]::GetFullPath($sourceDir)
 $targetDirPath = [System.IO.Path]::GetFullPath($targetDir)
 
-# install root certificate
-Write-Host Importing root certificate
-$rootCertPath = [System.IO.Path]::Combine($sourceDirPath, "Kd-Soft.cer")
-Import-Certificate -FilePath $rootCertPath -CertStoreLocation Cert:\LocalMachine\Root
+# install root/signing certificates (chain)
+Write-Host Importing root certificate chain
+foreach ($caFile in Get-ChildItem -Path $sourceDirPath -Filter '*.cer') {
+    Import-Certificate -FilePath $caFile.FullName -CertStoreLocation Cert:\LocalMachine\Root
+}
 
-# process first client certificate matching role=etw-pushagent
+# process any PKCS12 certificates
 Write-Host
-Write-Host Checking client certificates
+Write-Host Checking PKCS12 certificates
 $clientCert = $null
 foreach ($clientCertFile in Get-ChildItem -Path . -Filter '*.p12') {
-    $role, $clientCert = Import-Cert $clientCertFile cert:\localMachine\my
+    $role, $clientCert = Import-Cert $clientCertFile Cert:\localMachine\my
     if ($role -eq 'etw-pushagent') {
-        Write-Host Using client certificate $clientCertFile
-        break
-    } else {
-        $clientCert = $null
+        Write-Host Imported certificate $clientCertFile with role 'etw-pushagent'
+    } elseif ($clientCert) {
+        Write-Host Imported certificate $clientCertFile
     }
 }
 

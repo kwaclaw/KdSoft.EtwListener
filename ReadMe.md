@@ -81,11 +81,11 @@ The UI consists of two main sections, a side bar and a main pane for configurati
   - If any errors in communicating with an agent occurred then the error number will be > 0 and clicking on the Errors label will slide up a list of errors.
 
 ### Updating Agent Certificates
-Occasionally, and agent's certificate will expire. When that time approaches, a warning indicator will show next to the client certificate's expiry countdown.
+Occasionally, an agent's certificate will expire. When that time approaches a warning indicator will show next to the client certificate's expiry countdown.
 
 - Certificate updates are triggered by dropping one or more new certificates into the *AgentCerts* folder in the AgentManager's install directory.
   - This allows multiple methods of deploying certificates, as the only requirement is that they end up in the AgentCerts directory.
-  - Certificates can also be uploaded through the UI (icon at top of side bar).
+  - Certificates can also be uploaded through the UI (upload icon at top of side bar).
   - A successful install can be checked by observing a change in the expiry countdown, or by checking if the thumbprint has changed (hover over "Certificate" label).
 
 - Certificates must conform to these requirements:

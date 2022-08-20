@@ -1,10 +1,18 @@
 @echo off
 Setlocal enabledelayedexpansion
+:: switch to location of this script
+pushd "%~dp0"
 
 :: Prerequisite: OpenSSL >= 3.0 must be installed - see https://slproweb.com/products/Win32OpenSSL.html
 
-:: Example: MakeKdSoftClientCert.cmd -name my-etw-site -email karl@kd-soft.net -extra "role=etw-pushagent"
-:: Example: MakeKdSoftClientCert.cmd -name "Karl Waclawek" -email karl@waclawek.net -extra "role=etw-manager"
+:: Example for Agent: MakeClientCert.cmd -name my-etw-site -email karl@kd-soft.net -extra "role=etw-pushagent"
+:: Example for User: MakeClientCert.cmd -name "Karl Waclawek" -email karl@waclawek.net -extra "role=etw-manager"
+
+:: MODIFY FOR YOUR SCENARIO
+set ca_sign_file=Kd-Soft.crt
+set ca_key_file=Kd-Soft.key
+set base_distinguished_name=/C=CA/ST=ON/L=Oshawa/O=Kd-Soft
+
 
 :: Common Name (CN)
 set -name=
@@ -42,25 +50,30 @@ if ["%-extra%"] == [""] ( cd. ) else (set -extra=/%-extra%)
 
 set cn=CN=%-name%
 set em=/emailAddress=%-email%
-set dn=/C=CA/ST=ON/L=Oshawa/O=Kd-Soft/%cn%%em%%-extra%
+set dn=%base_distinguished_name%/%cn%%em%%-extra%
+
+mkdir tmp 2>nul
+mkdir out 2>nul
+
 
 @echo generate client key
-openssl genrsa -out "tmp/client.key" 4096
+openssl ecparam -out "tmp/client.key" -name secp384r1 -genkey
 if %ERRORLEVEL% NEQ 0 (Exit /b)
 
 @echo generate CSR
-openssl req -new -key "tmp/client.key" -out "tmp/client.csr" -config "kd-soft-client.cnf"
+openssl req -new -key "tmp/client.key" -out "tmp/client.csr" -config "client.cnf" -subj "%dn%"
 if %ERRORLEVEL% NEQ 0 (Exit /b)
     
 @echo create and sign the client certificate    
-openssl x509 -req -days 750 -in "tmp/client.csr" -CA "Kd-Soft.crt" -CAkey "Kd-Soft.key" ^
-    -CAcreateserial -out "tmp/client.crt" -subj "%dn%" -copy_extensions copy
+openssl x509 -req -sha384 -days 1095 -in "tmp/client.csr" -CA "%ca_sign_file%" -CAkey "%ca_key_file%" ^
+    -CAcreateserial -out "tmp/client.crt" -copy_extensions copy
 if %ERRORLEVEL% NEQ 0 (Exit /b)
 
-  
 @echo export to pkcs12
 :: sha256 encrypted keys cannot be imported on WinServer 2016 / Win10 <= 1703, use TripleDES-SHA1 instead
 :: openssl pkcs12 -export -in "tmp/client.crt" -inkey "tmp/client.key" -out "out/%-name%.p12"
-openssl pkcs12 -export -in "tmp/client.crt" -inkey "tmp/client.key" -macalg SHA1 -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -out "out/%-name%.p12"
-    
+:: openssl pkcs12 -export -in "tmp/client.crt" -inkey "tmp/client.key" -macalg SHA1 -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -out "out/%-name%.p12"
+openssl pkcs12 -export -in "tmp/client.crt" -inkey "tmp/client.key" -out "out/%-name%.p12"
+
+popd    
 pause

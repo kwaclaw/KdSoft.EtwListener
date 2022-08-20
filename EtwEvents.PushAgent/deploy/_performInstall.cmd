@@ -49,5 +49,4 @@ REM use single quotes for PowerShell arguments containing blanks
 PowerShell -ExecutionPolicy Bypass .\InstallService.ps1 -sourceDir . -targetDir '%targetDir%' ^
     -file 'KdSoft.EtwEvents.PushAgent.exe' -user '.\LocalSystem' -managerUrl '%managerUrl%'
 
-popd
 pause

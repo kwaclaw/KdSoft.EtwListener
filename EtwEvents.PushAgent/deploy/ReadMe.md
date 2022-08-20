@@ -2,7 +2,7 @@
 
 - The installer is shipped as a zip archive, with this file in it.
 
-- In addition you will also require two items:
+- In addition you will also require:
   
   1) A client certificate, required on new installations, can be re-used on updates.
      - The client certificate must be copied into this directory (once unzipped).
@@ -10,14 +10,16 @@
      - One of these applies:
         - Use a client certificate where the subject (DN) includes "role=etw-pushagent" 
         - Use a client certificate where the Common Name (CN) is listed in the Agent Manager's appsettings.json under AgentValidation
-     - The installer will use the first matching client certificate it can find in this directory.
-     - The Control::ClientCertificate::SubjectCN property in appsettings.local.json will be set to the client certificate's Common Name'
-  2) The Https URL for the agent manager (which controls the agent service).
+     - The installer will import any matching client certificates it can find in this directory.
+     - The Control::ClientCertificate::SubjectCN property in appsettings.local.json will be set to the last imported client certificate's Common Name'.
+  2) Any root or intermediate CA certificates required to validate the client certificate.
+     - These certificates must have the `.cer` file extension.
+  3) The Https URL for the agent manager (which controls the agent service).
 
 - Steps:
   
   1) Unzip archive.
-  2) copy certificate into unzipped folder (if provided).
+  2) copy certificates into unzipped folder (if provided).
   3) Double click `InstallService.cmd`, follow prompts.
 
 ### Local Configuration
