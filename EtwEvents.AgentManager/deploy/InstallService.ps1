@@ -167,7 +167,9 @@ Copy-Item -Path $sourcePublishPath -Destination $targetDirPath -Recurse
 [string] $localAppSettingsSource = '.\appsettings.Local.json'
 [string] $localAppSettingsTarget = [System.IO.Path]::Combine($targetDirPath, "appsettings.Local.json")
 Copy-Item -Path $localAppSettingsSource -Destination $localAppSettingsTarget
-Update-AppSettings $localAppSettingsTarget $serverCert
+if ($serverCert) {
+    Update-AppSettings $localAppSettingsTarget $serverCert
+}
 
 # path of service binary executable
 $filepath = [System.IO.Path]::Combine($targetDirPath, $file)
@@ -191,7 +193,7 @@ if ($cred.UserName -like 'NT SERVICE\*') {
 }
 
 "Configuring the service"
-sc.exe failure $serviceName reset=86400 actions=restart/6000/restart/6000/restart/6000
+sc.exe failure $serviceName reset= 86400 actions= restart/6000/restart/6000/restart/6000
 
 "Installed and configured the service."
 

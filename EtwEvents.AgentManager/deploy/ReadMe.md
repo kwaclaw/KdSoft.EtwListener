@@ -4,13 +4,16 @@
 
 - In addition you will also require:
   
-    1) A server certificate, required on new installations, can be re-used on updates.
-       - The server certificate must be copied into this directory (once unzipped).
+  1) A web server certificate, required on new installations, can be re-used on updates.
+     - The certificate can be installed manually (or it could be already installed, e.g. if it is a wildcard certificate)
+       - When installed, manually configure its specifics in `appsettings.Local.json` - see below under [Local Configuration](#local-configuration).
+     - The server certificate can be provided as a file:
+       - it must be copied into this directory (once unzipped).
        - The certificate must be a PKCS12 certificate with a `.p12` file extension.
-       - It must be a proper web server certificate.
        - The installer will use the first matching certificate it can find in this directory.
-    2) Any root or intermediate CA certificates, typically required to validate client certificates (user or agent).
-       - These certificates must have the `.cer` file extension.
+       - In this case the installer will update `appsettings.Local.json` accordingly.
+  2) Any root or intermediate CA certificates, typically required to validate client certificates (user or agent).
+     - These certificates must have the `.cer` file extension.
 
 - Steps:
   
@@ -39,7 +42,6 @@ One of these applies:
   - Note: this will override/replace settings in appsettings.json, but it is not possible to remove existing settings.
 
 - This example will add John Doe as an authorized user for the agent manager (common name of certificate must be "John Doe"):
-  
   ```json
   "ClientValidation": {
     // optional, only set when a specific root certificate must be used for client authorization
@@ -47,5 +49,29 @@ One of these applies:
     "AuthorizedCommonNames": [
       "John Doe"
     ]
+  },
+  ```
+
+- This example will specify which certificate to load as server certificate:
+  - only required if certificate already installed, otherwise the installer will update `appsettings.Local.json`.
+  ```json
+  "Kestrel": {
+    "EndpointDefaults": {
+      "Protocols": "Http1AndHttp2"
+    },
+    "Endpoints": {
+      "Http": {
+        "Url": "http://0.0.0.0:80"
+      },
+      "Https": {
+        "Url": "https://0.0.0.0:443"
+        "Certificate": { // Windows only, will select the matching certificate with the latest expiry date
+          "Subject": "kd-soft.net", // matches any Subject containing that string
+          "Store": "My", // My = Personal store, seems like only stores indicated by the StoreName type are accepted
+          "Location": "LocalMachine",
+          "AllowInvalid": false //"<true or false; defaults to false, must be false for server certificates>"
+        }
+      }
+    }
   },
   ```

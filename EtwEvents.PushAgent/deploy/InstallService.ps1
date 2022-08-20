@@ -204,12 +204,12 @@ if ($cred.UserName -like 'NT SERVICE\*') {
     New-Service -Name $serviceName -BinaryPathName $filepath -Description $serviceDescription -DisplayName $serviceDisplayName -StartupType Automatic
     $newService  = Get-WmiObject -Class Win32_Service -Filter "Name='$serviceName'"
     $ChangeStatus = $newService.Change($null, $null, $null, $null, $null, $null, $cred.UserName, $null, $null, $null, $null)
-    If ($ChangeStatus.ReturnValue -eq '0')  {
+    if ($ChangeStatus.ReturnValue -eq '0')  {
         Write-host Log on account updated sucessfully for the service $newService -f Green
         # for lack of a better understanding of minimum permissions, we use Administrator rights
         net localgroup Administrators /delete $cred.UserName
         net localgroup Administrators /add $cred.UserName
-    } Else {
+    } else {
         Write-host Failed to update Log on account in the service $newService. Error code: $($ChangeStatus.ReturnValue) -f Red
     }
 } else {
@@ -217,7 +217,7 @@ if ($cred.UserName -like 'NT SERVICE\*') {
 }
 
 "Configuring the service"
-sc.exe failure $serviceName reset=86400 actions=restart/6000/restart/6000/restart/6000
+sc.exe failure $serviceName reset= 86400 actions= restart/6000/restart/6000/restart/6000
 
 "Installed and configured the service."
 

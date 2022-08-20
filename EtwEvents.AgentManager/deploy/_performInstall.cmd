@@ -31,7 +31,6 @@ rem if not provided, use default install directory
 if [%targetDir%]==[##none##] (set targetDir=%defaultDir:"=%)
 
 REM use single quotes for PowerShell arguments containing blanks
-PowerShell -ExecutionPolicy Bypass .\InstallService.ps1 -sourceDir . -targetDir '%targetDir%' ^
-    -file 'KdSoft.EtwEvents.AgentManager.exe' -port 50300
+PowerShell -ExecutionPolicy Bypass .\InstallService.ps1 -sourceDir . -targetDir '%targetDir%' -file 'KdSoft.EtwEvents.AgentManager.exe'
 
 pause
