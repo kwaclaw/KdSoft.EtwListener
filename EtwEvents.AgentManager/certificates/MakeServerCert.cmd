@@ -67,6 +67,6 @@ if %ERRORLEVEL% NEQ 0 (Exit /b)
 :: openssl pkcs12 -export -in "tmp/server.crt" -inkey "tmp/server.key" -out "out/%-dns%.p12"
 :: openssl pkcs12 -export -in "tmp/server.crt" -inkey "tmp/server.key" -macalg SHA1 -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -out "out/%-dns%.p12"
 openssl pkcs12 -export -in "tmp/server.crt" -inkey "tmp/server.key" -out "out/%-dns%.p12"
-
-popd   
+   
+popd
 pause

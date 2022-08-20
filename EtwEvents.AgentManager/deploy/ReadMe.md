@@ -9,7 +9,7 @@
        - The certificate must be a PKCS12 certificate with a `.p12` file extension.
        - It must be a proper web server certificate.
        - The installer will use the first matching certificate it can find in this directory.
-    2) Any root or intermediate CA certificates required to validate the client certificate.
+    2) Any root or intermediate CA certificates, typically required to validate client certificates (user or agent).
        - These certificates must have the `.cer` file extension.
 
 - Steps:
