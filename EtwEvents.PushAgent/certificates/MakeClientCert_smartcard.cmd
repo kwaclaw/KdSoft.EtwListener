@@ -5,11 +5,11 @@ pushd "%~dp0"
 
 :: Prerequisite: OpenSSL >= 3.0 must be installed - see https://slproweb.com/products/Win32OpenSSL.html
 
-:: Example for Agent: MakeClientCert.cmd -name my-etw-site -email karl@kd-soft.net -extra "role=etw-pushagent"
-:: Example for User: MakeClientCert.cmd -name "Karl Waclawek" -email karl@waclawek.net -extra "role=etw-manager"
+:: Example for Agent: MakeClientCert_smartcard.cmd -name my-etw-site -email karl@kd-soft.net -extra "role=etw-pushagent"
+:: Example for User: MakeClientCert_smartcard.cmd -name "Karl Waclawek" -email karl@waclawek.net -extra "role=etw-manager"
 
 :: MODIFY FOR YOUR SCENARIO
-set config_file=client.cnf                                 
+set config_file=client_smartcard.cnf                                 
 set ca_sign_file=Kd-Soft.crt
 set ca_key_file=Kd-Soft.key
 set base_distinguished_name=/C=CA/ST=ON/L=Oshawa/O=Kd-Soft
@@ -58,7 +58,12 @@ mkdir out 2>nul
 
 
 @echo generate client key
-openssl ecparam -out "tmp/client.key" -name secp384r1 -genkey
+:: openssl ecparam -out "tmp/client.key" -name secp384r1 -genkey
+:: The PIV standard allows RSA 2048 bit keys, or elliptic curve keys based on curve prime256v1
+::  - see https://nvlpubs.nist.gov/nistpubs/specialpublications/nist.sp.800-78-4.pdf
+:: However, the Windows Base Smart Card CryptoProvider does not seem to support elliptic curve keys.
+:: openssl ecparam -out "tmp/client.key" -name prime256v1 -genkey
+openssl genrsa -out "tmp/client.key" 2048
 if %ERRORLEVEL% NEQ 0 (Exit /b)
 
 @echo generate CSR
@@ -68,8 +73,11 @@ if %ERRORLEVEL% NEQ 0 (Exit /b)
 openssl req -new -key "tmp/client.key" -out "tmp/client.csr" -config "%config_file%" -subj "%dn%"
 if %ERRORLEVEL% NEQ 0 (Exit /b)
     
-@echo create and sign the client certificate    
-openssl x509 -req -sha384 -days 1095 -in "tmp/client.csr" -CA "%ca_sign_file%" -CAkey "%ca_key_file%" ^
+@echo create and sign the client certificate
+:: The PIV standard does not allow SHA384 for the hash.
+:: openssl x509 -req -sha384 -days 1095 -in "tmp/client.csr" -CA "%ca_sign_file%" -CAkey "%ca_key_file%" ^
+::     -CAcreateserial -out "tmp/client.crt" -copy_extensions copy
+openssl x509 -req -sha256 -days 1095 -in "tmp/client.csr" -CA "%ca_sign_file%" -CAkey "%ca_key_file%" ^
     -CAcreateserial -out "tmp/client.crt" -copy_extensions copy
 if %ERRORLEVEL% NEQ 0 (Exit /b)
 
