@@ -70,6 +70,8 @@ if %ERRORLEVEL% NEQ 0 (Exit /b)
 :: OpenSSL 3.0 bug: -addext with long values clears the existing extensions from the config file !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 :: openssl req -new -key "tmp/client.key" -out "tmp/client.csr" -config "%config_file%" -subj "%dn%" ^
 ::     -addext "subjectAltName=otherName:1.3.6.1.4.1.311.20.2.3;UTF8:%-email%"
+:: Workaround: we communicate the email through an environemnt variable that is referenced in the config file
+set EMAIL_ADDRESS=%-email%
 openssl req -new -key "tmp/client.key" -out "tmp/client.csr" -config "%config_file%" -subj "%dn%"
 if %ERRORLEVEL% NEQ 0 (Exit /b)
     
