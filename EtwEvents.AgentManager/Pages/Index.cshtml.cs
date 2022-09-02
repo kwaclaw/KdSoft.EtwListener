@@ -1,17 +1,18 @@
 ﻿using System;
+using KdSoft.EtwEvents.AgentManager;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace KdSoft.EtwEvents.WebClient.Pages
 {
     public class IndexModel: PageModel
     {
-        readonly IConfiguration _config;
+        readonly IOptionsMonitor<AuthorizationOptions> _authOpts;
         readonly ILogger<IndexModel> _logger;
 
-        public IndexModel(IConfiguration config, ILogger<IndexModel> logger) {
-            _config = config;
+        public IndexModel(IOptionsMonitor<AuthorizationOptions> authOpts, ILogger<IndexModel> logger) {
+            _authOpts = authOpts;
             _logger = logger;
         }
 
@@ -29,7 +30,7 @@ namespace KdSoft.EtwEvents.WebClient.Pages
             }
         }
 
-        public int CertExpiryWarningDays => _config.GetValue<int>("CertExpiryWarningDays");
+        public int CertExpiryWarningDays => _authOpts.CurrentValue.CertExpiryWarningDays;
 
         //public string ResourceBase64() {
         //    // Retrieves the requested culture

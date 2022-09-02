@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Globalization;
@@ -18,6 +17,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using OrchardCore.Localization;
 
 namespace KdSoft.EtwEvents.AgentManager
@@ -59,13 +59,13 @@ namespace KdSoft.EtwEvents.AgentManager
                     //OnAuthenticationFailed = context => {
                     //    return Task.CompletedTask;
                     //},
-                    OnChallenge = (context) => {  // invoked for each client certificate?
+                    OnChallenge = (context) => {  // does not seem to be called! should be invoked for each client certificate?
                         //var clientCert = context.HttpContext.Connection.ClientCertificate;
                         return Task.CompletedTask;
                     },
                     OnCertificateValidated = context => {
-                        var authService = context.HttpContext.RequestServices.GetService<AuthorizationService>();
-                        var success = authService!.AuthorizePrincipal(context.Principal!, context.ClientCertificate, Role.Agent, Role.Manager);
+                        var authService = context.HttpContext.RequestServices.GetRequiredService<AuthorizationService>();
+                        var success = authService!.AuthorizePrincipal(context, Role.Agent, Role.Manager);
 
                         if (success) {
                             context.Success();
@@ -77,14 +77,9 @@ namespace KdSoft.EtwEvents.AgentManager
                 };
             });
 
-            // thess sections will be monitored for changes, so we cannot use Bind()
-            services.Configure<ClientValidationOptions>(Configuration.GetSection("ClientValidation"));
-            services.Configure<AgentValidationOptions>(Configuration.GetSection("AgentValidation"));
+            // this section will be monitored for changes, so we cannot use Bind()
+            services.Configure<AuthorizationOptions>(Configuration.GetSection("AuthorizationOptions"));
 
-            // add user role/authorization service
-            //TODO make this react to a reload of the config file
-            //var authorizedAgents = Configuration.GetSection("AgentValidation:AuthorizedCommonNames").Get<HashSet<string>>();
-            //var authorizedUsers = Configuration.GetSection("ClientValidation:AuthorizedCommonNames").Get<HashSet<string>>();
             services.AddSingleton<AuthorizationService>();
 
             services.Configure<CookiePolicyOptions>(options => {
@@ -153,10 +148,9 @@ namespace KdSoft.EtwEvents.AgentManager
 
             services.AddSingleton<CertificateFileService>(provider => {
                 var certDir = Path.Combine(_env.ContentRootPath, "AgentCerts");
-                var fileExpiry = TimeSpan.FromDays(Configuration.GetValue<int>("PendingCertExpiryDays", 7));
-                var checkPeriod = TimeSpan.FromMinutes(Configuration.GetValue<int>("PendingCertCheckMinutes", 360));
+                var authOptsMonitor = provider.GetRequiredService<IOptionsMonitor<AuthorizationOptions>>();
                 var logger = provider.GetRequiredService<ILogger<CertificateFileService>>();
-                return new CertificateFileService(new DirectoryInfo(certDir), fileExpiry, checkPeriod, logger);
+                return new CertificateFileService(new DirectoryInfo(certDir), authOptsMonitor, logger);
             });
             services.AddHostedService<CertificateFileService>(provider => provider.GetRequiredService<CertificateFileService>());
 

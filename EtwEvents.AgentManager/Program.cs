@@ -3,6 +3,7 @@ using KdSoft.Logging;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -20,6 +21,7 @@ namespace KdSoft.EtwEvents.AgentManager
                     webBuilder.ConfigureAppConfiguration((hostContext, cfgBuilder) => {
                         // we are overriding some of the settings that are already loaded
                         cfgBuilder.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+                        cfgBuilder.AddJsonFile("authorization.json", optional: true, reloadOnChange: true);
                         cfgBuilder.AddCommandLine(args);
                     });
                     webBuilder.ConfigureLogging((hostContext, loggingBuilder) => {
@@ -38,27 +40,8 @@ namespace KdSoft.EtwEvents.AgentManager
                         options.ConfigureHttpsDefaults(opts => {
                             opts.ClientCertificateMode = ClientCertificateMode.RequireCertificate;
                             opts.CheckCertificateRevocation = false;
-                            // if a root certificate thumprint is specified then constrain validation to that specific root certificate
-                            var rootCertThumbprint = context.Configuration["ClientValidation:RootCertificateThumbprint"];
-                            if (!string.IsNullOrEmpty(rootCertThumbprint)) {
-                                opts.ClientCertificateValidation = (cert, chain, errors) => {
-                                    if (chain != null) {
-                                        var clientThumbprint = context.Configuration["ClientValidation:RootCertificateThumbprint"];
-                                        foreach (var chainElement in chain.ChainElements) {
-                                            if (chainElement.Certificate.Thumbprint.ToUpperInvariant() == clientThumbprint?.ToUpperInvariant()) {
-                                                return true;
-                                            }
-                                        }
-                                        var agentThumbprint = context.Configuration["AgentValidation:RootCertificateThumbprint"];
-                                        foreach (var chainElement in chain.ChainElements) {
-                                            if (chainElement.Certificate.Thumbprint.ToUpperInvariant() == agentThumbprint?.ToUpperInvariant()) {
-                                                return true;
-                                            }
-                                        }
-                                    }
-                                    return false;
-                                };
-                            }
+                            var authService = options.ApplicationServices.GetRequiredService<AuthorizationService>();
+                            opts.ClientCertificateValidation = authService.ValidateClientCertificate;
                         });
                     });
                 })

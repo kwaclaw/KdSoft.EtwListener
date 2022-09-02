@@ -1,11 +1,11 @@
-﻿namespace KdSoft.EtwEvents.AgentManager
+﻿using System;
+using System.Collections.Generic;
+
+namespace KdSoft.EtwEvents.AgentManager
 {
     public class CertificateValidationOptions
     {
-        public string RootCertificateThumbprint { get; set; } = "";
         public string[] AuthorizedCommonNames { get; set; } = new string[0];
+        public HashSet<string> RevokedCertificates { get; set; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     }
-
-    public class ClientValidationOptions: CertificateValidationOptions { }
-    public class AgentValidationOptions: CertificateValidationOptions { }
 }

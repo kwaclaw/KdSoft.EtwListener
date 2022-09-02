@@ -1,10 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Net.Security;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Grpc.Core;
+using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.Extensions.ObjectPool;
 using Microsoft.Extensions.Options;
 
@@ -12,8 +14,7 @@ namespace KdSoft.EtwEvents.AgentManager
 {
     public class AuthorizationService
     {
-        readonly IOptionsMonitor<ClientValidationOptions> _clientOpts;
-        readonly IOptionsMonitor<AgentValidationOptions> _agentOpts;
+        readonly IOptionsMonitor<AuthorizationOptions> _authOpts;
         static readonly IReadOnlyList<Role> _emptyRoles = new List<Role>().AsReadOnly();
         static readonly ObjectPool<HashSet<Role>> _roleSetPool = new DefaultObjectPool<HashSet<Role>>(new DefaultPooledObjectPolicy<HashSet<Role>>());
 
@@ -39,25 +40,17 @@ namespace KdSoft.EtwEvents.AgentManager
             return builder.ToImmutable();
         }
 
-        public AuthorizationService(IOptionsMonitor<ClientValidationOptions> clientOpts, IOptionsMonitor<AgentValidationOptions> agentOpts) {
-            this._clientOpts = clientOpts;
-            this._agentOpts = agentOpts;
+        public AuthorizationService(IOptionsMonitor<AuthorizationOptions> authOpts) {
+            this._authOpts = authOpts;
 
-            clientOpts.OnChange(opts => {
-                var newRoleMap = CreateRoleMap(this._agentOpts.CurrentValue.AuthorizedCommonNames, opts.AuthorizedCommonNames);
+            authOpts.OnChange(opts => {
+                var newRoleMap = CreateRoleMap(opts.AgentValidation.AuthorizedCommonNames, opts.ClientValidation.AuthorizedCommonNames);
                 Interlocked.MemoryBarrier();
                 this._roleMap = newRoleMap;
                 Interlocked.MemoryBarrier();
             });
 
-            agentOpts.OnChange(opts => {
-                var newRoleMap = CreateRoleMap(opts.AuthorizedCommonNames, this._clientOpts.CurrentValue.AuthorizedCommonNames);
-                Interlocked.MemoryBarrier();
-                this._roleMap = newRoleMap;
-                Interlocked.MemoryBarrier();
-            });
-
-            var newRoleMap = CreateRoleMap(this._agentOpts.CurrentValue.AuthorizedCommonNames, this._clientOpts.CurrentValue.AuthorizedCommonNames);
+            var newRoleMap = CreateRoleMap(authOpts.CurrentValue.AgentValidation.AuthorizedCommonNames, authOpts.CurrentValue.ClientValidation.AuthorizedCommonNames);
             this._roleMap = newRoleMap;
         }
 
@@ -91,14 +84,34 @@ namespace KdSoft.EtwEvents.AgentManager
             }
         }
 
+        bool IsCertificateRevoked(string requestPath, X509Certificate2 clientCertificate) {
+            HashSet<string>? revokedCerts;
+            if (requestPath.Contains("/Manager/"))
+                revokedCerts = this._authOpts.CurrentValue.ClientValidation.RevokedCertificates;
+            else  // we assume every other path comes from a PushAgent
+                revokedCerts = this._authOpts.CurrentValue.AgentValidation.RevokedCertificates;
+            if (revokedCerts != null && revokedCerts.Contains(clientCertificate.Thumbprint)) {
+                return true;
+            }
+            return false;
+        }
+
         /// <summary>
         /// Returns if the ClaimsPrincipal matches any of the specified roles.
         /// Also adds corresponding claims to the principal's identities.
         /// </summary>
-        /// <param name="principal"></param>
-        /// <param name="clientCertificate"></param>
+        /// <param name="context"></param>
+        /// <param name="roles">Roles to check. Any match means success.</param>
         /// <returns></returns>
-        public bool AuthorizePrincipal(ClaimsPrincipal principal, X509Certificate2 clientCertificate, params Role[] roles) {
+        public bool AuthorizePrincipal(CertificateValidatedContext context, params Role[] roles) {
+            var clientCertificate = context.ClientCertificate;
+
+            // check revocation list based on agent or client certificate
+            var revoked = IsCertificateRevoked(context.Request.Path, clientCertificate);
+            if (revoked)
+                return false;
+
+            var principal = context.Principal;
             var roleSet = _roleSetPool.Get();
             try {
                 roleSet.Clear();
@@ -139,9 +152,19 @@ namespace KdSoft.EtwEvents.AgentManager
         /// </summary>
         /// <param name="peerIdentity"></param>
         /// <param name="clientCertificate"></param>
-        /// <param name="roles"></param>
+        /// <param name="roles">Roles to check. Any match means success.</param>
         /// <returns></returns>
-        public bool AuthorizePeerIdentity(IEnumerable<AuthProperty> peerIdentity, X509Certificate2 clientCertificate, params Role[] roles) {
+        public bool AuthorizePeerIdentity(IEnumerable<AuthProperty> peerIdentity, ServerCallContext context, params Role[] roles) {
+            var httpContext = context.GetHttpContext();
+            var clientCertificate = httpContext?.Connection.ClientCertificate;
+            if (clientCertificate is null)
+                return false;
+
+            // check revocation list based on agent or client certificate
+            var revoked = IsCertificateRevoked(context.Method, clientCertificate);
+            if (revoked)
+                return false;
+
             var roleSet = _roleSetPool.Get();
             try {
                 roleSet.Clear();
@@ -191,6 +214,25 @@ namespace KdSoft.EtwEvents.AgentManager
         //    }
         //    return roleSet;
         //}
+
+        public bool ValidateClientCertificate(X509Certificate2 cert, X509Chain? chain, SslPolicyErrors errors) {
+            if (errors != SslPolicyErrors.None) {
+                return false;
+            }
+            if (chain != null) {
+                // if a root certificate thumbprint is specified then we accept only certificates that are derived from it
+                var rootThumbprint = this._authOpts.CurrentValue.RootCertificateThumbprint?.ToUpperInvariant();
+                if (!string.IsNullOrEmpty(rootThumbprint)) {
+                    foreach (var chainElement in chain.ChainElements) {
+                        if (chainElement.Certificate.Thumbprint.ToUpperInvariant() == rootThumbprint) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 
     public enum Role

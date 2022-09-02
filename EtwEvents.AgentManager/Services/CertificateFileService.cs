@@ -5,20 +5,19 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace KdSoft.EtwEvents.AgentManager
 {
     public class CertificateFileService: BackgroundService
     {
         readonly DirectoryInfo _dirInfo;
-        readonly TimeSpan _fileExpiry;
-        readonly TimeSpan _checkPeriod;
+        readonly IOptionsMonitor<AuthorizationOptions> _authOptsMonitor;
         readonly ILogger<CertificateFileService> _logger;
 
-        public CertificateFileService(DirectoryInfo dirInfo, TimeSpan fileExpiry, TimeSpan checkPeriod, ILogger<CertificateFileService> logger) {
+        public CertificateFileService(DirectoryInfo dirInfo, IOptionsMonitor<AuthorizationOptions> authOptsMonitor, ILogger<CertificateFileService> logger) {
             _dirInfo = dirInfo;
-            _fileExpiry = fileExpiry;
-            _checkPeriod = checkPeriod;
+            _authOptsMonitor = authOptsMonitor;
             _logger = logger;
             // make sure directory exists
             _dirInfo.Create();
@@ -28,9 +27,10 @@ namespace KdSoft.EtwEvents.AgentManager
         void CleanupPendingFiles() {
             var utcNow = DateTimeOffset.UtcNow;
             var files = _dirInfo.GetFiles();
+            var fileExpiry = TimeSpan.FromDays(_authOptsMonitor.CurrentValue.PendingCertExpiryDays);
             foreach (var fi in files) {
                 var fileAge = utcNow - fi.LastWriteTimeUtc;
-                if (fileAge > _fileExpiry) {
+                if (fileAge > fileExpiry) {
                     try {
                         fi.Delete();
                     }
@@ -42,14 +42,16 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
+
             while (!stoppingToken.IsCancellationRequested) {
+                var checkPeriod = TimeSpan.FromMinutes(_authOptsMonitor.CurrentValue.PendingCertCheckMinutes);
                 try {
                     CleanupPendingFiles();
                 }
                 catch (Exception ex) {
                     _logger.LogError(ex, "Error in {method}.", nameof(CertificateFileService));
                 }
-                await Task.Delay(_checkPeriod, stoppingToken).ConfigureAwait(false);
+                await Task.Delay(checkPeriod, stoppingToken).ConfigureAwait(false);
             }
         }
 

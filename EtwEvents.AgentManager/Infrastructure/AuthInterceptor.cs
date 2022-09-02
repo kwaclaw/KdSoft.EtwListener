@@ -18,12 +18,9 @@ namespace KdSoft.EtwEvents
             if (context == null)
                 throw new ArgumentNullException(nameof(context));
 
-            var clientCert = context.GetHttpContext()?.Connection.ClientCertificate;
-            if (clientCert != null) {
-                var authorized = _authService.AuthorizePeerIdentity(context.AuthContext.PeerIdentity, clientCert, Role.Agent);
-                if (authorized) {
-                    return;
-                }
+            var authorized = _authService.AuthorizePeerIdentity(context.AuthContext.PeerIdentity, context, Role.Agent);
+            if (authorized) {
+                return;
             }
 
             throw new RpcException(new Status(StatusCode.PermissionDenied, "Unauthorized or missing Certificate"));
