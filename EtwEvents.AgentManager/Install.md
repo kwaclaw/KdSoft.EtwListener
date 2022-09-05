@@ -10,6 +10,7 @@
 - If applicable, check that the publish profile's target framework is installed.
 - On a new installation
   - Edit the included `appsettings.Local.json` according to the local requirements (see [Local Configuration](#local-configuration) below).
+  - Edit the included `authorization.json` according to the local requirements (see [Local Configuration](#local-configuration) below).
 - On an existing installation:
   - Take note of the current install directory, if it needs to stay the same
   - Update the current `appsettings.Local.json` file if changes are desired.
@@ -28,7 +29,9 @@
 
 ### Local Configuration
 
-- Override the settings in `appsettings.json` by editing the file `appsettings.Local.json` in the deploy folder.
+- If required, override the settings in `appsettings.json` by editing the file `appsettings.Local.json` in the deploy folder.
+- if required, override the settings in `authorization.json` by editing the file `authorization.json` in the deploy folder.
+- Both files can be changed at run-time and most changes will not require restarting the service.
 
 - The settings in `appsettings.Local.json` can selectively override settings in `appsettings.json` without having to duplicate the entire file.
 
@@ -48,11 +51,10 @@ The User and the ETW PushAgent authenticate themselves to the AgentManager using
 - The client certificate must be configured to support client authorization.
 - The client certificate presented by the PushAgent will be authorized if the DN contains role=etw-pushagent.
 - The client certificate presented by the User will be authorized if the DN contains role=etw-manager.
-- If the client certificate does not have the apprpriate role, it can be authorized by having its common name listed in the AuthorizedCommonNames setting of the AgentManager:
-```json
+- If the client certificate does not have the appropriate role, it can be authorized by having its common name listed
+  in the AuthorizedCommonNames setting of the AgentManager's `authorization.json` file:
+  ```json
   "ClientValidation": {
-    // when specified then we only accept certificates derived from this root certificate
-    "RootCertificateThumbprint": "",
     // this is only checked when the agent's certificate does not have role=etw-manager
     "AuthorizedCommonNames": [
       "Karl Waclawek",
@@ -60,12 +62,15 @@ The User and the ETW PushAgent authenticate themselves to the AgentManager using
     ]
   },
   "AgentValidation": {
-    // when specified then we only accept certificates derived from this root certificate
-    "RootCertificateThumbprint": "",
     // this is only checked when the agent's certificate does not have role=etw-pushagent
     "AuthorizedCommonNames": []
   },
-
+  // when specified then we only accept certificates derived from this root certificate
+  "RootCertificateThumbprint": "",
+  // thumbprints of revoked certificates, applies to both, ClientValidation and AgentValidation
+  "RevokedCertificates": [
+    "cd91bf6d1f52b76285b5b96abb57381d8d92bfa5"
+  ],
   ```
 - To create client certificates, check the scripts in the `EtwEvents.PushAgent/certificates` folder.
   - They need to be modified for the individual install scenario.

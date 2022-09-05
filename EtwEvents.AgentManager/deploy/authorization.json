@@ -1,0 +1,15 @@
+{
+  "AuthorizationOptions": {
+    "ClientValidation": {
+      "AuthorizedCommonNames": []
+    },
+    "AgentValidation": {
+      "AuthorizedCommonNames": []
+    },
+    "RevokedCertificates": [],
+    "RootCertificateThumbprint": "",
+    "CertExpiryWarningDays": 30,
+    "PendingCertExpiryDays": 7,
+    "PendingCertCheckMinutes": 360
+  }
+}

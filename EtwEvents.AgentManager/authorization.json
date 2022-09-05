@@ -5,20 +5,18 @@
       "AuthorizedCommonNames": [
         "Karl Waclawek",
         "John Doe"
-      ],
-      // thumbprints of revoked certificates, applicable to certificates that have role=etw-manager
-      "RevokedCertificates": [
-        "cd91bc6d1f52b76285b6b96abb57377d8d92bfa5"
       ]
     },
     "AgentValidation": {
       // this is only checked when the agent's certificate does not have role=etw-pushagent
-      "AuthorizedCommonNames": [],
-      // thumbprints of revoked certificates, applicable to certificates that have role=etw-pushagent 
-      "RevokedCertificates": []
+      "AuthorizedCommonNames": []
     },
     // when specified then we only accept certificates derived from that root certificate
     "RootCertificateThumbprint": "",
+    // thumbprints of revoked certificates, applies to both, ClientValidation and AgentValidation
+    "RevokedCertificates": [
+      "cd91bc6d1f52b76285b6b96abb57377d8d92bfa5"
+    ],
     "CertExpiryWarningDays": 30,
     "PendingCertExpiryDays": 7,
     "PendingCertCheckMinutes": 360

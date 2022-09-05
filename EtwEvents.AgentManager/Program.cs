@@ -40,6 +40,11 @@ namespace KdSoft.EtwEvents.AgentManager
                         options.ConfigureHttpsDefaults(opts => {
                             opts.ClientCertificateMode = ClientCertificateMode.RequireCertificate;
                             opts.CheckCertificateRevocation = false;
+                            // This callback is part of the certificate negotiation and forces the browser
+                            // to re-trigger the client certificate dialog when the certificate does not validate.
+                            // If we rejected a certificate later (e.g. in the CertificateAuthenticationEvents), then
+                            // the browser would still think that the certificate itself is valid, and it would not
+                            // offer the choice to select another client certificate on page reload.
                             var authService = options.ApplicationServices.GetRequiredService<AuthorizationService>();
                             opts.ClientCertificateValidation = authService.ValidateClientCertificate;
                         });

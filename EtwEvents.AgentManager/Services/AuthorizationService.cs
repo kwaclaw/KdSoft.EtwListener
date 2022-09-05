@@ -84,12 +84,9 @@ namespace KdSoft.EtwEvents.AgentManager
             }
         }
 
-        bool IsCertificateRevoked(string requestPath, X509Certificate2 clientCertificate) {
+        public bool IsCertificateRevoked(X509Certificate2 clientCertificate) {
             HashSet<string>? revokedCerts;
-            if (requestPath.Contains("/Manager/"))
-                revokedCerts = this._authOpts.CurrentValue.ClientValidation.RevokedCertificates;
-            else  // we assume every other path comes from a PushAgent
-                revokedCerts = this._authOpts.CurrentValue.AgentValidation.RevokedCertificates;
+            revokedCerts = this._authOpts.CurrentValue.RevokedCertificates;
             if (revokedCerts != null && revokedCerts.Contains(clientCertificate.Thumbprint)) {
                 return true;
             }
@@ -105,11 +102,6 @@ namespace KdSoft.EtwEvents.AgentManager
         /// <returns></returns>
         public bool AuthorizePrincipal(CertificateValidatedContext context, params Role[] roles) {
             var clientCertificate = context.ClientCertificate;
-
-            // check revocation list based on agent or client certificate
-            var revoked = IsCertificateRevoked(context.Request.Path, clientCertificate);
-            if (revoked)
-                return false;
 
             var principal = context.Principal;
             var roleSet = _roleSetPool.Get();
@@ -158,11 +150,6 @@ namespace KdSoft.EtwEvents.AgentManager
             var httpContext = context.GetHttpContext();
             var clientCertificate = httpContext?.Connection.ClientCertificate;
             if (clientCertificate is null)
-                return false;
-
-            // check revocation list based on agent or client certificate
-            var revoked = IsCertificateRevoked(context.Method, clientCertificate);
-            if (revoked)
                 return false;
 
             var roleSet = _roleSetPool.Get();
@@ -219,15 +206,25 @@ namespace KdSoft.EtwEvents.AgentManager
             if (errors != SslPolicyErrors.None) {
                 return false;
             }
-            if (chain != null) {
+            if (chain is null) {
+                if (IsCertificateRevoked(cert)) {
+                    return false;
+                }
+            }
+            else {
                 // if a root certificate thumbprint is specified then we accept only certificates that are derived from it
                 var rootThumbprint = this._authOpts.CurrentValue.RootCertificateThumbprint?.ToUpperInvariant();
-                if (!string.IsNullOrEmpty(rootThumbprint)) {
-                    foreach (var chainElement in chain.ChainElements) {
-                        if (chainElement.Certificate.Thumbprint.ToUpperInvariant() == rootThumbprint) {
-                            return true;
-                        }
+                bool rootValidation = !string.IsNullOrEmpty(rootThumbprint);
+                bool rootValidated = false;
+                foreach (var chainElement in chain.ChainElements) {
+                    if (IsCertificateRevoked(chainElement.Certificate)) {
+                        return false;
                     }
+                    if (rootValidation && chainElement.Certificate.Thumbprint.ToUpperInvariant() == rootThumbprint) {
+                        rootValidated = true;
+                    }
+                }
+                if (rootValidation && !rootValidated) {
                     return false;
                 }
             }
