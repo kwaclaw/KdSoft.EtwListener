@@ -1,3 +1,5 @@
+#Requires -Version 5.1
+
 param(
     [Parameter(mandatory=$true)][String]$sourceDir,
     [Parameter(mandatory=$true)][String]$targetDir,
@@ -34,7 +36,59 @@ function Save-JsonObject {
         [PSCustomObject] $jsonObject
     )
 
-    $jsonObject | ConvertTo-Json -Compress -Depth 6 | Set-Content -Path $jsonFilePath
+    $jsonObject | ConvertTo-Json -Compress -Depth 10 | Set-Content -Path $jsonFilePath
+}
+
+function Merge-Json($source, $extend) {
+    if ($source -is [PSCustomObject] -and $extend -is [PSCustomObject]) {
+        # Ordered hashtable for collecting properties
+        $merged = [ordered] @{}
+
+        # Copy $source properties or overwrite by $extend properties recursively
+        foreach ($property in $source.PSObject.Properties) {
+            if ($null -eq $extend.$($property.Name)) {
+                $merged[$property.Name] = $property.Value
+            }
+            else {
+                $merged[$property.Name] = Merge-Json $property.Value $extend.$($property.Name)
+            }
+        }
+
+        # Add $extend properties
+        foreach ($property in $extend.PSObject.Properties) {
+            if ($null -eq $source.$($property.Name)) {
+                $merged[$property.Name] = $property.Value
+            }
+        }
+
+        # Convert hashtable into PSCustomObject and output
+        [PSCustomObject] $merged
+    }
+    elseif ($source -is [Collections.IList] -and $extend -is [Collections.IList]) {
+        $maxCount = [Math]::Max($source.Count, $extend.Count)
+
+        [array] $merged = for ($i = 0; $i -lt $maxCount; ++$i) {
+            if ($i -ge $source.Count) { 
+                # extend array is bigger than source array
+                $extend[$i]
+            }              
+            elseif ($i -ge $extend.Count) {
+                # source array is bigger than extend array
+                $source[$i]
+            }
+            else {
+                # Merge the elements recursively
+                Merge-Json $source[$i] $extend[$i]
+            }
+        }
+
+        # Output merged array, using comma operator to prevent enumeration 
+        , $merged
+    }
+    else {
+        # Output extend object (scalar or different types)
+        $extend
+    }
 }
 
 # this returns a certificate where the KeyStorageFlags are not set properly to MachineKeySet | PersistKeySet
@@ -43,10 +97,18 @@ function Get-CertPfxItems {
         [string] $certFilePath
     )
 
-    $clientCert = Get-PfxCertificate -FilePath $certFilePath
-    $subjectName = $clientCert.SubjectName.Decode(128)
-    if ($subjectName -match 'OID\.2\.5\.4\.72=([^,]*)') { 
-        $role = $Matches[1]
+    try {
+        $clientCert = Get-PfxCertificate -FilePath $certFilePath
+    }
+    catch {
+        $clientCert = $null
+    }
+
+    if ($clientCert) {
+        $subjectName = $clientCert.SubjectName.Decode(128)
+        if ($subjectName -match 'OID\.2\.5\.4\.72=([^,]*)') { 
+            $role = $Matches[1]
+        }
     }
 
     Write-Output $role, $clientCert
@@ -94,12 +156,59 @@ function Import-Cert {
     Write-Output $role, $clientCert
 }
 
-function Update-AppSettings {
+# produces two files: 1) target file merged into source file, 2) backup of target file
+function Merge-AppSettings {
     param (
-        [string] $jsonFile,
+        [string]$jsonFile,
+        [string]$targetDir
+    )
+
+    [string] $sourceFile = '.\' + $jsonFile
+    [string] $targetFile = [System.IO.Path]::Combine($targetDir, $jsonFile)
+    [string] $localTargetFileMerged = $sourceFile + '.merged'
+
+    if (Test-Path -Path $targetFile -PathType leaf) {
+        [string] $localTargetFileBackup = $sourceFile + '.bkp'
+        Copy-Item -Path $targetFile -Destination $localTargetFileBackup
+
+        [PSCustomObject] $targetObj = Load-JsonObject $localTargetFileBackup
+        [PSCustomObject] $sourceObj = Load-JsonObject $sourceFile
+        $mergedObj = Merge-Json $sourceObj $targetObj
+
+        Save-JsonObject $localTargetFileMerged $mergedObj
+    }
+    else {
+        Copy-Item -Path $sourceFile -Destination $localTargetFileMerged
+    }
+}
+
+function Copy-AppSettings {
+    param (
+        [string]$jsonFile,
+        [string]$targetDir
+    )
+
+    [string] $sourceFile = '.\' + $jsonFile
+
+    [string] $localTargetFileMerged = $sourceFile + '.merged'
+    if (Test-Path -Path $localTargetFileMerged -PathType leaf) {
+        [string] $targetFile = [System.IO.Path]::Combine($targetDir, $jsonFile)
+        Copy-Item -Path $localTargetFileMerged -Destination $targetFile
+    }
+
+    [string] $localTargetFileBackup = $sourceFile + '.bkp'
+    if (Test-Path -Path $localTargetFileBackup -PathType leaf) {
+        [string] $targetFileBackup = [System.IO.Path]::Combine($targetDir, $jsonFile) + '.bkp'
+        Copy-Item -Path $localTargetFileBackup -Destination $targetFileBackup
+    }
+}
+
+function Update-MergedAppSettings {
+    param (
         $clientCert
     )
 
+    [string] $jsonFile = '.\appsettings.Local.json.merged'
     [PSCustomObject] $jsonObject = Load-JsonObject $jsonFile
 
     if ($managerUrl -ne '') {
@@ -157,25 +266,28 @@ $cred = New-Object System.Management.Automation.PSCredential ($user, $secpwd)
 
 $existingService  = Get-WmiObject -Class Win32_Service -Filter "Name='$serviceName'"
 if ($existingService) {
-  "'$serviceName' exists already. Stopping."
-  Stop-Service $serviceName
-  "Waiting 6 seconds to allow existing service to stop."
-  Start-Sleep -s 6
+    "'$serviceName' exists already. Stopping."
+    Stop-Service $serviceName
+    "Waiting 6 seconds to allow existing service to stop."
+    Start-Sleep -s 6
     
-  $existingService.Delete()
-  "Waiting 5 seconds to allow service to be uninstalled."
-  Start-Sleep -s 5  
+    $existingService.Delete()
+    "Waiting 5 seconds to allow service to be uninstalled."
+    Start-Sleep -s 5  
 }
   
 echo "Install Directory: $targetDirPath"
 
+# merge target settings into source settings to preserve them
+Merge-AppSettings 'appsettings.Local.json' $targetDirPath
+
 # clean target directory
 Remove-Item $targetDirPath -Force -Recurse -ErrorAction SilentlyContinue
-if (!(test-path $targetDirPath)) {
-  New-Item -ItemType "directory" -Path $targetDirPath
+if (!(Test-Path $targetDirPath)) {
+    New-Item -ItemType "directory" -Path $targetDirPath
 }
 
-# LocalSystem already has all kinds of permissions
+# LocalSystem account has all kinds of permissions already
 if ($cred.UserName -notlike '*\LocalSystem') {
     $acl = Get-Acl "$targetDirPath"
     $aclRuleArgs = $cred.UserName, "Read,Write,ReadAndExecute", "ContainerInherit,ObjectInherit", "None", "Allow"
@@ -189,11 +301,13 @@ if ($cred.UserName -notlike '*\LocalSystem') {
 $sourcePublishPath = [System.IO.Path]::Combine($sourceDirPath, "publish", "*") 
 Copy-Item -Path $sourcePublishPath -Destination $targetDirPath -Recurse
 
-# copy appsettings.Local.json to target directory and update it there
-[string] $localAppSettingsSource = '.\appsettings.Local.json'
-[string] $localAppSettingsTarget = [System.IO.Path]::Combine($targetDirPath, "appsettings.Local.json")
-Copy-Item -Path $localAppSettingsSource -Destination $localAppSettingsTarget
-Update-AppSettings $localAppSettingsTarget $clientCert
+# update appsettings.Local.json.merged with client certificate
+if ($clientCert) {
+    Update-MergedAppSettings $clientCert
+}
+
+# now copy merged and updated settings to target directory
+Copy-AppSettings 'appsettings.Local.json' $targetDirPath
 
 # path of service binary executable
 $filepath = [System.IO.Path]::Combine($targetDirPath, $file)

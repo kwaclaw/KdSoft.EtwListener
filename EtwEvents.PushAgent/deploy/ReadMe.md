@@ -9,9 +9,9 @@
      - The certificate must be a PKCS12 certificate with a `.p12` file extension.
      - One of these applies:
         - Use a client certificate where the subject (DN) includes "role=etw-pushagent" 
-        - Use a client certificate where the Common Name (CN) is listed in the Agent Manager's appsettings.json under AgentValidation
+        - Use a client certificate where the Common Name (CN) is listed in the Agent Manager's authorization.json under AgentValidation
      - The installer will import any matching client certificates it can find in this directory.
-     - The Control::ClientCertificate::SubjectCN property in appsettings.local.json will be set to the last imported client certificate's Common Name'.
+     - The Control::ClientCertificate::SubjectCN property in appsettings.Local.json will be set to the last imported client certificate's Common Name'.
   2) Any root or intermediate CA certificates required to validate the client certificate.
      - These certificates must have the `.cer` file extension.
   3) The Https URL for the agent manager (which controls the agent service).
@@ -24,7 +24,10 @@
 
 ### Local Configuration
 
-- Optionally, override the settings in `appsettings.json` by editing the file `appsettings.Local.json` in the this folder.
+- Optionally, change the settings in `appsettings.Local.json` (in this folder) before running InstallService.cmd.
+  - Note: Powershell 5.1 (default version) does not support comments in JSON files.
+  - Note: when running the installer to update an already existing install, then the installed configuration files
+    will be merged back into the new configuration files before being replaced, to preserve the existing configuration.
 
 - The settings in `appsettings.Local.json` can selectively override settings in `appsettings.json` without having to duplicate the entire file.
 
