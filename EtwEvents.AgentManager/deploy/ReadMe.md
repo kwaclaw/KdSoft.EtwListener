@@ -37,23 +37,31 @@ One of these applies:
 
 ### Local Configuration
 
-- Optionally, change the settings in `appsettings.Local.json`.
-  
-  - Note: this will override/replace settings in appsettings.json, but it is not possible to remove existing settings.
+- Optionally, change the settings in `appsettings.Local.json` and/or `authorization.json` before running InstallService.cmd.
+  - Note: Powershell 5.1 (default version) does not support comments in JSON files.
+  - Note: when running the installer to update an already existing install, then the installed configuration files
+    will be merged back into the new configuration files before being replaced, to preserve the existing configuration.
 
+- The settings in `appsettings.Local.json` can selectively override settings in `appsettings.json` without having to duplicate the entire file.
+      
 - This example will add John Doe as an authorized user for the agent manager (common name of certificate must be "John Doe"):
   ```json
   "ClientValidation": {
-    // optional, only set when a specific root certificate must be used for client authorization
-    "RootCertificateThumbprint": "",
     "AuthorizedCommonNames": [
       "John Doe"
     ]
   },
   ```
 
+- This example will revoke the client certificate with thumbprint cd91bf6d1f52b76285b5b96abb57381d8d92bfa5:
+  ```json
+  RevokedCertificates": [
+    "cd91bf6d1f52b76285b5b96abb57381d8d92bfa5"
+  ],
+  ```
+
 - This example will specify which certificate to load as server certificate:
-  - only required if certificate already installed, otherwise the installer will update `appsettings.Local.json`.
+  - only required if certificate already installed, and no cetificate in installer folder, otherwise the installer will update `appsettings.Local.json`.
   ```json
   "Kestrel": {
     "EndpointDefaults": {
