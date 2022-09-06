@@ -58,18 +58,18 @@ mkdir out 2>nul
 
 
 @echo generate client key
-openssl ecparam -out "tmp/client.key" -name secp384r1 -genkey
+:: We would like to use elliptic curve cryptography, but using a certificate for data protection limits us to use RSA
+:: see https://docs.microsoft.com/en-us/aspnet/core/security/data-protection/implementation/key-encryption-at-rest?view=aspnetcore-6.0
+:: openssl ecparam -out "tmp/client.key" -name secp384r1 -genkey
+openssl genrsa -out "tmp/client.key" 2048
 if %ERRORLEVEL% NEQ 0 (Exit /b)
 
 @echo generate CSR
-:: OpenSSL 3.0 bug: -addext with long values clears the existing extensions from the config file !!!!!!!!!!!!!!!!!!!!!!!!!!!!
-:: openssl req -new -key "tmp/client.key" -out "tmp/client.csr" -config "%config_file%" -subj "%dn%" ^
-::     -addext "subjectAltName=otherName:1.3.6.1.4.1.311.20.2.3;UTF8:%-email%"
 openssl req -new -key "tmp/client.key" -out "tmp/client.csr" -config "%config_file%" -subj "%dn%"
 if %ERRORLEVEL% NEQ 0 (Exit /b)
     
 @echo create and sign the client certificate    
-openssl x509 -req -sha384 -days 1095 -in "tmp/client.csr" -CA "%ca_sign_file%" -CAkey "%ca_key_file%" ^
+openssl x509 -req -sha256 -days 1095 -in "tmp/client.csr" -CA "%ca_sign_file%" -CAkey "%ca_key_file%" ^
     -CAcreateserial -out "tmp/client.crt" -copy_extensions copy
 if %ERRORLEVEL% NEQ 0 (Exit /b)
 

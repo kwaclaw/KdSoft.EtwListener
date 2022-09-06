@@ -9,6 +9,8 @@ using System.Text.Json.Serialization;
 using Google.Protobuf;
 using KdSoft.EtwLogging;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption;
+using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -77,6 +79,7 @@ namespace KdSoft.EtwEvents.PushAgent
         }
 
         // https://docs.microsoft.com/en-us/aspnet/core/security/data-protection/configuration/non-di-scenarios?view=aspnetcore-6.0
+        // https://docs.microsoft.com/en-us/aspnet/core/security/data-protection/implementation/key-encryption-at-rest?view=aspnetcore-6.0
         // When appsettings.Local.json is missing, there is no data protection thumbprint stored in it, then load
         // the first client certificate and store its thumbprint so it can be used in future startup processing.
         // On startup, compare the stored thumprint to the first client certificate's thumbprint, and if different,
@@ -100,6 +103,11 @@ namespace KdSoft.EtwEvents.PushAgent
                 new DirectoryInfo(keyDirectory),
                 dpBuilder => {
                     dpBuilder.SetApplicationName("KdSoft.EtwEvents.PushAgent");
+                    //AuthenticatedEncryptorConfiguration cfg = new AuthenticatedEncryptorConfiguration {
+                    //    EncryptionAlgorithm = EncryptionAlgorithm.AES_256_GCM,
+                    //    ValidationAlgorithm = ValidationAlgorithm.HMACSHA512
+                    //};
+                    //dpBuilder.UseCryptographicAlgorithms(cfg);
                 },
                 dataCertificate
             );
