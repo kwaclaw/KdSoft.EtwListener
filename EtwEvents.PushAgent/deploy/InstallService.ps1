@@ -281,6 +281,12 @@ echo "Install Directory: $targetDirPath"
 # merge target settings into source settings to preserve them
 Merge-AppSettings 'appsettings.Local.json' $targetDirPath
 
+# backup eventSession.json and eventSinks.Json
+[string] $targetEventSession = [System.IO.Path]::Combine($targetDir, 'eventSession.json')
+Copy-Item -Path $targetEventSession -Destination '.\eventSession.json' -ErrorAction SilentlyContinue
+[string] $targetEventSinks = [System.IO.Path]::Combine($targetDir, 'eventSinks.json')
+Copy-Item -Path $targetEventSinks -Destination '.\eventSinks.json' -ErrorAction SilentlyContinue
+
 # clean target directory
 Remove-Item $targetDirPath -Force -Recurse -ErrorAction SilentlyContinue
 if (!(Test-Path $targetDirPath)) {
@@ -308,6 +314,10 @@ if ($clientCert) {
 
 # now copy merged and updated settings to target directory
 Copy-AppSettings 'appsettings.Local.json' $targetDirPath
+
+# restore eventSession.json and eventSinks.Json
+Copy-Item -Path '.\eventSession.json' -Destination $targetEventSession -ErrorAction SilentlyContinue
+Copy-Item -Path '.\eventSinks.json' -Destination $targetEventSinks -ErrorAction SilentlyContinue
 
 # path of service binary executable
 $filepath = [System.IO.Path]::Combine($targetDirPath, $file)
