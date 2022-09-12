@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace EtwEvents.Tests
+﻿namespace EtwEvents.Tests
 {
     class MockSinkOptions
     {

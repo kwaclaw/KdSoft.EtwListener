@@ -1,9 +1,5 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Channels;
-using System.Threading.Tasks;
+﻿using System.Threading.Channels;
 using LaunchDarkly.EventSource;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace KdSoft.EtwEvents.PushAgent

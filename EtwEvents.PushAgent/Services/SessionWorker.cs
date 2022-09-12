@@ -1,21 +1,12 @@
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.IO;
-using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Channels;
-using System.Threading.Tasks;
 using Google.Protobuf.Collections;
 using KdSoft.EtwEvents.Server;
 using KdSoft.EtwLogging;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using fu = KdSoft.EtwEvents.FilterUtils;
 

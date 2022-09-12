@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using KdSoft.EtwEvents.AgentManager;
 using KdSoft.EtwEvents.Server;
 using Xunit;

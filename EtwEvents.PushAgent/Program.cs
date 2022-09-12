@@ -1,15 +1,9 @@
-using System;
 using System.Diagnostics;
-using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 using KdSoft.EtwEvents.Server;
 using KdSoft.Logging;
 using Microsoft.Diagnostics.Tracing.Session;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 [assembly: InternalsVisibleTo("EtwEvents.Tests")]

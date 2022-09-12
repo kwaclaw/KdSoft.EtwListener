@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using MongoDB.Driver;
 
 namespace KdSoft.EtwEvents.EventSinks

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using KdSoft.EtwLogging;
+﻿using KdSoft.EtwLogging;
 using Microsoft.Diagnostics.Tracing;
 using Microsoft.Extensions.Logging;
 

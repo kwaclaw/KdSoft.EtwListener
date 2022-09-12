@@ -1,6 +1,4 @@
-﻿using System.Threading.Tasks;
-using KdSoft.EtwLogging;
-using Microsoft.Extensions.Logging;
+﻿using KdSoft.EtwLogging;
 
 namespace KdSoft.EtwEvents.PushAgent
 {

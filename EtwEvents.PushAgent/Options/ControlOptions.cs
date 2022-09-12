@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace KdSoft.EtwEvents.PushAgent
+﻿namespace KdSoft.EtwEvents.PushAgent
 {
     public class ControlOptions
     {

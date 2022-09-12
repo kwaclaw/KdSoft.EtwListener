@@ -1,9 +1,5 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
 using KdSoft.EtwEvents;
 using KdSoft.EtwEvents.EventSinks;

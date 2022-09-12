@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using KdSoft.EtwLogging;
+﻿using KdSoft.EtwLogging;
 
 namespace KdSoft.EtwEvents
 {

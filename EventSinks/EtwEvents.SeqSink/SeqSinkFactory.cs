@@ -1,8 +1,5 @@
-﻿using System;
-using System.Net;
-using System.Net.Http;
+﻿using System.Net;
 using System.Text.Json;
-using System.Threading.Tasks;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Logging;
 

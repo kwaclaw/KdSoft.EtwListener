@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace KdSoft.EtwEvents.EventSinks
+﻿namespace KdSoft.EtwEvents.EventSinks
 {
     public class ElasticSinkOptions
     {

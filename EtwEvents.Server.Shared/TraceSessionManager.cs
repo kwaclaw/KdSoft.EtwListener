@@ -1,5 +1,4 @@
-﻿using System;
-using KdSoft.Utils;
+﻿using KdSoft.Utils;
 
 namespace KdSoft.EtwEvents.Server
 {

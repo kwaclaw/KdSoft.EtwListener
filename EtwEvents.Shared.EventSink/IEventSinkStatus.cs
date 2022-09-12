@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace KdSoft.EtwEvents
+﻿namespace KdSoft.EtwEvents
 {
     /// <summary>
     /// Provides an event to be notified of status changes.

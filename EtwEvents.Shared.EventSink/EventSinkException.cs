@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace KdSoft.EtwEvents
+﻿namespace KdSoft.EtwEvents
 {
     [Serializable]
     public class EventSinkException: Exception

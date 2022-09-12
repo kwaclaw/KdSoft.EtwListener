@@ -1,5 +1,4 @@
-﻿using System;
-using OpenSearch.Net;
+﻿using OpenSearch.Net;
 
 namespace KdSoft.EtwEvents.EventSinks
 {

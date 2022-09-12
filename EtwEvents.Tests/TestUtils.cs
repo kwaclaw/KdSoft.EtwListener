@@ -1,6 +1,4 @@
-﻿using System.IO;
-using System.Linq;
-using Microsoft.DotNet.PlatformAbstractions;
+﻿using Microsoft.DotNet.PlatformAbstractions;
 
 namespace EtwEvents.Tests
 {

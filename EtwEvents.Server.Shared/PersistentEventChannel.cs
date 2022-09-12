@@ -1,7 +1,4 @@
-﻿using System;
-using System.Buffers;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Buffers;
 using Google.Protobuf;
 using KdSoft.EtwLogging;
 using KdSoft.Faster;

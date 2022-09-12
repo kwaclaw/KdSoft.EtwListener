@@ -1,6 +1,4 @@
-﻿using System.Threading.Tasks;
-
-namespace KdSoft.EtwEvents
+﻿namespace KdSoft.EtwEvents
 {
     public interface IEventSinkFactory
     {

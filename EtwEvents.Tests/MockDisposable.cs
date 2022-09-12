@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace EtwEvents.Tests
+﻿namespace EtwEvents.Tests
 {
     class MockDisposable: IDisposable
     {

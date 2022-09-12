@@ -1,15 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
-using System.Linq;
-using System.Net.Http;
+﻿using System.IO.Compression;
 using System.Net.Http.Json;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using KdSoft.EtwLogging;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace KdSoft.EtwEvents.PushAgent

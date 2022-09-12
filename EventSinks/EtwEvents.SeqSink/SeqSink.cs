@@ -1,11 +1,7 @@
-﻿using System;
-using System.Buffers;
-using System.Net.Http;
+﻿using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Logging;
 
