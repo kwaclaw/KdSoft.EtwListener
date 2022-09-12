@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks.Sources;
+﻿using System.Threading.Tasks.Sources;
 
 namespace KdSoft.EtwEvents
 {

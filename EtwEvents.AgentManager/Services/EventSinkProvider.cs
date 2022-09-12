@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
-using System.Linq;
+﻿using System.IO.Compression;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using KdSoft.EtwEvents.Client;
 using KdSoft.EtwLogging;
-using Microsoft.Extensions.Logging;
 
 namespace KdSoft.EtwEvents.AgentManager
 {

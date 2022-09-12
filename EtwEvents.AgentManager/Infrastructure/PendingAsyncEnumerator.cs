@@ -1,8 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace KdSoft.EtwEvents
+﻿namespace KdSoft.EtwEvents
 {
     public abstract class PendingAsyncEnumerator<T>: IAsyncEnumerator<T> where T : notnull
     {

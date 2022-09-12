@@ -1,7 +1,5 @@
-﻿using System;
-using KdSoft.EtwEvents.AgentManager;
+﻿using KdSoft.EtwEvents.AgentManager;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace KdSoft.EtwEvents.WebClient.Pages

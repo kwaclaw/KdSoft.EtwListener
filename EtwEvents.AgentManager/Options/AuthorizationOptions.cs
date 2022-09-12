@@ -1,8 +1,4 @@
-﻿
-using System.Collections.Generic;
-using System;
-
-namespace KdSoft.EtwEvents.AgentManager
+﻿namespace KdSoft.EtwEvents.AgentManager
 {
     public class AuthorizationOptions
     {

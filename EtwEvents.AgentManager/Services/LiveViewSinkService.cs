@@ -1,8 +1,5 @@
-﻿using System;
-using System.Threading.Tasks;
-using Grpc.Core;
+﻿using Grpc.Core;
 using KdSoft.EtwLogging;
-using Microsoft.Extensions.Logging;
 
 namespace KdSoft.EtwEvents.AgentManager
 {

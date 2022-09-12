@@ -1,23 +1,17 @@
-﻿using System;
-using System.Buffers;
+﻿using System.Buffers;
 using System.Collections.Immutable;
-using System.Linq;
 using System.Net;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Google.Protobuf;
 using KdSoft.EtwEvents.EventSinks;
 using KdSoft.EtwLogging;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 

@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using Microsoft.Extensions.FileProviders;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using OrchardCore.Localization;

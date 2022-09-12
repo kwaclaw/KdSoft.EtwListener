@@ -8,6 +8,7 @@
     <!--<AspNetCoreHostingModel>OutOfProcess</AspNetCoreHostingModel>-->
     <LangVersion>Latest</LangVersion>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>aca35d68-2f97-4471-bcee-88a607e466f3</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <!--<PublishTrimmed>true</PublishTrimmed>-->
