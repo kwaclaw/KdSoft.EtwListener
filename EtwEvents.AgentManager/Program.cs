@@ -78,7 +78,7 @@ builder.Services.AddAuthentication(CertificateAuthenticationDefaults.Authenticat
         //    return Task.CompletedTask;
         //},
         OnChallenge = (context) => {  // does not seem to be called! should be invoked for each client certificate?
-                                      //var clientCert = context.HttpContext.Connection.ClientCertificate;
+            //var clientCert = context.HttpContext.Connection.ClientCertificate;
             return Task.CompletedTask;
         },
         OnCertificateValidated = context => {

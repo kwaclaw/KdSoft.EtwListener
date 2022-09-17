@@ -2,6 +2,8 @@
 using System.Net.Security;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Grpc.Core;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.Extensions.ObjectPool;
@@ -12,8 +14,25 @@ namespace KdSoft.EtwEvents.AgentManager
     public class AuthorizationService
     {
         readonly IOptionsMonitor<AuthorizationOptions> _authOpts;
+        readonly IHostEnvironment _env;
+        readonly ILogger<AuthorizationService> _logger;
+        readonly object _syncObj = new object();
+
         static readonly IReadOnlyList<Role> _emptyRoles = new List<Role>().AsReadOnly();
         static readonly ObjectPool<HashSet<Role>> _roleSetPool = new DefaultObjectPool<HashSet<Role>>(new DefaultPooledObjectPolicy<HashSet<Role>>());
+        static readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions {
+            WriteIndented = true,
+            ReadCommentHandling = JsonCommentHandling.Skip,
+            AllowTrailingCommas = true,
+            PropertyNameCaseInsensitive = true,
+        };
+        static readonly JsonNodeOptions _nodeOptions = new JsonNodeOptions {
+            PropertyNameCaseInsensitive = true,
+        };
+        static readonly JsonDocumentOptions _docOptions = new JsonDocumentOptions {
+            CommentHandling = JsonCommentHandling.Skip,
+            AllowTrailingCommas = true,
+        };
 
         ImmutableDictionary<string, List<Role>> _roleMap;
 
@@ -37,8 +56,10 @@ namespace KdSoft.EtwEvents.AgentManager
             return builder.ToImmutable();
         }
 
-        public AuthorizationService(IOptionsMonitor<AuthorizationOptions> authOpts) {
+        public AuthorizationService(IOptionsMonitor<AuthorizationOptions> authOpts, IHostEnvironment env, ILogger<AuthorizationService> logger) {
             this._authOpts = authOpts;
+            this._env = env;
+            this._logger = logger;
 
             authOpts.OnChange(opts => {
                 var newRoleMap = CreateRoleMap(opts.AgentValidation.AuthorizedCommonNames, opts.ClientValidation.AuthorizedCommonNames);
@@ -81,10 +102,37 @@ namespace KdSoft.EtwEvents.AgentManager
             }
         }
 
+        Task UpdateRevokedCertName(string thumbprint, string commonName) {
+            return Task.Run(() => {
+                try {
+                    lock (_syncObj) {
+                        var authFile = Path.Combine(_env.ContentRootPath, "authorization.json");
+                        var authObj = JsonObject.Parse(File.ReadAllText(authFile), _nodeOptions, _docOptions);
+                        var certNode = authObj?["AuthorizationOptions"]?["RevokedCertificates"];
+                        if (certNode is JsonObject certObj) {
+                            //case-insensitive matching depends on _nodeOptions
+                            certObj[thumbprint] = commonName;
+                            File.WriteAllText(authFile, authObj?.ToJsonString(_serializerOptions));
+                        }
+                    }
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "Error in {method}.", nameof(UpdateRevokedCertName));
+                }
+            });
+        }
+
         public bool IsCertificateRevoked(X509Certificate2 clientCertificate) {
-            HashSet<string>? revokedCerts;
+            Dictionary<string, string>? revokedCerts;
             revokedCerts = this._authOpts.CurrentValue.RevokedCertificates;
-            if (revokedCerts != null && revokedCerts.Contains(clientCertificate.Thumbprint)) {
+            if (revokedCerts != null && revokedCerts.TryGetValue(clientCertificate.Thumbprint, out var commonName)) {
+                if (string.IsNullOrWhiteSpace(commonName) || string.Equals(commonName, "Unknown", StringComparison.OrdinalIgnoreCase)) {
+                    var certCommonName = clientCertificate.GetNameInfo(X509NameType.SimpleName, false);
+                    // reduce probability of multiple identical updates to authorization.json
+                    revokedCerts[clientCertificate.Thumbprint] = certCommonName;
+                    // update authorization.json
+                    _ = UpdateRevokedCertName(clientCertificate.Thumbprint, certCommonName);
+                }
                 return true;
             }
             return false;

@@ -13,10 +13,10 @@
     },
     // when specified then we only accept certificates derived from that root certificate
     "RootCertificateThumbprint": "",
-    // thumbprints of revoked certificates, applies to both, ClientValidation and AgentValidation
-    "RevokedCertificates": [
-      "cd91bc6d1f52b76285b6b96abb57377d8d92bfa5"
-    ],
+    // thumbprints and common name of revoked certificates, applies to both, ClientValidation and AgentValidation
+    "RevokedCertificates": {
+      "cd91bc6d1f52b76285b6b96abb57377d8d92bfa5":  "Unknown"
+    },
     "CertExpiryWarningDays": 30,
     "PendingCertExpiryDays": 7,
     "PendingCertCheckMinutes": 360
