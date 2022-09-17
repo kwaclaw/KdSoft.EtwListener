@@ -16,7 +16,13 @@ using OrchardCore.Localization;
 
 #region Initial Configuration
 
-var builder = WebApplication.CreateBuilder(args);
+var opts = new WebApplicationOptions {
+     Args = args,
+#if DEBUG
+     ContentRootPath = AppContext.BaseDirectory
+#endif
+};
+var builder = WebApplication.CreateBuilder(opts);
 
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
 builder.Configuration.AddJsonFile("authorization.json", optional: true, reloadOnChange: true);

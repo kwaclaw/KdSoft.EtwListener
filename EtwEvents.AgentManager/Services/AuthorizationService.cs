@@ -14,7 +14,7 @@ namespace KdSoft.EtwEvents.AgentManager
     public class AuthorizationService
     {
         readonly IOptionsMonitor<AuthorizationOptions> _authOpts;
-        readonly IHostEnvironment _env;
+        readonly IWebHostEnvironment _env;
         readonly ILogger<AuthorizationService> _logger;
         readonly object _syncObj = new object();
 
@@ -56,7 +56,7 @@ namespace KdSoft.EtwEvents.AgentManager
             return builder.ToImmutable();
         }
 
-        public AuthorizationService(IOptionsMonitor<AuthorizationOptions> authOpts, IHostEnvironment env, ILogger<AuthorizationService> logger) {
+        public AuthorizationService(IOptionsMonitor<AuthorizationOptions> authOpts, IWebHostEnvironment env, ILogger<AuthorizationService> logger) {
             this._authOpts = authOpts;
             this._env = env;
             this._logger = logger;
