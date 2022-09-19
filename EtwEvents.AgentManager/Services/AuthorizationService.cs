@@ -90,14 +90,19 @@ namespace KdSoft.EtwEvents.AgentManager
         /// </summary>
         /// <param name="roleSet"></param>
         /// <param name="cert"></param>
-        public static void GetRole(ISet<Role> roleSet, X509Certificate2 cert) {
-            string? certRole = cert.GetSubjectRole()?.ToLowerInvariant();
-            if (certRole != null) {
-                if (certRole.Equals("etw-pushagent")) {
-                    roleSet.Add(Role.Agent);
-                }
-                else if (certRole.Equals("etw-manager")) {
-                    roleSet.Add(Role.Manager);
+        public static void GetRoles(ISet<Role> roleSet, X509Certificate2 cert) {
+            var roles = cert.GetSubjectRoles();
+            foreach (var role in roles) {
+                switch (role) {
+                    case "etw-pushagent":
+                        roleSet.Add(Role.Agent);
+                        break;
+                    case "etw-manager":
+                        roleSet.Add(Role.Manager);
+                        break;
+                    case "etw-admin":
+                        roleSet.Add(Role.Admin);
+                        break;
                 }
             }
         }
@@ -153,7 +158,7 @@ namespace KdSoft.EtwEvents.AgentManager
             try {
                 roleSet.Clear();
                 // primary identity gets role specified in certificate
-                GetRole(roleSet, clientCertificate);
+                GetRoles(roleSet, clientCertificate);
                 var primaryIdentity = principal?.Identity as ClaimsIdentity;
                 // ClaimsIdentity.Name here is the certificate's Subject Common Name (CN)
                 if (primaryIdentity != null) {
@@ -200,7 +205,7 @@ namespace KdSoft.EtwEvents.AgentManager
             var roleSet = _roleSetPool.Get();
             try {
                 roleSet.Clear();
-                GetRole(roleSet, clientCertificate);
+                GetRoles(roleSet, clientCertificate);
                 foreach (var authProp in peerIdentity) {
                     if (string.IsNullOrEmpty(authProp.Value))
                         continue;
@@ -280,6 +285,7 @@ namespace KdSoft.EtwEvents.AgentManager
     public enum Role
     {
         Agent,
-        Manager
+        Manager,
+        Admin
     }
 }

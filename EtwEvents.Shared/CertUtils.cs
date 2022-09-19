@@ -109,16 +109,17 @@ namespace KdSoft.EtwEvents
             }
         }
 
-        // it seems that the same DN component can be encoded by OID or OID's friendly name, e.g. "OID.2.5.4.72", "2.5.4.72" or "role"
-        public static Regex SubjectRoleRegex = new Regex(@"(OID\.2\.5\.4\.72|\.2\.5\.4\.72|role)\s*=\s*(?<role>[^,=]*)\s*(,|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-        public static string? GetSubjectRole(this X509Certificate2 cert) {
-            string? certRole = null;
-            var match = SubjectRoleRegex.Match(cert.Subject);
-            if (match.Success) {
-                certRole = match.Groups["role"].Value;
+        public static List<string> GetSubjectRoles(this X509Certificate2 cert) {
+            var rdns = cert.SubjectName.GetRelativeNames();
+            var result = new List<string>();
+            var roleOID = new Oid("2.5.4.72");
+            foreach (var rdn in rdns) {
+                foreach (var att in rdn.Attributes) {
+                    if (att.Type.Value == roleOID.Value)
+                        result.Add(att.Value);
+                }
             }
-            return certRole;
+            return result;
         }
 
         public const string ClientAuthentication = "1.3.6.1.5.5.7.3.2";

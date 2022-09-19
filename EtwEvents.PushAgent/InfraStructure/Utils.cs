@@ -21,12 +21,9 @@ namespace KdSoft.EtwEvents.PushAgent
             }
             if (certOptions.SubjectRole.Length > 0) {
                 var clientCerts = CertUtils.GetCertificates(certOptions.Location, CertUtils.ClientAuthentication, crt => {
-                    var match = CertUtils.SubjectRoleRegex.Match(crt.Subject);
-                    if (match.Success) {
-                        var certRole = match.Groups["role"].Value;
-                        if (certRole != null && certRole.Equals(certOptions.SubjectRole, StringComparison.OrdinalIgnoreCase))
-                            return true;
-                    }
+                    var roles = crt.GetSubjectRoles();
+                    if (roles.Exists(certRole => certRole.Equals(certOptions.SubjectRole, StringComparison.OrdinalIgnoreCase)))
+                        return true;
                     return false;
                 });
                 result.AddRange(clientCerts);
