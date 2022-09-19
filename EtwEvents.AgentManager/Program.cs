@@ -19,6 +19,7 @@ using OrchardCore.Localization;
 var opts = new WebApplicationOptions {
      Args = args,
 #if DEBUG
+     // avoid changes to files under revision control
      ContentRootPath = AppContext.BaseDirectory
 #endif
 };
