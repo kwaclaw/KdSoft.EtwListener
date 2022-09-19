@@ -1,10 +1,15 @@
-﻿using System.Security.Cryptography;
+﻿using System.Formats.Asn1;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace KdSoft.EtwEvents
 {
+    public record RdnAttribute(Oid Type, string Value);
+
+    public record Rdn(ICollection<RdnAttribute> Attributes);
+
+
     public static class CertUtils
     {
         /// <summary>
@@ -261,6 +266,54 @@ namespace KdSoft.EtwEvents
                 ExportToPEM(builder, cert, exportPrivateKey);
             }
             return builder.ToString();
+        }
+
+        /// <summary>
+        /// Extracts the Relative Distinguished Names (RDNs) from a Distinguished Name (DN).
+        /// Supports multi-valued RDNs. Does not support values other than string types.
+        /// </summary>
+        /// <param name="distinguishedName"></param>
+        /// <returns>Collection of RDNS (Pairs of OID and Value).</returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        /// <exception cref="NotSupportedException"></exception>
+        public static IEnumerable<Rdn> GetRelativeNames(this X500DistinguishedName distinguishedName) {
+            var reader = new AsnReader(distinguishedName.RawData, AsnEncodingRules.BER);
+            var snSeq = reader.ReadSequence();
+            if (!snSeq.HasData) {
+                throw new InvalidOperationException();
+            }
+            // Many types are allowable.  We're only going to support the string-like ones
+            // (This excludes IPAddress, X400 address, and other weird stuff)
+            // https://www.rfc-editor.org/rfc/rfc5280#page-37
+            // https://www.rfc-editor.org/rfc/rfc5280#page-112
+            var allowedRdnTags = new[] {
+                UniversalTagNumber.TeletexString,
+                UniversalTagNumber.PrintableString,
+                UniversalTagNumber.UniversalString,
+                UniversalTagNumber.UTF8String,
+                UniversalTagNumber.BMPString,
+                UniversalTagNumber.IA5String,
+                UniversalTagNumber.NumericString,
+                UniversalTagNumber.VisibleString,
+                UniversalTagNumber.T61String
+            };
+            while (snSeq.HasData) {
+                var rdnSet = snSeq.ReadSetOf();
+                var rdnAttributes = new List<RdnAttribute>();
+                while (rdnSet.HasData) {
+                    var rdnSeq = rdnSet.ReadSequence();
+                    while (rdnSeq.HasData) {
+                        var attrOid = rdnSeq.ReadObjectIdentifier();
+                        var attrValueTagNo = (UniversalTagNumber)rdnSeq.PeekTag().TagValue;
+                        if (!allowedRdnTags.Contains(attrValueTagNo)) {
+                            throw new NotSupportedException($"Unknown tag type {attrValueTagNo} for attr {attrOid}");
+                        }
+                        var attrValue = rdnSeq.ReadCharacterString(attrValueTagNo);
+                        rdnAttributes.Add(new RdnAttribute(new Oid(attrOid), attrValue));
+                    }
+                }
+                yield return new Rdn(rdnAttributes);
+            }
         }
     }
 }
