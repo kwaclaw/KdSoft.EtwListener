@@ -189,5 +189,18 @@ namespace EtwEvents.Tests
                 }
             }
         }
+
+        [Fact]
+        public void LoadCerts() {
+            var filesDir = new DirectoryInfo(Path.Combine(TestUtils.ProjectDir!, "Files"));
+            foreach (var file in filesDir.GetFiles()) {
+                if (file.Name.Contains("-1") || file.Name.Contains("-2")) {
+                    var fileCert = CertUtils.LoadCertificate(file.FullName);
+                    var certBytes = File.ReadAllBytes(file.FullName);
+                    var bytesCert = CertUtils.LoadCertificate(certBytes);
+                    Assert.Equal(fileCert.GetRawCertData(), bytesCert.GetRawCertData());
+                }
+            }
+        }
     }
 }

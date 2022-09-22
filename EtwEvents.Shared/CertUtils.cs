@@ -1,4 +1,5 @@
 ﻿using System.Formats.Asn1;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -206,6 +207,50 @@ namespace KdSoft.EtwEvents
             store.Open(OpenFlags.ReadWrite);
             store.Add(certificate);
         }
+
+        public static X509Certificate2 LoadCertificate(string filePath) {
+            X509ContentType contentType;
+            try {
+                contentType = X509Certificate2.GetCertContentType(filePath);
+            }
+            catch (CryptographicException) {
+                contentType = X509ContentType.Unknown;
+            }
+            switch (contentType) {
+                // we assume it is a PEM certificate with the unencrypted private key included
+                case X509ContentType.Unknown:
+                    return X509Certificate2.CreateFromPemFile(filePath, filePath);
+                case X509ContentType.Cert:
+                    return new X509Certificate2(filePath);
+                case X509ContentType.Pfx:
+                    return new X509Certificate2(filePath, (string?)null, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+                default:
+                    throw new ArgumentException($"Unrecognized certificate type in file: {filePath}");
+            }
+        }
+
+        public static X509Certificate2 LoadCertificate(ReadOnlySpan<byte> rawData, Encoding? encoding = null) {
+            X509ContentType contentType;
+            try {
+                contentType = X509Certificate2.GetCertContentType(rawData);
+            }
+            catch (CryptographicException) {
+                contentType = X509ContentType.Unknown;
+            }
+            switch (contentType) {
+                // we assume it is a PEM certificate with the unencrypted private key included
+                case X509ContentType.Unknown:
+                    var charSpan = (encoding ?? Encoding.Default).GetString(rawData);
+                    return X509Certificate2.CreateFromPem(charSpan, charSpan);
+                case X509ContentType.Cert:
+                    return new X509Certificate2(rawData);
+                case X509ContentType.Pfx:
+                    return new X509Certificate2(rawData, (string?)null, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+                default:
+                    throw new ArgumentException($"Unrecognized certificate type.");
+            }
+        }
+
 
         static AsymmetricAlgorithm? GetPrivateKey(X509Certificate2 cert, out bool isRSA) {
             const string RSA = "1.2.840.113549.1.1.1";

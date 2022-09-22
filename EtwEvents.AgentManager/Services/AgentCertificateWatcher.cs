@@ -1,6 +1,5 @@
 ﻿using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using KdSoft.Utils;
 
@@ -33,27 +32,6 @@ namespace KdSoft.EtwEvents.AgentManager
             _fileChangeDetector.FileChanged += FileChanged;
             _fileChangeDetector.ErrorEvent += FileChangeError;
             _certificates = ImmutableDictionary<string, (X509Certificate2, string)>.Empty;
-        }
-
-        public X509Certificate2 LoadCertificate(string filePath) {
-            X509ContentType contentType;
-            try {
-                contentType = X509Certificate2.GetCertContentType(filePath);
-            }
-            catch (CryptographicException) {
-                contentType = X509ContentType.Unknown;
-            }
-            switch (contentType) {
-                // we assume it is a PEM certificate with the unencrypted private key included
-                case X509ContentType.Unknown:
-                    return X509Certificate2.CreateFromPemFile(filePath, filePath);
-                case X509ContentType.Cert:
-                    return new X509Certificate2(filePath);
-                case X509ContentType.Pfx:
-                    return new X509Certificate2(filePath, (string?)null, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
-                default:
-                    throw new ArgumentException($"Unrecognized certificate type in file: {filePath}");
-            }
         }
 
         /// <summary>
@@ -150,7 +128,7 @@ namespace KdSoft.EtwEvents.AgentManager
         /// Tries to post new certificate to agent, otherwise saves the certificate for later when agent connects.
         /// </summary>
         void ProcessUpdatedCertificate(string certFilePath) {
-            var newCert = LoadCertificate(certFilePath);
+            var newCert = CertUtils.LoadCertificate(certFilePath);
             var newKey = newCert.GetNameInfo(X509NameType.SimpleName, false);
             // track the certificate so we can remove the file once we get a successful update from the agent
             var newValue = (newCert, certFilePath);
