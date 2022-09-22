@@ -107,24 +107,8 @@ namespace KdSoft.EtwEvents.AgentManager
             }
         }
 
-        Task UpdateRevokedCertName(string thumbprint, string commonName) {
-            return Task.Run(() => {
-                try {
-                    lock (_syncObj) {
-                        var authFile = Path.Combine(_env.ContentRootPath, "authorization.json");
-                        var authObj = JsonObject.Parse(File.ReadAllText(authFile), _nodeOptions, _docOptions);
-                        var certNode = authObj?["AuthorizationOptions"]?["RevokedCertificates"];
-                        if (certNode is JsonObject certObj) {
-                            //case-insensitive matching depends on _nodeOptions
-                            certObj[thumbprint] = commonName;
-                            File.WriteAllText(authFile, authObj?.ToJsonString(_serializerOptions));
-                        }
-                    }
-                }
-                catch (Exception ex) {
-                    _logger.LogError(ex, "Error in {method}.", nameof(UpdateRevokedCertName));
-                }
-            });
+        Task<JsonObject?> UpdateRevokedCertName(string thumbprint, string commonName) {
+            return Task.Run<JsonObject?>(() => RevokeCertificate(thumbprint, commonName));
         }
 
         public bool IsCertificateRevoked(X509Certificate2 clientCertificate) {
@@ -141,6 +125,26 @@ namespace KdSoft.EtwEvents.AgentManager
                 return true;
             }
             return false;
+        }
+
+        public JsonObject? RevokeCertificate(string thumbprint, string? commonName) {
+            try {
+                lock (_syncObj) {
+                    var authFile = Path.Combine(_env.ContentRootPath, "authorization.json");
+                    var authObj = JsonObject.Parse(File.ReadAllText(authFile), _nodeOptions, _docOptions);
+                    var certNode = authObj?["AuthorizationOptions"]?["RevokedCertificates"];
+                    if (certNode is JsonObject certObj) {
+                        //case-insensitive matching depends on _nodeOptions
+                        certObj[thumbprint] = commonName;
+                        File.WriteAllText(authFile, authObj?.ToJsonString(_serializerOptions));
+                        return certObj;
+                    }
+                }
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error in {method}.", nameof(RevokeCertificate));
+            }
+            return null;
         }
 
         /// <summary>
