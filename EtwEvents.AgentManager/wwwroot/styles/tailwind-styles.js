@@ -552,6 +552,9 @@ video {
 .mr-2 {
   margin-right: 0.5rem;
 }
+.mr-auto {
+  margin-right: auto;
+}
 .mb-1 {
   margin-bottom: 0.25rem;
 }

@@ -6,10 +6,6 @@ import { LitMvvmElement, css, BatchScheduler } from '@kdsoft/lit-mvvm';
 import { observable } from '@nx-js/observer-util';
 import { Queue, priorities } from '@nx-js/queue-util';
 import dialogPolyfill from 'dialog-polyfill';
-import {
-  KdSoftDropdownModel,
-  KdSoftDropdownChecklistConnector,
-} from '@kdsoft/lit-mvvm-components';
 import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
 import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
@@ -35,17 +31,6 @@ class EtwAgent extends LitMvvmElement {
     // setting model property here because we cannot reliable set it from a non-lit-html rendered HTML page
     // we must assign the model *after* the scheduler, or assign it externally
     // this.model = new EtwAppModel(); --
-
-    this.eventSinkDropDownModel = observable(new KdSoftDropdownModel());
-    this.eventSinkChecklistConnector = new KdSoftDropdownChecklistConnector(
-      () => this.renderRoot.getElementById('sinktype-ddown'),
-      () => this.renderRoot.getElementById('sinktype-list'),
-      listModel => {
-        const item = listModel.firstSelectedEntry?.item;
-        if (item) return `${item.sinkType} (${item.version})`;
-        return '';
-      }
-    );
   }
 
   //#region Providers
@@ -239,7 +224,7 @@ class EtwAgent extends LitMvvmElement {
           max-width: 1200px;
         }
 
-        #sinktype-ddown {
+        #sinktype-list {
           min-width: 12rem;
         }
 
@@ -254,6 +239,12 @@ class EtwAgent extends LitMvvmElement {
           background: rgba(255,255,255,0.3);
           row-gap: 5px;
           column-gap: 10px;
+        }
+
+        #dlg-add-event-sink form > h3 {
+          grid-column: 1 / -1;
+          justify-self: center;
+          margin-bottom: .5em;
         }
       `
     ];
@@ -380,13 +371,17 @@ class EtwAgent extends LitMvvmElement {
       </div>
 
       <dialog id="dlg-add-event-sink" class="${dialogClass}">
-        <form name="add-event-sink" @submit=${(e) => this._okAddEventSink(e, activeAgentState)} @reset=${this._cancelAddEventSink}>
-          <label for="sinktype-ddown">Name</label>
+        <form name="add-event-sink"
+          @submit=${(e) => this._okAddEventSink(e, activeAgentState)}
+          @reset=${this._cancelAddEventSink}
+        >
+          <h3 class="font-bold">Add Event Sink</h3>
+          <label for="sink-name">Name</label>
           <input id="sink-name" name="name" type="text" required />
-          <label for="sinktype-ddown">Sink Type</label>
+          <label for="sinktype-list">Sink Type</label>
           <etw-checklist
-            id="sinktype-list" 
-            class="text-black" 
+            id="sinktype-list"
+            class="text-black"
             .model=${this.model.sinkInfoCheckListModel}
             .getItemTemplate=${item => html`<div class="flex w-full"><span class="mr-1">${item.sinkType}</span><span class="ml-auto">(${item.version})</span></div>`}
             .attachInternals=${true}

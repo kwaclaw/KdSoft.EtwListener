@@ -241,7 +241,7 @@ class EventSinkConfig extends LitMvvmElement {
 
         <form class="relative ${expanded ? '' : 'hidden'}">
           <div id="form-header">
-            <pre class="${status?.lastError ? '' : 'hidden'}><textarea
+            <pre class="${status?.lastError ? '' : 'hidden'}"><textarea
               class="my-2 w-full border-2 border-red-500 focus:outline-none focus:border-red-700"
             >${retryMessage}${status?.lastError}</textarea></pre>
 
@@ -251,7 +251,7 @@ class EventSinkConfig extends LitMvvmElement {
               <label for="maxWriteDelayMSecs">Max Write Delay (msecs)</label>
               <input type="number" id="maxWriteDelayMSecs" name="maxWriteDelayMSecs" .value=${profile.maxWriteDelayMSecs} min="0" />
               <label for="persistentChannel">Persistent Buffer</label>
-              <input type="checkbox" id="persistentChannel" name="persistentChannel" .checked=${profile.persistentChannel} />
+              <input type="checkbox" id="persistentChannel" name="persistentChannel" class="mr-auto" .checked=${profile.persistentChannel} />
             </div>
           </div>
           <div id="form-content">
