@@ -90,7 +90,7 @@ builder.Services.AddAuthentication(CertificateAuthenticationDefaults.Authenticat
         },
         OnCertificateValidated = context => {
             var authService = context.HttpContext.RequestServices.GetRequiredService<AuthorizationService>();
-            var success = authService!.AuthorizePrincipal(context, Role.Agent, Role.Manager);
+            var success = authService!.AuthorizePrincipal(context, Role.Agent, Role.Manager, Role.Admin);
 
             if (success) {
                 context.Success();
