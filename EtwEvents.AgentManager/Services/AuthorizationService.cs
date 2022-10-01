@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System.Buffers;
+using System.Collections.Immutable;
 using System.Net.Security;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
@@ -16,6 +17,7 @@ namespace KdSoft.EtwEvents.AgentManager
         readonly IOptionsMonitor<AuthorizationOptions> _authOpts;
         readonly IWebHostEnvironment _env;
         readonly ILogger<AuthorizationService> _logger;
+        readonly ArrayBufferWriter<byte> _bufferWriter;
         readonly object _syncObj = new object();
 
         static readonly IReadOnlyList<Role> _emptyRoles = new List<Role>().AsReadOnly();
@@ -25,6 +27,10 @@ namespace KdSoft.EtwEvents.AgentManager
             ReadCommentHandling = JsonCommentHandling.Skip,
             AllowTrailingCommas = true,
             PropertyNameCaseInsensitive = true,
+        };
+        static readonly JsonWriterOptions _writerOptions = new JsonWriterOptions {
+            Indented = true,
+            SkipValidation = true
         };
         static readonly JsonNodeOptions _nodeOptions = new JsonNodeOptions {
             PropertyNameCaseInsensitive = true,
@@ -60,6 +66,7 @@ namespace KdSoft.EtwEvents.AgentManager
             this._authOpts = authOpts;
             this._env = env;
             this._logger = logger;
+            _bufferWriter = new ArrayBufferWriter<byte>(2048);
 
             authOpts.OnChange(opts => {
                 var newRoleMap = CreateRoleMap(opts.AgentValidation.AuthorizedCommonNames, opts.ClientValidation.AuthorizedCommonNames);
@@ -127,16 +134,34 @@ namespace KdSoft.EtwEvents.AgentManager
             return false;
         }
 
+        void SaveNodeAtomic(JsonNode node, string filePath) {
+            _bufferWriter.Clear();
+            using (var utf8Writer = new Utf8JsonWriter(_bufferWriter, _writerOptions)) {
+                node.WriteTo(utf8Writer, _serializerOptions);
+                utf8Writer.Flush();
+            }
+            FileUtils.WriteFileAtomic(_bufferWriter.WrittenSpan, filePath);
+        }
+
+        JsonNode? ReadNode(string filePath) {
+            using (var fs = FileUtils.OpenFileWithRetry(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan)) {
+                using (var buffer = MemoryPool<byte>.Shared.Rent((int)fs.Length)) {
+                    var byteCount = fs.Read(buffer.Memory.Span);
+                    return JsonObject.Parse(buffer.Memory.Span.Slice(0, byteCount), _nodeOptions, _docOptions);
+                }
+            }
+        }
+
         public JsonObject? RevokeCertificate(string thumbprint, string? commonName) {
             try {
                 lock (_syncObj) {
                     var authFile = Path.Combine(_env.ContentRootPath, "authorization.json");
-                    var authObj = JsonObject.Parse(File.ReadAllText(authFile), _nodeOptions, _docOptions);
+                    var authObj = ReadNode(authFile);
                     var certNode = authObj?["AuthorizationOptions"]?["RevokedCertificates"];
                     if (certNode is JsonObject certObj) {
                         //case-insensitive matching depends on _nodeOptions
                         certObj[thumbprint] = commonName;
-                        File.WriteAllText(authFile, authObj?.ToJsonString(_serializerOptions));
+                        SaveNodeAtomic(authObj!, authFile);
                         return certObj;
                     }
                 }
@@ -145,6 +170,26 @@ namespace KdSoft.EtwEvents.AgentManager
                 _logger.LogError(ex, "Error in {method}.", nameof(RevokeCertificate));
             }
             return null;
+        }
+
+        public bool CancelCertificateRevocation(string thumbprint) {
+            try {
+                lock (_syncObj) {
+                    var authFile = Path.Combine(_env.ContentRootPath, "authorization.json");
+                    var authObj = ReadNode(authFile);
+                    var certNode = authObj?["AuthorizationOptions"]?["RevokedCertificates"];
+                    if (certNode is JsonObject certObj) {
+                        //case-insensitive matching depends on _nodeOptions
+                        var result = certObj.Remove(thumbprint);
+                        SaveNodeAtomic(authObj!, authFile);
+                        return result;
+                    }
+                }
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error in {method}.", nameof(RevokeCertificate));
+            }
+            return false;
         }
 
         /// <summary>
@@ -161,7 +206,7 @@ namespace KdSoft.EtwEvents.AgentManager
             var roleSet = _roleSetPool.Get();
             try {
                 roleSet.Clear();
-                // primary identity gets role specified in certificate
+                // primary identity gets roles specified in certificate
                 GetRoles(roleSet, clientCertificate);
                 var primaryIdentity = principal?.Identity as ClaimsIdentity;
                 // ClaimsIdentity.Name here is the certificate's Subject Common Name (CN)
