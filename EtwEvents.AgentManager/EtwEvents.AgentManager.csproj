@@ -42,6 +42,7 @@
     </Content>
     <Content Include="EventSinks/**/*" Exclude="EventSinks/**/*.json">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Update="wwwroot/node_modules/**/*;wwwroot/_tmp/**/*;wwwroot/localize/**/*">
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
