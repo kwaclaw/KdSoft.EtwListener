@@ -53,7 +53,9 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         public void KeepAlive(object? state) {
+            int agentCount = 0;
             foreach (var entry in _proxies) {
+                agentCount += 1;
                 var agentProxy = entry.Value;
                 // integer subtraction is immune to rollover, e.g. unchecked(int.MaxValue + y) - (int.MaxValue - x) = y + x;
                 // Environment.TickCount rolls over from int.Maxvalue to int.MinValue!
@@ -64,6 +66,13 @@ namespace KdSoft.EtwEvents.AgentManager
                     agentProxy.Post(GetStateMessage);
                 }
             }
+
+            // we adjust the checkPeriod so we check multiple times within the keepAlive period;
+            // so we can distribute GetStateMessage events more evenly over time, to avoid spikes
+            var checkPeriodMSecs = _keepAliveMSecs / (agentCount + 1);
+            if (checkPeriodMSecs < 1000)
+                checkPeriodMSecs = 1000;
+            _keepAliveTimer.Change(checkPeriodMSecs, checkPeriodMSecs);
         }
 
         public Task<AgentStates> GetAgentStates() {
