@@ -64,7 +64,8 @@ Add the correct text decoration in Chrome, Edge, and Safari.
 */
 
 abbr:where([title]) {
-  text-decoration: underline dotted;
+  -webkit-text-decoration: underline dotted;
+          text-decoration: underline dotted;
 }
 
 /*
@@ -549,11 +550,11 @@ video {
 .ml-4 {
   margin-left: 1rem;
 }
-.mr-2 {
-  margin-right: 0.5rem;
-}
 .mr-auto {
   margin-right: auto;
+}
+.mr-2 {
+  margin-right: 0.5rem;
 }
 .mb-1 {
   margin-bottom: 0.25rem;
@@ -569,6 +570,9 @@ video {
 }
 .flex {
   display: flex;
+}
+.inline-flex {
+  display: inline-flex;
 }
 .grid {
   display: grid;

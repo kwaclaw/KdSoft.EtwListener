@@ -21,6 +21,7 @@ function getAgentIndex(agentList, agentId) {
 }
 
 const dialogClass = utils.html5DialogSupported ? '' : 'fixed';
+const emptyRevokedEntry = { name: 'Certificate revokation list is empty', thumbprint: '###' };
 
 class EtwAppSideBar extends LitMvvmElement {
   constructor() {
@@ -75,6 +76,9 @@ class EtwAppSideBar extends LitMvvmElement {
     this.model.getRevokedCerts()
       .then(certs => {
         if (certs) {
+          if (!certs.length) {
+            certs.push(emptyRevokedEntry);
+          }
           const revokedList = dlg.querySelector('#revoked-list');
           revokedList.model = observable(new KdSoftChecklistModel(certs));
         }
@@ -112,6 +116,9 @@ class EtwAppSideBar extends LitMvvmElement {
     this.model.cancelCertRevocation(entry.thumbprint)
       .then(certs => {
         if (certs) {
+          if (!certs.length) {
+            certs.push(emptyRevokedEntry);
+          }
           const dlg = this.renderRoot.getElementById('dlg-revoke-cert');
           const revokedList = dlg.querySelector('#revoked-list');
           revokedList.model.items = certs;
@@ -126,6 +133,9 @@ class EtwAppSideBar extends LitMvvmElement {
     this.model.revokeCert(thumbprint, name)
       .then(certs => {
         if (certs) {
+          if (!certs.length) {
+            certs.push(emptyRevokedEntry);
+          }
           const revokedList = dlg.querySelector('#revoked-list');
           revokedList.model.items = certs;
         }
@@ -319,10 +329,11 @@ class EtwAppSideBar extends LitMvvmElement {
         }
 
         #revoked-list::part(thumb) {
-          width:14em;
-          text-overflow:ellipsis;
-          overflow:hidden;
-          white-space:nowrap;
+          width: 14em;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          white-space: nowrap;
+          margin-right: -0.5em;
         }
 
         #revoked-list::part(button) {
@@ -330,15 +341,11 @@ class EtwAppSideBar extends LitMvvmElement {
         }
 
         #revoke-cert-file {
-          grid-column: 1 / -1;
+          grid-column: 2 / -1;
         }
 
         #revoke-cert-file::file-selector-button {
           display:none;
-        }
-
-        #revoke-cert-file::file-selector-button::after {
-          content: 'From file';
         }
 
         #revoke-btn {
@@ -452,6 +459,7 @@ class EtwAppSideBar extends LitMvvmElement {
             <button type="reset"><i class="fa-solid fa-lg fa-xmark"></i></button>
           </div>
 
+          <label class="italic" for="revoke-cert-file">Populate From</label>
           <input id="revoke-cert-file" name="formFile"
             type="file" @change=${e => this._certFilePicked(e)}
             accept=".crt,.pem,.pfx,application/pkix-cert,application/x-pkcs12" />
@@ -471,9 +479,16 @@ class EtwAppSideBar extends LitMvvmElement {
             class="text-black" 
             .getItemTemplate=${item => html`
               <div class="flex w-full revoked-entry">
-                <span class="mr-2">${item.name}</span>
-                <span class="thumb-print ml-auto" part="thumb">(<i title=${item.thumbprint}>${item.thumbprint}</i>)</span>
-                <button class="fa-solid fa-lg fa-times self-center ml-2" part="button" @click=${e => this._removeRevokedEntry(e, item)}></button>
+                <span class="mr-auto">${item.name}</span>
+                ${item.thumbprint === '###'
+                  ? nothing
+                  : html`
+                      <span class="inline-flex items-center ml-2">(<span part="thumb" title=${item.thumbprint}>${item.thumbprint}</span>)</span>
+                      <button class="fa-solid fa-lg fa-times ml-2" part="button"
+                        @click=${e => this._removeRevokedEntry(e, item)}
+                        title="Cancel revocation"></button>
+                    `
+                }
               </div>`
             }
             .attachInternals=${true}

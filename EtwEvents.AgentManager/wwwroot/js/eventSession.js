@@ -52,7 +52,7 @@ class EventSession {
 
     this.ws = new WebSocket(this.wsUrl);
 
-    this.ws.onclose = (e) => {
+    this.ws.onclose = e => {
       this.ws = null;
       this._openCount -= 1;
       if (e.code > NormalClosureCode) {
@@ -65,7 +65,7 @@ class EventSession {
       }
     };
 
-    this.ws.onopen = (e) => {
+    this.ws.onopen = e => {
       this._openCount += 1;
     };
 
