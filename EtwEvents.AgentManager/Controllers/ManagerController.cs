@@ -25,24 +25,30 @@ namespace KdSoft.EtwEvents.AgentManager
     {
         readonly AgentProxyManager _agentProxyManager;
         readonly EventSinkProvider _evtSinkProvider;
+        readonly AuthorizationService _authService;
         readonly CertificateFileService _agentCertFileService;
         readonly IOptions<JsonOptions> _jsonOptions;
+        readonly IOptionsMonitor<AuthorizationOptions> _authOpts;
         readonly JsonFormatter _jsonFormatter;
         readonly ILogger<ManagerController> _logger;
 
         public ManagerController(
             AgentProxyManager agentProxyManager,
             EventSinkProvider evtSinkProvider,
+            AuthorizationService authService,
             CertificateFileService agentCertFileService,
             JsonFormatter jsonFormatter,
             IOptions<JsonOptions> jsonOptions,
+            IOptionsMonitor<AuthorizationOptions> authOpts,
             ILogger<ManagerController> logger
         ) {
             this._agentProxyManager = agentProxyManager;
             this._evtSinkProvider = evtSinkProvider;
+            this._authService = authService;
             this._agentCertFileService = agentCertFileService;
             this._jsonFormatter = jsonFormatter;
             this._jsonOptions = jsonOptions;
+            this._authOpts = authOpts;
             this._logger = logger;
         }
 
@@ -54,11 +60,29 @@ namespace KdSoft.EtwEvents.AgentManager
             return $"[{name}{thumbPrint}]";
         }
 
+        HttpResponse SetupSSEResponse() {
+            var resp = Response;
+
+            resp.ContentType = Constants.EventStreamHeaderValue;
+            resp.Headers[HeaderNames.CacheControl] = "no-cache,no-store";
+            resp.Headers[HeaderNames.Pragma] = "no-cache";
+            // hopefully prevents buffering
+            resp.Headers[HeaderNames.ContentEncoding] = "identity";
+
+            // Make sure we disable all response buffering for SSE
+            var bufferingFeature = resp.HttpContext.Features.Get<IHttpResponseBodyFeature>();
+            bufferingFeature?.DisableBuffering();
+
+            return resp;
+        }
+
         [HttpGet]
         public IActionResult GetEventSinkInfos() {
             var result = _evtSinkProvider.GetEventSinkInfos().Select(si => si.Item1);
             return Ok(result);
         }
+
+        #region Certificates
 
         [HttpPost]
         public async Task<IActionResult> UploadAgentCerts([FromForm] IFormCollection model, CancellationToken cancelToken) {
@@ -96,21 +120,99 @@ namespace KdSoft.EtwEvents.AgentManager
             return Ok();
         }
 
-        HttpResponse SetupSSEResponse() {
-            var resp = Response;
-
-            resp.ContentType = Constants.EventStreamHeaderValue;
-            resp.Headers[HeaderNames.CacheControl] = "no-cache,no-store";
-            resp.Headers[HeaderNames.Pragma] = "no-cache";
-            // hopefully prevents buffering
-            resp.Headers[HeaderNames.ContentEncoding] = "identity";
-
-            // Make sure we disable all response buffering for SSE
-            var bufferingFeature = resp.HttpContext.Features.Get<IHttpResponseBodyFeature>();
-            bufferingFeature?.DisableBuffering();
-
-            return resp;
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        public IActionResult GetRevokedCerts(CancellationToken cancelToken) {
+            var revokedList = _authOpts.CurrentValue.RevokedCertificates.Select(rv => new CertInfo { Name = rv.Value, Thumbprint = rv.Key });
+            return Ok(revokedList);
         }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        public IActionResult RevokeCert([FromBody] CertInfo cert, CancellationToken cancelToken) {
+            var revokedCerts = _authService.RevokeCertificate(cert.Thumbprint, cert.Name);
+            if (revokedCerts is null) {
+                var problemDetails = new ProblemDetails {
+                    Status = (int)HttpStatusCode.InternalServerError,
+                    Instance = null,
+                    Title = "Could not revoke certificate.",
+                };
+                return StatusCode(problemDetails.Status.Value, problemDetails);
+            }
+            var revokedList = revokedCerts.Select(rv => new CertInfo { Name = rv.Value?.ToString(), Thumbprint = rv.Key });
+            return Ok(revokedList);
+        }
+
+        [HttpPost]
+        public ObjectResult GetCertInfo([FromForm] FileModel model, CancellationToken cancelToken) {
+            if (model is null || model.File is null) {
+                _logger.LogError("Error in {method}, file not specified.", nameof(GetCertInfo));
+                var problemDetails = new ProblemDetails {
+                    Status = (int)HttpStatusCode.BadRequest,
+                    Instance = null,
+                    Title = "Invalid arguments",
+                };
+                return StatusCode(problemDetails.Status.Value, problemDetails);
+            }
+
+            X509Certificate2 cert;
+            try {
+                byte[] certBytes;
+                using (var rs = model.File.OpenReadStream()) {
+                    checked {
+                        var len = (int)rs.Length;
+                        certBytes = new byte[len];
+                        rs.Read(certBytes, 0, len);
+                    }
+                }
+                cert = CertUtils.LoadCertificate(certBytes);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error in {method}.", nameof(GetCertInfo));
+                var problemDetails = new ProblemDetails {
+                    Status = (int)HttpStatusCode.InternalServerError,
+                    Instance = null,
+                    Title = "Could not load certificate.",
+                };
+                return StatusCode(problemDetails.Status.Value, problemDetails);
+            }
+
+            var certCommonName = cert.GetNameInfo(X509NameType.SimpleName, false);
+
+            return Ok(new CertInfo { Name = certCommonName, Thumbprint = cert.Thumbprint });
+        }
+
+        //[Authorize(Roles = "Admin")]
+        //[HttpPost]
+        //public IActionResult RevokeCert([FromForm] FileModel model, CancellationToken cancelToken) {
+        //    var result = GetCertInfo(model, cancelToken);
+
+        //    if (result.StatusCode != (int)HttpStatusCode.OK || result.Value is null) {
+        //        return result;
+        //    }
+
+        //    var value = (CertInfo)result.Value;
+        //    return RevokeCert(value.Thumbprint, value.Name, cancelToken);
+        //}
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        public IActionResult CancelCertRevocation([FromBody] CertInfo cert, CancellationToken cancelToken) {
+            var revokedCerts = _authService.CancelCertificateRevocation(cert.Thumbprint);
+            if (revokedCerts is null) {
+                var problemDetails = new ProblemDetails {
+                    Status = (int)HttpStatusCode.InternalServerError,
+                    Instance = null,
+                    Title = "Could not cancel certificate revocation.",
+                };
+                return StatusCode(problemDetails.Status.Value, problemDetails);
+            }
+            var revokedList = revokedCerts.Select(rv => new CertInfo { Name = rv.Value?.ToString(), Thumbprint = rv.Key });
+            return Ok(revokedList);
+        }
+
+        #endregion
+
 
         #region Agent Events to Manager (SPA)
 

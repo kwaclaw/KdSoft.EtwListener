@@ -172,7 +172,7 @@ namespace KdSoft.EtwEvents.AgentManager
             return null;
         }
 
-        public bool CancelCertificateRevocation(string thumbprint) {
+        public JsonObject? CancelCertificateRevocation(string thumbprint) {
             try {
                 lock (_syncObj) {
                     var authFile = Path.Combine(_env.ContentRootPath, "authorization.json");
@@ -182,14 +182,14 @@ namespace KdSoft.EtwEvents.AgentManager
                         //case-insensitive matching depends on _nodeOptions
                         var result = certObj.Remove(thumbprint);
                         SaveNodeAtomic(authObj!, authFile);
-                        return result;
+                        return certObj;
                     }
                 }
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Error in {method}.", nameof(RevokeCertificate));
             }
-            return false;
+            return null;
         }
 
         /// <summary>
