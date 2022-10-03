@@ -259,6 +259,8 @@ class EtwAppSideBar extends LitMvvmElement {
   }
 
   render() {
+    const isAdmin = window.userRoles.includes('Admin');
+    const uploadLeftMargin = isAdmin ? 'ml-2' : 'ml-auto';
     return html`
       <nav id="sidebar" class="text-gray-500 bg-gray-800 pt-0 pb-3 h-full z-30">
         <!-- <div class="pr-2"> -->
@@ -274,12 +276,20 @@ class EtwAppSideBar extends LitMvvmElement {
             <a class="text-white no-underline hover:text-white hover:no-underline" href="#">
               <span class="text-2xl pl-2 brand"><i class="brand"></i>KDS</span>
             </a>
-            <input id="upload-cert" type="file" class="invisible"
-              accept=".crt,.pem,.pfx,application/pkix-cert,application/x-pkcs12" multiple @change=${(e) => this._uploadCerts(e)} />
-            <label for="upload-cert" class="flex items-center text-orange-500 ml-auto" title="Upload Agent Certificates">
+            ${isAdmin
+              ? html`<button id="revoke-cert-btn" class="flex items-center text-red-500 ml-auto"
+                title="Revoke Certificates" @click=${e => this._openRevokeCertDialog(e)}>
+                <i class="fas fa-certificate"></i>
+              </button>`
+              : nothing
+            }
+            <label for="upload-agent-certs" class="flex items-center text-orange-500 ${uploadLeftMargin}" title="Upload Agent Certificates">
               <i class="fas fa-upload"></i>
+              <input id="upload-agent-certs" type="file" class="hidden"
+                @change=${e => this._uploadAgentCerts(e)}
+                accept=".crt,.pem,.pfx,application/pkix-cert,application/x-pkcs12" multiple />
             </label>
-            <button class="text-blue-500 ml-2 fas fa-redo-alt" @click=${() => this._refreshState()} title="Refresh"></button>
+            <button class="text-blue-500 ml-4 fas fa-redo-alt" @click=${() => this._refreshState()} title="Refresh"></button>
           <!-- </div> -->
         </div>
 

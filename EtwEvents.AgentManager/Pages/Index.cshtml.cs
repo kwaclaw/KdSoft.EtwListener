@@ -1,4 +1,5 @@
-﻿using KdSoft.EtwEvents.AgentManager;
+﻿using System.Security.Claims;
+using KdSoft.EtwEvents.AgentManager;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Options;
 
@@ -29,6 +30,8 @@ namespace KdSoft.EtwEvents.WebClient.Pages
         }
 
         public int CertExpiryWarningDays => _authOpts.CurrentValue.CertExpiryWarningDays;
+
+        public IEnumerable<string> Roles => User.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).Distinct();
 
         //public string ResourceBase64() {
         //    // Retrieves the requested culture
