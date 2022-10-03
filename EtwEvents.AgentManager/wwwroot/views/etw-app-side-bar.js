@@ -13,7 +13,7 @@ import tailwindStyles from '../styles/tailwind-styles.js';
 import spinnerStyles from '../styles/spinner-styles.js';
 import appStyles from '../styles/etw-app-styles.js';
 import dialogStyles from '../styles/dialog-polyfill-styles.js';
-import '../components/revoked-checklist.js';
+import '../components/etw-checklist.js';
 import * as utils from '../js/utils.js';
 
 function getAgentIndex(agentList, agentId) {
@@ -314,8 +314,19 @@ class EtwAppSideBar extends LitMvvmElement {
 
         #revoked-list {
           grid-column: 2 / -1;
-          min-height: 2em;
+          min-height: 4em;
           max-height: 20em;
+        }
+
+        #revoked-list::part(thumb) {
+          width:14em;
+          text-overflow:ellipsis;
+          overflow:hidden;
+          white-space:nowrap;
+        }
+
+        #revoked-list::part(button) {
+          color: #718096;
         }
 
         #revoke-cert-file {
@@ -454,19 +465,20 @@ class EtwAppSideBar extends LitMvvmElement {
           <input id="commonName" name="commonName" type="text" />
 
           <label for="revoked-list">Revoked Certificates</label>
-          <revoked-checklist
+          <!-- we need to expose item template elemnts to be styled as named parts! -->
+          <etw-checklist exportparts="item"
             id="revoked-list" 
             class="text-black" 
             .getItemTemplate=${item => html`
               <div class="flex w-full revoked-entry">
                 <span class="mr-2">${item.name}</span>
-                <span class="thumb-print ml-auto">(<i title=${item.thumbprint}>${item.thumbprint}</i>)</span>
-                <button class="fa-solid fa-lg fa-times self-center ml-2" @click=${e => this._removeRevokedEntry(e, item)}></button>
+                <span class="thumb-print ml-auto" part="thumb">(<i title=${item.thumbprint}>${item.thumbprint}</i>)</span>
+                <button class="fa-solid fa-lg fa-times self-center ml-2" part="button" @click=${e => this._removeRevokedEntry(e, item)}></button>
               </div>`
             }
             .attachInternals=${true}
             tabindex=-1>
-          </revoked-checklist>
+          </etw-checklist>
         </form>
       </dialog>
 
