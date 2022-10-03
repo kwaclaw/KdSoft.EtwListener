@@ -426,9 +426,9 @@ class EtwApp extends LitMvvmElement {
                   <a href="#">Configuration</a>
 
                   <input type="file"
-                    @change=${(e) => this._importAgentConfig(e, activeEntry)}
+                    @change=${e => this._importAgentConfig(e, activeEntry)}
                     hidden />
-                  <button class="ml-4 text-gray-300" @click=${(e) => this._importAgentConfigDialog(e)} title="Import Configuration">
+                  <button class="ml-4 text-gray-300" @click=${e => this._importAgentConfigDialog(e)} title="Import Configuration">
                     <i class="fas fa-file-import"></i>
                   </button>
                   <button class="ml-2 text-gray-300" @click=${() => this._exportAgentConfig(activeAgentState)} title="Export Configuration">

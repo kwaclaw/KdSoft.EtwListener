@@ -199,7 +199,7 @@ class LiveViewConfig extends LitMvvmElement {
       </div>
 
       <dialog id="dlg-add-payload-col" class="${dialogClass}">
-        <form name="add-payload-col" @submit=${(e) => this._okAddPayloadCol(e)} @reset=${this._cancelAddPayloadCol}>
+        <form name="add-payload-col" @submit=${e => this._okAddPayloadCol(e)} @reset=${this._cancelAddPayloadCol}>
           <label for="payload-field">Field</label>
           <input id="payload-field" type="text" placeholder="field name" required @blur=${this._payloadFieldBlur} />
           <label for="payload-label">Label</label>

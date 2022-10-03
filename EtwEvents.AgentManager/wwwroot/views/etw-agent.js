@@ -268,14 +268,14 @@ class EtwAgent extends LitMvvmElement {
           <div class="flex my-2 pr-2">
             <span class="font-semibold ${this.model.getProvidersModified(activeEntry) ? 'italic text-red-500' : ''}">Event Providers</span>
             <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
-              @click=${(e) => this._addProviderClick(e, activeAgentState)}>
+              @click=${e => this._addProviderClick(e, activeAgentState)}>
             </span>
           </div>
           ${activeAgentState.enabledProviders.map(provider => html`
             <provider-config class="my-3"
               .model=${provider}
-              @beforeExpand=${(e) => this._providerBeforeExpand(e, activeAgentState)}
-              @delete=${(e) => this._deleteProviderClick(e, activeAgentState)}>
+              @beforeExpand=${e => this._providerBeforeExpand(e, activeAgentState)}
+              @delete=${e => this._deleteProviderClick(e, activeAgentState)}>
             </provider-config>
           `)}
           <hr class="my-3" />
@@ -302,23 +302,23 @@ class EtwAgent extends LitMvvmElement {
             entry => html`
               <event-sink-config class="bg-gray-300 px-2 my-3"
                 .model=${entry[1]}
-                @beforeExpand=${(e) => this._eventSinkBeforeExpand(e, activeAgentState)}
-                @delete=${(e) => this._deleteEventSinkClick(e, activeAgentState)}>
+                @beforeExpand=${e => this._eventSinkBeforeExpand(e, activeAgentState)}
+                @delete=${e => this._deleteEventSinkClick(e, activeAgentState)}>
               </event-sink-config>
             `
           )}
           <hr class="my-3" />
           <div id="ok-cancel-buttons" class="flex flex-wrap mt-2 bt-1">
             <input type="file"
-              @change=${(e) => this._importEventSinks(e, activeAgentState)}
+              @change=${e => this._importEventSinks(e, activeAgentState)}
               hidden />
-            <button type="button" class="mr-1 text-gray-600" @click=${(e) => this._importEventSinksDialog(e)} title="Import">
+            <button type="button" class="mr-1 text-gray-600" @click=${e => this._importEventSinksDialog(e)} title="Import">
               <i class="fas fa-lg fa-file-import"></i>
             </button>
-            <button type="button" class="py-1 px-2" @click=${(e) => this._exportEventSinks(e, activeAgentState)} title="Export">
+            <button type="button" class="py-1 px-2" @click=${e => this._exportEventSinks(e, activeAgentState)} title="Export">
               <i class="fas fa-lg fa-file-export text-gray-600"></i>
             </button>
-            <button type="button" class="py-1 px-2 ml-auto" @click=${(e) => this._updateEventSinks(e, activeAgentState)} title="Apply">
+            <button type="button" class="py-1 px-2 ml-auto" @click=${e => this._updateEventSinks(e, activeAgentState)} title="Apply">
               <i class="fas fa-lg fa-check text-green-500"></i>
             </button>
             <button type="button" class="py-1 px-2" @click=${() => this.model.resetEventSinks(activeEntry)} title="Reset to Current" autofocus>
@@ -372,7 +372,7 @@ class EtwAgent extends LitMvvmElement {
 
       <dialog id="dlg-add-event-sink" class="${dialogClass}">
         <form name="add-event-sink"
-          @submit=${(e) => this._okAddEventSink(e, activeAgentState)}
+          @submit=${e => this._okAddEventSink(e, activeAgentState)}
           @reset=${this._cancelAddEventSink}
         >
           <h3 class="font-bold">Add Event Sink</h3>
