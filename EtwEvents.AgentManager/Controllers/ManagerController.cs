@@ -123,7 +123,9 @@ namespace KdSoft.EtwEvents.AgentManager
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public IActionResult GetRevokedCerts(CancellationToken cancelToken) {
-            var revokedList = _authOpts.CurrentValue.RevokedCertificates.Select(rv => new CertInfo { Name = rv.Value, Thumbprint = rv.Key });
+            var revokedList = _authOpts.CurrentValue.RevokedCertificates
+                .Select(rv => new CertInfo { Name = rv.Value, Thumbprint = rv.Key })
+                .OrderBy(ci => ci.Name);
             return Ok(revokedList);
         }
 
@@ -139,7 +141,9 @@ namespace KdSoft.EtwEvents.AgentManager
                 };
                 return StatusCode(problemDetails.Status.Value, problemDetails);
             }
-            var revokedList = revokedCerts.Select(rv => new CertInfo { Name = rv.Value?.ToString(), Thumbprint = rv.Key });
+            var revokedList = revokedCerts
+                .Select(rv => new CertInfo { Name = rv.Value?.ToString(), Thumbprint = rv.Key })
+                .OrderBy(ci => ci.Name);
             return Ok(revokedList);
         }
 
@@ -207,12 +211,13 @@ namespace KdSoft.EtwEvents.AgentManager
                 };
                 return StatusCode(problemDetails.Status.Value, problemDetails);
             }
-            var revokedList = revokedCerts.Select(rv => new CertInfo { Name = rv.Value?.ToString(), Thumbprint = rv.Key });
+            var revokedList = revokedCerts
+                .Select(rv => new CertInfo { Name = rv.Value?.ToString(), Thumbprint = rv.Key })
+                .OrderBy(ci => ci.Name);
             return Ok(revokedList);
         }
 
         #endregion
-
 
         #region Agent Events to Manager (SPA)
 
