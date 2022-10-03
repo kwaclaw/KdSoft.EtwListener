@@ -603,6 +603,8 @@ class EtwAppModel {
 
   //#endregion
 
+  //#region Options
+
   getAgentOptions(agentState) {
     const result = new AgentRawOptions();
     result.enabledProviders = this.getEnabledProviders(agentState);
@@ -659,10 +661,36 @@ class EtwAppModel {
     this.setAgentState(entry, utils.clone(entry.current));
   }
 
+  //#endregion
+
+  //#region Certificates
+
   uploadAgentCerts(fileData) {
     return this.fetcher.postFormMultipart('UploadAgentCerts', null, fileData)
       .catch(error => window.etwApp.defaultHandleError(error));
   }
+
+  getRevokedCerts() {
+    return this.fetcher.getJson('GetRevokedCerts')
+      .catch(error => window.etwApp.defaultHandleError(error));
+  }
+
+  getCertInfo(fileData) {
+    return this.fetcher.postFormMultipart('GetCertInfo', null, fileData)
+      .catch(error => window.etwApp.defaultHandleError(error));
+  }
+  
+  revokeCert(thumbprint, name) {
+    return this.fetcher.postJson('RevokeCert', null, { thumbprint, name })
+      .catch(error => window.etwApp.defaultHandleError(error));
+  }
+
+  cancelCertRevocation(thumbprint) {
+    return this.fetcher.postJson('CancelCertRevocation', null, { thumbprint })
+      .catch(error => window.etwApp.defaultHandleError(error));
+  }
+
+  //#endregion
 }
 
 export default EtwAppModel;

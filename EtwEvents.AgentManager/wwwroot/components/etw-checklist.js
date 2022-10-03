@@ -6,6 +6,7 @@ import tailwindStyles from '../styles/tailwind-styles.js';
 export default class EtwChecklist extends KdSoftChecklist {
   static get styles() {
     return [
+      ...super.styles,
       KdSoftChecklist.styles,
       tailwindStyles
     ];

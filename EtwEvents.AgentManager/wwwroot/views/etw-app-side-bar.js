@@ -3,6 +3,7 @@
 import { html, nothing } from 'lit';
 import { observable, observe, unobserve } from '@nx-js/observer-util';
 import { Queue, priorities } from '@nx-js/queue-util';
+import dialogPolyfill from 'dialog-polyfill';
 import { LitMvvmElement, css, BatchScheduler } from '@kdsoft/lit-mvvm';
 import '@kdsoft/lit-mvvm-components/kdsoft-expander.js';
 import { KdSoftChecklistModel } from '@kdsoft/lit-mvvm-components';
@@ -12,12 +13,14 @@ import tailwindStyles from '../styles/tailwind-styles.js';
 import spinnerStyles from '../styles/spinner-styles.js';
 import appStyles from '../styles/etw-app-styles.js';
 import dialogStyles from '../styles/dialog-polyfill-styles.js';
-import '../components/etw-checklist.js';
+import '../components/revoked-checklist.js';
 import * as utils from '../js/utils.js';
 
 function getAgentIndex(agentList, agentId) {
   return agentList.findIndex(val => val.id === agentId);
 }
+
+const dialogClass = utils.html5DialogSupported ? '' : 'fixed';
 
 class EtwAppSideBar extends LitMvvmElement {
   constructor() {
@@ -52,7 +55,7 @@ class EtwAppSideBar extends LitMvvmElement {
     this.model.refreshState(activeAgentState);
   }
 
-  _uploadCerts(e) {
+  _uploadAgentCerts(e) {
     const input = e.currentTarget;
     const data = new FormData();
     for (const file of input.files) {
@@ -62,6 +65,70 @@ class EtwAppSideBar extends LitMvvmElement {
       .then(() => {
         // clear to prevent change event from not happening
         input.value = null;
+      });
+  }
+
+  _openRevokeCertDialog(e) {
+    const dlg = this.renderRoot.getElementById('dlg-revoke-cert');
+    dlg.querySelector('form').reset();
+    dlg.showModal();
+    this.model.getRevokedCerts()
+      .then(certs => {
+        if (certs) {
+          const revokedList = dlg.querySelector('#revoked-list');
+          revokedList.model = observable(new KdSoftChecklistModel(certs));
+        }
+      });
+  }
+
+  _closeRevokeCertDialog(e) {
+    const dlg = e.currentTarget.closest('dialog');
+    dlg.close();
+  }
+
+  _certFilePicked(e) {
+    const input = e.currentTarget;
+    const selectedFile = input.files[0];
+
+    if (!selectedFile) return;
+    if (selectedFile.size > 32758) {
+      window.etwApp.defaultHandleError(new Error('Certificate file size too large.'));
+      return;
+    }
+
+    const fileData = new FormData();
+    fileData.append('file', selectedFile, selectedFile.name);
+    this.model.getCertInfo(fileData)
+      .then(certInfo => {
+        if (certInfo) {
+          const dlg = this.renderRoot.getElementById('dlg-revoke-cert');
+          dlg.querySelector('#thumbprint').value = certInfo.thumbprint;
+          dlg.querySelector('#commonName').value = certInfo.name;
+        }
+      });
+  }
+
+  _removeRevokedEntry(e, entry) {
+    this.model.cancelCertRevocation(entry.thumbprint)
+      .then(certs => {
+        if (certs) {
+          const dlg = this.renderRoot.getElementById('dlg-revoke-cert');
+          const revokedList = dlg.querySelector('#revoked-list');
+          revokedList.model.items = certs;
+        }
+      });
+  }
+
+  _revokeCert(e) {
+    const dlg = this.renderRoot.getElementById('dlg-revoke-cert');
+    const thumbprint = dlg.querySelector('#thumbprint').value;
+    const name = dlg.querySelector('#commonName').value;
+    this.model.revokeCert(thumbprint, name)
+      .then(certs => {
+        if (certs) {
+          const revokedList = dlg.querySelector('#revoked-list');
+          revokedList.model.items = certs;
+        }
       });
   }
 
@@ -116,7 +183,10 @@ class EtwAppSideBar extends LitMvvmElement {
 
   // called at most once every time after connectedCallback was executed
   firstRendered() {
-    //
+    const eventSinkDlg = this.renderRoot.getElementById('dlg-add-event-sink');
+    if (!utils.html5DialogSupported) {
+      dialogPolyfill.registerDialog(eventSinkDlg);
+    }
   }
 
   static get styles() {
@@ -135,6 +205,15 @@ class EtwAppSideBar extends LitMvvmElement {
 
         dialog {
           outline: lightgray solid 1px;
+        }
+
+        label {
+          font-weight: bolder;
+          color: #718096;
+        }
+
+        input {
+          border-width: 1px;
         }
         
         #sidebar {
@@ -208,6 +287,55 @@ class EtwAppSideBar extends LitMvvmElement {
 
         .fa-lg.fa-eye, .fa-lg.fa-file-archive {
           min-width: 2em;
+        }
+
+        #dlg-revoke-cert form {
+          display: grid;
+          grid-template-columns: auto auto 3em;
+          background: rgba(255,255,255,0.3);
+          row-gap: 5px;
+          column-gap: 10px;
+        }
+
+        #revoke-header {
+          grid-column: 1 / -1;
+          margin-bottom: .5em;
+          display: flex;
+        }
+
+        #revoke-header > h3 {
+          margin-left: auto;
+        }
+
+        #revoke-header > button {
+          margin-left: auto;
+          color: #718096;
+        }
+
+        #revoked-list {
+          grid-column: 2 / -1;
+          min-height: 2em;
+          max-height: 20em;
+        }
+
+        #revoke-cert-file {
+          grid-column: 1 / -1;
+        }
+
+        #revoke-cert-file::file-selector-button {
+          display:none;
+        }
+
+        #revoke-cert-file::file-selector-button::after {
+          content: 'From file';
+        }
+
+        #revoke-btn {
+          grid-column: 3/-1;
+          grid-row: 3/5;
+          justify-content: center;
+          padding-left: 0.75em;
+          padding-right: 0.75em;
         }
       `
     ];
@@ -305,6 +433,43 @@ class EtwAppSideBar extends LitMvvmElement {
         ></etw-checklist>
 
       </nav>
+
+      <dialog id="dlg-revoke-cert" class="${dialogClass}">
+        <form name="revoke-cert" @reset=${e => this._closeRevokeCertDialog(e)}>
+          <div id="revoke-header">
+            <h3 class="font-bold">Revoke Certificates</h3>
+            <button type="reset"><i class="fa-solid fa-lg fa-xmark"></i></button>
+          </div>
+
+          <input id="revoke-cert-file" name="formFile"
+            type="file" @change=${e => this._certFilePicked(e)}
+            accept=".crt,.pem,.pfx,application/pkix-cert,application/x-pkcs12" />
+          <label for="thumbprint">Thumbprint</label>
+          <input id="thumbprint" name="thumbprint" type="text" />
+          <button id="revoke-btn" type="button" @click=${e => this._revokeCert(e)}
+            class="flex items-center text-red-500 ml-auto" title="Revoke">
+            <i class="fa-solid fa-2xl fa-ban"></i>
+          </button>
+          <label for="commonName">Common Name</label>
+          <input id="commonName" name="commonName" type="text" />
+
+          <label for="revoked-list">Revoked Certificates</label>
+          <revoked-checklist
+            id="revoked-list" 
+            class="text-black" 
+            .getItemTemplate=${item => html`
+              <div class="flex w-full revoked-entry">
+                <span class="mr-2">${item.name}</span>
+                <span class="thumb-print ml-auto">(<i title=${item.thumbprint}>${item.thumbprint}</i>)</span>
+                <button class="fa-solid fa-lg fa-times self-center ml-2" @click=${e => this._removeRevokedEntry(e, item)}></button>
+              </div>`
+            }
+            .attachInternals=${true}
+            tabindex=-1>
+          </revoked-checklist>
+        </form>
+      </dialog>
+
     `;
   }
 
