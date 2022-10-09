@@ -52,6 +52,10 @@ namespace KdSoft.EtwEvents.PushAgent
             LoadSinkProfiles();
         }
 
+        public JsonFormatter JsonFormatter => _jsonFormatter;
+
+        #region DataProtectionOptions
+
         void SaveDataProtectionOptions(DataProtectionOptions dataProtectionOptions) {
             var jsonFile = Path.Combine(_context.HostingEnvironment.ContentRootPath, localSettingsFile);
             JsonObject doc;
@@ -119,9 +123,11 @@ namespace KdSoft.EtwEvents.PushAgent
             }
         }
 
-        public JsonFormatter JsonFormatter => _jsonFormatter;
+        #endregion
 
         #region SessionState
+
+        readonly object _sessionStateSync=new object();
 
         string EventSessionStatePath => Path.Combine(_context.HostingEnvironment.ContentRootPath, "eventSession.json");
 
@@ -131,7 +137,10 @@ namespace KdSoft.EtwEvents.PushAgent
 
         public bool LoadSessionState() {
             try {
-                var sessionStateJson = File.ReadAllText(EventSessionStatePath);
+                string sessionStateJson;
+                lock (_sessionStateSync) {
+                    sessionStateJson = File.ReadAllText(EventSessionStatePath);
+                }
                 _sessionState = string.IsNullOrWhiteSpace(sessionStateJson)
                     ? new EventSessionState()
                     : EventSessionState.Parser.ParseJson(sessionStateJson);
@@ -149,7 +158,9 @@ namespace KdSoft.EtwEvents.PushAgent
         public bool SaveSessionState(EventSessionState state) {
             try {
                 var json = _jsonFormatter.Format(state);
-                File.WriteAllText(EventSessionStatePath, json);
+                lock (_sessionStateSync) {
+                    File.WriteAllText(EventSessionStatePath, json);
+                }
                 _sessionState = state;
                 _stateAvailable = true;
                 return true;
@@ -164,6 +175,8 @@ namespace KdSoft.EtwEvents.PushAgent
 
         #region EventSinkProfile
 
+        readonly object _sinkProfileSync = new object();
+
         string EventSinkOptionsPath => Path.Combine(_context.HostingEnvironment.ContentRootPath, "eventSinks.json");
 
         Dictionary<string, EventSinkProfile> _sinkProfiles = new Dictionary<string, EventSinkProfile>(StringComparer.CurrentCultureIgnoreCase);
@@ -171,7 +184,10 @@ namespace KdSoft.EtwEvents.PushAgent
 
         public bool LoadSinkProfiles() {
             try {
-                var sinkOptionsJson = File.ReadAllText(EventSinkOptionsPath);
+                string sinkOptionsJson;
+                lock (_sinkProfileSync) {
+                    sinkOptionsJson = File.ReadAllText(EventSinkOptionsPath);
+                }
                 var profiles = string.IsNullOrWhiteSpace(sinkOptionsJson)
                     ? new Dictionary<string, EventSinkProfile>(StringComparer.CurrentCultureIgnoreCase)
                     : new Dictionary<string, EventSinkProfile>(EventSinkProfiles.Parser.ParseJson(sinkOptionsJson).Profiles, StringComparer.CurrentCultureIgnoreCase);
@@ -216,7 +232,9 @@ namespace KdSoft.EtwEvents.PushAgent
                     clonedProfiles[profileEntry.Key] = clonedProfile;
                 }
                 var json = _jsonFormatter.Format(new EventSinkProfiles { Profiles = { clonedProfiles } });
-                File.WriteAllText(EventSinkOptionsPath, json);
+                lock (_sinkProfileSync) {
+                    File.WriteAllText(EventSinkOptionsPath, json);
+                }
                 _sinkProfiles = new Dictionary<string, EventSinkProfile>(profiles, StringComparer.CurrentCultureIgnoreCase);
                 return true;
             }
