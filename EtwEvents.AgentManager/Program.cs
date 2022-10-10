@@ -17,16 +17,20 @@ using OrchardCore.Localization;
 #region Initial Configuration
 
 var opts = new WebApplicationOptions {
-     Args = args,
+    Args = args,
 #if DEBUG
-     // avoid changes to files under revision control
-     ContentRootPath = AppContext.BaseDirectory
+    // The program may change files that would be under revision control with the default ContentRootPath,
+    // so we change the content root path to be the output directory (e.g. bin/Debug/net6.0).
+    ContentRootPath = AppContext.BaseDirectory,
+    // But we want to retain the default WebRootPath.
+    WebRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot")
 #endif
 };
 var builder = WebApplication.CreateBuilder(opts);
 
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
 builder.Configuration.AddJsonFile("authorization.json", optional: true, reloadOnChange: true);
+builder.Configuration.AddEnvironmentVariables();
 builder.Configuration.AddCommandLine(args);
 
 builder.Logging.ClearProviders();
