@@ -144,10 +144,19 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         JsonNode? ReadNode(string filePath) {
-            using (var fs = FileUtils.OpenFileWithRetry(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan)) {
+            using (var fs = FileUtils.OpenFileWithRetry(filePath, FileMode.OpenOrCreate, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan)) {
                 using (var buffer = MemoryPool<byte>.Shared.Rent((int)fs.Length)) {
                     var byteCount = fs.Read(buffer.Memory.Span);
-                    return JsonObject.Parse(buffer.Memory.Span.Slice(0, byteCount), _nodeOptions, _docOptions);
+                    if (byteCount == 0) {
+                        return null;
+                    }
+                    try {
+                        return JsonObject.Parse(buffer.Memory.Span.Slice(0, byteCount), _nodeOptions, _docOptions);
+                    }
+                    catch (Exception ex) {
+                        _logger.LogError(ex, "Error in {method}.", nameof(ReadNode));
+                        return null;
+                    }
                 }
             }
         }
@@ -156,14 +165,27 @@ namespace KdSoft.EtwEvents.AgentManager
             try {
                 lock (_syncObj) {
                     var authFile = Path.Combine(_env.ContentRootPath, "authorization.json");
-                    var authObj = ReadNode(authFile);
-                    var certNode = authObj?["AuthorizationOptions"]?["RevokedCertificates"];
-                    if (certNode is JsonObject certObj) {
-                        //case-insensitive matching depends on _nodeOptions
-                        certObj[thumbprint] = commonName;
-                        SaveNodeAtomic(authObj!, authFile);
-                        return certObj;
+                    var authNode = ReadNode(authFile);
+                    if (authNode is not JsonObject authObj) {
+                        authObj = new JsonObject(_nodeOptions);
                     }
+
+                    //case-insensitive matching depends on _nodeOptions
+                    var authOptNode = authObj["AuthorizationOptions"];
+                    if (authOptNode is not JsonObject authOptObj) {
+                        authOptObj = new JsonObject(_nodeOptions);
+                        authObj["AuthorizationOptions"] = authOptObj;
+                    }
+
+                    var certNode = authOptObj["RevokedCertificates"];
+                    if (certNode is not JsonObject certObj) {
+                        certObj = new JsonObject(_nodeOptions);
+                        authOptObj["RevokedCertificates"] = certObj;
+                    }
+
+                    certObj[thumbprint] = commonName;
+                    SaveNodeAtomic(authObj, authFile);
+                    return certObj;
                 }
             }
             catch (Exception ex) {
