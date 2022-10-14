@@ -24,12 +24,12 @@
     <PackageReference Include="KdSoft.Logging" Version="1.1.2" />
     <PackageReference Include="KdSoft.Utils" Version="4.0.2" />
     <PackageReference Include="KdSoft.Utils.Portable" Version="4.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.Certificate" Version="6.0.9" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Certificate" Version="6.0.10" />
     <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="6.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="6.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="6.0.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.17.0" />
     <PackageReference Include="OrchardCore.Localization.Core" Version="1.4.0" />

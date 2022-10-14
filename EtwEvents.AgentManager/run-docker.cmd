@@ -28,4 +28,3 @@ docker cp "C:/Temp/etw-manager/certs/Kd-Soft.crt" KdSoft_ETW_AgentManager:"/usr/
 docker exec -dt -w "/usr/local/share/ca-certificates" KdSoft_ETW_AgentManager update-ca-certificates
 
 popd
-
