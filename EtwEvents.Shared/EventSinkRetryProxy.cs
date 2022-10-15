@@ -90,21 +90,29 @@ namespace KdSoft.EtwEvents
 
         record struct EventSinkContext(string SiteName, ILogger Logger): IEventSinkContext;
 
-        async Task<IEventSink> CreateEventSink() {
+        async Task<IEventSink?> CreateEventSink() {
             var logger = _loggerFactory.CreateLogger(_sinkId);
-            var sink = await _sinkFactory.Create(_options, _credentials, new EventSinkContext(_siteName, logger)).ConfigureAwait(false);
-            var oldSink = Interlocked.CompareExchange(ref _sink, sink, null);
-            if (oldSink != null)
-                throw new InvalidOperationException($"Must not replace EventSink instance {_sinkId} when it is not null.");
-            return sink;
+            try {
+                var sink = await _sinkFactory.Create(_options, _credentials, new EventSinkContext(_siteName, logger)).ConfigureAwait(false);
+                var oldSink = Interlocked.CompareExchange(ref _sink, sink, null);
+                if (oldSink != null)
+                    throw new InvalidOperationException($"Must not replace EventSink instance {_sinkId} when it is not null.");
+                return sink;
+            }
+            catch (Exception ex) {
+                _retryHolder.Value.LastError = ex;
+                RaiseChangedEvent();
+                _logger.LogError(ex, "Error creating event sink {sinkId}.", _sinkId);
+                return null;
+            }
         }
 
-        ValueTask<IEventSink> GetSink() {
-            var sink = _sink;
+        ValueTask<IEventSink?> GetSink() {
+            IEventSink? sink = _sink;
             if (sink != null) {
-                return ValueTask.FromResult(sink);
+                return ValueTask.FromResult<IEventSink?>(sink);
             }
-            return new ValueTask<IEventSink>(CreateEventSink());
+            return new ValueTask<IEventSink?>(CreateEventSink());
         }
 
         /*
@@ -171,8 +179,10 @@ namespace KdSoft.EtwEvents
 
         #region WriteAsync(EtwEventBatch evtBatch)
 
-        async ValueTask<bool> InternalWriteAsync(ValueTask<IEventSink> sinkTask, EtwEventBatch evtBatch) {
+        async ValueTask<bool> InternalWriteAsync(ValueTask<IEventSink?> sinkTask, EtwEventBatch evtBatch) {
             var sink = await sinkTask.ConfigureAwait(false);
+            if (sink is null)
+                return false;
             return await InternalPerformAsync(sink.WriteAsync(evtBatch)).ConfigureAwait(false);
         }
 
@@ -185,6 +195,8 @@ namespace KdSoft.EtwEvents
             var sinkTask = GetSink();
             if (sinkTask.IsCompleted) {
                 var sink = sinkTask.GetAwaiter().GetResult();
+                if (sink is null)
+                    return ValueTask.FromResult(false);
                 return InternalPerformAsync(sink.WriteAsync(evtBatch));
             }
             return InternalWriteAsync(sinkTask, evtBatch);
