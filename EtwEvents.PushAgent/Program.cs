@@ -74,6 +74,12 @@ namespace KdSoft.EtwEvents.PushAgent
                         SingleReader = true,
                         SingleWriter = false
                     }));
+                    services.AddSingleton<Func<IRetryStrategy>>(() => new BackoffRetryStrategy(
+                        TimeSpan.FromSeconds(2),
+                        TimeSpan.FromSeconds(30),
+                        TimeSpan.FromHours(2),
+                        forever: true
+                    ));
                     services.AddSingleton<ControlConnector>();
                     services.AddScoped<SessionWorker>();
                     services.AddHostedService<ControlWorker>();

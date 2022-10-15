@@ -21,17 +21,12 @@ namespace KdSoft.EtwEvents.PushAgent
         readonly EventSinkService _sinkService;
         readonly IConfiguration _config;
         readonly ILoggerFactory _loggerFactory;
+        readonly Func<IRetryStrategy> _defaultCreateRetryStrategy;
 
         readonly ILogger<SessionWorker> _logger;
         readonly EventProcessor _eventProcessor;
         readonly JsonSerializerOptions _jsonOptions;
 
-        static readonly IRetryStrategy _defaultRetryStrategy = new BackoffRetryStrategy(
-            TimeSpan.FromSeconds(2),
-            TimeSpan.FromSeconds(30),
-            TimeSpan.FromHours(2),
-            forever: true
-        );
 
         public SessionConfig SessionConfig => _sessionConfig;
 
@@ -45,7 +40,8 @@ namespace KdSoft.EtwEvents.PushAgent
             Channel<ControlEvent> controlChannel,
             EventSinkService sinkService,
             IConfiguration config,
-            ILoggerFactory loggerFactory
+            ILoggerFactory loggerFactory,
+            Func<IRetryStrategy> defaultCreateRetryStrategy
         ) {
             this._sessionConfig = sessionConfig;
             this._eventQueueOptions = eventQueueOptions;
@@ -54,6 +50,8 @@ namespace KdSoft.EtwEvents.PushAgent
             this._sinkService = sinkService;
             this._config = config;
             this._loggerFactory = loggerFactory;
+            this._defaultCreateRetryStrategy = defaultCreateRetryStrategy;
+
 
             _logger = loggerFactory.CreateLogger<SessionWorker>();
             _eventProcessor = new EventProcessor();
@@ -167,7 +165,7 @@ namespace KdSoft.EtwEvents.PushAgent
         /// <param name="sinkProfile"><see cref="EventSinkProfile"/> to use for event channnel.</param>
         /// <param name="retryStrategy"><see cref="IRetryStrategy"/> to use for event channnel.</param>
         /// <param name="isPersistent">Indicates if the event sink profile is persistent and must be saved.</param>
-        public async Task UpdateEventChannel(EventSinkProfile sinkProfile, IRetryStrategy? retryStrategy = null, bool isPersistent = true) {
+        public async Task UpdateEventChannel(EventSinkProfile sinkProfile, Func<IRetryStrategy>? retryStrategyFactory = null, bool isPersistent = true) {
             if (_eventProcessor.ActiveEventChannels.TryGetValue(sinkProfile.Name, out var channel)) {
                 var profileIsStored = _sessionConfig.SinkProfiles.TryGetValue(sinkProfile.Name, out var storedProfile);
                 // the only settings we can update on a running channel/EventSink are BatchSize and MaxWriteDelayMSecs
@@ -206,8 +204,9 @@ namespace KdSoft.EtwEvents.PushAgent
             }
 
             EventChannel? newChannel = null;
-            var sinkProxy = await sinkProfile.CreateRetryProxy(
-                _sinkService, retryStrategy ?? _defaultRetryStrategy, GetSiteName(), _loggerFactory).ConfigureAwait(false);
+            EventSinkRetryProxy sinkProxy;
+            sinkProxy = await sinkProfile.CreateRetryProxy(
+                _sinkService, retryStrategyFactory?.Invoke() ?? _defaultCreateRetryStrategy(), GetSiteName(), _loggerFactory).ConfigureAwait(false);
             try {
                 newChannel = _eventProcessor.AddChannel(sinkProfile.Name, sinkProxy, CreateChannel);
                 if (isPersistent) {

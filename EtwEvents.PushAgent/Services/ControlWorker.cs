@@ -170,10 +170,10 @@ namespace KdSoft.EtwEvents.PushAgent
                     if (managerSinkProfile == null)
                         return;
                     if (worker != null) {
-                        var retryStrategy = new BackoffRetryStrategy(TimeSpan.FromMilliseconds(500), TimeSpan.FromMilliseconds(1000), 10);
+                        var retryStrategyFactory = () => new BackoffRetryStrategy(TimeSpan.FromMilliseconds(500), TimeSpan.FromMilliseconds(1000), 10);
                         // make sure the manager sink name is the canonical name
                         managerSinkProfile.Name = Constants.LiveViewSinkName;
-                        await worker.UpdateEventChannel(managerSinkProfile, retryStrategy, false).ConfigureAwait(false);
+                        await worker.UpdateEventChannel(managerSinkProfile, retryStrategyFactory, false).ConfigureAwait(false);
                     }
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
