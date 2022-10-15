@@ -127,7 +127,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
         #region SessionState
 
-        readonly object _sessionStateSync=new object();
+        readonly object _sessionStateSync = new object();
 
         string EventSessionStatePath => Path.Combine(_context.HostingEnvironment.ContentRootPath, "eventSession.json");
 
