@@ -340,13 +340,17 @@ namespace KdSoft.EtwEvents.PushAgent
         Dictionary<string, EventSinkState> GetEventSinkStates() {
             var profiles = _sessionConfig.SinkProfiles;
             var result = new Dictionary<string, EventSinkState>();
+            var failedSinks = SessionWorker?.FailedEventSinks ?? ImmutableDictionary<string, (string, Exception)>.Empty;
             var failedChannels = SessionWorker?.FailedEventChannels ?? ImmutableDictionary<string, EventChannel>.Empty;
             var activeChannels = SessionWorker?.ActiveEventChannels ?? ImmutableDictionary<string, EventChannel>.Empty;
 
             foreach (var profileEntry in profiles) {
                 var profile = profileEntry.Value;
                 var sinkStatus = new EventSinkStatus();
-                if (failedChannels.TryGetValue(profile.Name, out var failed)) {
+                if (failedSinks.TryGetValue(profile.Name, out var sink)) {
+                    sinkStatus.LastError = sink.Item2.GetBaseException().Message;
+                }
+                else if (failedChannels.TryGetValue(profile.Name, out var failed)) {
                     var sinkError = failed.RunTask?.Exception?.GetBaseException().Message;
                     if (sinkError != null) {
                         sinkStatus.LastError = sinkError;

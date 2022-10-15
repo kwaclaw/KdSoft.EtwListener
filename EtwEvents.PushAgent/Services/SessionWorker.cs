@@ -27,6 +27,7 @@ namespace KdSoft.EtwEvents.PushAgent
         readonly EventProcessor _eventProcessor;
         readonly JsonSerializerOptions _jsonOptions;
 
+        ImmutableDictionary<string, (string, Exception)> _failedEventSinks;
 
         public SessionConfig SessionConfig => _sessionConfig;
 
@@ -52,6 +53,7 @@ namespace KdSoft.EtwEvents.PushAgent
             this._loggerFactory = loggerFactory;
             this._defaultCreateRetryStrategy = defaultCreateRetryStrategy;
 
+            _failedEventSinks = ImmutableDictionary<string, (string, Exception)>.Empty.WithComparers(StringComparer.CurrentCultureIgnoreCase);
 
             _logger = loggerFactory.CreateLogger<SessionWorker>();
             _eventProcessor = new EventProcessor();
@@ -147,6 +149,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
         #region Event Sink
 
+        public ImmutableDictionary<string, (string, Exception)> FailedEventSinks => _failedEventSinks;
         public IImmutableDictionary<string, EventChannel> ActiveEventChannels => _eventProcessor.ActiveEventChannels;
         public IImmutableDictionary<string, EventChannel> FailedEventChannels => _eventProcessor.FailedEventChannels;
 
@@ -205,8 +208,22 @@ namespace KdSoft.EtwEvents.PushAgent
 
             EventChannel? newChannel = null;
             EventSinkRetryProxy sinkProxy;
-            sinkProxy = await sinkProfile.CreateRetryProxy(
-                _sinkService, retryStrategyFactory?.Invoke() ?? _defaultCreateRetryStrategy(), GetSiteName(), _loggerFactory).ConfigureAwait(false);
+            try {
+                sinkProxy = await sinkProfile.CreateRetryProxy(
+                    _sinkService, retryStrategyFactory?.Invoke() ?? _defaultCreateRetryStrategy(), GetSiteName(), _loggerFactory).ConfigureAwait(false);
+                ImmutableInterlocked.TryRemove(ref _failedEventSinks, sinkProfile.Name, out _);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error creating event sink '{eventSink}'.", sinkProfile.Name);
+
+                ImmutableInterlocked.AddOrUpdate(ref _failedEventSinks, sinkProfile.Name, (sinkProfile.SinkType, ex), (k, v) => (sinkProfile.SinkType, ex));
+                // ControlWorker.GetEventSinkStates needs to pick up this error and reports it for this sink profile
+                var couldWrite = _controlChannel.Writer.TryWrite(ControlConnector.GetStateMessage);
+                if (!couldWrite) {
+                    _logger?.LogError("Error in {method}. Could not write event {event} to control channel.", nameof(UpdateEventChannel), ControlConnector.GetStateMessage.Event);
+                }
+                return;
+            }
             try {
                 newChannel = _eventProcessor.AddChannel(sinkProfile.Name, sinkProxy, CreateChannel);
                 if (isPersistent) {
@@ -229,7 +246,14 @@ namespace KdSoft.EtwEvents.PushAgent
                     await newChannel.DisposeAsync().ConfigureAwait(false);
                 }
                 _logger.LogError(ex, "Error updating event sink '{eventSink}'.", sinkProfile.Name);
-                throw;
+
+                ImmutableInterlocked.AddOrUpdate(ref _failedEventSinks, sinkProfile.Name, (sinkProfile.SinkType, ex), (k, v) => (sinkProfile.SinkType, ex));
+                // ControlWorker.GetEventSinkStates needs to pick up this error and reports it for this sink profile
+                var couldWrite = _controlChannel.Writer.TryWrite(ControlConnector.GetStateMessage);
+                if (!couldWrite) {
+                    _logger?.LogError("Error in {method}. Could not write event {event} to control channel.", nameof(UpdateEventChannel), ControlConnector.GetStateMessage.Event);
+                }
+                return;
             }
         }
 
