@@ -1,7 +1,9 @@
-﻿using System.Security.Cryptography.X509Certificates;
+﻿using System.Buffers;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using System.Text.Unicode;
 using Google.Protobuf;
 using KdSoft.EtwLogging;
 using Microsoft.AspNetCore.DataProtection;
@@ -16,12 +18,36 @@ namespace KdSoft.EtwEvents.PushAgent
         readonly ILogger<SessionConfig> _logger;
         readonly IOptions<ControlOptions> _options;
         readonly IOptionsMonitor<DataProtectionOptions> _dataOptionsMonitor;
-        readonly JsonFormatter _jsonFormatter;
-        readonly JsonSerializerOptions _jsonOptions;
-        readonly object dpSync = new object();
+        readonly ArrayBufferWriter<byte> _bufferWriter;
 
         const string DataProtectionPurpose = "sink-credentials";
         const string localSettingsFile = "appsettings.Local.json";
+
+        static readonly JsonFormatter _jsonFormatter = new JsonFormatter(
+            JsonFormatter.Settings.Default.WithFormatDefaultValues(true).WithFormatEnumsAsIntegers(true)
+        );
+
+        static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions {
+            WriteIndented = true,
+            ReadCommentHandling = JsonCommentHandling.Skip,
+            AllowTrailingCommas = true,
+            PropertyNameCaseInsensitive = true,
+            Converters = { new JsonStringEnumConverter() }
+        };
+
+        static readonly JsonWriterOptions _writerOptions = new JsonWriterOptions {
+            Indented = true,
+            SkipValidation = true
+        };
+
+        static readonly JsonNodeOptions _nodeOptions = new JsonNodeOptions {
+            PropertyNameCaseInsensitive = true,
+        };
+
+        static readonly JsonDocumentOptions _docOptions = new JsonDocumentOptions {
+            CommentHandling = JsonCommentHandling.Skip,
+            AllowTrailingCommas = true,
+        };
 
         IDataProtectionProvider _dpProvider;
         bool _stateAvailable;
@@ -38,15 +64,11 @@ namespace KdSoft.EtwEvents.PushAgent
             this._logger = logger;
             this._options = options;
             this._dataOptionsMonitor = dataOptionsMonitor;
+            _bufferWriter = new ArrayBufferWriter<byte>(2048);
 
-            var jsonSettings = JsonFormatter.Settings.Default.WithFormatDefaultValues(true).WithFormatEnumsAsIntegers(true);
-            _jsonFormatter = new JsonFormatter(jsonSettings);
-
-            _jsonOptions = new JsonSerializerOptions {
-                Converters = { new JsonStringEnumConverter() }
-            };
-
-            _dpProvider = InitializeDataProtection(_dataOptionsMonitor.CurrentValue.Certificate);
+            lock (_bufferWriter) {
+                _dpProvider = InitializeDataProtection(_dataOptionsMonitor.CurrentValue.Certificate);
+            }
 
             LoadSessionState();
             LoadSinkProfiles();
@@ -54,24 +76,73 @@ namespace KdSoft.EtwEvents.PushAgent
 
         public JsonFormatter JsonFormatter => _jsonFormatter;
 
+        void SaveNodeAtomic(string filePath, JsonNode node) {
+            _bufferWriter.Clear();
+            using (var utf8Writer = new Utf8JsonWriter(_bufferWriter, _writerOptions)) {
+                node.WriteTo(utf8Writer, _jsonOptions);
+                utf8Writer.Flush();
+            }
+            FileUtils.WriteFileAtomic(_bufferWriter.WrittenSpan, filePath);
+        }
+
+        void SaveUtf8FileAtomic(string filePath, string text) {
+            _bufferWriter.Clear();
+            var buffer = _bufferWriter.GetSpan(text.Length * 3);
+            var status = Utf8.FromUtf16(text, buffer, out int charsRead, out int bytesWritten, true, true);
+            if (status == OperationStatus.Done) {
+                _bufferWriter.Advance(bytesWritten);
+                FileUtils.WriteFileAtomic(_bufferWriter.WrittenSpan, filePath);
+            }
+            else {
+                if (status == OperationStatus.DestinationTooSmall)
+                    throw new InvalidOperationException("UTF8 buffer too small.");
+                else
+                    throw new InvalidOperationException("Could not convert UTF16 to UTF8.");
+            }
+        }
+
+        JsonNode? ReadNode(string filePath) {
+            using (var fs = FileUtils.OpenFileWithRetry(filePath, FileMode.OpenOrCreate, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan)) {
+                using (var buffer = MemoryPool<byte>.Shared.Rent((int)fs.Length)) {
+                    var byteCount = fs.Read(buffer.Memory.Span);
+                    if (byteCount == 0) {
+                        return null;
+                    }
+                    try {
+                        return JsonObject.Parse(buffer.Memory.Span.Slice(0, byteCount), _nodeOptions, _docOptions);
+                    }
+                    catch (Exception ex) {
+                        _logger.LogError(ex, "Error in {method}.", nameof(ReadNode));
+                        return null;
+                    }
+                }
+            }
+        }
+
         #region DataProtectionOptions
 
         void SaveDataProtectionOptions(DataProtectionOptions dataProtectionOptions) {
             var jsonFile = Path.Combine(_context.HostingEnvironment.ContentRootPath, localSettingsFile);
-            JsonObject doc;
+            JsonObject? docObj;
+
             try {
-                var json = File.ReadAllText(jsonFile) ?? "{}";
-                doc = JsonObject.Parse(json)?.AsObject() ?? new JsonObject();
+                var docNode = ReadNode(jsonFile);
+                docObj = docNode as JsonObject;
+                if (docObj is null) {
+                    docObj = new JsonObject(_nodeOptions);
+                }
             }
             catch (IOException) {
-                doc = new JsonObject();
+                docObj = new JsonObject();
             }
             catch (JsonException) {
-                doc = new JsonObject();
+                docObj = new JsonObject();
             }
+
             var dataProtectionNode = JsonSerializer.SerializeToNode(dataProtectionOptions, _jsonOptions);
-            doc["DataProtection"] = dataProtectionNode;
-            File.WriteAllText(jsonFile, doc.ToJsonString());
+            docObj["DataProtection"] = dataProtectionNode;
+
+            SaveNodeAtomic(jsonFile, docObj);
         }
 
         // https://docs.microsoft.com/en-us/aspnet/core/security/data-protection/configuration/non-di-scenarios?view=aspnetcore-6.0
@@ -115,11 +186,11 @@ namespace KdSoft.EtwEvents.PushAgent
         /// Update data protection when the certificate should change.
         /// </summary>
         public void UpdateDataProtection(DataCertOptions newCertOptions) {
-            lock (dpSync) {
+            lock (_bufferWriter) {
                 LoadSinkProfiles();
                 SaveDataProtectionOptions(new DataProtectionOptions { Certificate = newCertOptions });
                 _dpProvider = InitializeDataProtection(newCertOptions);
-                SaveSinkProfiles(_sinkProfiles);
+                SaveSinkProfilesInternal(_sinkProfiles);
             }
         }
 
@@ -127,20 +198,16 @@ namespace KdSoft.EtwEvents.PushAgent
 
         #region SessionState
 
-        readonly object _sessionStateSync = new object();
-
         string EventSessionStatePath => Path.Combine(_context.HostingEnvironment.ContentRootPath, "eventSession.json");
 
         EventSessionState _sessionState = new();
         public EventSessionState State => _sessionState;
         public bool StateAvailable => _stateAvailable;
 
-        public bool LoadSessionState() {
+        bool LoadSessionState() {
             try {
                 string sessionStateJson;
-                lock (_sessionStateSync) {
-                    sessionStateJson = File.ReadAllText(EventSessionStatePath);
-                }
+                sessionStateJson = File.ReadAllText(EventSessionStatePath);
                 _sessionState = string.IsNullOrWhiteSpace(sessionStateJson)
                     ? new EventSessionState()
                     : EventSessionState.Parser.ParseJson(sessionStateJson);
@@ -155,12 +222,11 @@ namespace KdSoft.EtwEvents.PushAgent
             }
         }
 
-        public bool SaveSessionState(EventSessionState state) {
+        bool SaveSessionState(EventSessionState state) {
             try {
+                //TODO add indentation to JSON once it is supported in Google.protobuf
                 var json = _jsonFormatter.Format(state);
-                lock (_sessionStateSync) {
-                    File.WriteAllText(EventSessionStatePath, json);
-                }
+                SaveUtf8FileAtomic(EventSessionStatePath, json);
                 _sessionState = state;
                 _stateAvailable = true;
                 return true;
@@ -175,30 +241,24 @@ namespace KdSoft.EtwEvents.PushAgent
 
         #region EventSinkProfile
 
-        readonly object _sinkProfileSync = new object();
-
         string EventSinkOptionsPath => Path.Combine(_context.HostingEnvironment.ContentRootPath, "eventSinks.json");
 
         Dictionary<string, EventSinkProfile> _sinkProfiles = new Dictionary<string, EventSinkProfile>(StringComparer.CurrentCultureIgnoreCase);
         public IReadOnlyDictionary<string, EventSinkProfile> SinkProfiles => _sinkProfiles;
 
-        public bool LoadSinkProfiles() {
+        bool LoadSinkProfiles() {
             try {
                 string sinkOptionsJson;
-                lock (_sinkProfileSync) {
-                    sinkOptionsJson = File.ReadAllText(EventSinkOptionsPath);
-                }
+                sinkOptionsJson = File.ReadAllText(EventSinkOptionsPath);
                 var profiles = string.IsNullOrWhiteSpace(sinkOptionsJson)
                     ? new Dictionary<string, EventSinkProfile>(StringComparer.CurrentCultureIgnoreCase)
                     : new Dictionary<string, EventSinkProfile>(EventSinkProfiles.Parser.ParseJson(sinkOptionsJson).Profiles, StringComparer.CurrentCultureIgnoreCase);
                 foreach (var profile in profiles.Values) {
                     if (profile.Credentials.StartsWith('*')) {
                         try {
-                            lock (dpSync) {
-                                var dataProtector = _dpProvider.CreateProtector(DataProtectionPurpose);
-                                var rawCredentials = dataProtector.Unprotect(profile.Credentials.Substring(1));
-                                profile.Credentials = rawCredentials;
-                            }
+                            var dataProtector = _dpProvider.CreateProtector(DataProtectionPurpose);
+                            var rawCredentials = dataProtector.Unprotect(profile.Credentials.Substring(1));
+                            profile.Credentials = rawCredentials;
                         }
                         catch (Exception ex) {
                             profile.Credentials = "{}";
@@ -216,31 +276,34 @@ namespace KdSoft.EtwEvents.PushAgent
             }
         }
 
-        public bool SaveSinkProfiles(IDictionary<string, EventSinkProfile> profiles) {
+        bool SaveSinkProfilesInternal(IDictionary<string, EventSinkProfile> profiles) {
             try {
                 // clone profiles so we only modify the stored version
                 var clonedProfiles = new Dictionary<string, EventSinkProfile>(profiles);
                 foreach (var profileEntry in clonedProfiles) {
                     var clonedProfile = profileEntry.Value.Clone();
                     if (!clonedProfile.Credentials.StartsWith('*')) {
-                        lock (dpSync) {
-                            var dataProtector = _dpProvider.CreateProtector(DataProtectionPurpose);
-                            var protectedCredentials = dataProtector.Protect(clonedProfile.Credentials);
-                            clonedProfile.Credentials = $"*{protectedCredentials}";
-                        }
+                        var dataProtector = _dpProvider.CreateProtector(DataProtectionPurpose);
+                        var protectedCredentials = dataProtector.Protect(clonedProfile.Credentials);
+                        clonedProfile.Credentials = $"*{protectedCredentials}";
                     }
                     clonedProfiles[profileEntry.Key] = clonedProfile;
                 }
+                //TODO add indentation to JSON once it is supported in Google.protobuf
                 var json = _jsonFormatter.Format(new EventSinkProfiles { Profiles = { clonedProfiles } });
-                lock (_sinkProfileSync) {
-                    File.WriteAllText(EventSinkOptionsPath, json);
-                }
+                SaveUtf8FileAtomic(EventSinkOptionsPath, json);
                 _sinkProfiles = new Dictionary<string, EventSinkProfile>(profiles, StringComparer.CurrentCultureIgnoreCase);
                 return true;
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Error saving event sink options.");
                 return false;
+            }
+        }
+
+        public bool SaveSinkProfiles(IDictionary<string, EventSinkProfile> profiles) {
+            lock (_bufferWriter) {
+                return SaveSinkProfilesInternal(profiles);
             }
         }
 
@@ -261,10 +324,12 @@ namespace KdSoft.EtwEvents.PushAgent
         #region Provider Settings
 
         public bool SaveProviderSettings(IEnumerable<ProviderSetting> providers) {
-            LoadSessionState();
-            _sessionState.ProviderSettings.Clear();
-            _sessionState.ProviderSettings.AddRange(providers);
-            return SaveSessionState(_sessionState);
+            lock (_bufferWriter) {
+                LoadSessionState();
+                _sessionState.ProviderSettings.Clear();
+                _sessionState.ProviderSettings.AddRange(providers);
+                return SaveSessionState(_sessionState);
+            }
         }
 
         #endregion
@@ -272,11 +337,13 @@ namespace KdSoft.EtwEvents.PushAgent
         #region Processing State
 
         public bool SaveProcessingState(ProcessingState state, bool updateFilterSource) {
-            LoadSessionState();
-            if (updateFilterSource) {
-                _sessionState.ProcessingState.FilterSource = state.FilterSource;
+            lock (_bufferWriter) {
+                LoadSessionState();
+                if (updateFilterSource) {
+                    _sessionState.ProcessingState.FilterSource = state.FilterSource;
+                }
+                return SaveSessionState(_sessionState);
             }
-            return SaveSessionState(_sessionState);
         }
 
         #endregion
@@ -284,9 +351,11 @@ namespace KdSoft.EtwEvents.PushAgent
         #region Live View
 
         public bool SaveLiveViewOptions(LiveViewOptions liveViewOptions) {
-            LoadSessionState();
-            _sessionState.LiveViewOptions = liveViewOptions;
-            return SaveSessionState(_sessionState);
+            lock (_bufferWriter) {
+                LoadSessionState();
+                _sessionState.LiveViewOptions = liveViewOptions;
+                return SaveSessionState(_sessionState);
+            }
         }
 
         #endregion
