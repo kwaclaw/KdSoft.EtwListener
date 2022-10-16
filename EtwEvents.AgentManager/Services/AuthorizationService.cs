@@ -134,7 +134,7 @@ namespace KdSoft.EtwEvents.AgentManager
             return false;
         }
 
-        void SaveNodeAtomic(JsonNode node, string filePath) {
+        void SaveNodeAtomic(string filePath, JsonNode node) {
             _bufferWriter.Clear();
             using (var utf8Writer = new Utf8JsonWriter(_bufferWriter, _writerOptions)) {
                 node.WriteTo(utf8Writer, _serializerOptions);
@@ -184,7 +184,7 @@ namespace KdSoft.EtwEvents.AgentManager
                     }
 
                     certObj[thumbprint] = commonName;
-                    SaveNodeAtomic(authObj, authFile);
+                    SaveNodeAtomic(authFile, authObj);
                     return certObj;
                 }
             }
@@ -203,7 +203,7 @@ namespace KdSoft.EtwEvents.AgentManager
                     if (certNode is JsonObject certObj) {
                         //case-insensitive matching depends on _nodeOptions
                         var result = certObj.Remove(thumbprint);
-                        SaveNodeAtomic(authObj!, authFile);
+                        SaveNodeAtomic(authFile, authObj!);
                         return certObj;
                     }
                 }
