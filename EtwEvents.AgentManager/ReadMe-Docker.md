@@ -11,7 +11,7 @@ Or better, just run `npm run build` in `wwwroot`, which performs an NPM install 
 
 - Before debugging, switch to wwwroot directory and run `npm install`, if necessary
 - Then debug with the Docker default launch settings selected, which use localhost.
-- To allow external clients to connect to the agent manager, you must use public domain name a matching server certificate.
+- To allow external clients to connect to the agent manager, you must use a publicly visible domain name with a matching server certificate.
 - When switching between Docker and regular debugging, rebuild the project.
 
 ## Build Docker image for production

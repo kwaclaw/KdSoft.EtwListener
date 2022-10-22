@@ -1,5 +1,7 @@
 ## Prepare Install Package
 
+- Rebuild all EventSink projects (or simply the entire Solution) in Release mode.
+- Run `npm run build` in `wwwroot`, which performs an NPM install followed by all other processing.
 - Open project EtwEvents.AgentManager and publish it using either the Platform or the SelfContained profile.
 - If using the Platform profile, it is a requirement that the target system has the target framework (specified in the profile) installed.
 

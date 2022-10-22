@@ -18,22 +18,23 @@
 - Steps:
   
   1) Unzip archive.
-  2) copy certificates into unzipped folder (if provided).
-  3) Double click `InstallService.cmd`, follow prompts.
+  2) Copy certificates into unzipped folder (if provided).
+  3) Modify `appsettings.Local.json` and `authorization.json` if needed.
+  4) Double click `InstallService.cmd`, follow prompts.
 
 ### User Authentication
 
 One of these applies (when prompted by the browser):
 
-- Use a client certificate where the subject (DN) includes "role=etw-manager" 
-- Use a client certificate where the Common Name (CN) is listed in appsettings.json under ClientValidation
+- Use a client certificate where the subject (DN) includes "role=etw-manager" or "role=etw-admin". 
+- Use a client certificate where the Common Name (CN) is listed in authorization.json under ClientValidation.
 
 ### Agent Authentication
 
 One of these applies:
 
-- Use a client certificate where the subject (DN) includes "role=etw-pushagent" 
-- Use a client certificate where the Common Name (CN) is listed in appsettings.json under AgentValidation
+- Use a client certificate where the subject (DN) includes "role=etw-pushagent".
+- Use a client certificate where the Common Name (CN) is listed in authorization.json under AgentValidation.
 
 ### Local Configuration
 
@@ -44,7 +45,8 @@ One of these applies:
 
 - The settings in `appsettings.Local.json` can selectively override settings in `appsettings.json` without having to duplicate the entire file.
       
-- This example will add John Doe as an authorized user for the agent manager (common name of certificate must be "John Doe"):
+- `authorization.json`:
+  This example will add John Doe in as an authorized user for the agent manager (common name of certificate must be "John Doe"):
   ```json
   "ClientValidation": {
     "AuthorizedCommonNames": [
@@ -53,15 +55,17 @@ One of these applies:
   },
   ```
 
-- This example will revoke the client certificate with thumbprint cd91bf6d1f52b76285b5b96abb57381d8d92bfa5:
+- `authorization.json`:
+  This example will revoke the client certificate with thumbprint cd91bf6d1f52b76285b5b96abb57381d8d92bfa5:
   ```json
   RevokedCertificates": [
     "cd91bf6d1f52b76285b5b96abb57381d8d92bfa5"
   ],
   ```
 
-- This example will specify which certificate to load as server certificate:
-  - only required if certificate already installed, and no cetificate in installer folder, otherwise the installer will update `appsettings.Local.json`.
+- `appsettings.Local.json`:
+  This example will specify which certificate to load as server certificate.
+  (only required if certificate is already installed, and no certificate is found in the installer folder, otherwise the installer will update `appsettings.Local.json`).
   ```json
   "Kestrel": {
     "EndpointDefaults": {
