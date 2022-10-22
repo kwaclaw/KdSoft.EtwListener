@@ -29,6 +29,7 @@ namespace KdSoft.EtwEvents.PushAgent
             Host.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((hostContext, cfgBuilder) => {
                     // we are overriding some of the settings that are already loaded
+                    cfgBuilder.AddJsonFile("appsettings.kd-soft.json", optional: true, reloadOnChange: true);
                     cfgBuilder.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
                     cfgBuilder.AddCommandLine(args);
                 })
