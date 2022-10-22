@@ -23,6 +23,14 @@
       },
       "applicationUrl": "https://localhost:50300"
     },
+    "EtwEvents.AgentManager KdSoft": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://agent-manager.kd-soft.net:50300"
+    },
     "EtwEvents.AgentManager Prod": {
       "commandName": "Project",
       "launchBrowser": true,
