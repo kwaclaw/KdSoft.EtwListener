@@ -20,7 +20,8 @@
   
   1) Unzip archive.
   2) copy certificates into unzipped folder (if provided).
-  3) Double click `InstallService.cmd`, follow prompts.
+  3) Modify `appsettings.Local.json` if needed.
+  4) Double click `InstallService.cmd`, follow prompts.
 
 ### Local Configuration
 

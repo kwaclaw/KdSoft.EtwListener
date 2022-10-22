@@ -53,7 +53,7 @@ The ETW PushAgent authenticates itself to the AgentManager using a client certif
 - To create client certificates, check the scripts in the `EtwEvents.PushAgent/certificates` folder.
   - They need to be modified for the individual install scenario.
 
-- If needed, custom root and  signing (intermediate CA) certificates (if desired) must be installed.
+- If needed, custom root and/or signing (intermediate CA) certificates must be installed.
   - On a Windows client, the optional root certificate must be installed in the "**Local Computer\Trusted Root Certification Authorities**" folder of the local certificate storage.
   - On a Windows client, the optional signing certificate must be installed in the "**Local Computer\Intermediate Certification Authorities**" folder of the local certificate storage.
   - On a Linux client it depends on the distribution. A popular way is:
