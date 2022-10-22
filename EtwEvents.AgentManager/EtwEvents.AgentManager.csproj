@@ -53,7 +53,7 @@
     <Content Update="appSettings.Development.json">
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </Content>
-    <Content Update="appsettings.kd-soft.json">
+    <Content Update="appsettings.Personal.json">
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </Content>
     <Content Update="authorization.json">

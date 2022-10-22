@@ -25,7 +25,7 @@ var builder = Host.CreateDefaultBuilder(args);
 
 builder.ConfigureAppConfiguration((hostContext, cfgBuilder) => {
     // we are overriding some of the settings that are already loaded
-    cfgBuilder.AddJsonFile("appsettings.kd-soft.json", optional: true, reloadOnChange: true);
+    cfgBuilder.AddJsonFile("appsettings.Personal.json", optional: true, reloadOnChange: true);
     cfgBuilder.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
     cfgBuilder.AddCommandLine(args);
 });

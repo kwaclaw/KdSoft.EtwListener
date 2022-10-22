@@ -28,7 +28,7 @@ var opts = new WebApplicationOptions {
 };
 var builder = WebApplication.CreateBuilder(opts);
 
-builder.Configuration.AddJsonFile("appsettings.kd-soft.json", optional: true, reloadOnChange: true);
+builder.Configuration.AddJsonFile("appsettings.Personal.json", optional: true, reloadOnChange: true);
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
 builder.Configuration.AddJsonFile("authorization.json", optional: true, reloadOnChange: true);
 builder.Configuration.AddEnvironmentVariables();
