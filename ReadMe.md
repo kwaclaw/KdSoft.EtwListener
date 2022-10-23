@@ -1,10 +1,3 @@
-<style>
-  .markdown-body {
-      width: 100% !important;
-      max-width: unset;
-  }
-</style>
-
 # ETW LISTENER
 
 A system to extract ETW (Event Tracing for Windows) events and collect them centrally.
