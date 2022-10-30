@@ -205,14 +205,15 @@ function Copy-AppSettings {
 
 function Update-MergedAppSettings {
     param (
-        $clientCert
+        $clientCert,
+        [String]$mgrUrl
     )
 
     [string] $jsonFile = '.\appsettings.Local.json.merged'
     [PSCustomObject] $jsonObject = Load-JsonObject $jsonFile
 
-    if ($managerUrl -ne '') {
-        $jsonObject.Control | Add-Member -Force -MemberType NoteProperty -Name 'Uri' -Value $managerUrl
+    if ($mgrUrl -ne '') {
+        $jsonObject.Control | Add-Member -Force -MemberType NoteProperty -Name 'Uri' -Value $mgrUrl
     }
 
     if ($clientCert) {
@@ -250,6 +251,8 @@ foreach ($clientCertFile in Get-ChildItem -Path . -Filter '*.p12') {
         Write-Host Imported certificate $clientCertFile with role 'etw-pushagent'
     } elseif ($clientCert) {
         Write-Host Imported certificate $clientCertFile
+    } else {
+         Write-Host Not a client certificate: $clientCertFile
     }
 }
 
@@ -307,10 +310,8 @@ if ($cred.UserName -notlike '*\LocalSystem') {
 $sourcePublishPath = [System.IO.Path]::Combine($sourceDirPath, "publish", "*") 
 Copy-Item -Path $sourcePublishPath -Destination $targetDirPath -Recurse
 
-# update appsettings.Local.json.merged with client certificate
-if ($clientCert) {
-    Update-MergedAppSettings $clientCert
-}
+# update appsettings.Local.json.merged with client certificate and managerUrl
+Update-MergedAppSettings $clientCert $managerUrl
 
 # now copy merged and updated settings to target directory
 Copy-AppSettings 'appsettings.Local.json' $targetDirPath
