@@ -75,8 +75,8 @@ if %ERRORLEVEL% NEQ 0 (Exit /b)
 
 @echo export to pkcs12
 :: SHA256 signed certificates cannot be imported on WinServer 2016 / Win10 <= 1703, use TripleDES-SHA1 instead
-:: openssl pkcs12 -export -in "tmp/client.crt" -inkey "tmp/client.key" -macalg SHA1 -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -out "out/%-name%.p12"
-openssl pkcs12 -export -in "tmp/client.crt" -inkey "tmp/client.key" -out "out/%-name%.p12"
+openssl pkcs12 -export -in "tmp/client.crt" -inkey "tmp/client.key" -macalg SHA1 -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -out "out/%-name%.p12"
+:: openssl pkcs12 -export -in "tmp/client.crt" -inkey "tmp/client.key" -out "out/%-name%.p12"
 
 popd    
 pause
