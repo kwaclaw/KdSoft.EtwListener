@@ -4,7 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>KdSoft.EtwEvents.AgentManager</AssemblyName>
     <RootNamespace>KdSoft.EtwEvents.AgentManager</RootNamespace>
-    <VersionPrefix>1.1.1</VersionPrefix>
+    <VersionPrefix>1.1.2</VersionPrefix>
     <!--<AspNetCoreHostingModel>OutOfProcess</AspNetCoreHostingModel>-->
     <LangVersion>Latest</LangVersion>
     <Nullable>enable</Nullable>

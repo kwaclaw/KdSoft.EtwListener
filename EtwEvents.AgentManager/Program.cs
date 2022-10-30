@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting.WindowsServices;
+using Microsoft.Extensions.Logging.EventLog;
 using Microsoft.Extensions.Options;
 using OrchardCore.Localization;
 
@@ -24,6 +26,8 @@ var opts = new WebApplicationOptions {
     ContentRootPath = AppContext.BaseDirectory,
     // But we want to retain the default WebRootPath.
     WebRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot")
+#else
+    ContentRootPath = WindowsServiceHelpers.IsWindowsService() ? AppContext.BaseDirectory : default
 #endif
 };
 var builder = WebApplication.CreateBuilder(opts);
@@ -58,7 +62,23 @@ builder.WebHost.ConfigureKestrel((context, options) => {
     });
 });
 
-builder.Host.UseWindowsService();
+// This would throw: "Changing the host configuration using WebApplicationBuilder.Host is not supported."
+// builder.Host.UseWindowsService();
+
+if (WindowsServiceHelpers.IsWindowsService()) {
+    builder.Host.ConfigureLogging((hostingContext, logging) =>
+    {
+        logging.AddEventLog();
+    })
+    .ConfigureServices((hostContext, services) => {
+        services.AddSingleton<IHostLifetime, WindowsServiceLifetime>();
+        services.Configure<EventLogSettings>(settings => {
+            if (string.IsNullOrEmpty(settings.SourceName)) {
+                settings.SourceName = hostContext.HostingEnvironment.ApplicationName;
+            }
+        });
+    });
+}
 
 #endregion
 
