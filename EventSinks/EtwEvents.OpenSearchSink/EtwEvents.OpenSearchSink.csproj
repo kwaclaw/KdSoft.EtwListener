@@ -15,7 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="OpenSearch.Net" Version="1.1.0" />
+    <PackageReference Include="OpenSearch.Net" Version="1.2.0" />
   </ItemGroup>
 
   <ItemGroup>
