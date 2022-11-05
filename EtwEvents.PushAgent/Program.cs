@@ -87,4 +87,4 @@ builder.ConfigureServices((hostContext, services) => {
     services.AddHostedService<ControlWorker>();
 });
 
-builder.Build().Run();
+await builder.Build().RunAsync();
