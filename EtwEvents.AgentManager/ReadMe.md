@@ -22,11 +22,15 @@ Both, the user accessing the agent manager, and the ETW agent accessing the agen
 We use client certificates for both.
 
 - The client certificate must be configured to support client authorization.
+
 - The client certificate presented by the PushAgent will be authorized if the DN contains role=etw-pushagent.
+
 - The client certificate presented by the user/browser will be authorized if the DN contains role=etw-manager.
+
 - If a client certificate does not have the role above, it can be authorized by being listed in the AuthorizedCommonNames setting (see below).
 
 - If needed, custom CA certificates must be installed.
+  
   - On a Windows client:
     - the custom root certificate must be installed in "**Local Computer\Trusted Root Certification Authorities**".
     - a custom intermediate CA certificate must be installed in "**Local Computer\Intermediate Certification Authorities**".
@@ -36,13 +40,16 @@ We use client certificates for both.
   - We can restrict validation to those client certificates that are derived from the custom root certificate - see below.
 
 - A useful GUI tool for creating certificates is [XCA](https://www.hohnstaedt.de/xca/).
+
 - We also have OpenSSL scripts, they require OpenSSL 3.0 installed:
+  
   - see https://slproweb.com/products/Win32OpenSSL.html or https://kb.firedaemon.com/support/solutions/articles/4000121705.
   - for server certificates: located in the `EtwEvents.AgentManager/certificates` directory.
   - for client certificates: located in the `EtwEvents.PushAgent/certificates` directory.
 
 - We specify authorized users/agents in `authorization.json`, in the **ClientValidation** and **AgentValidation** section.
   "Unauthorization" can be done by removing an authorized common name, or by revoking the associated certificate, e.g.:
+  
   ```json
   "ClientValidation": {
     // this is only checked when the agent's certificate does not have role=etw-manager
@@ -62,3 +69,12 @@ We use client certificates for both.
     "cd91bf6d1f52b76285b5b96abb57381d8d92bfa5"
   ],
   ```
+  
+  ### Localization
+  
+  Localization is based on the gettext system. See [Wikipedia](https://en.wikipedia.org/wiki/Gettext).
+  It is currently incomplete.
+  
+  - On the Javascript side we use [gettext.js](https://github.com/guillaumepotier/gettext.js),
+  - As a PO editor a free tool is [POEdit]( https://poedit.net/).
+  - In C# we use [OrchardCore.Localization.Core](https://github.com/OrchardCMS/OrchardCore/tree/main/src/OrchardCore/OrchardCore.Localization.Core).
