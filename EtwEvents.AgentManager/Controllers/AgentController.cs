@@ -5,6 +5,7 @@ using Google.Protobuf;
 using KdSoft.EtwLogging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using Microsoft.Net.Http.Headers;
 
 namespace KdSoft.EtwEvents.AgentManager
@@ -15,6 +16,7 @@ namespace KdSoft.EtwEvents.AgentManager
     [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
     class AgentController: ControllerBase
     {
+        readonly IStringLocalizer<AgentController> _;
         readonly AgentProxyManager _agentProxyManager;
         readonly EventSinkProvider _evtSinkProvider;
         readonly AgentCertificateWatcher _certWatcher;
@@ -22,12 +24,14 @@ namespace KdSoft.EtwEvents.AgentManager
         readonly ILogger<AgentController> _logger;
 
         public AgentController(
+            IStringLocalizer<AgentController> localizer,
             AgentProxyManager agentProxyManager,
             EventSinkProvider evtSinkProvider,
             AgentCertificateWatcher certWatcher,
             JsonFormatter jsonFormatter,
             ILogger<AgentController> logger
         ) {
+            this._ = localizer;
             this._agentProxyManager = agentProxyManager;
             this._evtSinkProvider = evtSinkProvider;
             this._certWatcher = certWatcher;

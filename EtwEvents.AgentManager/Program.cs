@@ -66,8 +66,7 @@ builder.WebHost.ConfigureKestrel((context, options) => {
 // builder.Host.UseWindowsService();
 
 if (WindowsServiceHelpers.IsWindowsService()) {
-    builder.Host.ConfigureLogging((hostingContext, logging) =>
-    {
+    builder.Host.ConfigureLogging((hostingContext, logging) => {
         logging.AddEventLog();
     })
     .ConfigureServices((hostContext, services) => {

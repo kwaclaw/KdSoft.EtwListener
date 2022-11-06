@@ -12,6 +12,7 @@ using KdSoft.EtwLogging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 
@@ -23,6 +24,7 @@ namespace KdSoft.EtwEvents.AgentManager
     [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
     class ManagerController: ControllerBase
     {
+        readonly IStringLocalizer<ManagerController> _;
         readonly AgentProxyManager _agentProxyManager;
         readonly EventSinkProvider _evtSinkProvider;
         readonly AuthorizationService _authService;
@@ -33,6 +35,7 @@ namespace KdSoft.EtwEvents.AgentManager
         readonly ILogger<ManagerController> _logger;
 
         public ManagerController(
+            IStringLocalizer<ManagerController> localizer,
             AgentProxyManager agentProxyManager,
             EventSinkProvider evtSinkProvider,
             AuthorizationService authService,
@@ -42,6 +45,7 @@ namespace KdSoft.EtwEvents.AgentManager
             IOptionsMonitor<AuthorizationOptions> authOpts,
             ILogger<ManagerController> logger
         ) {
+            this._ = localizer;
             this._agentProxyManager = agentProxyManager;
             this._evtSinkProvider = evtSinkProvider;
             this._authService = authService;

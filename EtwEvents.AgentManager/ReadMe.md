@@ -75,6 +75,10 @@ We use client certificates for both.
   Localization is based on the gettext system. See [Wikipedia](https://en.wikipedia.org/wiki/Gettext).
   It is currently incomplete.
   
-  - On the Javascript side we use [gettext.js](https://github.com/guillaumepotier/gettext.js),
-  - As a PO editor a free tool is [POEdit]( https://poedit.net/).
+  - On the Javascript side we use [gettext.js](https://github.com/guillaumepotier/gettext.js).
+    - Make a phrase localizable by using `i18n.__('My Phrase')`, where `i18n` is a global object.
+    - Then add localizations to the `.po` files under `EtwEvents.AgentManager\wwwroot`.
+  - For editing `.po` files we can use the free tool [POEdit]( https://poedit.net/).
   - In C# we use [OrchardCore.Localization.Core](https://github.com/OrchardCMS/OrchardCore/tree/main/src/OrchardCore/OrchardCore.Localization.Core).
+    - Make a phrase localizable by using `_.GetString("My Phrase")`, where `_` represents the injected `IStringLocalizer`.
+    - Then add localizations to the `.po` files under `EtwEvents.AgentManager\Resources`.
