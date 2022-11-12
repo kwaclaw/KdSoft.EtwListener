@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using Google.Protobuf;
@@ -96,6 +97,17 @@ if (WindowsServiceHelpers.IsWindowsService()) {
 //        return clientCertificate;
 //    };
 //});
+
+// The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+builder.Services.AddHsts(options => {
+    options.Preload = true;
+    options.IncludeSubDomains = true;
+    options.MaxAge = TimeSpan.FromDays(365);
+});
+
+builder.Services.AddHttpsRedirection(options => {
+    options.RedirectStatusCode = (int)HttpStatusCode.TemporaryRedirect;
+});
 
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(CertificateAuthenticationDefaults.AuthenticationScheme).AddCertificate(options => {
@@ -220,10 +232,19 @@ if (app.Environment.IsDevelopment()) {
 }
 else {
     app.UseExceptionHandler("/error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
     app.UseHttpsRedirection();
 }
+
+// add security headers
+app.Use(async (context, next) => {
+    context.Response.Headers.Add("X-Frame-Options", "DENY");
+    context.Response.Headers.Add("X-Xss-Protection", "1; mode=block");
+    context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Add("Referrer-Policy", "no-referrer");
+    context.Response.Headers.Add("Content-Security-Policy", "default-src 'self'");
+    await next();
+};
 
 // depending on development or production mode, we have to initialize the secrets differently
 //var appSecretsPath = Path.Combine(app.Environment.ContentRootPath, "appsecrets.json");
