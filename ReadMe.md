@@ -26,6 +26,19 @@ An agent is a Windows service that can make outgoing network connections.
 - Depending on configuration, the agent can also connect to an external endpoint to send the log events to.
 - For installation instructions, see [Install.md](EtwEvents.PushAgent/Install.md) and [deploy/ReadMe.md](EtwEvents.PushAgent/deploy/ReadMe.md).
 
+### Event Sink
+
+An event sink is a component of an agent that can send ETW events captured by the agent to a local or remote destination.
+The agent manager (see below) can remotely install one or more event sinks into a connected agent.
+Event sink components are currently available for:
+- [Elasticsearch](https://www.elastic.co/)
+- [OpenSearch](https://opensearch.org/)
+- [MongoDB](https://www.mongodb.com/)
+- [Seq](https://datalust.co/seq)
+- [Azure HTTP Data Collector API](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/data-collector-api)
+- gRPC (needs a gRPC endpoint matching its protobuf definitions)
+- File System (implements a rolling file strategy)
+
 ## Agent Manager
 
 The agent manager is a web site that allows for configuring, starting and stopping connected agents.
