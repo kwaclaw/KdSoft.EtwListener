@@ -237,14 +237,21 @@ else {
 }
 
 // add security headers
+var cspHeaderValues = string.Join(
+    ';',
+    "default-src 'self' data: blob:",
+    "style-src 'self' 'unsafe-inline' cdnjs.cloudflare.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: ga.jspm.io",
+    "font-src fonts.gstatic.com  cdnjs.cloudflare.com"
+);
 app.Use(async (context, next) => {
     context.Response.Headers.Add("X-Frame-Options", "DENY");
     context.Response.Headers.Add("X-Xss-Protection", "1; mode=block");
     context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
     context.Response.Headers.Add("Referrer-Policy", "no-referrer");
-    context.Response.Headers.Add("Content-Security-Policy", "default-src 'self'");
+    context.Response.Headers.Add("Content-Security-Policy", cspHeaderValues);
     await next();
-};
+});
 
 // depending on development or production mode, we have to initialize the secrets differently
 //var appSecretsPath = Path.Combine(app.Environment.ContentRootPath, "appsecrets.json");
