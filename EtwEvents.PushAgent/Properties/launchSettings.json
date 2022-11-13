@@ -1,11 +1,18 @@
 {
   "profiles": {
-    "EtwEvents.PushAgent": {
+    "EtwEvents.PushAgent Dev": {
       "commandName": "Project",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"
       },
-      "dotnetRunMessages": "true"
+      "dotnetRunMessages": true
+    },
+    "EtwEvents.PushAgent Personal": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Personal"
+      },
+      "dotnetRunMessages": true
     }
   }
 }

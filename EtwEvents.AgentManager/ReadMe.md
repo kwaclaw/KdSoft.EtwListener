@@ -21,7 +21,8 @@ Or better, just run `npm run build` in `wwwroot`, which performs an NPM install 
   - Modify the file appsettings.Personal.json in EtwEvents.AgentManager to load the right certificate.
   - Modify the profile "EtwEvents.AgentManager Personal" in EtwEvents.AgentManager to use the new Url.
   - Modify the file appsettings.Personal.json in EtwEvents.PushAgent to connect to the new Url
-  - When debugging make sure AgentManager uses the new profile "EtwEvents.AgentManager Personal".
+  - When debugging make sure the AgentManager uses the launch profile "EtwEvents.AgentManager Personal".
+  - When debugging make sure the PushAgent uses the launch profile "EtwEvents.PushAgent Personal".
 - When switching between Docker and regular debugging, rebuild the project.
 
 ### Client Authentication

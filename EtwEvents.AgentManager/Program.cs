@@ -33,7 +33,9 @@ var opts = new WebApplicationOptions {
 };
 var builder = WebApplication.CreateBuilder(opts);
 
-builder.Configuration.AddJsonFile("appsettings.Personal.json", optional: true, reloadOnChange: true);
+if (builder.Environment.IsEnvironment("Personal")) {
+    builder.Configuration.AddJsonFile("appsettings.Personal.json", optional: true, reloadOnChange: true);
+}
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
 builder.Configuration.AddJsonFile("authorization.json", optional: true, reloadOnChange: true);
 builder.Configuration.AddEnvironmentVariables();

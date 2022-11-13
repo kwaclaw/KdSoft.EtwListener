@@ -27,7 +27,7 @@
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Personal"
       },
       "applicationUrl": "https://agent-manager.kd-soft.net:50300"
     },
