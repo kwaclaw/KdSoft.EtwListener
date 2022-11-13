@@ -7,6 +7,7 @@ pushd "%~dp0"
 
 :: Example for Agent: MakeClientCert_smartcard.cmd -name my-etw-site -email karl@kd-soft.net -extra "role=etw-pushagent"
 :: Example for User: MakeClientCert_smartcard.cmd -name "Karl Waclawek" -email karl@waclawek.net -extra "role=etw-manager"
+:: Example for Admin+User: MakeClientCert.cmd -name "Karl Waclawek" -email karl@waclawek.net -extra "role=etw-manager+role=etw-admin"
 
 :: MODIFY FOR YOUR SCENARIO
 set config_file=client_smartcard.cnf                                 

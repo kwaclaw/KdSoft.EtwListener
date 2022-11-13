@@ -7,8 +7,16 @@ be imported/converted to that format. Place your CSS into `wwwroot/css` and then
 
 Or better, just run `npm run build` in `wwwroot`, which performs an NPM install followed by all other processing.
 
+## Import Development Certificates
+
+- Run `InstallDevCertificates.cmd` in the solution directory.
+- When the browser prompts for a client certificate, pick the one named "Dev Admin".
+- Note: The server certificate does not need to be installed, as it is loaded from the certificates directory - see appsettings.Development.json.
+
 ## Debug with Visual Studio
 
+- Debug with the `EtwEvents.AgentManager Dev` launch profile to be able to use the development server certificate for localhost.
+  - If debugging the PushAgent simultaneously, make sure the PushAgent uses the `EtwEvents.PushAgent Dev` profile.
 - To allow external clients to connect to the agent manager, you must use a publicly visible domain name with a matching server certificate.
   - Modify the file appsettings.Personal.json in EtwEvents.AgentManager to load the right certificate.
   - Modify the profile "EtwEvents.AgentManager Personal" in EtwEvents.AgentManager to use the new Url.
