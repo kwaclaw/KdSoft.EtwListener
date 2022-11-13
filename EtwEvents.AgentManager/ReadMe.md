@@ -13,8 +13,9 @@ Or better, just run `npm run build` in `wwwroot`, which performs an NPM install 
 - When the browser prompts for a client certificate, pick the one named "Dev Admin".
 - Note: The server certificate does not need to be installed, as it is loaded from the certificates directory - see appsettings.Development.json.
 
-## Debug with Visual Studio
+## Debug with Visual Studio 2022
 
+- For the PushAgent project Visual Studio must be running in Administrator mode.
 - Debug with the `EtwEvents.AgentManager Dev` launch profile to be able to use the development server certificate for localhost.
   - If debugging the PushAgent simultaneously, make sure the PushAgent uses the `EtwEvents.PushAgent Dev` profile.
 - To allow external clients to connect to the agent manager, you must use a publicly visible domain name with a matching server certificate.
