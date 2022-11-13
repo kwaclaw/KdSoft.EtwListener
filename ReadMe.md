@@ -2,6 +2,10 @@
 
 A system to extract ETW (Event Tracing for Windows) events and collect them centrally.
 
+## Quick Start
+
+Follow instructions in [Quick Start ReadMe](./QuickStart/ReadMe.md) .
+
 ## Overview
 
 An EtwListener deployment consists of two types of nodes:

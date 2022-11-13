@@ -49,6 +49,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.AzureDataCollecto
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.AzureDataCollector.Tests", "EventSinks\EtwEvents.AzureDataCollector.Tests\EtwEvents.AzureDataCollector.Tests.csproj", "{4B8DAFE0-7940-467A-ACEB-A16F1235F416}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "QuickStart", "QuickStart", "{31405B84-DF82-40E0-84C4-AB26FF682137}"
+	ProjectSection(SolutionItems) = preProject
+		QuickStart\my-dev-site.json = QuickStart\my-dev-site.json
+		QuickStart\ReadMe.md = QuickStart\ReadMe.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

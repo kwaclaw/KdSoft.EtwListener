@@ -1,0 +1,57 @@
+{
+  "enabledProviders": [
+    {
+      "name": "e13c0d23-ccbc-4e12-931b-d9cc2eee27e4",
+      "level": 0,
+      "matchKeywords": 0
+    }
+  ],
+  "dynamicFilterParts": [
+    "",
+    "",
+    "",
+    "return evt.TaskName == \"Contention\";"
+  ],
+  "eventSinkProfiles": [
+    {
+      "sinkType": "RollingFileSink",
+      "name": "File Sink",
+      "version": "1.2.0.0",
+      "options": {
+        "directory": "./logs",
+        "fileNameFormat": "app-{0:yyyy-MM-dd}",
+        "fileExtension": ".log",
+        "useLocalTime": true,
+        "fileSizeLimitKB": 4096,
+        "maxFileCount": 10,
+        "newFileOnStartup": true,
+        "relaxedJsonEscaping": true
+      },
+      "credentials": {},
+      "persistentChannel": true,
+      "batchSize": 100,
+      "maxWriteDelayMSecs": 400
+    }
+  ],
+  "liveViewOptions": {
+    "standardColumns": [
+      0,
+      1,
+      3,
+      4,
+      6,
+      7,
+      8
+    ],
+    "payloadColumnList": [
+      {
+        "name": "Site",
+        "label": "Site",
+        "type": "string"
+      }
+    ],
+    "payloadColumns": [
+      0
+    ]
+  }
+}
