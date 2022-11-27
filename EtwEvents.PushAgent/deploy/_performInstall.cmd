@@ -35,14 +35,14 @@ rem prompt for MANAGER URL if not provided as input argument
 rem need internal default value, to avoid an error when the user does not provide input
 set managerUrl=##none##
 if [%-url%]==[] (
-    set /p managerUrl=Manager URL:
+    set /p managerUrl=Manager URL ^(Enter for value from 'appSettings.Local.json'^):
 )
+
 rem remove quotes
 set managerUrl=%managerUrl:"=%
 rem if not provided, use default install directory
 if [%managerUrl%]==[##none##] (
-    @echo One can enter the Manager URL later in 'appSettings.Local.json'.
-    set %managerUrl%=
+    set managerUrl=
 )
 
 REM use single quotes for PowerShell arguments containing blanks
