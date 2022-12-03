@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.SampleClient", "EtwEvents.Client\EtwEvents.SampleClient.csproj", "{61B88BD7-160F-49EB-90B5-FDF3056BD5FF}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{82F0CB74-AC20-47F3-98FD-D659AFE71C42}"
 	ProjectSection(SolutionItems) = preProject
 		.filenesting.json = .filenesting.json
@@ -63,14 +61,6 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{61B88BD7-160F-49EB-90B5-FDF3056BD5FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{61B88BD7-160F-49EB-90B5-FDF3056BD5FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{61B88BD7-160F-49EB-90B5-FDF3056BD5FF}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{61B88BD7-160F-49EB-90B5-FDF3056BD5FF}.Debug|x64.Build.0 = Debug|Any CPU
-		{61B88BD7-160F-49EB-90B5-FDF3056BD5FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{61B88BD7-160F-49EB-90B5-FDF3056BD5FF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{61B88BD7-160F-49EB-90B5-FDF3056BD5FF}.Release|x64.ActiveCfg = Release|Any CPU
-		{61B88BD7-160F-49EB-90B5-FDF3056BD5FF}.Release|x64.Build.0 = Release|Any CPU
 		{8532908E-0353-4ECD-A432-2D90209D9E1A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8532908E-0353-4ECD-A432-2D90209D9E1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8532908E-0353-4ECD-A432-2D90209D9E1A}.Debug|x64.ActiveCfg = Debug|Any CPU
