@@ -15,7 +15,6 @@
     "RootCertificateThumbprint": "",
     // thumbprints and common name of revoked certificates, applies to both, ClientValidation and AgentValidation
     "RevokedCertificates": {
-      "cd91bc6d1f52b76285b6b96abb57377d8d92bfa5":  "Unknown"
     },
     "CertExpiryWarningDays": 30,
     "PendingCertExpiryDays": 7,
