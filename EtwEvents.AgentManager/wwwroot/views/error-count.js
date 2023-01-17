@@ -1,8 +1,7 @@
 /* global i18n */
 
-import { html, nothing } from 'lit';
-import { LitMvvmElement, css, BatchScheduler } from '@kdsoft/lit-mvvm';
-import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
+import { LitMvvmElement, html, css, nothing, BatchScheduler } from '@kdsoft/lit-mvvm';
+import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
 import appStyles from '../styles/etw-app-styles.js';
 

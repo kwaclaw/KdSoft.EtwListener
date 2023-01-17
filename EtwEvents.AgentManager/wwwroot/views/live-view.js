@@ -1,11 +1,10 @@
-﻿import { html, nothing } from 'lit';
-import { repeat } from 'lit/directives/repeat.js';
+﻿import { repeat } from 'lit-html/directives/repeat.js';
 import { observe, unobserve } from '@nx-js/observer-util';
-import { LitMvvmElement, css, BatchScheduler } from '@kdsoft/lit-mvvm';
-import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
-import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
-import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
-import gridStyles from '../styles/kdsoft-grid-styles.js';
+import { LitMvvmElement, css, html, nothing, BatchScheduler } from '@kdsoft/lit-mvvm';
+import tailwindStyles from '../styles/tailwind-styles.js';
+import checkboxStyles from '../styles/kds-checkbox-styles.js';
+import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
+import gridStyles from '../styles/kds-grid-styles.js';
 import appStyles from '../styles/etw-app-styles.js';
 import * as utils from '../js/utils.js';
 

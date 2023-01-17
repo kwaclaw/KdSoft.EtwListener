@@ -1,13 +1,12 @@
-﻿import { html } from 'lit';
-import { Queue, priorities } from '@nx-js/queue-util';
+﻿import { Queue, priorities } from '@nx-js/queue-util';
 import { observe, raw, unobserve } from '@nx-js/observer-util';
-import { LitMvvmElement, css, BatchScheduler } from '@kdsoft/lit-mvvm';
-import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
-import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
+import { LitMvvmElement, html, css, BatchScheduler } from '@kdsoft/lit-mvvm';
+import checkboxStyles from '../styles/kds-checkbox-styles.js';
+import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
 import appStyles from '../styles/etw-app-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
 import dialogStyles from '../styles/dialog-polyfill-styles.js';
-import '../components/etw-checklist.js';
+import '../components/etw-check-list.js';
 import * as utils from '../js/utils.js';
 import LiveViewConfigModel from './live-view-config-model.js';
 

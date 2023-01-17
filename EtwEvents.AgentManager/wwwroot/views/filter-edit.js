@@ -1,8 +1,7 @@
-import { html } from 'lit';
-import { repeat } from 'lit/directives/repeat.js';
-import { LitMvvmElement, css, BatchScheduler } from '@kdsoft/lit-mvvm';
+import { repeat } from 'lit-html/directives/repeat.js';
+import { LitMvvmElement, css, html, BatchScheduler } from '@kdsoft/lit-mvvm';
 import { Queue, priorities } from '@nx-js/queue-util';
-import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
+import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
 
 function comparePos(pos1, pos2) {

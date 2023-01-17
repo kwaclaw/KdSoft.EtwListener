@@ -1,7 +1,7 @@
 ﻿/* global i18n */
 
 import { observable, observe, raw } from '@nx-js/observer-util';
-import { KdSoftChecklistModel } from '@kdsoft/lit-mvvm-components';
+import { KdsListModel } from '@kdsoft/lit-mvvm-components';
 import LiveViewOptions from '../js/liveViewOptions.js';
 import * as utils from '../js/utils.js';
 
@@ -42,14 +42,14 @@ class LiveViewConfigModel {
 
   refresh(liveViewOptions) {
     const lvOpts = raw(liveViewOptions || new LiveViewOptions());
-    this.standardColumnCheckList = new KdSoftChecklistModel(
+    this.standardColumnCheckList = new KdsListModel(
       utils.clone(standardColumnList),
       utils.clone(lvOpts.standardColumns || [0, 1, 2, 3, 4, 5, 6, 7, 8]),
       true,
       item => item.name
     );
 
-    this.payloadColumnCheckList = new KdSoftChecklistModel(
+    this.payloadColumnCheckList = new KdsListModel(
       utils.clone(lvOpts.payloadColumnList || []),
       utils.clone(lvOpts.payloadColumns || []),
       true,

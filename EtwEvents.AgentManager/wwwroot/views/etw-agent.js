@@ -1,17 +1,16 @@
 /* global i18n */
 
-import { html, nothing } from 'lit';
-import { repeat } from 'lit/directives/repeat.js';
-import { LitMvvmElement, css, BatchScheduler } from '@kdsoft/lit-mvvm';
+import { repeat } from 'lit-html/directives/repeat.js';
+import { LitMvvmElement, html, css, nothing, BatchScheduler } from '@kdsoft/lit-mvvm';
 import { observable } from '@nx-js/observer-util';
 import { Queue, priorities } from '@nx-js/queue-util';
 import dialogPolyfill from 'dialog-polyfill';
-import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
-import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
+import checkboxStyles from '../styles/kds-checkbox-styles.js';
+import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
-import gridStyles from '../styles/kdsoft-grid-styles.js';
+import gridStyles from '../styles/kds-grid-styles.js';
 import dialogStyles from '../styles/dialog-polyfill-styles.js';
-import '../components/etw-checklist.js';
+import '../components/etw-check-list.js';
 import './etw-app-side-bar.js';
 import './provider-config.js';
 import './filter-edit.js';

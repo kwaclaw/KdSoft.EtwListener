@@ -1,10 +1,7 @@
-
-/* workaround for snowpack bug not processing first line imports */
-
 import { css } from '@kdsoft/lit-mvvm';
 
-// eslint-disable-next-line import/prefer-default-export
 export default css`
+
 /* CSS Grid KdSoft Style */
 
 .kds-container {
@@ -125,4 +122,5 @@ export default css`
 }
 
 /* END CSS Grid KdSoft Style */
+
 `;

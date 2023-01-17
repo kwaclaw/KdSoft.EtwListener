@@ -1,13 +1,11 @@
-import { html } from 'lit';
 import { observable } from '@nx-js/observer-util';
 import { Queue, priorities } from '@nx-js/queue-util';
-import { LitMvvmElement, css, BatchScheduler } from '@kdsoft/lit-mvvm';
-import { KdSoftDropdownModel, KdSoftDropdownChecklistConnector } from '@kdsoft/lit-mvvm-components';
-import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
-import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
-import '@kdsoft/lit-mvvm-components/kdsoft-dropdown.js';
+import { LitMvvmElement, html, css, BatchScheduler } from '@kdsoft/lit-mvvm';
+import { KdsDropdownModel, KdsDropdownChecklistConnector } from '@kdsoft/lit-mvvm-components';
+import checkboxStyles from '../styles/kds-checkbox-styles.js';
+import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
-import '../components/etw-checklist.js';
+import '../components/etw-check-list.js';
 import * as utils from '../js/utils.js';
 
 class ProviderConfig extends LitMvvmElement {
@@ -17,8 +15,8 @@ class ProviderConfig extends LitMvvmElement {
     //this.scheduler = new BatchScheduler(0);
     this.scheduler = window.renderScheduler;
 
-    this.levelDropDownModel = observable(new KdSoftDropdownModel());
-    this.levelChecklistConnector = new KdSoftDropdownChecklistConnector(
+    this.levelDropDownModel = observable(new KdsDropdownModel());
+    this.levelChecklistConnector = new KdsDropdownChecklistConnector(
       () => this.renderRoot.getElementById('traceLevel'),
       () => this.renderRoot.getElementById('traceLevelList'),
       ProviderConfig._getSelectedText

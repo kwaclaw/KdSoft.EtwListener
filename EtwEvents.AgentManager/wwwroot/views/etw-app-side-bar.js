@@ -1,19 +1,17 @@
 /* global i18n */
 
-import { html, nothing } from 'lit';
 import { observable, observe, unobserve } from '@nx-js/observer-util';
 import { Queue, priorities } from '@nx-js/queue-util';
 import dialogPolyfill from 'dialog-polyfill';
-import { LitMvvmElement, css, BatchScheduler } from '@kdsoft/lit-mvvm';
-import '@kdsoft/lit-mvvm-components/kdsoft-expander.js';
-import { KdSoftChecklistModel } from '@kdsoft/lit-mvvm-components';
-import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
-import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
+import { LitMvvmElement, css, html, nothing, BatchScheduler } from '@kdsoft/lit-mvvm';
+import { KdsListModel } from '@kdsoft/lit-mvvm-components';
+import checkboxStyles from '../styles/kds-checkbox-styles.js';
+import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
 import spinnerStyles from '../styles/spinner-styles.js';
 import appStyles from '../styles/etw-app-styles.js';
 import dialogStyles from '../styles/dialog-polyfill-styles.js';
-import '../components/etw-checklist.js';
+import '../components/etw-check-list.js';
 import * as utils from '../js/utils.js';
 
 function getAgentIndex(agentList, agentId) {
@@ -80,7 +78,7 @@ class EtwAppSideBar extends LitMvvmElement {
             certs.push(emptyRevokedEntry);
           }
           const revokedList = dlg.querySelector('#revoked-list');
-          revokedList.model = observable(new KdSoftChecklistModel(certs));
+          revokedList.model = observable(new KdsListModel(certs));
         }
       });
   }
@@ -171,7 +169,7 @@ class EtwAppSideBar extends LitMvvmElement {
     if (!this.agentChecklistModel) {
       const agentList = this.model.agents;
       const agentIndex = getAgentIndex(agentList, this.model.activeAgentId);
-      const checklistModel = new KdSoftChecklistModel(
+      const checklistModel = new KdsListModel(
         agentList,
         agentIndex >= 0 ? [agentIndex] : [],
         false,

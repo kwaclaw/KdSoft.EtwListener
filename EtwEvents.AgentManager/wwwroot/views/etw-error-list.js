@@ -1,17 +1,16 @@
 /* global i18n */
 
-import { html, nothing } from 'lit';
 import { Queue, priorities } from '@nx-js/queue-util';
-import { repeat } from 'lit/directives/repeat.js';
-import { LitMvvmElement, css, BatchScheduler } from '@kdsoft/lit-mvvm';
-import '@kdsoft/lit-mvvm-components/kdsoft-expander.js';
-import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
-import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
+import { repeat } from 'lit-html/directives/repeat.js';
+import { LitMvvmElement, css, html, nothing, BatchScheduler } from '@kdsoft/lit-mvvm';
+import '@kdsoft/lit-mvvm-components/kds-expander.js';
+import checkboxStyles from '../styles/kds-checkbox-styles.js';
+import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
 import spinnerStyles from '../styles/spinner-styles.js';
 import appStyles from '../styles/etw-app-styles.js';
-import gridStyles from '../styles/kdsoft-grid-styles.js';
-import '../components/etw-checklist.js';
+import gridStyles from '../styles/kds-grid-styles.js';
+import '../components/etw-check-list.js';
 import * as utils from '../js/utils.js';
 
 
