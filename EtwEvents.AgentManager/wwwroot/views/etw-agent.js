@@ -10,7 +10,7 @@ import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
 import gridStyles from '../styles/kds-grid-styles.js';
 import dialogStyles from '../styles/dialog-polyfill-styles.js';
-import '../components/etw-check-list.js';
+import '../components/etw-checklist.js';
 import './etw-app-side-bar.js';
 import './provider-config.js';
 import './filter-edit.js';

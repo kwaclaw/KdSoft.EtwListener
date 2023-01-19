@@ -11,7 +11,7 @@ import tailwindStyles from '../styles/tailwind-styles.js';
 import spinnerStyles from '../styles/spinner-styles.js';
 import appStyles from '../styles/etw-app-styles.js';
 import dialogStyles from '../styles/dialog-polyfill-styles.js';
-import '../components/etw-check-list.js';
+import '../components/etw-checklist.js';
 import * as utils from '../js/utils.js';
 
 function getAgentIndex(agentList, agentId) {
@@ -182,7 +182,7 @@ class EtwAppSideBar extends LitMvvmElement {
         const selEntry = this.agentChecklistModel.firstSelectedEntry;
         const selAgent = selEntry?.item;
         this.model.activeAgentId = selAgent?.state.id;
-        if (oldActiveAgentId != this.model.activeAgentId) {
+        if (oldActiveAgentId !== this.model.activeAgentId) {
           this.model.stopEtwEvents();
         }
       });
@@ -369,7 +369,7 @@ class EtwAppSideBar extends LitMvvmElement {
     const warningActive = clientCertWarningActive ? 'warning-active' : '';
 
     return html`
-      <kdsoft-expander class="w-full" .scheduler=${this.scheduler}>
+      <kds-expander class="w-full" .scheduler=${this.scheduler}>
         <div part="header" slot="header" class="flex items-baseline pr-1 text-white bg-gray-500">
           <label class="pl-1 font-bold text-xl">${entry.state.id}</label>
           <span part="cert-warning" class="ml-2 fa fas fa-exclamation-triangle text-red-500 ${warningActive}" title=${clientCertWarning}></span>
@@ -396,9 +396,9 @@ class EtwAppSideBar extends LitMvvmElement {
           <label class="pl-1 font-bold">Host</label>
           <div class="pl-1">${entry.state.host}</div>
           <label class="pl-1 font-bold" title=${entry.current?.clientCertThumbprint}>Certificate</label>
-          <div class="pl-1">${Number.isNaN(clientCertLifeDays) ? '??' : clientCertLifeDays } days</div>
+          <div class="pl-1">${Number.isNaN(clientCertLifeDays) ? '??' : clientCertLifeDays} days</div>
         </div>
-      </kdsoft-expander>
+      </kds-expander>
     `;
   }
 

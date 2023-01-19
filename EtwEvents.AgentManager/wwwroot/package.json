@@ -12,7 +12,8 @@
     "@nx-js/queue-util": "^1.1.1",
     "@tailwindcss/forms": "^0.5.3",
     "dialog-polyfill": "^0.5.6",
-    "gettext.js": "^1.2.0"
+    "gettext.js": "^1.2.0",
+    "lit-html": "^2.6.1"
   },
   "devDependencies": {
     "@fortawesome/fontawesome-free": "^6.2.1",
@@ -23,8 +24,7 @@
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.27.5",
     "glob": "^8.1.0",
-    "lit-html": "^2.6.1",
-    "rimraf": "^4.1.0",
+    "rimraf": "^4.1.1",
     "tailwindcss": "^3.2.4"
   },
   "scripts": {

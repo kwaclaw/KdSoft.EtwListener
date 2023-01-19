@@ -10,9 +10,8 @@ import tailwindStyles from '../styles/tailwind-styles.js';
 import spinnerStyles from '../styles/spinner-styles.js';
 import appStyles from '../styles/etw-app-styles.js';
 import gridStyles from '../styles/kds-grid-styles.js';
-import '../components/etw-check-list.js';
+import '../components/etw-checklist.js';
 import * as utils from '../js/utils.js';
-
 
 class EtwErrorList extends LitMvvmElement {
   constructor() {

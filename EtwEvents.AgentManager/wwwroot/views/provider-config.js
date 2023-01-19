@@ -5,7 +5,7 @@ import { KdsDropdownModel, KdsDropdownChecklistConnector } from '@kdsoft/lit-mvv
 import checkboxStyles from '../styles/kds-checkbox-styles.js';
 import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
-import '../components/etw-check-list.js';
+import '../components/etw-checklist.js';
 import * as utils from '../js/utils.js';
 
 class ProviderConfig extends LitMvvmElement {
@@ -101,7 +101,7 @@ class ProviderConfig extends LitMvvmElement {
           font-weight: bolder;
         }
 
-        kdsoft-dropdown {
+        kds-dropdown {
           width: auto;
         }
 
@@ -159,7 +159,7 @@ class ProviderConfig extends LitMvvmElement {
             <div class="provider pl-8 pb-1">
               <fieldset>
                 <label class="text-gray-600" for="level">Level</label>
-                <kdsoft-dropdown id="traceLevel" class="py-0"
+                <kds-dropdown id="traceLevel" class="py-0"
                   .model=${this.levelDropDownModel} .connector=${this.levelChecklistConnector}>
                   <etw-checklist
                     id="traceLevelList"
@@ -167,7 +167,7 @@ class ProviderConfig extends LitMvvmElement {
                     .model=${this.model.levelChecklistModel}
                     .getItemTemplate=${item => html`${item.name}`}>
                   </etw-checklist>
-                </kdsoft-dropdown>
+                </kds-dropdown>
               </fieldset>
               <fieldset>
                 <label class="text-gray-600" for="keywords">Match Keywords</label>

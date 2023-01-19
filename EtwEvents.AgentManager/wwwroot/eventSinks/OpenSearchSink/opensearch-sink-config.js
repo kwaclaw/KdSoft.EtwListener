@@ -1,6 +1,6 @@
 ﻿import { LitMvvmElement, html, css, BatchScheduler } from '@kdsoft/lit-mvvm';
 import { Queue, priorities } from '@nx-js/queue-util';
-import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
+import tailwindStyles from '../../styles/tailwind-styles.js';
 import '../../components/valid-section.js';
 import * as utils from '../../js/utils.js';
 

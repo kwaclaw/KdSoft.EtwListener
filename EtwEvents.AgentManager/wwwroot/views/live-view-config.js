@@ -6,7 +6,7 @@ import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
 import appStyles from '../styles/etw-app-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
 import dialogStyles from '../styles/dialog-polyfill-styles.js';
-import '../components/etw-check-list.js';
+import '../components/etw-checklist.js';
 import * as utils from '../js/utils.js';
 import LiveViewConfigModel from './live-view-config-model.js';
 

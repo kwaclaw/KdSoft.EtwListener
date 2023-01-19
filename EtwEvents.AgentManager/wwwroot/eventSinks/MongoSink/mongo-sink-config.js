@@ -1,14 +1,14 @@
 ﻿import { observable} from '@nx-js/observer-util';
 import { LitMvvmElement, html, css, BatchScheduler } from '@kdsoft/lit-mvvm';
 import { Queue, priorities } from '@nx-js/queue-util';
-import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
-import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
-import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
 import {
-  KdSoftDropdownModel,
-  KdSoftChecklistModel,
-  KdSoftDropdownChecklistConnector,
+  KdsDropdownModel,
+  KdsListModel,
+  KdsDropdownChecklistConnector
 } from '@kdsoft/lit-mvvm-components';
+import tailwindStyles from '../../styles/tailwind-styles.js';
+import checkboxStyles from '../../styles/kds-checkbox-styles.js';
+import fontAwesomeStyles from '../../styles/fontawesome/css/all-styles.js';
 import MongoSinkConfigModel from './mongo-sink-config-model.js';
 import '../../components/valid-section.js';
 import * as utils from '../../js/utils.js';
@@ -17,7 +17,7 @@ class MongoSinkConfig extends LitMvvmElement {
   constructor() {
     super();
     this.scheduler = window.renderScheduler;
-    this.evtFieldsDropDownModel = observable(new KdSoftDropdownModel());
+    this.evtFieldsDropDownModel = observable(new KdsDropdownModel());
   }
 
   isValid() {
@@ -70,7 +70,7 @@ class MongoSinkConfig extends LitMvvmElement {
   // first event when model is available
   beforeFirstRender() {
     if (!this.evtFieldChecklistModel) {
-      this.evtFieldChecklistModel = observable(new KdSoftChecklistModel(
+      this.evtFieldChecklistModel = observable(new KdsListModel(
         MongoSinkConfigModel.eventFields,
         [],
         true,
@@ -80,7 +80,7 @@ class MongoSinkConfig extends LitMvvmElement {
       this.evtFieldChecklistModel.selectIds(this.model.options.eventFilterFields || [], true);
     }
 
-    this.evtFieldsChecklistConnector = new KdSoftDropdownChecklistConnector(
+    this.evtFieldsChecklistConnector = new KdsDropdownChecklistConnector(
       () => this.renderRoot.getElementById('evtFields'),
       () => this.renderRoot.getElementById('evtFieldList'),
       chkListModel => {
@@ -159,15 +159,15 @@ class MongoSinkConfig extends LitMvvmElement {
               <label for="collection">Collection</label>
               <input type="text" id="collection" name="collection" .value=${opts.collection} required></input>
               <label for="eventFilterFields">Event Filter Fields</label>
-              <kdsoft-dropdown id="evtFields" class="py-0" .model=${this.evtFieldsDropDownModel} .connector=${this.evtFieldsChecklistConnector}>
-                <kdsoft-checklist
+              <kds-dropdown id="evtFields" class="py-0" .model=${this.evtFieldsDropDownModel} .connector=${this.evtFieldsChecklistConnector}>
+                <etw-checklist
                   id="evtFieldList"
                   class="text-black"
                   .model=${this.evtFieldChecklistModel}
                   .getItemTemplate=${item => html`${item.id}`}
                   show-checkboxes>
-                </kdsoft-checklist>
-              </kdsoft-dropdown>
+                </etw-checklist>
+              </kds-dropdown>
               <label for="payloadFilterFields">Payload Filter Fields</label>
               <input type="text" id="payloadFilterFields" name="payloadFilterFields" .value=${payloadFieldsList} @change=${this._fieldListChange}></input>
             </div>

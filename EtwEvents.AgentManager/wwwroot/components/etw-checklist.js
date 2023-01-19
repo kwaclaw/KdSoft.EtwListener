@@ -1,6 +1,6 @@
 import { repeat } from 'lit-html/directives/repeat.js';
 import { classMap } from 'lit-html/directives/class-map.js';
-import { LitMvvmElement, html, css } from '@kdsoft/lit-mvvm/lit-mvvm.js';
+import { LitMvvmElement, html, css } from '@kdsoft/lit-mvvm';
 import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
 import { KdsDragDropProvider } from '@kdsoft/lit-mvvm-components';
 import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
