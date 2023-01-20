@@ -161,9 +161,7 @@ class ProviderConfig extends LitMvvmElement {
                 <label class="text-gray-600" for="level">Level</label>
                 <kds-dropdown id="traceLevel" class="py-0"
                   .model=${this.levelDropDownModel} .connector=${this.levelChecklistConnector}>
-                  <etw-checklist
-                    id="traceLevelList"
-                    class="text-black"
+                  <etw-checklist id="traceLevelList" class="text-black"
                     .model=${this.model.levelChecklistModel}
                     .getItemTemplate=${item => html`${item.name}`}>
                   </etw-checklist>

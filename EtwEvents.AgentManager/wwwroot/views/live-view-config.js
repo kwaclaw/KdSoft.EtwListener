@@ -179,7 +179,7 @@ class LiveViewConfig extends LitMvvmElement {
           <etw-checklist id="standard-cols" class="w-full text-black"
             .model=${this.model.standardColumnCheckList}
             .getItemTemplate=${item => html`${item.label}`}
-            allow-drag-drop show-checkboxes>
+            allow-drag-drop checkboxes>
           </etw-checklist>
         </div>
         <div id="payload-cols-wrapper">
@@ -192,7 +192,7 @@ class LiveViewConfig extends LitMvvmElement {
           <etw-checklist id="payload-cols" class="text-black"
             .model=${this.model.payloadColumnCheckList}
             .getItemTemplate=${this._getPayloadColumnListItemTemplate}
-            allow-drag-drop show-checkboxes>
+            allow-drag-drop checkboxes>
           </etw-checklist>
         </div>
       </div>

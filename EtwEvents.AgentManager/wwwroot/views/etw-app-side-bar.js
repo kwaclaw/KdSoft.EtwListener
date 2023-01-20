@@ -472,9 +472,7 @@ class EtwAppSideBar extends LitMvvmElement {
 
           <label for="revoked-list">Revoked Certificates</label>
           <!-- we need to expose item template elemnts to be styled as named parts! -->
-          <etw-checklist exportparts="item"
-            id="revoked-list" 
-            class="text-black" 
+          <etw-checklist exportparts="item" id="revoked-list" class="text-black" 
             .getItemTemplate=${item => html`
               <div class="flex w-full revoked-entry">
                 <span class="mr-auto">${item.name}</span>

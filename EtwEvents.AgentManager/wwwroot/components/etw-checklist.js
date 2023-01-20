@@ -23,6 +23,8 @@ export default class EtwChecklist extends LitMvvmElement {
     super();
     this.scheduler = new Queue(priorities.HIGH);
     //this.scheduler = new BatchScheduler(0);
+    this.getItemTemplate = () => html``;
+    this.getStyles = () => [css``.styleSheet];
   }
 
   get allowDragDrop() { return this.hasAttribute('allow-drag-drop'); }
@@ -64,6 +66,12 @@ export default class EtwChecklist extends LitMvvmElement {
   initView() {
     const list = this.renderRoot.querySelector('kds-list');
     if (list) list.initView();
+  }
+
+  beforeFirstRender() {
+    // if the user wants to add more styles for use by the result of getItemTemplate()
+    const adopted = this.renderRoot.adoptedStyleSheets;
+    this.renderRoot.adoptedStyleSheets = [...adopted, ...this.getStyles()];
   }
 
   /* https://philipwalton.com/articles/what-no-one-told-you-about-z-index/ */
@@ -169,7 +177,7 @@ export default class EtwChecklist extends LitMvvmElement {
           >
             <span slot="up-arrow" class=${classMap(arrowClassList.upArrow)}></span>
             <span slot="down-arrow" class=${classMap(arrowClassList.downArrow)}></span>
-            <span slot="item" class="my-auto">${entry.item.name}</span>              
+            <span slot="item" class="my-auto">${this.getItemTemplate(entry.item)}</span>              
           </kds-list-item>`
         )}
       </kds-list>

@@ -160,12 +160,10 @@ class MongoSinkConfig extends LitMvvmElement {
               <input type="text" id="collection" name="collection" .value=${opts.collection} required></input>
               <label for="eventFilterFields">Event Filter Fields</label>
               <kds-dropdown id="evtFields" class="py-0" .model=${this.evtFieldsDropDownModel} .connector=${this.evtFieldsChecklistConnector}>
-                <etw-checklist
-                  id="evtFieldList"
-                  class="text-black"
+                <etw-checklist id="evtFieldList" class="text-black"
                   .model=${this.evtFieldChecklistModel}
                   .getItemTemplate=${item => html`${item.id}`}
-                  show-checkboxes>
+                  checkboxes>
                 </etw-checklist>
               </kds-dropdown>
               <label for="payloadFilterFields">Payload Filter Fields</label>

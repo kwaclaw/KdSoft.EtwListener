@@ -170,7 +170,7 @@ class EtwAgent extends LitMvvmElement {
   }
 
   shouldRender() {
-    return !!this.model;
+    return !!(this.model.getActiveEntry());
   }
 
   // called at most once every time after connectedCallback was executed
@@ -259,7 +259,7 @@ class EtwAgent extends LitMvvmElement {
   render() {
     const activeEntry = this.model.getActiveEntry();
     const activeAgentState = this.model.activeAgentState;
-    const processingModel = activeAgentState?.processingModel;
+    const processingModel = activeAgentState.processingModel;
     return html`
       <div id="main">
 
@@ -378,13 +378,11 @@ class EtwAgent extends LitMvvmElement {
           <label for="sink-name">Name</label>
           <input id="sink-name" name="name" type="text" required />
           <label for="sinktype-list">Sink Type</label>
-          <etw-checklist
-            id="sinktype-list"
-            class="text-black"
+          <etw-checklist id="sinktype-list" class="text-black"
             .model=${this.model.sinkInfoCheckListModel}
             .getItemTemplate=${item => html`<div class="flex w-full"><span class="mr-1">${item.sinkType}</span><span class="ml-auto">(${item.version})</span></div>`}
             .attachInternals=${true}
-            show-checkboxes
+            checkboxes
             required
             tabindex=-1>
           </etw-checklist>
