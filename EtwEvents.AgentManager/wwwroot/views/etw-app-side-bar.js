@@ -209,6 +209,7 @@ class EtwAppSideBar extends LitMvvmElement {
         :host {
           display: block;
           position: relative;
+          --trans-time: 300ms;
         }
 
         dialog {
@@ -370,6 +371,9 @@ class EtwAppSideBar extends LitMvvmElement {
 
     return html`
       <kds-expander class="w-full" .scheduler=${this.scheduler}>
+        <span slot="expander" class="expander-icon">
+          <i class="fa-solid fa-lg fa-caret-right text-blue-600"></i>
+        </span>
         <div part="header" slot="header" class="flex items-baseline pr-1 text-white bg-gray-500">
           <label class="pl-1 font-bold text-xl">${entry.state.id}</label>
           <span part="cert-warning" class="ml-2 fa fas fa-exclamation-triangle text-red-500 ${warningActive}" title=${clientCertWarning}></span>
@@ -400,6 +404,24 @@ class EtwAppSideBar extends LitMvvmElement {
         </div>
       </kds-expander>
     `;
+  }
+
+  getAgentTemplateStyles() {
+    return [css`
+      .expander-icon {
+        vertical-align: middle;
+      }
+      .expander-icon i {
+        transition: transform var(--trans-time) ease;
+      }
+      kds-expander[aria-expanded] .expander-icon i {
+        transform: rotate(90deg);
+      }
+      kds-expander::part(content) {
+        transition: height var(--trans-time) ease;
+      }
+      `.styleSheet
+    ];
   }
 
   render() {
@@ -446,6 +468,7 @@ class EtwAppSideBar extends LitMvvmElement {
           .model=${this.agentChecklistModel}
           .scheduler=${this.scheduler}
           .getItemTemplate=${entry => this.getAgentTemplate(entry)}
+          .getStyles=${this.getAgentTemplateStyles}
         ></etw-checklist>
 
       </nav>
