@@ -1,6 +1,6 @@
 import { repeat } from 'lit-html/directives/repeat.js';
 import { classMap } from 'lit-html/directives/class-map.js';
-import { LitMvvmElement, html, css } from '@kdsoft/lit-mvvm';
+import { LitMvvmElement, html, nothing, css } from '@kdsoft/lit-mvvm';
 import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
 import { KdsDragDropProvider } from '@kdsoft/lit-mvvm-components';
 import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
@@ -94,6 +94,11 @@ export default class EtwChecklist extends LitMvvmElement {
           padding: 2px;
         }
 
+        /* if we dont have a checkbox then we indicate selection this way */
+        kds-list-item[selected]:not([checkbox]) {
+          background-color: darkgrey;
+        }
+
         kds-list-item.kds-droppable {
           outline: 2px solid lightblue;
           outline-offset: -1px;
@@ -175,9 +180,14 @@ export default class EtwChecklist extends LitMvvmElement {
             ?down=${!entry.isLast}
             ?selected=${this.model.isItemSelected(entry.item)}
           >
-            <span slot="up-arrow" class=${classMap(arrowClassList.upArrow)}></span>
-            <span slot="down-arrow" class=${classMap(arrowClassList.downArrow)}></span>
-            <span slot="item" class="my-auto">${this.getItemTemplate(entry.item)}</span>              
+            ${this.arrows
+              ? html`
+                <span slot="up-arrow" class=${classMap(arrowClassList.upArrow)}></span>
+                <span slot="down-arrow" class=${classMap(arrowClassList.downArrow)}></span>
+              `
+              : nothing
+            }
+            <span slot="item" class="my-auto w-full">${this.getItemTemplate(entry.item)}</span>              
           </kds-list-item>`
         )}
       </kds-list>
