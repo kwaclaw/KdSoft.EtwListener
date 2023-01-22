@@ -36,12 +36,12 @@
   <ItemGroup>
     <PackageReference Include="KdSoft.Logging" Version="1.1.2" />
     <PackageReference Include="LaunchDarkly.EventSource" Version="5.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="7.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="7.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="7.0.2" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="7.0.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="7.0.2" />
   </ItemGroup>
 
   <ItemGroup>

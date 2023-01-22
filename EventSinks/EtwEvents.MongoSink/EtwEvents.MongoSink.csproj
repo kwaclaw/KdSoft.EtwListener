@@ -17,7 +17,7 @@
   <ItemGroup>
     <PackageReference Include="MongoDB.Driver" Version="2.18.0" />
     <PackageReference Include="System.Collections.Immutable" Version="7.0.0" />
-    <PackageReference Include="System.Text.Json" Version="7.0.0" />
+    <PackageReference Include="System.Text.Json" Version="7.0.1" />
   </ItemGroup>
 
   <ItemGroup>
