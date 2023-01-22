@@ -274,7 +274,6 @@ class EtwAppSideBar extends LitMvvmElement {
         }
 
         #agents::part(header) {
-          color: gray;
           background-color: inherit;
         }
 
@@ -374,7 +373,7 @@ class EtwAppSideBar extends LitMvvmElement {
         <span slot="expander" class="expander-icon">
           <i class="fa-solid fa-lg fa-caret-right text-blue-600"></i>
         </span>
-        <div part="header" slot="header" class="flex items-baseline pr-1 text-white bg-gray-500">
+        <div part="header" slot="header" class="flex items-baseline pr-1 text-white">
           <label class="pl-1 font-bold text-xl">${entry.state.id}</label>
           <span part="cert-warning" class="ml-2 fa fas fa-exclamation-triangle text-red-500 ${warningActive}" title=${clientCertWarning}></span>
           <span class="ml-auto">
@@ -394,7 +393,7 @@ class EtwAppSideBar extends LitMvvmElement {
           </span>
         </div>
         <!-- using part="slot" we can style this from here even though it will be rendered inside a web component -->
-        <div part="content" slot="content" class="pl-3">
+        <div part="content" slot="content" class="pl-3 text-white">
           <label class="pl-1 font-bold">Site</label>
           <div class="pl-1">${entry.state.site}</div>
           <label class="pl-1 font-bold">Host</label>
@@ -407,19 +406,20 @@ class EtwAppSideBar extends LitMvvmElement {
   }
 
   getAgentTemplateStyles() {
-    return [css`
-      .expander-icon {
-        vertical-align: middle;
-      }
-      .expander-icon i {
-        transition: transform var(--trans-time) ease;
-      }
-      kds-expander[aria-expanded] .expander-icon i {
-        transform: rotate(90deg);
-      }
-      kds-expander::part(content) {
-        transition: height var(--trans-time) ease;
-      }
+    return [
+      css`
+        .expander-icon {
+          vertical-align: middle;
+        }
+        .expander-icon i {
+          transition: transform var(--trans-time) ease;
+        }
+        kds-expander[aria-expanded] .expander-icon i {
+          transform: rotate(90deg);
+        }
+        kds-expander::part(content) {
+          transition: height var(--trans-time) ease;
+        }
       `.styleSheet
     ];
   }
