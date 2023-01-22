@@ -30,7 +30,7 @@
   "scripts": {
     "wrap-css": "node node_modules/@kdsoft/lit-mvvm-components/scripts/wrap-css.mjs",
     "po2json": "node node_modules/gettext.js/bin/po2json localize/de_AT.po de_AT.json -p",
-    "process-tailwind": "npx tailwindcss -i css/tailwind.tcss -o tailwind.css && npx tailwindcss -i css/etw-app.tcss -o etw-app.css",
+    "process-tailwind": "npx tailwindcss -i css/tailwind.tcss -o css/tailwind.css && npx tailwindcss -i css/etw-app.tcss -o css/etw-app.css",
     "wrap-css-styles": "npm run wrap-css css/**/*.css styles css",
     "wrap-css-dialog": "npm run wrap-css node_modules/dialog-polyfill/dialog-polyfill.css styles node_modules/dialog-polyfill",
     "wrap-fontawesome": "npm run wrap-css node_modules/@fortawesome/fontawesome-free/css/all.css styles/fontawesome node_modules/@fortawesome/fontawesome-free",
