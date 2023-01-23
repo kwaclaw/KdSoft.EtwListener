@@ -5,7 +5,7 @@ import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
 import { KdsDragDropProvider } from '@kdsoft/lit-mvvm-components';
 import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
-import checkboxStyles from '../styles/kds-checkbox-styles.js';
+import listItemCheckboxStyles from '../styles/kds-list-item-checkbox-styles.js';
 
 const arrowBase = { 'fa-solid': true, 'fa-lg': true, 'text-gray-500': true };
 
@@ -78,12 +78,8 @@ export default class EtwChecklist extends LitMvvmElement {
     return [
       tailwindStyles,
       fontAwesomeStyles,
-      checkboxStyles,
+      listItemCheckboxStyles,
       css`
-        :host {
-          display: block;
-        }
-
         kds-list::part(ul) {
           list-style: none;
           padding: 3px;
@@ -110,61 +106,11 @@ export default class EtwChecklist extends LitMvvmElement {
         kds-list-item:focus {
           outline: solid 2px rgb(50, 150, 255);
         }
-
-        /* #region styling default checkbox */
-
-        kds-list-item::part(checkbox) {
-          width: 1.2rem;
-          height: 1.2rem;
-          -webkit-appearance: none;
-          appearance: none;
-          -webkit-print-color-adjust: exact;
-          color-adjust: exact;
-          -webkit-user-select: none;
-          user-select: none;
-          padding: 0.15rem 0.3rem;
-          border: 1px solid #c8c8c8;
-          border-radius: 0.2rem;
-          cursor: pointer;
-          background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg version='1.1' id='Layer_1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' width='512px' height='512px' viewBox='-64 -64 640 640' style='enable-background:new 0 0 512 512;fill: %23179bd7' xml:space='preserve'%3e%3cpath d='M448,71.9c-17.3-13.4-41.5-9.3-54.1,9.1L214,344.2l-99.1-107.3c-14.6-16.6-39.1-17.4-54.7-1.8 c-15.6,15.5-16.4,41.6-1.7,58.1c0,0,120.4,133.6,137.7,147c17.3,13.4,41.5,9.3,54.1-9.1l206.3-301.7 C469.2,110.9,465.3,85.2,448,71.9z'/%3e%3c/svg%3e");
-          background-repeat: no-repeat;
-          background-size: 0;
-          background-color: #fff;
-          background-position: 50% 50%;
-          transition: .3s ease;
-
-          margin-top: auto;
-          margin-bottom: auto;
-        }
-        
-        kds-list-item::part(checkbox):active {
-          background-color: #ddd;
-        }
-        
-        kds-list-item::part(checkbox):focus {
-          box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.5);
-        }
-        
-        /* this is not working, why? 
-        kds-list-item::part(checkbox):checked {
-          background-size: cover;
-        }
-        */
-
-        kds-list-item[selected]::part(checkbox) {
-          background-size: cover;
-        }
-
-        kds-list-item::part(checkbox):disabled {
-          border: 1px solid gray;
-          background-color: lightgray;
-        }
-
-        /* #endregion styling checkbox */
       `,
     ];
   }
 
+  // we wrap KdsList (kds-list) instead of deriving from it because we need to populate its slots
   render() {
     return html`
       <kds-list .model=${this.model}>
