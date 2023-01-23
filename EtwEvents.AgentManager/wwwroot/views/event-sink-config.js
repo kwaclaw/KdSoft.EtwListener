@@ -153,9 +153,9 @@ class EventSinkConfig extends LitMvvmElement {
 
   static get styles() {
     return [
+      fontAwesomeStyles,
       tailwindStyles,
       checkboxStyles,
-      fontAwesomeStyles,
       //appStyles,
       css`
         :host {
@@ -251,7 +251,8 @@ class EventSinkConfig extends LitMvvmElement {
               <label for="maxWriteDelayMSecs">Max Write Delay (msecs)</label>
               <input type="number" id="maxWriteDelayMSecs" name="maxWriteDelayMSecs" .value=${profile.maxWriteDelayMSecs} min="0" />
               <label for="persistentChannel">Persistent Buffer</label>
-              <input type="checkbox" id="persistentChannel" name="persistentChannel" class="mr-auto" .checked=${profile.persistentChannel} />
+              <input type="checkbox" id="persistentChannel" name="persistentChannel"
+                class="kds-checkbox mr-auto" .checked=${profile.persistentChannel} />
             </div>
           </div>
           <div id="form-content">

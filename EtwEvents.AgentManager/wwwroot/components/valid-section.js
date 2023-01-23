@@ -1,3 +1,4 @@
+// This will only work on browsers that support attachInternals().
 export default class ValidSection extends HTMLElement {
   static get formAssociated() { return true; }
 
