@@ -510,7 +510,6 @@ class EtwAppSideBar extends LitMvvmElement {
                 }
               </div>`
             }
-            .attachInternals=${true}
             tabindex=-1>
           </etw-checklist>
         </form>

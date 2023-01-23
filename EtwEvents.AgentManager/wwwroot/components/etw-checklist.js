@@ -45,6 +45,10 @@ export default class EtwChecklist extends LitMvvmElement {
     else this.removeAttribute('arrows');
   }
 
+  // we don't derive from KdsList because we cannot render as a child, so if we want
+  // to re-use the public API of KdsList then we must expose the wrapped component
+  get list() { return this.renderRoot.querySelector('kds-list'); }
+
   // Observed attributes will trigger an attributeChangedCallback, which in turn will cause a re-render to be scheduled!
   static get observedAttributes() {
     return [...super.observedAttributes, 'allow-drag-drop', 'checkboxes', 'arrows'];
@@ -61,11 +65,6 @@ export default class EtwChecklist extends LitMvvmElement {
 
   shouldRender() {
     return !!this.model;
-  }
-
-  initView() {
-    const list = this.renderRoot.querySelector('kds-list');
-    if (list) list.initView();
   }
 
   beforeFirstRender() {

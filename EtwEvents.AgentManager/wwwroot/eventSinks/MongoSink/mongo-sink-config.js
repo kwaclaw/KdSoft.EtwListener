@@ -82,7 +82,7 @@ class MongoSinkConfig extends LitMvvmElement {
 
     this.evtFieldsChecklistConnector = new KdsDropdownChecklistConnector(
       () => this.renderRoot.getElementById('evtFields'),
-      () => this.renderRoot.getElementById('evtFieldList'),
+      () => this.renderRoot.getElementById('evtFieldList').list,
       chkListModel => {
         const selectedIds = Array.from(chkListModel.selectedEntries).map(entry => entry.item.id);
         // since we are already reacting to the selection change, let's update the underlying model

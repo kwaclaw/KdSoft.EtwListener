@@ -74,7 +74,7 @@ class EtwAgent extends LitMvvmElement {
     e.stopImmediatePropagation();
     const form = e.currentTarget.closest('form');
     const sinkname = form.querySelector('#sink-name');
-    const sinklist = form.querySelector('#sinktype-list');
+    const sinklist = form.querySelector('#sinktype-list').list;
     const selectedSinkInfo = sinklist.model.firstSelectedEntry?.item;
     sinklist._internals.setValidity({ valueMissing: !selectedSinkInfo }, 'Sink type must be selected.');
     if (!form.reportValidity()) return;
@@ -381,7 +381,6 @@ class EtwAgent extends LitMvvmElement {
           <etw-checklist id="sinktype-list" class="text-black"
             .model=${this.model.sinkInfoCheckListModel}
             .getItemTemplate=${item => html`<div class="flex w-full"><span class="mr-1">${item.sinkType}</span><span class="ml-auto">(${item.version})</span></div>`}
-            .attachInternals=${true}
             checkboxes
             required
             tabindex=-1>

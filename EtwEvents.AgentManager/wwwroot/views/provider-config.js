@@ -18,7 +18,7 @@ class ProviderConfig extends LitMvvmElement {
     this.levelDropDownModel = observable(new KdsDropdownModel());
     this.levelChecklistConnector = new KdsDropdownChecklistConnector(
       () => this.renderRoot.getElementById('traceLevel'),
-      () => this.renderRoot.getElementById('traceLevelList'),
+      () => this.renderRoot.getElementById('traceLevelList').list,
       ProviderConfig._getSelectedText
     );
   }
