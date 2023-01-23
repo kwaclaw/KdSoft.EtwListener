@@ -4,7 +4,7 @@
 
 /* See https://codepen.io/paulobrien/pen/ZrKeaQ */
 
-.kds-checkbox {
+input[type="checkbox"].kds-checkbox {
   width: 1.2rem;
   height: 1.2rem;
   -webkit-appearance: none;
@@ -25,19 +25,19 @@
   transition: .3s ease;
 }
 
-.kds-checkbox:active {
+input[type="checkbox"].kds-checkbox:active {
   background-color: #ddd;
 }
 
-.kds-checkbox:focus {
+input[type="checkbox"].kds-checkbox:focus {
   box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.5);
 }
 
-.kds-checkbox:checked {
+input[type="checkbox"].kds-checkbox:checked {
   background-size: cover;
 }
 
-.kds-checkbox:disabled {
+input[type="checkbox"].kds-checkbox:disabled {
   border: 1px solid gray;
   background-color: lightgray;
 }
