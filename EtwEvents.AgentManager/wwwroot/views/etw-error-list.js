@@ -1,6 +1,5 @@
 /* global i18n */
 
-import { Queue, priorities } from '@nx-js/queue-util';
 import { repeat } from 'lit-html/directives/repeat.js';
 import { LitMvvmElement, css, html, nothing, BatchScheduler } from '@kdsoft/lit-mvvm';
 import '@kdsoft/lit-mvvm-components/kds-expander.js';
@@ -11,17 +10,8 @@ import spinnerStyles from '../styles/spinner-styles.js';
 import appStyles from '../styles/etw-app-styles.js';
 import gridStyles from '../styles/kds-grid-styles.js';
 import '../components/etw-checklist.js';
-import * as utils from '../js/utils.js';
 
 class EtwErrorList extends LitMvvmElement {
-  constructor() {
-    super();
-    // seems priorities.HIGH may not allow render() calls in child components in some scenarios
-    //this.scheduler = new Queue(priorities.LOW);
-    //this.scheduler = new BatchScheduler(0);
-    this.scheduler = window.renderScheduler;
-  }
-
   _errorDetailClick(e) {
     e.currentTarget.classList.toggle('show-detail');
   }

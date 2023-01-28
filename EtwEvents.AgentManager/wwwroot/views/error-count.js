@@ -6,18 +6,6 @@ import tailwindStyles from '../styles/tailwind-styles.js';
 import appStyles from '../styles/etw-app-styles.js';
 
 class ErrorCount extends LitMvvmElement {
-  constructor() {
-    super();
-    // seems priorities.HIGH may not allow render() calls in child components in some scenarios
-    //this.scheduler = new Queue(priorities.LOW);
-    //this.scheduler = new BatchScheduler(0);
-    this.scheduler = window.renderScheduler;
-  }
-
-  //#region overrides
-
-  /* eslint-disable indent, no-else-return */
-
   shouldRender() {
     return !!this.model;
   }
@@ -33,8 +21,6 @@ class ErrorCount extends LitMvvmElement {
   render() {
     return html`${this.model.fetchErrors.count()} ${i18n.__('Errors')}`;
   }
-
-  //#endregion
 }
 
 window.customElements.define('error-count', ErrorCount);

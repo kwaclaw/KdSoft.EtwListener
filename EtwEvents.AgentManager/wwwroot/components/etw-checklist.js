@@ -1,7 +1,6 @@
 import { repeat } from 'lit-html/directives/repeat.js';
 import { classMap } from 'lit-html/directives/class-map.js';
 import { LitMvvmElement, html, nothing, css } from '@kdsoft/lit-mvvm';
-import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
 import { KdsDragDropProvider } from '@kdsoft/lit-mvvm-components';
 import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
@@ -21,8 +20,6 @@ function getListItemId(item) {
 export default class EtwChecklist extends LitMvvmElement {
   constructor() {
     super();
-    this.scheduler = new Queue(priorities.HIGH);
-    //this.scheduler = new BatchScheduler(0);
     this.getItemTemplate = () => html``;
     this.getStyles = () => [css``.styleSheet];
   }

@@ -1,9 +1,9 @@
+/* eslint-disable no-useless-constructor */
 /* global i18n */
 
 import { repeat } from 'lit-html/directives/repeat.js';
 import { LitMvvmElement, html, css, nothing, BatchScheduler } from '@kdsoft/lit-mvvm';
 import { observable } from '@nx-js/observer-util';
-import { Queue, priorities } from '@nx-js/queue-util';
 import dialogPolyfill from 'dialog-polyfill';
 import checkboxStyles from '../styles/kds-checkbox-styles.js';
 import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
@@ -23,10 +23,6 @@ const dialogClass = utils.html5DialogSupported ? '' : 'fixed';
 class EtwAgent extends LitMvvmElement {
   constructor() {
     super();
-    //this.scheduler = new Queue(priorities.LOW);
-    //this.scheduler = new BatchScheduler(0);
-    this.scheduler = window.renderScheduler;
-
     // setting model property here because we cannot reliable set it from a non-lit-html rendered HTML page
     // we must assign the model *after* the scheduler, or assign it externally
     // this.model = new EtwAppModel(); --

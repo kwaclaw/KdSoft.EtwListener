@@ -1,6 +1,5 @@
 import { repeat } from 'lit-html/directives/repeat.js';
 import { LitMvvmElement, css, html, BatchScheduler } from '@kdsoft/lit-mvvm';
-import { Queue, priorities } from '@nx-js/queue-util';
 import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
 
@@ -141,13 +140,6 @@ function formatPart(lines, diagMap) {
 }
 
 class FilterEdit extends LitMvvmElement {
-  constructor() {
-    super();
-    //this.scheduler = new Queue(priorities.LOW);
-    //this.scheduler = new BatchScheduler(0);
-    this.scheduler = window.renderScheduler;
-  }
-
   _change(e) {
     //e.stopPropagation();
     this.model.diagnostics = [];

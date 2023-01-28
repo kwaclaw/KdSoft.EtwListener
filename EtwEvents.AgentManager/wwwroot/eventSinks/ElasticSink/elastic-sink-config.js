@@ -1,15 +1,9 @@
 ﻿import { LitMvvmElement, html, css, BatchScheduler } from '@kdsoft/lit-mvvm';
-import { Queue, priorities } from '@nx-js/queue-util';
 import tailwindStyles from '../../styles/tailwind-styles.js';
 import '../../components/valid-section.js';
 import * as utils from '../../js/utils.js';
 
 class ElasticSinkConfig extends LitMvvmElement {
-  constructor() {
-    super();
-    this.scheduler = window.renderScheduler;
-  }
-
   isValid() {
     const validatedElement = this.renderRoot.getElementById('credentials');
     this._setValidatedCredentials(validatedElement);

@@ -1,7 +1,6 @@
 /* global i18n */
 
 import { classMap } from 'lit-html/directives/class-map.js';
-import { Queue, priorities } from '@nx-js/queue-util';
 import { LitMvvmElement, css, html, nothing, BatchScheduler } from '@kdsoft/lit-mvvm';
 import './etw-app-side-bar.js';
 import './etw-agent.js';
@@ -58,7 +57,7 @@ class EtwApp extends LitMvvmElement {
     super();
     //this.scheduler = new Queue(priorities.LOW);
     //this.scheduler = new BatchScheduler(0);
-    this.scheduler = window.renderScheduler = cb => window.queueMicrotask(cb);
+    window._kd_soft.scheduler = cb => window.queueMicrotask(cb);
 
     // setting model property here because we cannot reliable set it from a non-lit-html rendered HTML page
     // we must assign the model *after* the scheduler, or assign it externally

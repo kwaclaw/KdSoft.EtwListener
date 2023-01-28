@@ -1,5 +1,4 @@
 import { observable } from '@nx-js/observer-util';
-import { Queue, priorities } from '@nx-js/queue-util';
 import { LitMvvmElement, html, css, BatchScheduler } from '@kdsoft/lit-mvvm';
 import { KdsDropdownModel, KdsDropdownChecklistConnector } from '@kdsoft/lit-mvvm-components';
 import checkboxStyles from '../styles/kds-checkbox-styles.js';
@@ -11,9 +10,6 @@ import * as utils from '../js/utils.js';
 class ProviderConfig extends LitMvvmElement {
   constructor() {
     super();
-    //this.scheduler = new Queue(priorities.LOW);
-    //this.scheduler = new BatchScheduler(0);
-    this.scheduler = window.renderScheduler;
 
     this.levelDropDownModel = observable(new KdsDropdownModel());
     this.levelChecklistConnector = new KdsDropdownChecklistConnector(

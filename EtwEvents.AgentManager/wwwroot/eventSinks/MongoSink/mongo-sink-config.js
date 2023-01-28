@@ -1,6 +1,5 @@
 ﻿import { observable} from '@nx-js/observer-util';
 import { LitMvvmElement, html, css, BatchScheduler } from '@kdsoft/lit-mvvm';
-import { Queue, priorities } from '@nx-js/queue-util';
 import {
   KdsDropdownModel,
   KdsListModel,
@@ -17,7 +16,6 @@ import * as utils from '../../js/utils.js';
 class MongoSinkConfig extends LitMvvmElement {
   constructor() {
     super();
-    this.scheduler = window.renderScheduler;
     this.evtFieldsDropDownModel = observable(new KdsDropdownModel());
     this.evtFieldsChecklistConnector = new KdsDropdownChecklistConnector(
       () => this.renderRoot.getElementById('evtFields'),

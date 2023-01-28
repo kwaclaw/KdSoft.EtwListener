@@ -1,7 +1,6 @@
 /* global i18n */
 
 import { observable, observe, unobserve } from '@nx-js/observer-util';
-import { Queue, priorities } from '@nx-js/queue-util';
 import dialogPolyfill from 'dialog-polyfill';
 import { LitMvvmElement, css, html, nothing, BatchScheduler } from '@kdsoft/lit-mvvm';
 import { KdsListModel } from '@kdsoft/lit-mvvm-components';
@@ -22,14 +21,6 @@ const dialogClass = utils.html5DialogSupported ? '' : 'fixed';
 const emptyRevokedEntry = { name: 'Certificate revokation list is empty', thumbprint: '###' };
 
 class EtwAppSideBar extends LitMvvmElement {
-  constructor() {
-    super();
-    // seems priorities.HIGH may not allow render() calls in child components in some scenarios
-    //this.scheduler = new Queue(priorities.LOW);
-    //this.scheduler = new BatchScheduler(0);
-    this.scheduler = window.renderScheduler;
-  }
-
   _toggleNav() {
     const host = this.renderRoot.host;
     const expanded = host.hasAttribute('aria-expanded');
@@ -369,7 +360,7 @@ class EtwAppSideBar extends LitMvvmElement {
     const warningActive = clientCertWarningActive ? 'warning-active' : '';
 
     return html`
-      <kds-expander class="w-full" .scheduler=${this.scheduler}>
+      <kds-expander class="w-full">
         <span slot="expander" class="expander-icon">
           <i class="fa-solid fa-lg fa-caret-right text-blue-600"></i>
         </span>
@@ -466,7 +457,6 @@ class EtwAppSideBar extends LitMvvmElement {
           @input="${this._searchTextChanged}" />
         <etw-checklist id="agents" class="text-black"
           .model=${this.agentChecklistModel}
-          .scheduler=${this.scheduler}
           .getItemTemplate=${entry => this.getAgentTemplate(entry)}
           .getStyles=${this.getAgentTemplateStyles}
         ></etw-checklist>
