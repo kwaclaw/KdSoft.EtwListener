@@ -10,6 +10,7 @@ import tailwindStyles from '../../styles/tailwind-styles.js';
 import checkboxStyles from '../../styles/kds-checkbox-styles.js';
 import fontAwesomeStyles from '../../styles/fontawesome/css/all-styles.js';
 import MongoSinkConfigModel from './mongo-sink-config-model.js';
+import '../../components/etw-checklist.js';
 import '../../components/valid-section.js';
 import * as utils from '../../js/utils.js';
 
@@ -18,6 +19,16 @@ class MongoSinkConfig extends LitMvvmElement {
     super();
     this.scheduler = window.renderScheduler;
     this.evtFieldsDropDownModel = observable(new KdsDropdownModel());
+    this.evtFieldsChecklistConnector = new KdsDropdownChecklistConnector(
+      () => this.renderRoot.getElementById('evtFields'),
+      () => this.renderRoot.getElementById('evtFieldList').list,
+      chkListModel => {
+        const selectedIds = Array.from(chkListModel.selectedEntries).map(entry => entry.item.id);
+        // since we are already reacting to the selection change, let's update the underlying model
+        this.model.options.eventFilterFields = selectedIds;
+        return selectedIds.join(', ');
+      }
+    );
   }
 
   isValid() {
@@ -79,17 +90,6 @@ class MongoSinkConfig extends LitMvvmElement {
       // we select by item ids as we have these readily available
       this.evtFieldChecklistModel.selectIds(this.model.options.eventFilterFields || [], true);
     }
-
-    this.evtFieldsChecklistConnector = new KdsDropdownChecklistConnector(
-      () => this.renderRoot.getElementById('evtFields'),
-      () => this.renderRoot.getElementById('evtFieldList').list,
-      chkListModel => {
-        const selectedIds = Array.from(chkListModel.selectedEntries).map(entry => entry.item.id);
-        // since we are already reacting to the selection change, let's update the underlying model
-        this.model.options.eventFilterFields = selectedIds;
-        return selectedIds.join(', ');
-      }
-    );
   }
 
   static get styles() {
@@ -159,12 +159,15 @@ class MongoSinkConfig extends LitMvvmElement {
               <label for="collection">Collection</label>
               <input type="text" id="collection" name="collection" .value=${opts.collection} required></input>
               <label for="eventFilterFields">Event Filter Fields</label>
-              <kds-dropdown id="evtFields" class="py-0" .model=${this.evtFieldsDropDownModel} .connector=${this.evtFieldsChecklistConnector}>
+              <kds-dropdown id="evtFields" class="py-0"
+                .model=${this.evtFieldsDropDownModel}
+                .connector=${this.evtFieldsChecklistConnector}>
                 <etw-checklist id="evtFieldList" class="text-black"
                   .model=${this.evtFieldChecklistModel}
                   .getItemTemplate=${item => html`${item.id}`}
                   checkboxes>
                 </etw-checklist>
+                <span slot="dropDownButtonIcon" class="fa-solid fa-lg fa-caret-down"></span>
               </kds-dropdown>
               <label for="payloadFilterFields">Payload Filter Fields</label>
               <input type="text" id="payloadFilterFields" name="payloadFilterFields" .value=${payloadFieldsList} @change=${this._fieldListChange}></input>
