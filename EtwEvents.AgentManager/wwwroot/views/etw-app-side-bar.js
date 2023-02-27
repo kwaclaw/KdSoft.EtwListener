@@ -457,8 +457,8 @@ class EtwAppSideBar extends LitMvvmElement {
           @input="${this._searchTextChanged}" />
         <etw-checklist id="agents" class="text-black"
           .model=${this.agentChecklistModel}
-          .getItemTemplate=${entry => this.getAgentTemplate(entry)}
-          .getStyles=${this.getAgentTemplateStyles}
+          .itemTemplate=${entry => this.getAgentTemplate(entry)}
+          .itemStyleSheets=${this.getAgentTemplateStyles}
         ></etw-checklist>
 
       </nav>
@@ -486,7 +486,7 @@ class EtwAppSideBar extends LitMvvmElement {
           <label for="revoked-list">Revoked Certificates</label>
           <!-- we need to expose item template elemnts to be styled as named parts! -->
           <etw-checklist exportparts="item" id="revoked-list" class="text-black" 
-            .getItemTemplate=${item => html`
+            .itemTemplate=${item => html`
               <div class="flex w-full revoked-entry">
                 <span class="mr-auto">${item.name}</span>
                 ${item.thumbprint === '###'

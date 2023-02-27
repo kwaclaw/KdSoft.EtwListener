@@ -169,6 +169,11 @@ class EtwAgent extends LitMvvmElement {
     return !!(this.model.getActiveEntry());
   }
 
+  // first event where model is available
+  beforeFirstRender() {
+    this.model._kds_tabs = { items: ['Provider', 'Event Sinks', 'Live View', 'Filter'] };
+  }
+
   // called at most once every time after connectedCallback was executed
   static get styles() {
     return [
@@ -188,11 +193,17 @@ class EtwAgent extends LitMvvmElement {
           width: auto;
           position: relative;
           //columns: 2 auto;
-          display: flex;
+          /* display: flex;
           flex-direction: column;
           justify-content: flex-start;
           align-items: center;
-          flex-wrap: wrap;
+          flex-wrap: wrap; */
+        }
+
+        #main::part(container) {
+          height: 100%;
+          display: flex;
+          flex-direction: column;
         }
 
         form {
@@ -257,9 +268,13 @@ class EtwAgent extends LitMvvmElement {
     const activeAgentState = this.model.activeAgentState;
     const processingModel = activeAgentState.processingModel;
     return html`
-      <div id="main">
-
-        <form id="providers" class="border">
+      <kds-tab-container id="main" reverse>
+        ${this.model._kds_tabs.items.map((tab, index) => html`
+          <button type="button" slot="tabs" class="tab px-2 py-1 bg-white"
+              @click=${() => { this.model._kds_activeTab = index; }}
+          >${tab}</button>
+        `)}
+        <form id="providers" class="border" style="display:${this.model._kds_activeTab === 0 ? 'unset' : 'none'}">
           <div class="flex my-2 pr-2">
             <span class="font-semibold ${this.model.getProvidersModified(activeEntry) ? 'italic text-red-500' : ''}">Event Providers</span>
             <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
@@ -284,7 +299,7 @@ class EtwAgent extends LitMvvmElement {
           </div>
         </form>
 
-        <form id="event-sinks" class="border">
+        <form id="event-sinks" class="border" style="display:${this.model._kds_activeTab === 1 ? 'unset' : 'none'}">
           <div class="flex my-2 pr-2">
             <span class="font-semibold ${this.model.getEventSinksModified(activeEntry) ? 'italic text-red-500' : ''}">Event Sinks</span>
             <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
@@ -322,7 +337,7 @@ class EtwAgent extends LitMvvmElement {
           </div>
         </form>
 
-        <form id="live-view" class="border">
+        <form id="live-view" class="border" style="display:${this.model._kds_activeTab === 2 ? 'unset' : 'none'}">
           <div class="flex my-2 pr-2">
             <span class="font-semibold ${this.model.getLiveViewOptionsModified(activeEntry) ? 'italic text-red-500' : ''}">Live View</span>
           </div>
@@ -341,7 +356,8 @@ class EtwAgent extends LitMvvmElement {
           </div>
         </form>
 
-        <form id="processing" class="border"  @change=${e => this._processingFieldChange(e, activeAgentState)}>
+        <form id="processing" class="border" style="display:${this.model._kds_activeTab === 3 ? 'unset' : 'none'}"
+           @change=${e => this._processingFieldChange(e, activeAgentState)}>
           <div class="flex my-2 pr-2">
             <span class="font-semibold ${this.model.getProcessingModified(activeEntry) ? 'italic text-red-500' : ''}">Filter</span>
           </div>
@@ -363,7 +379,7 @@ class EtwAgent extends LitMvvmElement {
           </div>
         </form> 
 
-      </div>
+      </kds-tab-container>
 
       <dialog id="dlg-add-event-sink" class="${dialogClass}">
         <form name="add-event-sink"
@@ -376,7 +392,7 @@ class EtwAgent extends LitMvvmElement {
           <label for="sinktype-list">Sink Type</label>
           <etw-checklist id="sinktype-list" class="text-black"
             .model=${this.model.sinkInfoCheckListModel}
-            .getItemTemplate=${item => html`<div class="flex w-full"><span class="mr-1">${item.sinkType}</span><span class="ml-auto">(${item.version})</span></div>`}
+            .itemTemplate=${item => html`<div class="flex w-full"><span class="mr-1">${item.sinkType}</span><span class="ml-auto">(${item.version})</span></div>`}
             checkboxes
             required
             tabindex=-1>

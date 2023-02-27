@@ -10,11 +10,10 @@ import * as utils from '../js/utils.js';
 class ProviderConfig extends LitMvvmElement {
   constructor() {
     super();
-
     this.levelDropDownModel = observable(new KdsDropdownModel());
     this.levelChecklistConnector = new KdsDropdownChecklistConnector(
       () => this.renderRoot.getElementById('traceLevel'),
-      () => this.renderRoot.getElementById('traceLevelList').list,
+      () => this.renderRoot.getElementById('traceLevelList'),
       ProviderConfig._getSelectedText
     );
   }
@@ -67,12 +66,6 @@ class ProviderConfig extends LitMvvmElement {
 
   shouldRender() {
     return !!this.model;
-  }
-
-  firstRendered() {
-    super.firstRendered();
-    // DOM nodes may have changed
-    this.levelChecklistConnector.reconnectDropdownSlot();
   }
 
   beforeFirstRender() {
@@ -156,11 +149,13 @@ class ProviderConfig extends LitMvvmElement {
               <fieldset>
                 <label class="text-gray-600" for="level">Level</label>
                 <kds-dropdown id="traceLevel" class="py-0"
-                  .model=${this.levelDropDownModel} .connector=${this.levelChecklistConnector}>
+                  .model=${this.levelDropDownModel}
+                  .connector=${this.levelChecklistConnector}>
                   <etw-checklist id="traceLevelList" class="text-black"
                     .model=${this.model.levelChecklistModel}
-                    .getItemTemplate=${item => html`${item.name}`}>
+                    .itemTemplate=${item => html`${item.name}`}>
                   </etw-checklist>
+                  <span slot="dropDownButtonIcon" class="fa-solid fa-lg fa-caret-down"></span>
                 </kds-dropdown>
               </fieldset>
               <fieldset>

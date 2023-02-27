@@ -19,7 +19,7 @@ class MongoSinkConfig extends LitMvvmElement {
     this.evtFieldsDropDownModel = observable(new KdsDropdownModel());
     this.evtFieldsChecklistConnector = new KdsDropdownChecklistConnector(
       () => this.renderRoot.getElementById('evtFields'),
-      () => this.renderRoot.getElementById('evtFieldList').list,
+      () => this.renderRoot.getElementById('evtFieldList'),
       chkListModel => {
         const selectedIds = Array.from(chkListModel.selectedEntries).map(entry => entry.item.id);
         // since we are already reacting to the selection change, let's update the underlying model
@@ -133,6 +133,12 @@ class MongoSinkConfig extends LitMvvmElement {
         input:invalid {
           border: 2px solid red;
         }
+
+        #evtFieldList {
+          width: 100%;
+          background-color: lightslategray;
+          --max-scroll-height: 19ex;
+        }
         `,
     ];
   }
@@ -162,7 +168,7 @@ class MongoSinkConfig extends LitMvvmElement {
                 .connector=${this.evtFieldsChecklistConnector}>
                 <etw-checklist id="evtFieldList" class="text-black"
                   .model=${this.evtFieldChecklistModel}
-                  .getItemTemplate=${item => html`${item.id}`}
+                  .itemTemplate=${item => html`${item.id}`}
                   checkboxes>
                 </etw-checklist>
                 <span slot="dropDownButtonIcon" class="fa-solid fa-lg fa-caret-down"></span>
