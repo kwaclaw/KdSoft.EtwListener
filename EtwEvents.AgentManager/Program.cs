@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Net;
 using System.Reflection;
+using System.Runtime.Versioning;
 using System.Security.Cryptography.X509Certificates;
 using Google.Protobuf;
 using KdSoft.EtwEvents;
@@ -319,3 +320,7 @@ class ManagerControllerFeatureProvider: ControllerFeatureProvider
 }
 
 #endregion
+
+// this gets rid of platform related warnings
+[SupportedOSPlatform("windows")]
+public partial class Program { }
