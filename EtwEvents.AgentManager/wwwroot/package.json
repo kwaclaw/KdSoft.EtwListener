@@ -13,19 +13,20 @@
     "@tailwindcss/forms": "^0.5.3",
     "dialog-polyfill": "^0.5.6",
     "gettext.js": "^1.2.0",
-    "lit-html": "^2.6.1"
+    "lit-html": "^2.6.1",
+    "@lit/reactive-element": "1.6.1"
   },
   "devDependencies": {
     "@fortawesome/fontawesome-free": "^6.3.0",
     "autoprefixer": "10.4.13",
     "copy-node-modules": "^1.1.1",
     "cpy-cli": "^4.2.0",
-    "eslint": "^8.32.0",
+    "eslint": "^8.35.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.27.5",
     "glob": "^8.1.0",
     "rimraf": "^4.1.2",
-    "tailwindcss": "^3.2.4"
+    "tailwindcss": "^3.2.7"
   },
   "scripts": {
     "wrap-css": "node node_modules/@kdsoft/lit-mvvm-components/scripts/wrap-css.mjs",
