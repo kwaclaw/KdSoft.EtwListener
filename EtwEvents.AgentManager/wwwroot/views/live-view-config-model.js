@@ -1,6 +1,6 @@
 ﻿/* global i18n */
 
-import { observable, observe, raw } from '@nx-js/observer-util';
+import { observable, raw } from '@nx-js/observer-util';
 import { KdsListModel } from '@kdsoft/lit-mvvm-components';
 import LiveViewOptions from '../js/liveViewOptions.js';
 import * as utils from '../js/utils.js';

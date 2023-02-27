@@ -1,5 +1,5 @@
 import { observable } from '@nx-js/observer-util';
-import { LitMvvmElement, html, css, BatchScheduler } from '@kdsoft/lit-mvvm';
+import { LitMvvmElement, html, css } from '@kdsoft/lit-mvvm';
 import { KdsDropdownModel, KdsDropdownChecklistConnector } from '@kdsoft/lit-mvvm-components';
 import checkboxStyles from '../styles/kds-checkbox-styles.js';
 import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';

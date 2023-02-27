@@ -1,5 +1,5 @@
 ﻿import { observe, observable, unobserve } from '@nx-js/observer-util';
-import { LitMvvmElement, html, nothing, css, BatchScheduler } from '@kdsoft/lit-mvvm';
+import { LitMvvmElement, html, nothing, css } from '@kdsoft/lit-mvvm';
 import checkboxStyles from '../styles/kds-checkbox-styles.js';
 import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
@@ -55,7 +55,6 @@ async function loadSinkDefinitionTemplate(sinkType) {
 }
 
 async function loadSinkDefinitionModel(sinkType) {
-  // Vite can only analyze the dynamic import if we provide a file extension
   const modelModule = await import(`../eventSinks/${sinkType}/${sinkConfigModel(sinkType)}.js`);
   const ModelClass = modelModule.default;
   return new ModelClass();

@@ -1,5 +1,5 @@
 ﻿import { observable} from '@nx-js/observer-util';
-import { LitMvvmElement, html, css, BatchScheduler } from '@kdsoft/lit-mvvm';
+import { LitMvvmElement, html, css } from '@kdsoft/lit-mvvm';
 import {
   KdsDropdownModel,
   KdsListModel,

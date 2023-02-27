@@ -2,8 +2,8 @@
 /* global i18n */
 
 import { repeat } from 'lit-html/directives/repeat.js';
-import { LitMvvmElement, html, css, nothing, BatchScheduler } from '@kdsoft/lit-mvvm';
-import { observable } from '@nx-js/observer-util';
+import { LitMvvmElement, html, css } from '@kdsoft/lit-mvvm';
+import '@kdsoft/lit-mvvm-components';
 import dialogPolyfill from 'dialog-polyfill';
 import checkboxStyles from '../styles/kds-checkbox-styles.js';
 import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';

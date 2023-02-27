@@ -2,7 +2,7 @@
 
 import { observable, observe, unobserve } from '@nx-js/observer-util';
 import dialogPolyfill from 'dialog-polyfill';
-import { LitMvvmElement, css, html, nothing, BatchScheduler } from '@kdsoft/lit-mvvm';
+import { LitMvvmElement, css, html, nothing } from '@kdsoft/lit-mvvm';
 import { KdsListModel } from '@kdsoft/lit-mvvm-components';
 import checkboxStyles from '../styles/kds-checkbox-styles.js';
 import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';

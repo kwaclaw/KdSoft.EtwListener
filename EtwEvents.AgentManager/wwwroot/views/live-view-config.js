@@ -1,5 +1,6 @@
-﻿import { observe, raw, unobserve } from '@nx-js/observer-util';
-import { LitMvvmElement, html, css, BatchScheduler } from '@kdsoft/lit-mvvm';
+﻿import { observe, unobserve } from '@nx-js/observer-util';
+import { LitMvvmElement, html, css } from '@kdsoft/lit-mvvm';
+import dialogPolyfill from 'dialog-polyfill';
 import checkboxStyles from '../styles/kds-checkbox-styles.js';
 import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
 import appStyles from '../styles/etw-app-styles.js';
@@ -99,10 +100,6 @@ class LiveViewConfig extends LitMvvmElement {
       const liveViewOptions = this.model.toOptions();
       this.changeCallback(liveViewOptions);
     });
-  }
-
-  firstRendered() {
-    // model is defined, because of our shouldRender() override
   }
 
   static get styles() {

@@ -1,15 +1,14 @@
 /* global i18n */
 
 import { repeat } from 'lit-html/directives/repeat.js';
-import { LitMvvmElement, css, html, nothing, BatchScheduler } from '@kdsoft/lit-mvvm';
+import { LitMvvmElement, css, html } from '@kdsoft/lit-mvvm';
 import '@kdsoft/lit-mvvm-components/kds-expander.js';
 import checkboxStyles from '../styles/kds-checkbox-styles.js';
 import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
-import spinnerStyles from '../styles/spinner-styles.js';
+//import spinnerStyles from '../styles/spinner-styles.js';
 import appStyles from '../styles/etw-app-styles.js';
 import gridStyles from '../styles/kds-grid-styles.js';
-import '../components/etw-checklist.js';
 
 class EtwErrorList extends LitMvvmElement {
   _errorDetailClick(e) {
@@ -141,6 +140,7 @@ class EtwErrorList extends LitMvvmElement {
           }
         )}
         </div>
+      </div>
     `;
   }
 

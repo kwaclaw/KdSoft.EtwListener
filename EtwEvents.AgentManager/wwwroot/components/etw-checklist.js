@@ -1,7 +1,6 @@
-import { repeat } from 'lit-html/directives/repeat.js';
 import { classMap } from 'lit-html/directives/class-map.js';
-import { LitMvvmElement, html, nothing, css } from '@kdsoft/lit-mvvm';
-import { KdsDragDropProvider } from '@kdsoft/lit-mvvm-components';
+import { html, nothing, css } from '@kdsoft/lit-mvvm';
+import { KdsList, KdsDragDropProvider } from '@kdsoft/lit-mvvm-components';
 import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
 import listItemCheckboxStyles from '../styles/kds-list-item-checkbox-styles.js';

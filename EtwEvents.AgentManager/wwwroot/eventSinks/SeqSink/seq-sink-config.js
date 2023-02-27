@@ -1,4 +1,4 @@
-﻿import { LitMvvmElement, html, css, BatchScheduler } from '@kdsoft/lit-mvvm';
+﻿import { LitMvvmElement, html, css } from '@kdsoft/lit-mvvm';
 import tailwindStyles from '../../styles/tailwind-styles.js';
 import * as utils from '../../js/utils.js';
 
