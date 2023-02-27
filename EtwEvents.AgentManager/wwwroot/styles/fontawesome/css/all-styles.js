@@ -3,9 +3,9 @@ import { css } from '@kdsoft/lit-mvvm';
 export default css`
 
 /*!
- * Font Awesome Free 6.2.1 by @fontawesome - https://fontawesome.com
+ * Font Awesome Free 6.3.0 by @fontawesome - https://fontawesome.com
  * License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License)
- * Copyright 2022 Fonticons, Inc.
+ * Copyright 2023 Fonticons, Inc.
  */
 .fa {
   font-family: var(--fa-style-family, "Font Awesome 6 Free");
@@ -262,8 +262,10 @@ export default css`
             animation-duration: 1ms;
     -webkit-animation-iteration-count: 1;
             animation-iteration-count: 1;
-    transition-delay: 0s;
-    transition-duration: 0s; } }
+    -webkit-transition-delay: 0s;
+            transition-delay: 0s;
+    -webkit-transition-duration: 0s;
+            transition-duration: 0s; } }
 
 @-webkit-keyframes fa-beat {
   0%, 90% {
@@ -495,6 +497,7 @@ export default css`
 
 /* Font Awesome uses the Unicode Private Use Area (PUA) to ensure screen
 readers do not read off random characters that represent icons */
+
 .fa-0::before {
   content: "\\30"; }
 
@@ -7748,6 +7751,9 @@ readers do not read off random characters that represent icons */
 .fa-internet-explorer:before {
   content: "\\f26b"; }
 
+.fa-stubber:before {
+  content: "\\e5c7"; }
+
 .fa-telegram:before {
   content: "\\f2c6"; }
 
@@ -7756,6 +7762,9 @@ readers do not read off random characters that represent icons */
 
 .fa-old-republic:before {
   content: "\\f510"; }
+
+.fa-odysee:before {
+  content: "\\e5c6"; }
 
 .fa-square-whatsapp:before {
   content: "\\f40c"; }
