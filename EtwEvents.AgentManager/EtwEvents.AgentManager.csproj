@@ -13,6 +13,8 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <!--<PublishTrimmed>true</PublishTrimmed>-->
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <!-- workaround for https://github.com/dotnet/aspnetcore/issues/28643 -->
+    <DefaultExcludesInProjectFolder>$(DefaultExcludesInProjectFolder);wwwroot\node_modules\**</DefaultExcludesInProjectFolder>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,7 +34,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <Content Update="deploy/**/*">
+    <Content Update="deploy/**">
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>
@@ -40,7 +42,8 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Update="wwwroot/node_modules/**/*;wwwroot/_tmp/**/*;wwwroot/localize/**/*">
+    <Content Include="wwwroot/lib/**"/>
+    <Content Update="wwwroot/localize/**">
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </Content>
     <Content Update="wwwroot/package*.json">
@@ -65,12 +68,6 @@
   <ItemGroup>
     <Folder Include="AgentCerts\" />
   </ItemGroup>
-
-  <!-- This seems to be the only way top clean the Publish directory before publishing -->
-  <Target Name="ClearPublishDir" BeforeTargets="PrepareForPublish">
-    <Message Importance="high" Text="Cleaning out publish directory..." />
-    <RemoveDir Directories="$(PublishDir)" />
-  </Target>
 
   <Target Name="CopyEventSinks" AfterTargets="PostBuildEvent">
     <ItemGroup>
