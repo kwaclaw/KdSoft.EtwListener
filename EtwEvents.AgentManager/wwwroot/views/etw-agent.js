@@ -172,6 +172,7 @@ class EtwAgent extends LitMvvmElement {
   // first event where model is available
   beforeFirstRender() {
     this.model._kds_tabs = { items: ['Provider', 'Event Sinks', 'Live View', 'Filter'] };
+    this.model._kds_activeTab = 0;
   }
 
   // called at most once every time after connectedCallback was executed
@@ -187,27 +188,34 @@ class EtwAgent extends LitMvvmElement {
           display: block;
           position: relative;
         }
-        
-        #main {
+
+        kds-tab-container {
           height: 100%;
-          width: auto;
+          --top-row: 0;
+          --left-col: 0;
+          --right-col: 0;
+          --main-row: auto;
+          --bottom-row: minmax(0, min-content);
+        }
+
+        kds-tab-container > form {
           position: relative;
-          //columns: 2 auto;
-          /* display: flex;
-          flex-direction: column;
-          justify-content: flex-start;
-          align-items: center;
-          flex-wrap: wrap; */
+          break-inside: avoid;
+          margin: auto;
+          padding: 0.75rem;
         }
 
-        #main::part(container) {
-          height: 100%;
-          display: flex;
-          flex-direction: column;
+        kds-tab-container::part(footer) {
+          border-top: 2px darkgrey solid;
         }
 
-        form {
-          min-width:400px;
+        button[slot="tabs"][active] {
+          border-top: 2px white solid;
+          border-left: 2px darkgrey solid;
+          border-right: 2px darkgrey solid;
+          font-weight: bold;
+          z-index: 2;
+          margin-top: -2px;
         }
 
         label {
@@ -269,11 +277,14 @@ class EtwAgent extends LitMvvmElement {
     const processingModel = activeAgentState.processingModel;
     return html`
       <kds-tab-container id="main" reverse>
-        ${this.model._kds_tabs.items.map((tab, index) => html`
-          <button type="button" slot="tabs" class="tab px-2 py-1 bg-white"
-              @click=${() => { this.model._kds_activeTab = index; }}
-          >${tab}</button>
-        `)}
+        ${this.model._kds_tabs.items.map((tab, index) => {
+          const active = index === this.model._kds_activeTab;
+          return html`
+            <button type="button" slot="tabs" class="px-2 py-1 bg-white" ?active=${active}
+                @click=${() => { this.model._kds_activeTab = index; }}
+            >${tab}</button>`;
+          }
+        )}
         <form id="providers" class="border" style="display:${this.model._kds_activeTab === 0 ? 'unset' : 'none'}">
           <div class="flex my-2 pr-2">
             <span class="font-semibold ${this.model.getProvidersModified(activeEntry) ? 'italic text-red-500' : ''}">Event Providers</span>
