@@ -195,7 +195,7 @@ class EtwAgent extends LitMvvmElement {
           --left-col: 0;
           --right-col: 0;
           --main-row: auto;
-          --bottom-row: minmax(0, min-content);
+          --bottom-row: min-content;
         }
 
         kds-tab-container > form {
@@ -227,15 +227,11 @@ class EtwAgent extends LitMvvmElement {
           border-width: 1px;
         }
 
-        #main > form {
-          width: 100%;
-          max-width: 600px;
-          break-inside: avoid;
-          margin: 0.75rem;
-        }
-
-        #main > form#processing {
-          max-width: 1200px;
+        .providers {
+          display: flex;
+          writing-mode: horizontal-tb;
+          flex-wrap: wrap;
+          gap: 0.5rem;
         }
 
         #sinktype-list {
@@ -285,20 +281,23 @@ class EtwAgent extends LitMvvmElement {
             >${tab}</button>`;
           }
         )}
-        <form id="providers" class="border" style="display:${this.model._kds_activeTab === 0 ? 'unset' : 'none'}">
+
+        <form id="providers" class="border" style="${this.model._kds_activeTab === 0 ? '' : 'display:none'}">
           <div class="flex my-2 pr-2">
             <span class="font-semibold ${this.model.getProvidersModified(activeEntry) ? 'italic text-red-500' : ''}">Event Providers</span>
             <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
               @click=${e => this._addProviderClick(e, activeAgentState)}>
             </span>
           </div>
-          ${activeAgentState.enabledProviders.map(provider => html`
-            <provider-config class="my-3"
-              .model=${provider}
-              @beforeExpand=${e => this._providerBeforeExpand(e, activeAgentState)}
-              @delete=${e => this._deleteProviderClick(e, activeAgentState)}>
-            </provider-config>
-          `)}
+          <div class="providers">
+            ${activeAgentState.enabledProviders.map(provider => html`
+              <provider-config
+                .model=${provider}
+                @beforeExpand=${e => this._providerBeforeExpand(e, activeAgentState)}
+                @delete=${e => this._deleteProviderClick(e, activeAgentState)}>
+              </provider-config>
+            `)}
+          </div>
           <hr class="my-3" />
           <div class="flex flex-wrap mt-2 bt-1">
             <button type="button" class="py-1 px-2 ml-auto" @click=${() => this.model.applyProviders(activeAgentState)} title="Apply">
@@ -310,7 +309,7 @@ class EtwAgent extends LitMvvmElement {
           </div>
         </form>
 
-        <form id="event-sinks" class="border" style="display:${this.model._kds_activeTab === 1 ? 'unset' : 'none'}">
+        <form id="event-sinks" class="border" style="${this.model._kds_activeTab === 1 ? '' : 'display:none'}">
           <div class="flex my-2 pr-2">
             <span class="font-semibold ${this.model.getEventSinksModified(activeEntry) ? 'italic text-red-500' : ''}">Event Sinks</span>
             <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
@@ -348,13 +347,13 @@ class EtwAgent extends LitMvvmElement {
           </div>
         </form>
 
-        <form id="live-view" class="border" style="display:${this.model._kds_activeTab === 2 ? 'unset' : 'none'}">
+        <form id="live-view" class="border" style="${this.model._kds_activeTab === 2 ? '' : 'display:none'}">
           <div class="flex my-2 pr-2">
             <span class="font-semibold ${this.model.getLiveViewOptionsModified(activeEntry) ? 'italic text-red-500' : ''}">Live View</span>
           </div>
           <live-view-config
             .model=${activeAgentState.liveViewConfigModel}
-            .changeCallback=${(opts) => this.model.updateLiveViewOptions(activeEntry, opts)}
+            .changeCallback=${opts => this.model.updateLiveViewOptions(activeEntry, opts)}
           ></live-view-config>
           <hr class="my-3" />
           <div class="flex flex-wrap mt-2 bt-1">
@@ -367,7 +366,7 @@ class EtwAgent extends LitMvvmElement {
           </div>
         </form>
 
-        <form id="processing" class="border" style="display:${this.model._kds_activeTab === 3 ? 'unset' : 'none'}"
+        <form id="processing" class="border" style="${this.model._kds_activeTab === 3 ? '' : 'display:none'}"
            @change=${e => this._processingFieldChange(e, activeAgentState)}>
           <div class="flex my-2 pr-2">
             <span class="font-semibold ${this.model.getProcessingModified(activeEntry) ? 'italic text-red-500' : ''}">Filter</span>

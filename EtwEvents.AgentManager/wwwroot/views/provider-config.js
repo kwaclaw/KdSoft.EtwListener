@@ -27,23 +27,6 @@ class ProviderConfig extends LitMvvmElement {
     return result;
   }
 
-  expand() {
-    const oldExpanded = this.model.expanded;
-    // send event to parent to collapse other providers
-    if (!oldExpanded) {
-      const evt = new CustomEvent('beforeExpand', {
-        // composed allows bubbling beyond shadow root
-        bubbles: true, composed: true, cancelable: true, detail: { model: this.model }
-      });
-      this.dispatchEvent(evt);
-    }
-    this.model.expanded = !oldExpanded;
-  }
-
-  _expandClicked(e) {
-    this.expand();
-  }
-
   _deleteClicked(e) {
     // send event to parent to remove from list
     const evt = new CustomEvent('delete', {
@@ -96,6 +79,8 @@ class ProviderConfig extends LitMvvmElement {
 
         etw-checklist {
           min-width: 200px;
+          background-color: white;
+          z-index: 2;
         }
 
         .provider {
@@ -126,9 +111,6 @@ class ProviderConfig extends LitMvvmElement {
     const borderColor = expanded ? 'border-indigo-500' : 'border-transparent';
     const htColor = expanded ? 'text-indigo-700' : 'text-gray-700';
     const timesClasses = 'text-gray-600 fas fa-lg fa-times';
-    const chevronClasses = expanded
-      ? 'text-indigo-500 fas fa-lg  fa-chevron-circle-up'
-      : 'text-gray-600 fas fa-lg fa-chevron-circle-down';
 
     // Note: number inputs can be sized by setting their max value
 
@@ -142,16 +124,15 @@ class ProviderConfig extends LitMvvmElement {
                 .value=${this.model.name}
               />
             <span class="${timesClasses} ml-auto mr-2" @click=${this._deleteClicked}></span>
-            <span class="${chevronClasses}" @click=${this._expandClicked}></span>
           </header>
-          <div class="mt-2 relative ${expanded ? '' : 'hidden'}">
+          <div class="mt-2 relative">
             <div class="provider pl-8 pb-1">
               <fieldset>
                 <label class="text-gray-600" for="level">Level</label>
                 <kds-dropdown id="traceLevel" class="py-0"
                   .model=${this.levelDropDownModel}
                   .connector=${this.levelChecklistConnector}>
-                  <etw-checklist id="traceLevelList" class="text-black"
+                  <etw-checklist id="traceLevelList" class="text-black bg-white"
                     .model=${this.model.levelChecklistModel}
                     .itemTemplate=${item => html`${item.name}`}>
                   </etw-checklist>
