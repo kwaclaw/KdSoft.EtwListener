@@ -154,7 +154,7 @@ export default class EtwChecklist extends KdsList {
           `
           : nothing
         }
-        <span slot="item" class="my-auto w-full">${this.itemTemplate(entry.item)}</span>              
+        <span slot="item" class="my-auto w-full inline-flex">${this.itemTemplate(entry.item)}</span>              
       </kds-list-item>
     `;
   }
