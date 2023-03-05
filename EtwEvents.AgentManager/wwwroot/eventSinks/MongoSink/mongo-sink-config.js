@@ -3,7 +3,7 @@ import { LitMvvmElement, html, css } from '@kdsoft/lit-mvvm';
 import {
   KdsDropdownModel,
   KdsListModel,
-  KdsDropdownChecklistConnector
+  KdsDropdownListConnector
 } from '@kdsoft/lit-mvvm-components';
 import tailwindStyles from '../../styles/tailwind-styles.js';
 import checkboxStyles from '../../styles/kds-checkbox-styles.js';
@@ -17,7 +17,7 @@ class MongoSinkConfig extends LitMvvmElement {
   constructor() {
     super();
     this.evtFieldsDropDownModel = observable(new KdsDropdownModel());
-    this.evtFieldsChecklistConnector = new KdsDropdownChecklistConnector(
+    this.evtFieldsChecklistConnector = new KdsDropdownListConnector(
       () => this.renderRoot.getElementById('evtFields'),
       () => this.renderRoot.getElementById('evtFieldList'),
       chkListModel => {

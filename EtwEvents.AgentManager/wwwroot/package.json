@@ -6,8 +6,8 @@
   "license": "ISC",
   "browser": "index.js",
   "dependencies": {
-    "@kdsoft/lit-mvvm": "../../../KdSoft.lit-mvvm",
-    "@kdsoft/lit-mvvm-components": "../../../KdSoft.lit-mvvm/components",
+    "@kdsoft/lit-mvvm": "file:../../../KdSoft.lit-mvvm",
+    "@kdsoft/lit-mvvm-components": "file:../../../KdSoft.lit-mvvm/components",
     "@nx-js/observer-util": "^4.2.2",
     "@nx-js/queue-util": "^1.1.1",
     "@tailwindcss/forms": "^0.5.3",

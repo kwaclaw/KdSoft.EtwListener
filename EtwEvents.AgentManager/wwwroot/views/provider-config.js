@@ -1,6 +1,6 @@
 import { observable } from '@nx-js/observer-util';
 import { LitMvvmElement, html, css } from '@kdsoft/lit-mvvm';
-import { KdsDropdownModel, KdsDropdownChecklistConnector } from '@kdsoft/lit-mvvm-components';
+import { KdsDropdownModel, KdsDropdownListConnector } from '@kdsoft/lit-mvvm-components';
 import checkboxStyles from '../styles/kds-checkbox-styles.js';
 import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
@@ -11,7 +11,7 @@ class ProviderConfig extends LitMvvmElement {
   constructor() {
     super();
     this.levelDropDownModel = observable(new KdsDropdownModel());
-    this.levelChecklistConnector = new KdsDropdownChecklistConnector(
+    this.levelChecklistConnector = new KdsDropdownListConnector(
       () => this.renderRoot.getElementById('traceLevel'),
       () => this.renderRoot.getElementById('traceLevelList'),
       ProviderConfig._getSelectedText
