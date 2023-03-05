@@ -14,10 +14,10 @@ const dialogClass = utils.html5DialogSupported ? '' : 'fixed';
 
 function getPayloadColumnListItemTemplate(item) {
   return html`
-    <div class="inline-block w-1/3 mr-4 truncate" title=${item.name}>${item.name}</div>
-    <div class="inline-block w-2/5 border-l pl-2 truncate" title=${item.label}>${item.label}</div>
-    <div class="inline-block w-1/5 border-l pl-2" title=${item.type}>${item.type}&nbsp;</div>
-    <span class="ml-auto flex-end text-gray-600 cursor-pointer" @click=${e => this._deletePayloadColumnClick(e)}>
+    <div class="inline-block w-2/6 mr-4 truncate" title=${item.name}>${item.name}</div>
+    <div class="inline-block w-2/6 border-l pl-2 truncate" title=${item.label}>${item.label}</div>
+    <div class="inline-block w-1/6 border-l pl-2 truncate" title=${item.type}>${item.type}&nbsp;</div>
+    <span class="ml-auto pr-2 flex-end text-gray-600 cursor-pointer" @click=${e => this._deletePayloadColumnClick(e)}>
       <i class="far fa-trash-alt"></i>
     </span>
   `;
@@ -70,7 +70,9 @@ class LiveViewConfig extends LitMvvmElement {
 
   _deletePayloadColumnClick(e) {
     e.stopPropagation();
-    const itemIndex = e.target.closest('.list-item').dataset.itemIndex;
+    const payLoadChecklist = this.renderRoot.getElementById('payload-cols');
+    const listItem = e.target.closest('kds-list-item');
+    const itemIndex = payLoadChecklist.getItemIndexFromElement(listItem);
     this.model.payloadColumnCheckList.items.splice(itemIndex, 1);
   }
 
@@ -143,6 +145,7 @@ class LiveViewConfig extends LitMvvmElement {
         #payload-cols {
           flex: 1;
           height: 100%;
+          width: 35vw;
         }
 
         #dlg-add-payload-col form {

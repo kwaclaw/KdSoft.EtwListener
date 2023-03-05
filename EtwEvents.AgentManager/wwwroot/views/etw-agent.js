@@ -243,6 +243,10 @@ class EtwAgent extends LitMvvmElement {
           margin-bottom: 10px;
         }
 
+        #live-view {
+          --max-scroll-height: 60vh;
+        }
+
         #dlg-add-event-sink form {
           display: grid;
           grid-template-columns: auto auto;
