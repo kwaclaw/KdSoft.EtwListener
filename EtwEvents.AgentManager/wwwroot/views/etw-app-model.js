@@ -21,10 +21,11 @@ const traceLevelList = () => [
 ];
 
 function _enhanceProviderState(provider) {
+  const level = raw(provider).level;
   if (!(provider.levelChecklistModel instanceof KdsListModel)) {
     provider.levelChecklistModel = observable(new KdsListModel(
       traceLevelList(),
-      [provider.level || 0],
+      [level || 0],
       false,
       item => item.value
     ));
@@ -32,7 +33,7 @@ function _enhanceProviderState(provider) {
       provider.level = provider.levelChecklistModel.firstSelectedEntry?.item.value || 0;
     });
   }
-  provider.levelChecklistModel.selectIndex(provider.level, true);
+  provider.levelChecklistModel.selectIndex(level, true);
   return provider;
 }
 

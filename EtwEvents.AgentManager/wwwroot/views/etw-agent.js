@@ -64,7 +64,7 @@ class EtwAgent extends LitMvvmElement {
     e.stopImmediatePropagation();
     const form = e.currentTarget.closest('form');
     const sinkname = form.querySelector('#sink-name');
-    const sinklist = form.querySelector('#sinktype-list').list;
+    const sinklist = form.querySelector('#sinktype-list');
     const selectedSinkInfo = sinklist.model.firstSelectedEntry?.item;
     sinklist._internals.setValidity({ valueMissing: !selectedSinkInfo }, 'Sink type must be selected.');
     if (!form.reportValidity()) return;
