@@ -39,12 +39,6 @@ class EtwAgent extends LitMvvmElement {
     agentState.removeProvider(provider.name);
   }
 
-  _providerBeforeExpand(e, agentState) {
-    agentState.enabledProviders.forEach(p => {
-      p.expanded = false;
-    });
-  }
-
   //#endregion
 
   //#region Processing
@@ -88,12 +82,6 @@ class EtwAgent extends LitMvvmElement {
   _deleteEventSinkClick(e, agentState) {
     const model = e.currentTarget.model;
     this.model.deleteEventSink(agentState, model.profile.name);
-  }
-
-  _eventSinkBeforeExpand(e, agentState) {
-    Object.entries(agentState.eventSinks).forEach(es => {
-      es[1].expanded = false;
-    });
   }
 
   _updateEventSinks(e, agentState) {
@@ -227,7 +215,7 @@ class EtwAgent extends LitMvvmElement {
           border-width: 1px;
         }
 
-        .providers {
+        .providers, .eventSinks {
           display: flex;
           writing-mode: horizontal-tb;
           flex-wrap: wrap;
@@ -301,7 +289,6 @@ class EtwAgent extends LitMvvmElement {
             ${activeAgentState.enabledProviders.map(provider => html`
               <provider-config
                 .model=${provider}
-                @beforeExpand=${e => this._providerBeforeExpand(e, activeAgentState)}
                 @delete=${e => this._deleteProviderClick(e, activeAgentState)}>
               </provider-config>
             `)}
@@ -324,17 +311,18 @@ class EtwAgent extends LitMvvmElement {
               @click=${this._addEventSinkClick}>
             </span>
           </div>
-          ${repeat(
-            Object.entries(activeAgentState.eventSinks),
-            entry => entry[0],
-            entry => html`
-              <event-sink-config class="bg-gray-300 px-2 my-3"
-                .model=${entry[1]}
-                @beforeExpand=${e => this._eventSinkBeforeExpand(e, activeAgentState)}
-                @delete=${e => this._deleteEventSinkClick(e, activeAgentState)}>
-              </event-sink-config>
-            `
-          )}
+          <div class="eventSinks">
+            ${repeat(
+              Object.entries(activeAgentState.eventSinks),
+              entry => entry[0],
+              entry => html`
+                <event-sink-config class="bg-gray-300 px-2 my-3"
+                  .model=${entry[1]}
+                  @delete=${e => this._deleteEventSinkClick(e, activeAgentState)}>
+                </event-sink-config>
+              `
+            )}
+          </div>
           <hr class="my-3" />
           <div id="ok-cancel-buttons" class="flex flex-wrap mt-2 bt-1">
             <input type="file"

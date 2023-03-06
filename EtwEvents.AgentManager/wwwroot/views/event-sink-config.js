@@ -67,23 +67,6 @@ class EventSinkConfig extends LitMvvmElement {
     this.sinkTypeTemplateHolder = observable({ tag: nothing });
   }
 
-  expand() {
-    const oldExpanded = this.model.expanded;
-    // send event to parent to collapse other providers
-    if (!oldExpanded) {
-      const evt = new CustomEvent('beforeExpand', {
-        // composed allows bubbling beyond shadow root
-        bubbles: true, composed: true, cancelable: true, detail: { model: this.model }
-      });
-      this.dispatchEvent(evt);
-    }
-    this.model.expanded = !oldExpanded;
-  }
-
-  _expandClicked(e) {
-    this.expand();
-  }
-
   _deleteClicked(e) {
     // send event to parent to remove from list
     const evt = new CustomEvent('delete', {
@@ -214,14 +197,10 @@ class EventSinkConfig extends LitMvvmElement {
   render() {
     const profile = this.model.profile;
     const status = this.model.status;
-    const expanded = this.model.expanded || false;
-    const borderColor = expanded ? 'border-indigo-500' : 'border-transparent';
+    const borderColor = 'border-transparent';
     const timesClasses = 'text-gray-600 fas fa-lg fa-times';
-    const chevronClasses = expanded
-      ? 'text-indigo-500 fas fa-lg  fa-chevron-circle-up'
-      : 'text-gray-600 fas fa-lg fa-chevron-circle-down';
     const errorClasses = status?.lastError ? 'border-red-500 focus:outline-none focus:border-red-700' : '';
-    const titleClasses = status?.lastError ? 'text-red-600' : (expanded ? 'text-indigo-500' : '');
+    const titleClasses = status?.lastError ? 'text-red-600' : 'text-indigo-500';
     const retryTimestamp = status ? `${utils.dateFormat.format(status.retryStartTimeMSecs)}` : '';
     const retryMessage = (status?.numRetries > 0) ? `${status.numRetries} retries since ${retryTimestamp}.\n` : '';
 
@@ -230,10 +209,9 @@ class EventSinkConfig extends LitMvvmElement {
         <header class="flex items-center justify-start pl-1 py-2 cursor-pointer select-none relative ${errorClasses}">
           <span class="${titleClasses}">${profile.name} - ${profile.sinkType}(${profile.version})</span>
           <span class="${timesClasses} ml-auto mr-2" @click=${this._deleteClicked}></span>
-          <span class="${chevronClasses}" @click=${this._expandClicked}></span>
         </header>
 
-        <form class="relative ${expanded ? '' : 'hidden'}">
+        <form class="relative">
           <div id="form-header">
             <pre class="${status?.lastError ? '' : 'hidden'}"><textarea
               class="my-2 w-full border-2 border-red-500 focus:outline-none focus:border-red-700"

@@ -107,9 +107,8 @@ class ProviderConfig extends LitMvvmElement {
   }
 
   render() {
-    const expanded = this.model.expanded || false;
-    const borderColor = expanded ? 'border-indigo-500' : 'border-transparent';
-    const htColor = expanded ? 'text-indigo-700' : 'text-gray-700';
+    const borderColor = 'border-transparent';
+    const htColor = 'text-gray-700';
     const timesClasses = 'text-gray-600 fas fa-lg fa-times';
 
     // Note: number inputs can be sized by setting their max value
@@ -120,7 +119,6 @@ class ProviderConfig extends LitMvvmElement {
           <header class="flex items-center justify-start pl-1 cursor-pointer select-none relative">
               <input name="name" type="text"
                 class="${htColor} mr-2 w-full" 
-                ?readonly=${!expanded}
                 .value=${this.model.name}
               />
             <span class="${timesClasses} ml-auto mr-2" @click=${this._deleteClicked}></span>
