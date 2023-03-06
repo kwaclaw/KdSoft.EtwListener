@@ -165,7 +165,7 @@ class MongoSinkConfig extends LitMvvmElement {
               <label for="eventFilterFields">Event Filter Fields</label>
               <kds-dropdown id="evtFields" class="py-0"
                 .model=${this.evtFieldsDropDownModel}
-                .connector=${this.evtFieldsChecklistConnector}>
+              >
                 <etw-checklist id="evtFieldList" class="text-black"
                   .model=${this.evtFieldChecklistModel}
                   .itemTemplate=${item => html`${item.id}`}
@@ -196,6 +196,10 @@ class MongoSinkConfig extends LitMvvmElement {
       </form>
     `;
     return result;
+  }
+
+  rendered() {
+    this.evtFieldsChecklistConnector.reconnectDropdownSlot();
   }
 }
 

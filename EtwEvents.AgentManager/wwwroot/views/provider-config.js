@@ -43,10 +43,6 @@ class ProviderConfig extends LitMvvmElement {
 
   /* eslint-disable indent, no-else-return */
 
-  disconnectedCallback() {
-    super.disconnectedCallback();
-  }
-
   shouldRender() {
     return !!this.model;
   }
@@ -129,7 +125,7 @@ class ProviderConfig extends LitMvvmElement {
                 <label class="text-gray-600" for="level">Level</label>
                 <kds-dropdown id="traceLevel" class="py-0"
                   .model=${this.levelDropDownModel}
-                  .connector=${this.levelChecklistConnector}>
+                >
                   <etw-checklist id="traceLevelList" class="text-black bg-white"
                     .model=${this.model.levelChecklistModel}
                     .itemTemplate=${item => html`${item.name}`}>
@@ -147,6 +143,11 @@ class ProviderConfig extends LitMvvmElement {
         </div>
       </form>
     `;
+  }
+
+  rendered() {
+    // it may be necessary to reconnect the drop down connector
+    this.levelChecklistConnector.reconnectDropdownSlot();
   }
 }
 
