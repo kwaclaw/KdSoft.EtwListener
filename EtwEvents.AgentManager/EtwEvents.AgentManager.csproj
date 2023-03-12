@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <PackageReference Include="Grpc.AspNetCore.Server" Version="2.51.0" />
-    <PackageReference Include="Grpc.Tools" Version="2.51.0">
+    <PackageReference Include="Grpc.Tools" Version="2.52.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -42,7 +42,7 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="wwwroot/lib/**"/>
+    <Content Include="wwwroot/lib/**" />
     <Content Update="wwwroot/localize/**">
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </Content>
