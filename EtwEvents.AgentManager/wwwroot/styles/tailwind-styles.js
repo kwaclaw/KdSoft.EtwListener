@@ -706,10 +706,6 @@ select {
   visibility: hidden;
 }
 
-.collapse {
-  visibility: collapse;
-}
-
 .static {
   position: static;
 }
@@ -825,10 +821,6 @@ select {
   display: contents;
 }
 
-.list-item {
-  display: list-item;
-}
-
 .hidden {
   display: none;
 }
@@ -928,11 +920,6 @@ select {
 .border-gray-600 {
   --tw-border-opacity: 1;
   border-color: rgb(75 85 99 / var(--tw-border-opacity));
-}
-
-.border-indigo-500 {
-  --tw-border-opacity: 1;
-  border-color: rgb(99 102 241 / var(--tw-border-opacity));
 }
 
 .border-red-500 {
@@ -1120,11 +1107,6 @@ select {
 .text-indigo-500 {
   --tw-text-opacity: 1;
   color: rgb(99 102 241 / var(--tw-text-opacity));
-}
-
-.text-indigo-700 {
-  --tw-text-opacity: 1;
-  color: rgb(67 56 202 / var(--tw-text-opacity));
 }
 
 .text-orange-500 {
