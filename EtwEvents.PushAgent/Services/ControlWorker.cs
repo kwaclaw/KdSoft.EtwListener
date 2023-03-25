@@ -473,7 +473,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 }
 
                 // if the executing worker Task ends on its own (error?), clean up and update state
-                _ = sessionWorker.ExecuteTask
+                _ = sessionWorker.ExecuteTask?
                     .ContinueWith(swt => {
                         Interlocked.Exchange(ref _sessionWorkerAvailable, 0);
                         var oldScope = Interlocked.CompareExchange(ref _sessionScope, null, scope);

@@ -1,11 +1,8 @@
-import { html } from 'lit';
 import { observable } from '@nx-js/observer-util';
-import { Queue, priorities } from '@nx-js/queue-util';
-import { LitMvvmElement, css, BatchScheduler } from '@kdsoft/lit-mvvm';
-import { KdSoftDropdownModel, KdSoftDropdownChecklistConnector } from '@kdsoft/lit-mvvm-components';
-import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
-import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
-import '@kdsoft/lit-mvvm-components/kdsoft-dropdown.js';
+import { LitMvvmElement, html, css } from '@kdsoft/lit-mvvm';
+import { KdsDropdownModel, KdsDropdownListConnector } from '@kdsoft/lit-mvvm-components';
+import checkboxStyles from '../styles/kds-checkbox-styles.js';
+import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
 import '../components/etw-checklist.js';
 import * as utils from '../js/utils.js';
@@ -13,12 +10,8 @@ import * as utils from '../js/utils.js';
 class ProviderConfig extends LitMvvmElement {
   constructor() {
     super();
-    //this.scheduler = new Queue(priorities.LOW);
-    //this.scheduler = new BatchScheduler(0);
-    this.scheduler = window.renderScheduler;
-
-    this.levelDropDownModel = observable(new KdSoftDropdownModel());
-    this.levelChecklistConnector = new KdSoftDropdownChecklistConnector(
+    this.levelDropDownModel = observable(new KdsDropdownModel());
+    this.levelChecklistConnector = new KdsDropdownListConnector(
       () => this.renderRoot.getElementById('traceLevel'),
       () => this.renderRoot.getElementById('traceLevelList'),
       ProviderConfig._getSelectedText
@@ -32,23 +25,6 @@ class ProviderConfig extends LitMvvmElement {
       else result = selEntry.item.name;
     }
     return result;
-  }
-
-  expand() {
-    const oldExpanded = this.model.expanded;
-    // send event to parent to collapse other providers
-    if (!oldExpanded) {
-      const evt = new CustomEvent('beforeExpand', {
-        // composed allows bubbling beyond shadow root
-        bubbles: true, composed: true, cancelable: true, detail: { model: this.model }
-      });
-      this.dispatchEvent(evt);
-    }
-    this.model.expanded = !oldExpanded;
-  }
-
-  _expandClicked(e) {
-    this.expand();
   }
 
   _deleteClicked(e) {
@@ -67,18 +43,8 @@ class ProviderConfig extends LitMvvmElement {
 
   /* eslint-disable indent, no-else-return */
 
-  disconnectedCallback() {
-    super.disconnectedCallback();
-  }
-
   shouldRender() {
     return !!this.model;
-  }
-
-  firstRendered() {
-    super.firstRendered();
-    // DOM nodes may have changed
-    this.levelChecklistConnector.reconnectDropdownSlot();
   }
 
   beforeFirstRender() {
@@ -103,12 +69,14 @@ class ProviderConfig extends LitMvvmElement {
           font-weight: bolder;
         }
 
-        kdsoft-dropdown {
+        kds-dropdown {
           width: auto;
         }
 
         etw-checklist {
           min-width: 200px;
+          background-color: white;
+          z-index: 2;
         }
 
         .provider {
@@ -135,13 +103,9 @@ class ProviderConfig extends LitMvvmElement {
   }
 
   render() {
-    const expanded = this.model.expanded || false;
-    const borderColor = expanded ? 'border-indigo-500' : 'border-transparent';
-    const htColor = expanded ? 'text-indigo-700' : 'text-gray-700';
+    const borderColor = 'border-transparent';
+    const htColor = 'text-gray-700';
     const timesClasses = 'text-gray-600 fas fa-lg fa-times';
-    const chevronClasses = expanded
-      ? 'text-indigo-500 fas fa-lg  fa-chevron-circle-up'
-      : 'text-gray-600 fas fa-lg fa-chevron-circle-down';
 
     // Note: number inputs can be sized by setting their max value
 
@@ -151,25 +115,23 @@ class ProviderConfig extends LitMvvmElement {
           <header class="flex items-center justify-start pl-1 cursor-pointer select-none relative">
               <input name="name" type="text"
                 class="${htColor} mr-2 w-full" 
-                ?readonly=${!expanded}
                 .value=${this.model.name}
               />
             <span class="${timesClasses} ml-auto mr-2" @click=${this._deleteClicked}></span>
-            <span class="${chevronClasses}" @click=${this._expandClicked}></span>
           </header>
-          <div class="mt-2 relative ${expanded ? '' : 'hidden'}">
+          <div class="mt-2 relative">
             <div class="provider pl-8 pb-1">
               <fieldset>
                 <label class="text-gray-600" for="level">Level</label>
-                <kdsoft-dropdown id="traceLevel" class="py-0"
-                  .model=${this.levelDropDownModel} .connector=${this.levelChecklistConnector}>
-                  <etw-checklist
-                    id="traceLevelList"
-                    class="text-black"
+                <kds-dropdown id="traceLevel" class="py-0"
+                  .model=${this.levelDropDownModel}
+                >
+                  <etw-checklist id="traceLevelList" class="text-black bg-white"
                     .model=${this.model.levelChecklistModel}
-                    .getItemTemplate=${item => html`${item.name}`}>
+                    .itemTemplate=${item => html`${item.name}`}>
                   </etw-checklist>
-                </kdsoft-dropdown>
+                  <span slot="dropDownButtonIcon" class="fa-solid fa-lg fa-caret-down"></span>
+                </kds-dropdown>
               </fieldset>
               <fieldset>
                 <label class="text-gray-600" for="keywords">Match Keywords</label>
@@ -181,6 +143,11 @@ class ProviderConfig extends LitMvvmElement {
         </div>
       </form>
     `;
+  }
+
+  rendered() {
+    // it may be necessary to reconnect the drop down connector
+    this.levelChecklistConnector.reconnectDropdownSlot();
   }
 }
 

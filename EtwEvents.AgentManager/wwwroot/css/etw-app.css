@@ -1,7 +1,3 @@
-import { css } from '@kdsoft/lit-mvvm';
-
-export default css`
-
 .btn {
   padding-top: 0.25rem;
   padding-bottom: 0.25rem;
@@ -26,4 +22,3 @@ export default css`
   --tw-text-opacity: 1;
   color: rgb(156 163 175 / var(--tw-text-opacity))
 }
-`;

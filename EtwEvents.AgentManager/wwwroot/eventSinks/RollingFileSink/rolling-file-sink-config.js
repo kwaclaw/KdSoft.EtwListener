@@ -1,16 +1,10 @@
-﻿import { LitMvvmElement, html, css, BatchScheduler } from '@kdsoft/lit-mvvm';
-import { Queue, priorities } from '@nx-js/queue-util';
-import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
-import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
-import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
+﻿import { LitMvvmElement, html, css } from '@kdsoft/lit-mvvm';
+import tailwindStyles from '../../styles/tailwind-styles.js';
+import checkboxStyles from '../../styles/kds-checkbox-styles.js';
+import fontAwesomeStyles from '../../styles/fontawesome/css/all-styles.js';
 import * as utils from '../../js/utils.js';
 
 class RollingFileSinkConfig extends LitMvvmElement {
-  constructor() {
-    super();
-    this.scheduler = window.renderScheduler;
-  }
-
   isValid() {
     return this.renderRoot.querySelector('form').reportValidity();
   }
@@ -89,15 +83,15 @@ class RollingFileSinkConfig extends LitMvvmElement {
               <label for="fileExtension">File Extension</label>
               <input type="text" id="fileExtension" name="fileExtension" .value=${opts.fileExtension} required></input>
               <label for="useLocalTime">Use Local Time</label>
-              <input type="checkbox" id="useLocalTime" name="useLocalTime" .checked=${opts.useLocalTime}></input>
+              <input type="checkbox" class="kds-checkbox" id="useLocalTime" name="useLocalTime" .checked=${opts.useLocalTime}></input>
               <label for="fileSizeLimitKB">File-size Limit (KB)</label>
               <input type="number" id="fileSizeLimitKB" name="fileSizeLimitKB" .value=${opts.fileSizeLimitKB} min="1"></input>
               <label for="maxFileCount">Max File Count</label>
               <input type="number" id="maxFileCount" name="maxFileCount" .value=${opts.maxFileCount} min="1"></input>
               <label for="newFileOnStartup">New File on Startup</label>
-              <input type="checkbox" id="newFileOnStartup" name="newFileOnStartup" .checked=${opts.newFileOnStartup}></input>
+              <input type="checkbox" class="kds-checkbox" id="newFileOnStartup" name="newFileOnStartup" .checked=${opts.newFileOnStartup}></input>
               <label for="relaxedJsonEscaping">Relaxed JSON Escaping</label>
-              <input type="checkbox" id="relaxedJsonEscaping" name="relaxedJsonEscaping" .checked=${opts.relaxedJsonEscaping}></input>
+              <input type="checkbox" class="kds-checkbox" id="relaxedJsonEscaping" name="relaxedJsonEscaping" .checked=${opts.relaxedJsonEscaping}></input>
             </div>
           </fieldset>
         </section>

@@ -1,18 +1,17 @@
 /* global i18n */
 
-import { html, nothing } from 'lit';
-import { classMap } from 'lit/directives/class-map.js';
-import { Queue, priorities } from '@nx-js/queue-util';
-import { LitMvvmElement, css, BatchScheduler } from '@kdsoft/lit-mvvm';
+import { classMap } from 'lit-html/directives/class-map.js';
+import { LitMvvmElement, css, html, nothing } from '@kdsoft/lit-mvvm';
+import { Queue, priorities } from '@nx-js/queue-util/dist/es.es6.js';
 import './etw-app-side-bar.js';
 import './etw-agent.js';
 import './live-view.js';
 import './etw-error-list.js';
 import './error-count.js';
-import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
-import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
+import checkboxStyles from '../styles/kds-checkbox-styles.js';
+import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
-import gridStyles from '../styles/kdsoft-grid-styles.js';
+import gridStyles from '../styles/kds-grid-styles.js';
 
 const tabBase = {
   'pt-3': true,
@@ -59,7 +58,8 @@ class EtwApp extends LitMvvmElement {
     super();
     //this.scheduler = new Queue(priorities.LOW);
     //this.scheduler = new BatchScheduler(0);
-    this.scheduler = window.renderScheduler = cb => window.queueMicrotask(cb);
+    //window._kd_soft.scheduler = cb => window.queueMicrotask(cb);
+    window._kd_soft.scheduler = new Queue(priorities.LOW);
 
     // setting model property here because we cannot reliable set it from a non-lit-html rendered HTML page
     // we must assign the model *after* the scheduler, or assign it externally

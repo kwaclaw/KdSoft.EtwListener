@@ -18,7 +18,7 @@
 
 @section Styles{
     <!-- Seems that fonts cannot be loaded from within a web component -->
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css" />
     <style>
         etw-app {
             height: 100vh;
@@ -36,12 +36,9 @@
     <script type="importmap">
     {
         "imports": {
-            "lit": "@(importRoot)/lit/index.js",
-            "lit/": "@(importRoot)/lit/",
-            "lit/directives/": "@(importRoot)/lit-html/directives/",
             "lit-html": "@(importRoot)/lit-html/lit-html.js",
             "lit-html/": "@(importRoot)/lit-html/",
-            "lit-element/lit-element.js": "@(importRoot)/lit-element/lit-element.js",
+            "lit-html/directives/": "@(importRoot)/lit-html/directives/",
             "@@lit/reactive-element": "@(importRoot)/@@lit/reactive-element/reactive-element.js",
             "@@lit/reactive-element/": "@(importRoot)/@@lit/reactive-element/",
             "@@kdsoft/": "@(importRoot)/@@kdsoft/",

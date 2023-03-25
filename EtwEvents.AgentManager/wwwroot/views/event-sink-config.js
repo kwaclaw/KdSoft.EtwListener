@@ -1,8 +1,7 @@
 ﻿import { observe, observable, unobserve } from '@nx-js/observer-util';
-import { Queue, priorities } from '@nx-js/queue-util';
-import { LitMvvmElement, html, nothing, css, BatchScheduler } from '@kdsoft/lit-mvvm';
-import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
-import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
+import { LitMvvmElement, html, nothing, css } from '@kdsoft/lit-mvvm';
+import checkboxStyles from '../styles/kds-checkbox-styles.js';
+import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
 import * as utils from '../js/utils.js';
 
@@ -56,7 +55,6 @@ async function loadSinkDefinitionTemplate(sinkType) {
 }
 
 async function loadSinkDefinitionModel(sinkType) {
-  // Vite can only analyze the dynamic import if we provide a file extension
   const modelModule = await import(`../eventSinks/${sinkType}/${sinkConfigModel(sinkType)}.js`);
   const ModelClass = modelModule.default;
   return new ModelClass();
@@ -65,29 +63,8 @@ async function loadSinkDefinitionModel(sinkType) {
 class EventSinkConfig extends LitMvvmElement {
   constructor() {
     super();
-    //this.scheduler = new Queue(priorities.LOW);
-    //this.scheduler = new BatchScheduler(0);
-    this.scheduler = window.renderScheduler;
-
     // for "nothing" to work we need to render raw(this.sinkTypeTemplateHolder.value)
     this.sinkTypeTemplateHolder = observable({ tag: nothing });
-  }
-
-  expand() {
-    const oldExpanded = this.model.expanded;
-    // send event to parent to collapse other providers
-    if (!oldExpanded) {
-      const evt = new CustomEvent('beforeExpand', {
-        // composed allows bubbling beyond shadow root
-        bubbles: true, composed: true, cancelable: true, detail: { model: this.model }
-      });
-      this.dispatchEvent(evt);
-    }
-    this.model.expanded = !oldExpanded;
-  }
-
-  _expandClicked(e) {
-    this.expand();
   }
 
   _deleteClicked(e) {
@@ -153,9 +130,9 @@ class EventSinkConfig extends LitMvvmElement {
 
   static get styles() {
     return [
+      fontAwesomeStyles,
       tailwindStyles,
       checkboxStyles,
-      fontAwesomeStyles,
       //appStyles,
       css`
         :host {
@@ -220,14 +197,10 @@ class EventSinkConfig extends LitMvvmElement {
   render() {
     const profile = this.model.profile;
     const status = this.model.status;
-    const expanded = this.model.expanded || false;
-    const borderColor = expanded ? 'border-indigo-500' : 'border-transparent';
+    const borderColor = 'border-transparent';
     const timesClasses = 'text-gray-600 fas fa-lg fa-times';
-    const chevronClasses = expanded
-      ? 'text-indigo-500 fas fa-lg  fa-chevron-circle-up'
-      : 'text-gray-600 fas fa-lg fa-chevron-circle-down';
     const errorClasses = status?.lastError ? 'border-red-500 focus:outline-none focus:border-red-700' : '';
-    const titleClasses = status?.lastError ? 'text-red-600' : (expanded ? 'text-indigo-500' : '');
+    const titleClasses = status?.lastError ? 'text-red-600' : 'text-indigo-500';
     const retryTimestamp = status ? `${utils.dateFormat.format(status.retryStartTimeMSecs)}` : '';
     const retryMessage = (status?.numRetries > 0) ? `${status.numRetries} retries since ${retryTimestamp}.\n` : '';
 
@@ -236,10 +209,9 @@ class EventSinkConfig extends LitMvvmElement {
         <header class="flex items-center justify-start pl-1 py-2 cursor-pointer select-none relative ${errorClasses}">
           <span class="${titleClasses}">${profile.name} - ${profile.sinkType}(${profile.version})</span>
           <span class="${timesClasses} ml-auto mr-2" @click=${this._deleteClicked}></span>
-          <span class="${chevronClasses}" @click=${this._expandClicked}></span>
         </header>
 
-        <form class="relative ${expanded ? '' : 'hidden'}">
+        <form class="relative">
           <div id="form-header">
             <pre class="${status?.lastError ? '' : 'hidden'}"><textarea
               class="my-2 w-full border-2 border-red-500 focus:outline-none focus:border-red-700"
@@ -251,7 +223,8 @@ class EventSinkConfig extends LitMvvmElement {
               <label for="maxWriteDelayMSecs">Max Write Delay (msecs)</label>
               <input type="number" id="maxWriteDelayMSecs" name="maxWriteDelayMSecs" .value=${profile.maxWriteDelayMSecs} min="0" />
               <label for="persistentChannel">Persistent Buffer</label>
-              <input type="checkbox" id="persistentChannel" name="persistentChannel" class="mr-auto" .checked=${profile.persistentChannel} />
+              <input type="checkbox" id="persistentChannel" name="persistentChannel"
+                class="kds-checkbox mr-auto" .checked=${profile.persistentChannel} />
             </div>
           </div>
           <div id="form-content">

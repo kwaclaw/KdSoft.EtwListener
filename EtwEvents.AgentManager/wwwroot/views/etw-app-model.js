@@ -1,7 +1,7 @@
 /* global i18n */
 
 import { observable, observe, raw } from '@nx-js/observer-util';
-import { KdSoftChecklistModel } from '@kdsoft/lit-mvvm-components';
+import { KdsListModel } from '@kdsoft/lit-mvvm-components';
 import EventSinkProfile from '../js/eventSinkProfile.js';
 import RingBuffer from '../js/ringBuffer.js';
 import * as utils from '../js/utils.js';
@@ -21,10 +21,11 @@ const traceLevelList = () => [
 ];
 
 function _enhanceProviderState(provider) {
-  if (!(provider.levelChecklistModel instanceof KdSoftChecklistModel)) {
-    provider.levelChecklistModel = observable(new KdSoftChecklistModel(
+  const level = raw(provider).level;
+  if (!(provider.levelChecklistModel instanceof KdsListModel)) {
+    provider.levelChecklistModel = observable(new KdsListModel(
       traceLevelList(),
-      [provider.level || 0],
+      [level || 0],
       false,
       item => item.value
     ));
@@ -32,7 +33,7 @@ function _enhanceProviderState(provider) {
       provider.level = provider.levelChecklistModel.firstSelectedEntry?.item.value || 0;
     });
   }
-  provider.levelChecklistModel.selectIndex(provider.level, true);
+  provider.levelChecklistModel.selectIndex(level, true);
   return provider;
 }
 
@@ -255,7 +256,7 @@ class EtwAppModel {
       })
       .catch(error => window.etwApp.defaultHandleError(error));
 
-    this.sinkInfoCheckListModel = new KdSoftChecklistModel(
+    this.sinkInfoCheckListModel = new KdsListModel(
       observableThis.eventSinkInfos,
       observableThis.eventSinkInfos.length ? [0] : [],
       false,

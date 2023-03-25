@@ -1,14 +1,8 @@
-﻿import { LitMvvmElement, html, css, BatchScheduler } from '@kdsoft/lit-mvvm';
-import { Queue, priorities } from '@nx-js/queue-util';
-import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
+﻿import { LitMvvmElement, html, css } from '@kdsoft/lit-mvvm';
+import tailwindStyles from '../../styles/tailwind-styles.js';
 import * as utils from '../../js/utils.js';
 
 class DataCollectorSinkConfig extends LitMvvmElement {
-  constructor() {
-    super();
-    this.scheduler = window.renderScheduler;
-  }
-
   isValid() {
     return this.renderRoot.querySelector('form').reportValidity();
   }

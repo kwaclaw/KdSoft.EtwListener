@@ -13,30 +13,28 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <!--<PublishTrimmed>true</PublishTrimmed>-->
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <!-- workaround for https://github.com/dotnet/aspnetcore/issues/28643 -->
+    <DefaultExcludesInProjectFolder>$(DefaultExcludesInProjectFolder);wwwroot\node_modules\**</DefaultExcludesInProjectFolder>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Grpc.AspNetCore.Server" Version="2.50.0" />
-    <PackageReference Include="Grpc.Tools" Version="2.51.0">
+    <PackageReference Include="Grpc.AspNetCore.Server" Version="2.52.0" />
+    <PackageReference Include="Grpc.Tools" Version="2.53.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="KdSoft.Logging" Version="1.1.2" />
     <PackageReference Include="KdSoft.Utils" Version="4.0.2" />
     <PackageReference Include="KdSoft.Utils.Portable" Version="4.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.Certificate" Version="6.0.11" />
-    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="7.0.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Certificate" Version="6.0.15" />
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="7.0.0" />
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.17.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.18.1" />
     <PackageReference Include="OrchardCore.Localization.Core" Version="1.5.0" />
   </ItemGroup>
   
   <ItemGroup>
-    <Content Update="deploy/**/*">
+    <Content Update="deploy/**">
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>
@@ -44,7 +42,8 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Update="wwwroot/node_modules/**/*;wwwroot/_tmp/**/*;wwwroot/localize/**/*">
+    <Content Include="wwwroot/lib/**" />
+    <Content Update="wwwroot/localize/**">
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </Content>
     <Content Update="wwwroot/package*.json">
@@ -69,12 +68,6 @@
   <ItemGroup>
     <Folder Include="AgentCerts\" />
   </ItemGroup>
-
-  <!-- This seems to be the only way top clean the Publish directory before publishing -->
-  <Target Name="ClearPublishDir" BeforeTargets="PrepareForPublish">
-    <Message Importance="high" Text="Cleaning out publish directory..." />
-    <RemoveDir Directories="$(PublishDir)" />
-  </Target>
 
   <Target Name="CopyEventSinks" AfterTargets="PostBuildEvent">
     <ItemGroup>

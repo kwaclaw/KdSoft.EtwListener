@@ -22,7 +22,7 @@ namespace EtwEvents.Tests
             _formattedEntries = new List<string>();
         }
 
-        public IDisposable BeginScope<TState>(TState state) {
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull {
             if (_externalScopeProvider != null)
                 return _externalScopeProvider.Push(state);
             return MockDisposable.Instance;

@@ -1,67 +1,45 @@
 {
   "name": "etw-events-agentmanager",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Manager for ETW Push Agents.",
   "author": "",
   "license": "ISC",
   "browser": "index.js",
   "dependencies": {
-    "@kdsoft/lit-mvvm": "^2.1.2",
-    "@kdsoft/lit-mvvm-components": "^1.0.0-beta.16",
+    "@kdsoft/lit-mvvm": "^2.1.4",
+    "@kdsoft/lit-mvvm-components": "^2.0.0-beta.3",
     "@nx-js/observer-util": "^4.2.2",
     "@nx-js/queue-util": "^1.1.1",
+    "@tailwindcss/forms": "^0.5.3",
     "dialog-polyfill": "^0.5.6",
     "gettext.js": "^1.2.0",
-    "lit": "^2.4.0"
+    "lit-html": "^2.7.0",
+    "@lit/reactive-element": "1.6.1"
   },
   "devDependencies": {
-    "autoprefixer": "10.4.12",
-    "@tailwindcss/forms": "^0.5.3",
+    "@fortawesome/fontawesome-free": "^6.3.0",
+    "autoprefixer": "10.4.14",
     "copy-node-modules": "^1.1.1",
-    "eslint": "^8.26.0",
+    "cpy-cli": "^4.2.0",
+    "eslint": "^8.36.0",
     "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-plugin-import": "^2.26.0",
-    "move-cli": "^2.0.0",
-    "postcss": "^8.4.18",
-    "postcss-cli": "^10.0.0",
-    "postcss-copy": "^7.1.0",
-    "postcss-import": "^15.0.0",
-    "shx": "^0.3.4",
-    "tailwindcss": "^3.2.1"
+    "eslint-plugin-import": "^2.27.5",
+    "glob": "^9.3.2",
+    "rimraf": "^4.4.1",
+    "tailwindcss": "^3.2.7"
   },
   "scripts": {
     "wrap-css": "node node_modules/@kdsoft/lit-mvvm-components/scripts/wrap-css.mjs",
     "po2json": "node node_modules/gettext.js/bin/po2json localize/de_AT.po de_AT.json -p",
-    "postcss-css": "postcss css/**/*[.pcss,.css] --dir _tmp --ext css",
-    "wrap-css-tmp": "npm run wrap-css _tmp/**/*.css styles _tmp",
+    "process-tailwind": "npx tailwindcss -i css/tailwind.tcss -o css/tailwind.css && npx tailwindcss -i css/etw-app.tcss -o css/etw-app.css",
+    "wrap-css-styles": "npm run wrap-css css/**/*.css styles css",
     "wrap-css-dialog": "npm run wrap-css node_modules/dialog-polyfill/dialog-polyfill.css styles node_modules/dialog-polyfill",
-    "build-styles": "npm run postcss-css && npm run wrap-css-tmp && npm run wrap-css-dialog",
-    "prepare": "rimraf _tmp/**/*  && rimraf lib && npm run po2json && npm run build-styles",
-    "build": "npm install && copy-node-modules . ./_tmp && move-cli _tmp/node_modules ./lib"
-  },
-  "postcss": {
-    "plugins": {
-      "postcss-import": {},
-      "postcss-copy": {
-        "basePath": [
-          "node_modules"
-        ],
-        "template": "[path]/[name].[ext][query]",
-        "dest": "styles/assets"
-      },
-      "tailwindcss": {
-        "content": [
-          "./views/**/*.{html,js}",
-          "./eventSinks/**/*.{html,js}"
-        ],
-        "theme": {},
-        "variants": {},
-        "plugins": [
-          "@tailwindcss/forms"
-        ]
-      },
-      "autoprefixer": {}
-    }
+    "wrap-fontawesome": "npm run wrap-css node_modules/@fortawesome/fontawesome-free/css/all.css styles/fontawesome node_modules/@fortawesome/fontawesome-free",
+    "copy-webfonts": "cpy node_modules/@fortawesome/fontawesome-free/webfonts/** styles/fontawesome/webfonts",
+    "build-styles": "npm run wrap-css-styles && npm run wrap-css-dialog && npm run wrap-fontawesome && npm run copy-webfonts",
+    "prebuild": "rimraf lib && rimraf styles && copy-node-modules . lib",
+    "build": "npm run process-tailwind && npm run po2json && npm run build-styles",
+    "prepare": "npm run build"
   },
   "browserslist": [
     "last 2 chrome versions",

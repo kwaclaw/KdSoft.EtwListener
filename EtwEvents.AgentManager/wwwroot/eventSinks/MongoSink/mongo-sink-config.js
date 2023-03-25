@@ -1,23 +1,25 @@
-﻿import { observable} from '@nx-js/observer-util';
-import { LitMvvmElement, html, css, BatchScheduler } from '@kdsoft/lit-mvvm';
-import { Queue, priorities } from '@nx-js/queue-util';
-import tailwindStyles from '@kdsoft/lit-mvvm-components/styles/tailwind-styles.js';
-import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
-import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
+﻿import { observable, observe } from '@nx-js/observer-util';
+import { LitMvvmElement, html, css } from '@kdsoft/lit-mvvm';
 import {
-  KdSoftDropdownModel,
-  KdSoftChecklistModel,
-  KdSoftDropdownChecklistConnector,
+  KdsListModel,
 } from '@kdsoft/lit-mvvm-components';
+import tailwindStyles from '../../styles/tailwind-styles.js';
+import checkboxStyles from '../../styles/kds-checkbox-styles.js';
+import fontAwesomeStyles from '../../styles/fontawesome/css/all-styles.js';
 import MongoSinkConfigModel from './mongo-sink-config-model.js';
+import '../../components/etw-checklist.js';
 import '../../components/valid-section.js';
 import * as utils from '../../js/utils.js';
 
 class MongoSinkConfig extends LitMvvmElement {
   constructor() {
     super();
-    this.scheduler = window.renderScheduler;
-    this.evtFieldsDropDownModel = observable(new KdSoftDropdownModel());
+    this.evtFieldChecklistModel = observable(new KdsListModel(
+      MongoSinkConfigModel.eventFields,
+      [],
+      true,
+      item => item.id
+    ));
   }
 
   isValid() {
@@ -44,9 +46,9 @@ class MongoSinkConfig extends LitMvvmElement {
     const pwd = utils.getFieldValue(this.renderRoot.getElementById('password'));
     if (certCN || (user && pwd)) {
       validatedElement.setCustomValidity('');
-      this.model.certificateCommonName = certCN;
-      this.model.user = user;
-      this.model.password = pwd;
+      this.model.credentials.certificateCommonName = certCN;
+      this.model.credentials.user = user;
+      this.model.credentials.password = pwd;
       return true;
     }
     // change validity on first empty control, we can't really use a hidden/invisible/zero-size control
@@ -69,27 +71,10 @@ class MongoSinkConfig extends LitMvvmElement {
 
   // first event when model is available
   beforeFirstRender() {
-    if (!this.evtFieldChecklistModel) {
-      this.evtFieldChecklistModel = observable(new KdSoftChecklistModel(
-        MongoSinkConfigModel.eventFields,
-        [],
-        true,
-        item => item.id
-      ));
-      // we select by item ids as we have these readily available
-      this.evtFieldChecklistModel.selectIds(this.model.options.eventFilterFields || [], true);
-    }
-
-    this.evtFieldsChecklistConnector = new KdSoftDropdownChecklistConnector(
-      () => this.renderRoot.getElementById('evtFields'),
-      () => this.renderRoot.getElementById('evtFieldList'),
-      chkListModel => {
-        const selectedIds = Array.from(chkListModel.selectedEntries).map(entry => entry.item.id);
-        // since we are already reacting to the selection change, let's update the underlying model
-        this.model.options.eventFilterFields = selectedIds;
-        return selectedIds.join(', ');
-      }
-    );
+    // save state temporarily because this._eventFieldsObserver will reset it on unselectAll()
+    const eventFilterFields = this.model.options.eventFilterFields;
+    this.evtFieldChecklistModel.unselectAll();
+    this.evtFieldChecklistModel.selectIds(eventFilterFields, true);
   }
 
   static get styles() {
@@ -124,9 +109,22 @@ class MongoSinkConfig extends LitMvvmElement {
           border-width: 1px;
         }
 
-        valid-section fieldset > div {
+        #options fieldset > div {
           display:grid;
-          grid-template-columns: auto auto;
+          grid-template-columns: auto auto minmax(auto, 12em);
+          grid-template-rows: repeat(8, auto);
+          align-items: baseline;
+          row-gap: 5px;
+          column-gap: 10px;
+        }
+
+        #credentials {
+          width:100%;
+        }
+
+        #credentials fieldset > div {
+          display:grid;
+          grid-template-columns: auto auto minmax(auto, 12em);
           align-items: baseline;
           row-gap: 5px;
           column-gap: 10px;
@@ -134,6 +132,41 @@ class MongoSinkConfig extends LitMvvmElement {
 
         input:invalid {
           border: 2px solid red;
+        }
+
+        valid-section fieldset > div > label {
+          grid-column: 1;
+        }
+
+        valid-section fieldset > div > input {
+          grid-column: 2;
+        }
+
+        label[for="evtFieldList"] {
+          grid-column: 3;
+          grid-row: 1;
+        }
+
+        #evtFieldList {
+          grid-column: 3 / 3;
+          grid-row: 2 / -1;
+          display: flex;
+          position: relative;
+          height: 100%;
+        }
+
+        #evtFieldList etw-checklist {
+          position: absolute;
+          left:0;
+          top:0;
+          right:0;
+          bottom:0;
+          background-color: lightgray;
+          --max-scroll-height: 100%;
+        }
+
+        .pad {
+          height: 3ex;
         }
         `,
     ];
@@ -158,18 +191,21 @@ class MongoSinkConfig extends LitMvvmElement {
               <input type="text" id="database" name="database" .value=${opts.database} required></input>
               <label for="collection">Collection</label>
               <input type="text" id="collection" name="collection" .value=${opts.collection} required></input>
-              <label for="eventFilterFields">Event Filter Fields</label>
-              <kdsoft-dropdown id="evtFields" class="py-0" .model=${this.evtFieldsDropDownModel} .connector=${this.evtFieldsChecklistConnector}>
-                <kdsoft-checklist
-                  id="evtFieldList"
-                  class="text-black"
+              <label for="evtFieldList">Event Filter Fields</label>
+              <div id="evtFieldList">
+                <etw-checklist class="text-black"
                   .model=${this.evtFieldChecklistModel}
-                  .getItemTemplate=${item => html`${item.id}`}
-                  show-checkboxes>
-                </kdsoft-checklist>
-              </kdsoft-dropdown>
+                  .itemTemplate=${item => html`${item.id}`}
+                  checkboxes>
+                </etw-checklist>
+              </div>
               <label for="payloadFilterFields">Payload Filter Fields</label>
-              <input type="text" id="payloadFilterFields" name="payloadFilterFields" .value=${payloadFieldsList} @change=${this._fieldListChange}></input>
+              <input type="text"
+                id="payloadFilterFields" name="payloadFilterFields"
+                .value=${payloadFieldsList} @change=${this._fieldListChange}
+                placeholder="Comma delimited list"></input>
+              <div class="pad"></div><div class="pad"></div><div class="pad"></div>
+              <div class="pad"></div><div class="pad"></div><div class="pad"></div>
             </div>
           </fieldset>
         </valid-section>
@@ -191,6 +227,16 @@ class MongoSinkConfig extends LitMvvmElement {
       </form>
     `;
     return result;
+  }
+
+  firstRendered() {
+    if (!this._eventFieldsObserver) {
+      this._eventFieldsObserver = observe(() => {
+        const selectedIds = Array.from(this.evtFieldChecklistModel.selectedEntries).map(entry => entry.item.id);
+        // since we are already reacting to the selection change, let's update the underlying model
+        this.model.options.eventFilterFields = selectedIds;
+      });
+    }
   }
 }
 

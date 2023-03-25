@@ -1,14 +1,11 @@
 /* global i18n */
 
-import { html, nothing } from 'lit';
 import { observable, observe, unobserve } from '@nx-js/observer-util';
-import { Queue, priorities } from '@nx-js/queue-util';
 import dialogPolyfill from 'dialog-polyfill';
-import { LitMvvmElement, css, BatchScheduler } from '@kdsoft/lit-mvvm';
-import '@kdsoft/lit-mvvm-components/kdsoft-expander.js';
-import { KdSoftChecklistModel } from '@kdsoft/lit-mvvm-components';
-import checkboxStyles from '@kdsoft/lit-mvvm-components/styles/kdsoft-checkbox-styles.js';
-import fontAwesomeStyles from '@kdsoft/lit-mvvm-components/styles/fontawesome/css/all-styles.js';
+import { LitMvvmElement, css, html, nothing } from '@kdsoft/lit-mvvm';
+import { KdsListModel } from '@kdsoft/lit-mvvm-components';
+import checkboxStyles from '../styles/kds-checkbox-styles.js';
+import fontAwesomeStyles from '../styles/fontawesome/css/all-styles.js';
 import tailwindStyles from '../styles/tailwind-styles.js';
 import spinnerStyles from '../styles/spinner-styles.js';
 import appStyles from '../styles/etw-app-styles.js';
@@ -24,14 +21,6 @@ const dialogClass = utils.html5DialogSupported ? '' : 'fixed';
 const emptyRevokedEntry = { name: 'Certificate revokation list is empty', thumbprint: '###' };
 
 class EtwAppSideBar extends LitMvvmElement {
-  constructor() {
-    super();
-    // seems priorities.HIGH may not allow render() calls in child components in some scenarios
-    //this.scheduler = new Queue(priorities.LOW);
-    //this.scheduler = new BatchScheduler(0);
-    this.scheduler = window.renderScheduler;
-  }
-
   _toggleNav() {
     const host = this.renderRoot.host;
     const expanded = host.hasAttribute('aria-expanded');
@@ -80,7 +69,7 @@ class EtwAppSideBar extends LitMvvmElement {
             certs.push(emptyRevokedEntry);
           }
           const revokedList = dlg.querySelector('#revoked-list');
-          revokedList.model = observable(new KdSoftChecklistModel(certs));
+          revokedList.model = observable(new KdsListModel(certs));
         }
       });
   }
@@ -171,7 +160,7 @@ class EtwAppSideBar extends LitMvvmElement {
     if (!this.agentChecklistModel) {
       const agentList = this.model.agents;
       const agentIndex = getAgentIndex(agentList, this.model.activeAgentId);
-      const checklistModel = new KdSoftChecklistModel(
+      const checklistModel = new KdsListModel(
         agentList,
         agentIndex >= 0 ? [agentIndex] : [],
         false,
@@ -184,7 +173,7 @@ class EtwAppSideBar extends LitMvvmElement {
         const selEntry = this.agentChecklistModel.firstSelectedEntry;
         const selAgent = selEntry?.item;
         this.model.activeAgentId = selAgent?.state.id;
-        if (oldActiveAgentId != this.model.activeAgentId) {
+        if (oldActiveAgentId !== this.model.activeAgentId) {
           this.model.stopEtwEvents();
         }
       });
@@ -211,6 +200,7 @@ class EtwAppSideBar extends LitMvvmElement {
         :host {
           display: block;
           position: relative;
+          --trans-time: 300ms;
         }
 
         dialog {
@@ -275,7 +265,6 @@ class EtwAppSideBar extends LitMvvmElement {
         }
 
         #agents::part(header) {
-          color: gray;
           background-color: inherit;
         }
 
@@ -371,8 +360,11 @@ class EtwAppSideBar extends LitMvvmElement {
     const warningActive = clientCertWarningActive ? 'warning-active' : '';
 
     return html`
-      <kdsoft-expander class="w-full" .scheduler=${this.scheduler}>
-        <div part="header" slot="header" class="flex items-baseline pr-1 text-white bg-gray-500">
+      <kds-expander class="w-full">
+        <span slot="expander" class="expander-icon">
+          <i class="fa-solid fa-lg fa-caret-right text-blue-600"></i>
+        </span>
+        <div part="header" slot="header" class="flex items-baseline pr-1 text-white">
           <label class="pl-1 font-bold text-xl">${entry.state.id}</label>
           <span part="cert-warning" class="ml-2 fa fas fa-exclamation-triangle text-red-500 ${warningActive}" title=${clientCertWarning}></span>
           <span class="ml-auto">
@@ -392,16 +384,35 @@ class EtwAppSideBar extends LitMvvmElement {
           </span>
         </div>
         <!-- using part="slot" we can style this from here even though it will be rendered inside a web component -->
-        <div part="content" slot="content" class="pl-3">
+        <div part="content" slot="content" class="pl-3 text-white">
           <label class="pl-1 font-bold">Site</label>
           <div class="pl-1">${entry.state.site}</div>
           <label class="pl-1 font-bold">Host</label>
           <div class="pl-1">${entry.state.host}</div>
           <label class="pl-1 font-bold" title=${entry.current?.clientCertThumbprint}>Certificate</label>
-          <div class="pl-1">${Number.isNaN(clientCertLifeDays) ? '??' : clientCertLifeDays } days</div>
+          <div class="pl-1">${Number.isNaN(clientCertLifeDays) ? '??' : clientCertLifeDays} days</div>
         </div>
-      </kdsoft-expander>
+      </kds-expander>
     `;
+  }
+
+  getAgentTemplateStyles() {
+    return [
+      css`
+        .expander-icon {
+          vertical-align: middle;
+        }
+        .expander-icon i {
+          transition: transform var(--trans-time) ease;
+        }
+        kds-expander[aria-expanded] .expander-icon i {
+          transform: rotate(90deg);
+        }
+        kds-expander::part(content) {
+          transition: height var(--trans-time) ease;
+        }
+      `.styleSheet
+    ];
   }
 
   render() {
@@ -446,8 +457,8 @@ class EtwAppSideBar extends LitMvvmElement {
           @input="${this._searchTextChanged}" />
         <etw-checklist id="agents" class="text-black"
           .model=${this.agentChecklistModel}
-          .scheduler=${this.scheduler}
-          .getItemTemplate=${entry => this.getAgentTemplate(entry)}
+          .itemTemplate=${entry => this.getAgentTemplate(entry)}
+          .itemStyleSheets=${this.getAgentTemplateStyles}
         ></etw-checklist>
 
       </nav>
@@ -474,10 +485,8 @@ class EtwAppSideBar extends LitMvvmElement {
 
           <label for="revoked-list">Revoked Certificates</label>
           <!-- we need to expose item template elemnts to be styled as named parts! -->
-          <etw-checklist exportparts="item"
-            id="revoked-list" 
-            class="text-black" 
-            .getItemTemplate=${item => html`
+          <etw-checklist exportparts="item" id="revoked-list" class="text-black" 
+            .itemTemplate=${item => html`
               <div class="flex w-full revoked-entry">
                 <span class="mr-auto">${item.name}</span>
                 ${item.thumbprint === '###'
@@ -491,7 +500,6 @@ class EtwAppSideBar extends LitMvvmElement {
                 }
               </div>`
             }
-            .attachInternals=${true}
             tabindex=-1>
           </etw-checklist>
         </form>
