@@ -6,14 +6,14 @@
   "license": "ISC",
   "browser": "index.js",
   "dependencies": {
-    "@kdsoft/lit-mvvm": "file:../../../KdSoft.lit-mvvm",
-    "@kdsoft/lit-mvvm-components": "file:../../../KdSoft.lit-mvvm/components",
+    "@kdsoft/lit-mvvm": "^2.1.4",
+    "@kdsoft/lit-mvvm-components": "^2.0.0-beta.3",
     "@nx-js/observer-util": "^4.2.2",
     "@nx-js/queue-util": "^1.1.1",
     "@tailwindcss/forms": "^0.5.3",
     "dialog-polyfill": "^0.5.6",
     "gettext.js": "^1.2.0",
-    "lit-html": "^2.6.1",
+    "lit-html": "^2.7.0",
     "@lit/reactive-element": "1.6.1"
   },
   "devDependencies": {
@@ -24,8 +24,8 @@
     "eslint": "^8.36.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.27.5",
-    "glob": "^9.2.1",
-    "rimraf": "^4.4.0",
+    "glob": "^9.3.2",
+    "rimraf": "^4.4.1",
     "tailwindcss": "^3.2.7"
   },
   "scripts": {
