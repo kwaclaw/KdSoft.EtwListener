@@ -188,8 +188,10 @@ class EtwAgent extends LitMvvmElement {
 
         kds-tab-container > form {
           position: relative;
+          display:flex;
+          width: 100%;
           break-inside: avoid;
-          margin: auto;
+          margin: 0;
           padding: 0.75rem;
         }
 
@@ -215,10 +217,34 @@ class EtwAgent extends LitMvvmElement {
           border-width: 1px;
         }
 
+        .form-header {
+          position:absolute;
+          left:0;
+          right:0;
+          top:0;
+        }
+
+        .form-footer {
+          position:absolute;
+          left:0;
+          right:0;
+          bottom:0;
+        }
+
+        .form-body {
+          position:absolute;
+          left: 0;
+          right: 0;
+          top: 2em;
+          bottom: 2em;
+        }
+
         .providers, .eventSinks {
           display: flex;
           writing-mode: horizontal-tb;
           flex-wrap: wrap;
+          align-content: flex-start;
+          overflow-y: auto;
           gap: 0.5rem;
         }
 
@@ -279,13 +305,13 @@ class EtwAgent extends LitMvvmElement {
         )}
 
         <form id="providers" class="border" style="${this.model._kds_activeTab === 0 ? '' : 'display:none'}">
-          <div class="flex my-2 pr-2">
+          <div class="form-header flex my-2 pr-2">
             <span class="font-semibold ${this.model.getProvidersModified(activeEntry) ? 'italic text-red-500' : ''}">Event Providers</span>
             <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
               @click=${e => this._addProviderClick(e, activeAgentState)}>
             </span>
           </div>
-          <div class="providers">
+          <div class="form-body providers border">
             ${activeAgentState.enabledProviders.map(provider => html`
               <provider-config
                 .model=${provider}
@@ -293,8 +319,7 @@ class EtwAgent extends LitMvvmElement {
               </provider-config>
             `)}
           </div>
-          <hr class="my-3" />
-          <div class="flex flex-wrap mt-2 bt-1">
+          <div class="form-footer flex flex-wrap mt-2 bt-1">
             <button type="button" class="py-1 px-2 ml-auto" @click=${() => this.model.applyProviders(activeAgentState)} title="Apply">
               <i class="fas fa-lg fa-check text-green-500"></i>
             </button>
@@ -305,13 +330,13 @@ class EtwAgent extends LitMvvmElement {
         </form>
 
         <form id="event-sinks" class="border" style="${this.model._kds_activeTab === 1 ? '' : 'display:none'}">
-          <div class="flex my-2 pr-2">
+          <div class="form-header flex my-2 pr-2">
             <span class="font-semibold ${this.model.getEventSinksModified(activeEntry) ? 'italic text-red-500' : ''}">Event Sinks</span>
             <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
               @click=${this._addEventSinkClick}>
             </span>
           </div>
-          <div class="eventSinks">
+          <div class="form-body eventSinks border">
             ${repeat(
               Object.entries(activeAgentState.eventSinks),
               entry => entry[0],
@@ -323,8 +348,7 @@ class EtwAgent extends LitMvvmElement {
               `
             )}
           </div>
-          <hr class="my-3" />
-          <div id="ok-cancel-buttons" class="flex flex-wrap mt-2 bt-1">
+          <div id="ok-cancel-buttons" class="form-footer flex flex-wrap mt-2 bt-1">
             <input type="file"
               @change=${e => this._importEventSinks(e, activeAgentState)}
               hidden />
@@ -344,15 +368,14 @@ class EtwAgent extends LitMvvmElement {
         </form>
 
         <form id="live-view" class="border" style="${this.model._kds_activeTab === 2 ? '' : 'display:none'}">
-          <div class="flex my-2 pr-2">
+          <div class="form-header flex my-2 pr-2">
             <span class="font-semibold ${this.model.getLiveViewOptionsModified(activeEntry) ? 'italic text-red-500' : ''}">Live View</span>
           </div>
-          <live-view-config
+          <live-view-config class="form-body"
             .model=${activeAgentState.liveViewConfigModel}
             .changeCallback=${opts => this.model.updateLiveViewOptions(activeEntry, opts)}
           ></live-view-config>
-          <hr class="my-3" />
-          <div class="flex flex-wrap mt-2 bt-1">
+          <div class="form-footer flex flex-wrap mt-2 bt-1">
             <button type="button" class="py-1 px-2 ml-auto" @click=${() => this.model.applyLiveViewOptions(activeAgentState)} title="Apply">
               <i class="fas fa-lg fa-check text-green-500"></i>
             </button>
@@ -364,12 +387,11 @@ class EtwAgent extends LitMvvmElement {
 
         <form id="processing" class="border" style="${this.model._kds_activeTab === 3 ? '' : 'display:none'}"
            @change=${e => this._processingFieldChange(e, activeAgentState)}>
-          <div class="flex my-2 pr-2">
+          <div class="form-header flex my-2 pr-2">
             <span class="font-semibold ${this.model.getProcessingModified(activeEntry) ? 'italic text-red-500' : ''}">Filter</span>
           </div>
-          <filter-edit id="filterEdit" class="p-2" .model=${processingModel.filter}></filter-edit>
-          <hr class="my-3" />
-          <div class="flex flex-wrap mt-2 bt-1">
+          <filter-edit id="filterEdit" class="form-body p-2" .model=${processingModel.filter}></filter-edit>
+          <div class="form-footer flex flex-wrap mt-2 bt-1">
             <button type="button" class="py-1 px-2" @click=${() => this.model.testFilter(activeAgentState)} title="Test">
               <i class="fas fa-lg fa-vial" style="color:orange"></i>
             </button>

@@ -83,15 +83,15 @@ class RollingFileSinkConfig extends LitMvvmElement {
               <label for="fileExtension">File Extension</label>
               <input type="text" id="fileExtension" name="fileExtension" .value=${opts.fileExtension} required></input>
               <label for="useLocalTime">Use Local Time</label>
-              <input type="checkbox" id="useLocalTime" name="useLocalTime" .checked=${opts.useLocalTime}></input>
+              <input type="checkbox" class="kds-checkbox" id="useLocalTime" name="useLocalTime" .checked=${opts.useLocalTime}></input>
               <label for="fileSizeLimitKB">File-size Limit (KB)</label>
               <input type="number" id="fileSizeLimitKB" name="fileSizeLimitKB" .value=${opts.fileSizeLimitKB} min="1"></input>
               <label for="maxFileCount">Max File Count</label>
               <input type="number" id="maxFileCount" name="maxFileCount" .value=${opts.maxFileCount} min="1"></input>
               <label for="newFileOnStartup">New File on Startup</label>
-              <input type="checkbox" id="newFileOnStartup" name="newFileOnStartup" .checked=${opts.newFileOnStartup}></input>
+              <input type="checkbox" class="kds-checkbox" id="newFileOnStartup" name="newFileOnStartup" .checked=${opts.newFileOnStartup}></input>
               <label for="relaxedJsonEscaping">Relaxed JSON Escaping</label>
-              <input type="checkbox" id="relaxedJsonEscaping" name="relaxedJsonEscaping" .checked=${opts.relaxedJsonEscaping}></input>
+              <input type="checkbox" class="kds-checkbox" id="relaxedJsonEscaping" name="relaxedJsonEscaping" .checked=${opts.relaxedJsonEscaping}></input>
             </div>
           </fieldset>
         </section>
