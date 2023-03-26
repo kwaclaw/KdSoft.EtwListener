@@ -18,7 +18,7 @@ namespace EtwEvents.AzureDataCollector.Tests
         record struct EventSinkContext(string SiteName, ILogger Logger): IEventSinkContext;
 
         [Fact]
-        public async void Test1() {
+        public async void IngestBatch() {
             var opts = new DataCollectorSinkOptions {
                 CustomerId = "1ce7293d-adc8-4fab-b242-04a15bfb8f1b",
                 LogType = "etw_analytics_demo"
@@ -29,7 +29,6 @@ namespace EtwEvents.AzureDataCollector.Tests
                 var batch = new EtwEventBatch();
                 for (int i = 1; i <= 80; i++) {
                     var evt = new EtwEvent() { Id = (uint)i, TimeStamp = DateTimeOffset.UtcNow.ToTimestamp() };
-                    batch.Events.Clear();
                     batch.Events.Add(evt);
                 }
                 await eventSink.WriteAsync(batch).ConfigureAwait(false);
@@ -40,7 +39,5 @@ namespace EtwEvents.AzureDataCollector.Tests
 
             await eventSink.RunTask.ConfigureAwait(false);
         }
-
-
     }
 }
