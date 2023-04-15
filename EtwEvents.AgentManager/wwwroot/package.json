@@ -7,26 +7,26 @@
   "browser": "index.js",
   "dependencies": {
     "@kdsoft/lit-mvvm": "^2.1.4",
-    "@kdsoft/lit-mvvm-components": "^2.0.0-beta.3",
+    "@kdsoft/lit-mvvm-components": "^2.0.0-beta.4",
     "@nx-js/observer-util": "^4.2.2",
     "@nx-js/queue-util": "^1.1.1",
     "@tailwindcss/forms": "^0.5.3",
     "dialog-polyfill": "^0.5.6",
     "gettext.js": "^1.2.0",
-    "lit-html": "^2.7.0",
+    "lit-html": "^2.7.2",
     "@lit/reactive-element": "1.6.1"
   },
   "devDependencies": {
-    "@fortawesome/fontawesome-free": "^6.3.0",
+    "@fortawesome/fontawesome-free": "^6.4.0",
     "autoprefixer": "10.4.14",
     "copy-node-modules": "^1.1.1",
     "cpy-cli": "^4.2.0",
-    "eslint": "^8.36.0",
+    "eslint": "^8.38.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.27.5",
-    "glob": "^9.3.2",
-    "rimraf": "^4.4.1",
-    "tailwindcss": "^3.2.7"
+    "glob": "^10.1.0",
+    "rimraf": "^5.0.0",
+    "tailwindcss": "^3.3.1"
   },
   "scripts": {
     "wrap-css": "node node_modules/@kdsoft/lit-mvvm-components/scripts/wrap-css.mjs",
