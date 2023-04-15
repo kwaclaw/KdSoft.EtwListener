@@ -1,0 +1,13 @@
+<Project>
+
+  <Import Project="..\common.props" />
+ 
+  <PropertyGroup>
+    <RootNamespace>KdSoft.EtwEvents.EventSinks</RootNamespace>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+  </PropertyGroup>
+  
+</Project>

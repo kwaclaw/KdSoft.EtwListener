@@ -7,6 +7,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		.filenesting.json = .filenesting.json
 		CleanupBinObj.cmd = CleanupBinObj.cmd
+		common.props = common.props
 		InstallDevCertificates.cmd = InstallDevCertificates.cmd
 		InstallDevCertificates.ps1 = InstallDevCertificates.ps1
 		msbuild.bat = msbuild.bat
@@ -22,6 +23,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.PushAgent", "EtwEvents.PushAgent\EtwEvents.PushAgent.csproj", "{E3949C98-B45B-40F4-9830-2A19C9383CE3}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "EventSinks", "EventSinks", "{89C33CBB-6F1B-431C-AC75-24C9DBD9A3E5}"
+	ProjectSection(SolutionItems) = preProject
+		EventSinks\eventSink.props = EventSinks\eventSink.props
+		EventSinks\eventSink.targets = EventSinks\eventSink.targets
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.MongoSink", "EventSinks\EtwEvents.MongoSink\EtwEvents.MongoSink.csproj", "{CD7CBB13-8F2B-4CBC-B2E7-4DBC7F2005AD}"
 EndProject
@@ -43,9 +48,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.Shared.EventSink"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.OpenSearchSink", "EventSinks\EtwEvents.OpenSearchSink\EtwEvents.OpenSearchSink.csproj", "{38BEA472-D57A-402F-A6C4-A3944374A250}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.AzureDataCollector", "EventSinks\EtwEvents.AzureDataCollector\EtwEvents.AzureDataCollector.csproj", "{AB8EB739-C383-44C6-B4A5-0F5091F979DC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.AzureDataCollectorSink", "EventSinks\EtwEvents.AzureDataCollectorSink\EtwEvents.AzureDataCollectorSink.csproj", "{AB8EB739-C383-44C6-B4A5-0F5091F979DC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.AzureDataCollector.Tests", "EventSinks\EtwEvents.AzureDataCollector.Tests\EtwEvents.AzureDataCollector.Tests.csproj", "{4B8DAFE0-7940-467A-ACEB-A16F1235F416}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.AzureDataCollectorSink.Tests", "EventSinks\EtwEvents.AzureDataCollectorSink.Tests\EtwEvents.AzureDataCollectorSink.Tests.csproj", "{4B8DAFE0-7940-467A-ACEB-A16F1235F416}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "QuickStart", "QuickStart", "{31405B84-DF82-40E0-84C4-AB26FF682137}"
 	ProjectSection(SolutionItems) = preProject

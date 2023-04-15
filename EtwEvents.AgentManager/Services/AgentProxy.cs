@@ -3,7 +3,7 @@ using Grpc.Core;
 using KdSoft.EtwLogging;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Net.Http.Headers;
-using fu = KdSoft.EtwEvents.FilterUtils;
+using Kdfu = KdSoft.EtwEvents.FilterUtils;
 
 namespace KdSoft.EtwEvents.AgentManager
 {
@@ -24,7 +24,7 @@ namespace KdSoft.EtwEvents.AgentManager
             this._logger = logger;
             // the default state should have reasonable default properties
             var emptyFilter = Filter.MergeFilterTemplate();
-            var emptyFilterSource = fu.BuildFilterSource(emptyFilter);
+            var emptyFilterSource = Kdfu.BuildFilterSource(emptyFilter);
             this._state = new AgentState {
                 Id = agentId,
                 Host = "<Pending>",

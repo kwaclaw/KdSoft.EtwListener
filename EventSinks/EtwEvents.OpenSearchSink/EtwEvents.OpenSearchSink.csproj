@@ -1,16 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <Import Project="..\eventSink.props" />
   <Import Project="..\eventSink.targets" />
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <VersionPrefix>1.0.1</VersionPrefix>
-    <LangVersion>Latest</LangVersion>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <EnableDynamicLoading>true</EnableDynamicLoading>
-    <RootNamespace>KdSoft.EtwEvents.EventSinks</RootNamespace>
-    <AssemblyName>KdSoft.EtwEvents.OpenSearchSink</AssemblyName>
+    <VersionPrefix>1.0.2</VersionPrefix>
     <SinkName>OpenSearchSink</SinkName>
   </PropertyGroup>
 

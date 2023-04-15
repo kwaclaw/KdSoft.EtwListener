@@ -1,22 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <Import Project="..\eventSink.props" />
   <Import Project="..\eventSink.targets" />
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <VersionPrefix>1.1.1</VersionPrefix>
-    <LangVersion>Latest</LangVersion>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <EnableDynamicLoading>true</EnableDynamicLoading>
-    <RootNamespace>KdSoft.EtwEvents.EventSinks</RootNamespace>
-    <AssemblyName>KdSoft.EtwEvents.gRPCSink</AssemblyName>
+    <VersionPrefix>1.1.2</VersionPrefix>
     <SinkName>gRPCSink</SinkName>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Grpc.Net.Client" Version="2.52.0" />
-    <PackageReference Include="Grpc.Tools" Version="2.53.0">
+    <PackageReference Include="Grpc.Tools" Version="2.54.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

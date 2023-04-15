@@ -5,7 +5,7 @@ using KdSoft.EtwLogging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace EtwEvents.AzureDataCollector.Tests
+namespace EtwEvents.AzureDataCollectorSink.Tests
 {
     public class UnitTests
     {

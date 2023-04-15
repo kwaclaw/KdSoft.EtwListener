@@ -1,13 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
 
+  <Import Project="..\common.props" />
+
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <AssemblyName>KdSoft.EtwEvents.PushAgent</AssemblyName>
-    <RootNamespace>KdSoft.EtwEvents.PushAgent</RootNamespace>
     <VersionPrefix>1.1.2</VersionPrefix>
     <LangVersion>Latest</LangVersion>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>dotnet-EtwEvents.PushAgent-2DA4777E-5631-4E75-9630-82767D1F596C</UserSecretsId>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
@@ -36,12 +33,12 @@
   <ItemGroup>
     <PackageReference Include="KdSoft.Logging" Version="1.1.2" />
     <PackageReference Include="LaunchDarkly.EventSource" Version="5.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="7.0.4" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="7.0.4" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="7.0.5" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="7.0.5" />
     <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="7.0.4" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="7.0.5" />
   </ItemGroup>
 
   <ItemGroup>

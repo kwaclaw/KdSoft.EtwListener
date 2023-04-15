@@ -1,13 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <Import Project="..\common.props" />
+
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <AssemblyName>KdSoft.EtwEvents.Server.Shared</AssemblyName>
     <RootNamespace>KdSoft.EtwEvents.Server</RootNamespace>
     <VersionPrefix>1.0.1</VersionPrefix>
-    <LangVersion>Latest</LangVersion>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,10 +12,10 @@
     <PackageReference Include="KdSoft.Faster" Version="2.0.1" />
     <PackageReference Include="KdSoft.Utils.Portable" Version="4.0.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.5.0" />
-    <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.0.8" />
+    <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.1.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="7.0.4" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="7.0.5" />
   </ItemGroup>
 
   <ItemGroup>

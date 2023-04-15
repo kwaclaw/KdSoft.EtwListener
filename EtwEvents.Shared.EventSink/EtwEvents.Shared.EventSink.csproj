@@ -1,13 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <Import Project="..\common.props" />
+
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <AssemblyName>KdSoft.EtwEvents.Shared.EventSink</AssemblyName>
     <RootNamespace>KdSoft.EtwEvents</RootNamespace>
     <VersionPrefix>1.0.1</VersionPrefix>
-    <LangVersion>Latest</LangVersion>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>

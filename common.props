@@ -1,0 +1,26 @@
+<Project>
+
+  <PropertyGroup>
+    <Copyright>Copyright © Karl Waclawek 2023</Copyright>
+    <Authors>Karl Waclawek</Authors>
+    <Company>KD Soft</Company>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <RootNamespace>KdSoft.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+    <AssemblyName>KdSoft.$(MSBuildProjectName)</AssemblyName>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <LangVersion>Latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <Datestamp>$([System.DateTime]::Now.ToString("yyyy-MM-dd"))</Datestamp>
+    <Timestamp>$([System.DateTime]::Now.ToString("yyyy-MM-ddTHHmm"))</Timestamp>
+  </PropertyGroup>
+
+</Project>

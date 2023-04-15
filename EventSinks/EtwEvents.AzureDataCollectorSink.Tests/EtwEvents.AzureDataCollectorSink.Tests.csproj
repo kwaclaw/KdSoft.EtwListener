@@ -1,10 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <Import Project="..\eventSink.props" />
+
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
@@ -22,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EtwEvents.AzureDataCollector\EtwEvents.AzureDataCollector.csproj" />
+    <ProjectReference Include="..\EtwEvents.AzureDataCollectorSink\EtwEvents.AzureDataCollectorSink.csproj" />
   </ItemGroup>
 
 </Project>
