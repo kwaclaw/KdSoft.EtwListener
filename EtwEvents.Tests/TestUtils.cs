@@ -1,6 +1,6 @@
 ﻿using Microsoft.DotNet.PlatformAbstractions;
 
-namespace EtwEvents.Tests
+namespace KdSoft.EtwEvents.Tests
 {
     static class TestUtils
     {

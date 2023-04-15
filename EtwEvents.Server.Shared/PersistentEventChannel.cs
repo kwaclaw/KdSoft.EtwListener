@@ -4,7 +4,7 @@ using KdSoft.EtwLogging;
 using KdSoft.Faster;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
-using tracing = Microsoft.Diagnostics.Tracing;
+using MdTracing = Microsoft.Diagnostics.Tracing;
 
 namespace KdSoft.EtwEvents.Server
 {
@@ -35,7 +35,7 @@ namespace KdSoft.EtwEvents.Server
             this._lastWrittenMSecs = Environment.TickCount;
         }
 
-        public override bool PostEvent(tracing.TraceEvent evt) {
+        public override bool PostEvent(MdTracing.TraceEvent evt) {
             if (_stoppingTokenSource?.Token.IsCancellationRequested ?? true) {
                 return false;
             }

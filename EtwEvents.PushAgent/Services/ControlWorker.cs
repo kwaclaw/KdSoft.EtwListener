@@ -13,8 +13,8 @@ using Google.Protobuf.WellKnownTypes;
 using KdSoft.EtwEvents.Server;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Options;
-using fu = KdSoft.EtwEvents.FilterUtils;
-using pb = Google.Protobuf;
+using Kdfu = KdSoft.EtwEvents.FilterUtils;
+using Gpb = Google.Protobuf;
 
 namespace KdSoft.EtwEvents.PushAgent
 {
@@ -114,13 +114,13 @@ namespace KdSoft.EtwEvents.PushAgent
                     File.WriteAllBytes(_stoppedFilePath, _emptyBytes);
                     _ = await StopSessionWorker(default).ConfigureAwait(false);
 
-                    var emptySettings = new pb.Collections.RepeatedField<ProviderSetting>();
+                    var emptySettings = new Gpb.Collections.RepeatedField<ProviderSetting>();
                     _sessionConfig.SaveProviderSettings(emptySettings);
 
                     var emptyState = new ProcessingState();
                     _sessionConfig.SaveProcessingState(emptyState, true);
 
-                    var emptySinks = new pb.Collections.MapField<string, EventSinkProfile>();
+                    var emptySinks = new Gpb.Collections.MapField<string, EventSinkProfile>();
                     _sessionConfig.SaveSinkProfiles(emptySinks);
 
                     var emptyOptions = new LiveViewOptions();
@@ -140,7 +140,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     var emptyFilter = string.IsNullOrEmpty(sse.Data) ? null : Filter.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
                     if (emptyFilter == null)
                         return;
-                    _emptyFilterSource = fu.BuildFilterSource(emptyFilter);
+                    _emptyFilterSource = Kdfu.BuildFilterSource(emptyFilter);
                     break;
 
                 case Constants.TestFilterEvent:

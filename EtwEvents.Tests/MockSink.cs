@@ -1,7 +1,7 @@
 ﻿using KdSoft.EtwEvents;
 using KdSoft.EtwLogging;
 
-namespace EtwEvents.Tests
+namespace KdSoft.EtwEvents.Tests
 {
     class MockSink: IEventSink
     {

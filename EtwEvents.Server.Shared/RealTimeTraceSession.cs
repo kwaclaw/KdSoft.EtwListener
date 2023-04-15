@@ -11,7 +11,7 @@ using Microsoft.Diagnostics.Tracing;
 using Microsoft.Diagnostics.Tracing.Session;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using tracing = Microsoft.Diagnostics.Tracing;
+using MdTracing = Microsoft.Diagnostics.Tracing;
 
 namespace KdSoft.EtwEvents.Server
 {
@@ -57,7 +57,7 @@ namespace KdSoft.EtwEvents.Server
                 _instance.EnableProviderTimeoutMSec = 10000;
                 // we don't want the trace session to keep running
                 _instance.StopOnDispose = true;
-                _instance.EnableProvider(TplActivities.TplEventSourceGuid, tracing.TraceEventLevel.Always, TplActivities.TaskFlowActivityIdsKeyword);
+                _instance.EnableProvider(TplActivities.TplEventSourceGuid, MdTracing.TraceEventLevel.Always, TplActivities.TaskFlowActivityIdsKeyword);
             }
         }
 
@@ -116,7 +116,7 @@ namespace KdSoft.EtwEvents.Server
             }
         }
 
-        public Task<bool> StartEvents(Action<tracing.TraceEvent> postEvent, CancellationToken cancelToken) {
+        public Task<bool> StartEvents(Action<MdTracing.TraceEvent> postEvent, CancellationToken cancelToken) {
             CheckDisposed();
 
             int alreadyStarted = Interlocked.CompareExchange(ref _isStarted, 1, 0);
@@ -191,7 +191,7 @@ namespace KdSoft.EtwEvents.Server
         }
 
         public bool EnableProvider(ProviderSetting setting) {
-            var result = Instance.EnableProvider(setting.Name, (tracing.TraceEventLevel)setting.Level, setting.MatchKeywords);
+            var result = Instance.EnableProvider(setting.Name, (MdTracing.TraceEventLevel)setting.Level, setting.MatchKeywords);
             _logger.LogInformation("Enabled provider '{provider}': {enabled}.", setting.Name, result);
             _enabledProviders = _enabledProviders.SetItem(setting.Name, setting);
             return result;

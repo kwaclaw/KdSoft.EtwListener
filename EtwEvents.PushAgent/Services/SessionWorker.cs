@@ -8,7 +8,7 @@ using KdSoft.EtwLogging;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.Extensions.Options;
-using fu = KdSoft.EtwEvents.FilterUtils;
+using Kdfu = KdSoft.EtwEvents.FilterUtils;
 
 namespace KdSoft.EtwEvents.PushAgent
 {
@@ -95,7 +95,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
             // an empty filter is OK
             if (filter.FilterParts.Count > 0) {
-                var (sourceText, dynamicRanges) = fu.BuildSourceText(filter);
+                var (sourceText, dynamicRanges) = Kdfu.BuildSourceText(filter);
                 if (sourceText == null) {
                     var diagnostic = Diagnostic.Create(
                         "FL1000", "Filter", "Input filter not well formed.", DiagnosticSeverity.Error, DiagnosticSeverity.Error, true, 0
@@ -105,7 +105,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 else {
                     var diagnostics = RealTimeTraceSession.TestFilter(sourceText);
                     result.AddDiagnostics(diagnostics);
-                    result.FilterSource = fu.BuildFilterSource(sourceText, dynamicRanges!, filter);
+                    result.FilterSource = Kdfu.BuildFilterSource(sourceText, dynamicRanges!, filter);
                 }
             }
 
@@ -119,7 +119,7 @@ namespace KdSoft.EtwEvents.PushAgent
             var result = new BuildFilterResult();
 
             if (options.Filter.FilterParts.Count > 0) {
-                var (sourceText, dynamicRanges) = fu.BuildSourceText(options.Filter);
+                var (sourceText, dynamicRanges) = Kdfu.BuildSourceText(options.Filter);
                 if (sourceText == null) {
                     var diagnostic = Diagnostic.Create(
                         "FL1000", "Filter", "Input filter not well formed.", DiagnosticSeverity.Error, DiagnosticSeverity.Error, true, 0
@@ -129,7 +129,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 else {
                     var diagnostics = ses.SetFilter(sourceText, _config);
                     result.AddDiagnostics(diagnostics);
-                    result.FilterSource = fu.BuildFilterSource(sourceText, dynamicRanges!, options.Filter);
+                    result.FilterSource = Kdfu.BuildFilterSource(sourceText, dynamicRanges!, options.Filter);
                 }
             }
             else {

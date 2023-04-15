@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using KdSoft.EtwEvents;
 
-namespace EtwEvents.Tests
+namespace KdSoft.EtwEvents.Tests
 {
     class MockSinkFactory: IEventSinkFactory
     {

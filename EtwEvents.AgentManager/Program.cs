@@ -70,10 +70,8 @@ builder.WebHost.ConfigureKestrel((context, options) => {
 // builder.Host.UseWindowsService();
 
 if (WindowsServiceHelpers.IsWindowsService()) {
-    builder.Host.ConfigureLogging((hostingContext, logging) => {
-        logging.AddEventLog();
-    })
-    .ConfigureServices((hostContext, services) => {
+    builder.Logging.AddEventLog();
+    builder.Host.ConfigureServices((hostContext, services) => {
         services.AddSingleton<IHostLifetime, WindowsServiceLifetime>();
         services.Configure<EventLogSettings>(settings => {
             if (string.IsNullOrEmpty(settings.SourceName)) {
@@ -270,11 +268,9 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseEndpoints(endpoints => {
-    endpoints.MapRazorPages();
-    endpoints.MapControllers();
-    endpoints.MapGrpcService<LiveViewSinkService>();
-});
+app.MapRazorPages();
+app.MapControllers();
+app.MapGrpcService<LiveViewSinkService>();
 
 app.Run();
 

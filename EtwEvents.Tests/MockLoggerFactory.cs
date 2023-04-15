@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace EtwEvents.Tests
+namespace KdSoft.EtwEvents.Tests
 {
     class MockLoggerFactory: ILoggerFactory
     {

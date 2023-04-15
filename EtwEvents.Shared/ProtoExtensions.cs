@@ -2,8 +2,8 @@
 using System.Diagnostics;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.Diagnostics.Tracing;
-using ca = Microsoft.CodeAnalysis;
-using cat = Microsoft.CodeAnalysis.Text;
+using Mca = Microsoft.CodeAnalysis;
+using Mcat = Microsoft.CodeAnalysis.Text;
 
 namespace KdSoft.EtwLogging
 {
@@ -28,7 +28,7 @@ namespace KdSoft.EtwLogging
             return etw;
         }
 
-        public static BuildFilterResult AddDiagnostics(this BuildFilterResult bfr, ImmutableArray<ca.Diagnostic> diagnostics) {
+        public static BuildFilterResult AddDiagnostics(this BuildFilterResult bfr, ImmutableArray<Mca.Diagnostic> diagnostics) {
             foreach (var diag in diagnostics) {
                 LinePositionSpan? lineSpan = null;
                 if (diag.Location.IsInSource) {
@@ -51,7 +51,7 @@ namespace KdSoft.EtwLogging
             return bfr;
         }
 
-        public static FilterSource AddSourceLines(this FilterSource filterSource, IReadOnlyList<cat.TextLine> lines) {
+        public static FilterSource AddSourceLines(this FilterSource filterSource, IReadOnlyList<Mcat.TextLine> lines) {
             foreach (var line in lines) {
                 var textLine = new TextLine {
                     Line = line.LineNumber,
@@ -64,7 +64,7 @@ namespace KdSoft.EtwLogging
 
         public static FilterSource AddDynamicLineSpans(
             this FilterSource filterSource,
-            IReadOnlyList<cat.LinePositionSpan> linePositionSpans,
+            IReadOnlyList<Mcat.LinePositionSpan> linePositionSpans,
             IList<FilterPart> dynamicParts
         ) {
             Debug.Assert(linePositionSpans.Count == dynamicParts.Count);

@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace EtwEvents.Tests
+namespace KdSoft.EtwEvents.Tests
 {
     public class RetryTests
     {

@@ -4,7 +4,7 @@ using KdSoft.EtwEvents.AgentManager;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace EtwEvents.Tests
+namespace KdSoft.EtwEvents.Tests
 {
     public class CertificateTests
     {

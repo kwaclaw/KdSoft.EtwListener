@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace EtwEvents.Tests
+namespace KdSoft.EtwEvents.Tests
 {
     class MockLogger: ILogger
     {
