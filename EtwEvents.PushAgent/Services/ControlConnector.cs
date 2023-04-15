@@ -1,6 +1,5 @@
 ﻿using System.Threading.Channels;
 using LaunchDarkly.EventSource;
-using Microsoft.Extensions.Options;
 
 namespace KdSoft.EtwEvents.PushAgent
 {
@@ -18,7 +17,6 @@ namespace KdSoft.EtwEvents.PushAgent
         public ControlConnector(
             SocketsHandlerCache httpHandlerCache,
             Channel<ControlEvent> channel,
-            IOptionsMonitor<ControlOptions> controlOptions,
             ILogger<ControlConnector> logger
          ) {
             this._httpHandlerCache = httpHandlerCache;
@@ -79,11 +77,11 @@ namespace KdSoft.EtwEvents.PushAgent
                 var lastEventIdStr = string.IsNullOrEmpty(e.Message.LastEventId) ? "-1" : e.Message.LastEventId;
                 var messageDataStr = string.IsNullOrEmpty(e.Message.Data) ? "<None>" : e.Message.Data;
                 if (e.EventName == Constants.GetStateEvent) {
-                    _logger?.LogDebug("{method}: {eventName}-{lastEventId}, {messageData}", nameof(EventReceived), e.EventName, lastEventIdStr, messageDataStr);
+                    _logger.LogDebug("{method}: {eventName}-{lastEventId}, {messageData}", nameof(EventReceived), e.EventName, lastEventIdStr, messageDataStr);
                 }
                 else {
                     var dataStr = e.EventName == Constants.InstallCertEvent ? "" : messageDataStr;
-                    _logger?.LogInformation("{method}: {eventName}-{lastEventId}, {messageData}", nameof(EventReceived), e.EventName, lastEventIdStr, dataStr);
+                    _logger.LogInformation("{method}: {eventName}-{lastEventId}, {messageData}", nameof(EventReceived), e.EventName, lastEventIdStr, dataStr);
                 }
 
                 if (e.EventName == Constants.CloseEvent) {
@@ -93,28 +91,28 @@ namespace KdSoft.EtwEvents.PushAgent
                     var controlEvent = new ControlEvent { Event = e.EventName, Id = e.Message.LastEventId ?? "", Data = e.Message.Data ?? "" };
                     var couldWrite = _channel.Writer.TryWrite(controlEvent);
                     if (!couldWrite) {
-                        _logger?.LogError("Error in {method}. Could not write event {event} to control channel, event data:\n{data}",
+                        _logger.LogError("Error in {method}. Could not write event {event} to control channel, event data:\n{data}",
                             nameof(EventReceived), controlEvent.Event, e.EventName == Constants.InstallCertEvent ? "" : controlEvent.Data);
                     }
                 }
             }
             catch (Exception ex) {
-                _logger?.LogError(ex, "Error in {method}.", nameof(EventReceived));
+                _logger.LogError(ex, "Error in {method}.", nameof(EventReceived));
             }
         }
 
         void EventError(object? sender, ExceptionEventArgs e) {
-            _logger?.LogError(e.Exception, "Error in EventSource.");
+            _logger.LogError(e.Exception, "Error in EventSource.");
         }
 
         void EventSourceStateChanged(object? sender, StateChangedEventArgs e) {
-            _logger?.LogInformation("{method}: {readyState}", nameof(EventSourceStateChanged), e.ReadyState);
+            _logger.LogInformation("{method}: {readyState}", nameof(EventSourceStateChanged), e.ReadyState);
         }
 
         public void Dispose() {
             try {
                 var context = Interlocked.Exchange(ref _controlContext, null);
-                if (context != null) {
+                if (context is not null) {
                     context.Source.Dispose();
                     context.CancelRegistration.Dispose();
                 }
@@ -122,6 +120,56 @@ namespace KdSoft.EtwEvents.PushAgent
             finally {
                 // just in case
                 _tcs.TrySetResult();
+            }
+        }
+
+        class ControlContext
+        {
+            readonly ILogger _logger;
+
+            public ControlContext(EventSource source, ILogger logger) {
+                Source = source;
+                _logger = logger;
+            }
+
+            public EventSource Source { get; }
+            public CancellationTokenRegistration CancelRegistration { get; private set; } = default;
+            public Task? SseTask { get; private set; } = default;
+
+            public async Task StopAsync(TaskCompletionSource? tcs = null) {
+                // we do not want oldEventSource to be processed through the stoppingToken
+                CancelRegistration.Dispose();
+                try {
+                    Source.Close();
+                    if (SseTask != null) {
+                        await SseTask.ConfigureAwait(false);
+                    }
+                    tcs?.TrySetResult();
+                }
+                catch (OperationCanceledException) {
+                    tcs?.TrySetCanceled();
+                    _logger.LogInformation("EventSource was canceled.");
+
+                }
+                catch (Exception ex) {
+                    tcs?.TrySetException(ex);
+                    _logger.LogError(ex, "Error in EventSource.");
+                }
+                finally {
+                    Source.Dispose();
+                }
+            }
+
+            public bool Start(CancellationTokenRegistration cancelRegistration) {
+                try {
+                    SseTask = Source.StartAsync();
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "Error starting EventSource.");
+                    return false;
+                }
+                CancelRegistration = cancelRegistration;
+                return true;
             }
         }
     }

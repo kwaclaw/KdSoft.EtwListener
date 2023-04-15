@@ -220,7 +220,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 // ControlWorker.GetEventSinkStates needs to pick up this error and reports it for this sink profile
                 var couldWrite = _controlChannel.Writer.TryWrite(ControlConnector.GetStateMessage);
                 if (!couldWrite) {
-                    _logger?.LogError("Error in {method}. Could not write event {event} to control channel.", nameof(UpdateEventChannel), ControlConnector.GetStateMessage.Event);
+                    _logger.LogError("Error in {method}. Could not write event {event} to control channel.", nameof(UpdateEventChannel), ControlConnector.GetStateMessage.Event);
                 }
                 return;
             }
@@ -233,7 +233,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     if (_eventProcessor.ActiveEventChannels.ContainsKey(sinkProfile.Name)) {
                         var couldWrite = _controlChannel.Writer.TryWrite(ControlConnector.GetStateMessage);
                         if (!couldWrite) {
-                            _logger?.LogError("Error in {method}. Could not write event {event} to control channel.", "Changed Handler", ControlConnector.GetStateMessage.Event);
+                            _logger.LogError("Error in {method}. Could not write event {event} to control channel.", "Changed Handler", ControlConnector.GetStateMessage.Event);
                         }
                     }
                 };
@@ -251,7 +251,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 // ControlWorker.GetEventSinkStates needs to pick up this error and reports it for this sink profile
                 var couldWrite = _controlChannel.Writer.TryWrite(ControlConnector.GetStateMessage);
                 if (!couldWrite) {
-                    _logger?.LogError("Error in {method}. Could not write event {event} to control channel.", nameof(UpdateEventChannel), ControlConnector.GetStateMessage.Event);
+                    _logger.LogError("Error in {method}. Could not write event {event} to control channel.", nameof(UpdateEventChannel), ControlConnector.GetStateMessage.Event);
                 }
                 return;
             }

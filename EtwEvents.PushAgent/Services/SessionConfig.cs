@@ -109,7 +109,7 @@ namespace KdSoft.EtwEvents.PushAgent
                         return null;
                     }
                     try {
-                        return JsonObject.Parse(buffer.Memory.Span.Slice(0, byteCount), _nodeOptions, _docOptions);
+                        return JsonObject.Parse(buffer.Memory.Span[..byteCount], _nodeOptions, _docOptions);
                     }
                     catch (Exception ex) {
                         _logger.LogError(ex, "Error in {method}.", nameof(ReadNode));
