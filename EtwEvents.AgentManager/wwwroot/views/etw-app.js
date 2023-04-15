@@ -425,7 +425,7 @@ class EtwApp extends LitMvvmElement {
                 <div data-tabid="agent-config" class=${classMap(agentConfigTabType)}>
                   <a href="#">Configuration</a>
 
-                  <input type="file"
+                  <input type="file" accept=".json"
                     @change=${e => this._importAgentConfig(e, activeEntry)}
                     hidden />
                   <button class="ml-4 text-gray-300" @click=${e => this._importAgentConfigDialog(e)} title="Import Configuration">

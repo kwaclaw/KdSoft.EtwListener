@@ -349,7 +349,7 @@ class EtwAgent extends LitMvvmElement {
             )}
           </div>
           <div id="ok-cancel-buttons" class="form-footer flex flex-wrap mt-2 bt-1">
-            <input type="file"
+            <input type="file" accept=".json"
               @change=${e => this._importEventSinks(e, activeAgentState)}
               hidden />
             <button type="button" class="mr-1 text-gray-600" @click=${e => this._importEventSinksDialog(e)} title="Import">
