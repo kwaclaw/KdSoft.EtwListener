@@ -362,7 +362,6 @@ class EtwAppModel {
 
     this.stopEtwEvents();
     const evs = new EventSource(`Manager/GetEtwEvents?agentId=${agentState.id}`);
-    this.etwEventSource = evs;
 
     agentState.liveEvents = new RingBuffer(2048);
     let seqNo = 0;
@@ -378,6 +377,9 @@ class EtwAppModel {
         console.error(err);
       }
     };
+    evs.onopen = e => {
+      this.etwEventSource = evs;
+    }
     evs.onerror = e => {
       console.error('GetEtwEvents event source error.');
     };

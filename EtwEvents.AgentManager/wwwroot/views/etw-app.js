@@ -401,7 +401,7 @@ class EtwApp extends LitMvvmElement {
     const certInfoClassType = (window.clientCertLifeDays < window.certExpiryWarningDays) ? tabClassList.certInfoWarning : tabClassList.certInfo;
 
     const isRunning = activeEntry?.current?.isRunning;
-    const isLive = !!this.model.etwEventSource;
+    const isLive = this.model.etwEventSource && this.model.etwEventSource.readyState === 1;
     const sinkClass = isRunning ? (isLive ? 'text-yellow-300' : 'text-yellow-600') : 'text-gray-300';
 
     return html`
