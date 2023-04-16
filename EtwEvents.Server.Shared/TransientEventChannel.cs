@@ -83,6 +83,9 @@ namespace KdSoft.EtwEvents.Server
             try {
                 bool isCompleted;
 
+                var maxWriteDelayMSecs = this._maxWriteDelayMSecs;
+                _timer.Change(maxWriteDelayMSecs, maxWriteDelayMSecs);
+
                 do {
                     isCompleted = true;
                     var batch = new EtwEventBatch();

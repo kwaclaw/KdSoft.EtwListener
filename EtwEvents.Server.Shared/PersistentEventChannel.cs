@@ -115,6 +115,10 @@ namespace KdSoft.EtwEvents.Server
                 bool isCompleted;
 
                 using var reader = _channel.GetNewReader();
+
+                var maxWriteDelayMSecs = this._maxWriteDelayMSecs;
+                _timer.Change(maxWriteDelayMSecs, maxWriteDelayMSecs);
+
                 do {
                     isCompleted = true;
                     var batch = new EtwEventBatch();
