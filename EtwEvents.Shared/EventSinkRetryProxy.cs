@@ -126,8 +126,10 @@ namespace KdSoft.EtwEvents
 
         async Task<bool> HandleFailedWrite() {
             var sink = Interlocked.Exchange(ref _sink, null);
-            if (sink == null)
-                throw new InvalidOperationException($"EventSink instance {_sinkId} is null.");
+            if (sink == null) {
+                _logger.LogWarning("Failed write on null EventSink instance {eventSink}", _sinkId);
+                return false;
+            }
 
             try {
                 await sink.RunTask.WaitAsync(EventSinkTimeout).ConfigureAwait(false);
