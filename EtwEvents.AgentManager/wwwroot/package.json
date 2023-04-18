@@ -19,7 +19,6 @@
   "devDependencies": {
     "@fortawesome/fontawesome-free": "^6.4.0",
     "autoprefixer": "10.4.14",
-    "copy-node-modules": "^1.1.1",
     "cpy-cli": "^4.2.0",
     "eslint": "^8.38.0",
     "eslint-config-airbnb-base": "^15.0.0",
@@ -37,9 +36,10 @@
     "wrap-fontawesome": "npm run wrap-css node_modules/@fortawesome/fontawesome-free/css/all.css styles/fontawesome node_modules/@fortawesome/fontawesome-free",
     "copy-webfonts": "cpy node_modules/@fortawesome/fontawesome-free/webfonts/** styles/fontawesome/webfonts",
     "build-styles": "npm run wrap-css-styles && npm run wrap-css-dialog && npm run wrap-fontawesome && npm run copy-webfonts",
-    "prebuild": "rimraf lib && rimraf styles && copy-node-modules . lib",
+    "prebuild": "rimraf style",
     "build": "npm run process-tailwind && npm run po2json && npm run build-styles",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "prepare-release": "rimraf lib && cpy package.json package-lock.json lib && npm clean-install --omit=dev --ignore-scripts=true --prefix lib"
   },
   "browserslist": [
     "last 2 chrome versions",

@@ -3,9 +3,9 @@
 ## Import Styles before production build/publish or debugging in development environment
 
 Any CSS that is not available as CSS-in-JS in the form of lit-element css`...my styles...` must
-be imported/converted to that format. Place your CSS into `wwwroot/css` and then run `npm run prepare` in `wwwroot`.
+be imported/converted to that format. Place your CSS into `wwwroot/css` and then run `npm run build` in `wwwroot`.
 
-Or better, just run `npm run build` in `wwwroot`, which performs an NPM install followed by all other processing.
+Or better, just run `npm install` in `wwwroot`, which performs an NPM install followed by `npm run build`.
 
 ## Import Development Certificates
 

@@ -12,7 +12,7 @@
 @{
     ViewData["Title"] = "Home page";
     // any environment but Production uses the node_modules directory
-    var importRoot = environment.IsProduction() ? "./lib" : "./node_modules";
+    var importRoot = environment.IsProduction() ? "./lib/node_modules" : "./node_modules";
     var jsonSerializerOptions = jsonOptions.Value.JsonSerializerOptions;
 }
 

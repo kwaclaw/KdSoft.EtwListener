@@ -11,6 +11,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <!-- workaround for https://github.com/dotnet/aspnetcore/issues/28643 -->
     <DefaultExcludesInProjectFolder>$(DefaultExcludesInProjectFolder);wwwroot\node_modules\**</DefaultExcludesInProjectFolder>
+    <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
   </PropertyGroup>
 
   <ItemGroup>
@@ -34,11 +35,12 @@
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>
+    <Content Remove="Logs/**" />
     <Content Include="EventSinks/**/*" Exclude="EventSinks/**/*.json">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="wwwroot/lib/**" />
+    <Content Include="wwwroot/lib/**" Exclude="wwwroot/lib/package*.json" />
     <Content Update="wwwroot/localize/**">
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </Content>
@@ -71,5 +73,9 @@
     </ItemGroup>
     <RemoveDir Directories="$(ProjectDir)EventSinks" />
     <Copy SourceFiles="@(BinFiles)" DestinationFiles="@(BinFiles->'$(ProjectDir)EventSinks/%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)' == 'Release'">
+    <Exec Command="pushd wwwroot&#xD;&#xA;call npm install&#xD;&#xA;call npm run prepare-release&#xD;&#xA;popd" />
   </Target>
 </Project>

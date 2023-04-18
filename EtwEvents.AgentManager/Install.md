@@ -1,7 +1,7 @@
 ## Prepare Install Package
 
 - Rebuild all EventSink projects (or simply the entire Solution) in Release mode.
-- Run `npm run build` in `wwwroot`, which performs an NPM install followed by all other processing.
+  - This will also run a prebuild event `wwwroot`, which performs an NPM install followed by `npm run build` and `npm run prepare-release`.
 - Open project EtwEvents.AgentManager and publish it using either the Platform or the SelfContained profile.
 - If using the Platform profile, it is a requirement that the target system has the target framework (specified in the profile) installed.
 
@@ -15,7 +15,7 @@
   - Edit the included `authorization.json` according to the local requirements (see [Local Configuration](#local-configuration) below).
 - On an existing installation:
   - Take note of the current install directory, if it needs to stay the same
-  - Update the current `appsettings.Local.json` file if changes are desired.
+  - Update the currently installed `appsettings.Local.json` file if changes are desired.
 - Check that the proper server certificate for the agent manager is copied to the deploy directory.
   - It must include the private key, and it must be a PKCS12 encoded file with the ".p12" file extension.
   - It must be signed by a root/intermediate certificate accessible to the AgentManager web site.
