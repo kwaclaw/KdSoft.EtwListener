@@ -742,11 +742,6 @@ select {
   margin-bottom: 0.5rem;
 }
 
-.my-3 {
-  margin-top: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
 .my-auto {
   margin-top: auto;
   margin-bottom: auto;
@@ -1052,10 +1047,6 @@ select {
 
 .font-medium {
   font-weight: 500;
-}
-
-.font-semibold {
-  font-weight: 600;
 }
 
 .italic {
