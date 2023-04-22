@@ -159,7 +159,7 @@ class EtwAgent extends LitMvvmElement {
 
   // first event where model is available
   beforeFirstRender() {
-    this.model._kds_tabs = { items: ['Provider', 'Event Sinks', 'Live View', 'Filter'] };
+    this.model._kds_tabs = { items: ['Providers', 'Event Sinks', 'Live View', 'Filter'] };
     this.model._kds_activeTab = 0;
   }
 
@@ -179,11 +179,11 @@ class EtwAgent extends LitMvvmElement {
 
         kds-tab-container {
           height: 100%;
-          --top-row: 0;
+          --top-row: min-content;
           --left-col: 0;
           --right-col: 0;
           --main-row: auto;
-          --bottom-row: min-content;
+          --bottom-row: 0;
         }
 
         kds-tab-container > form {
@@ -195,17 +195,21 @@ class EtwAgent extends LitMvvmElement {
           padding: 0.75rem;
         }
 
-        kds-tab-container::part(footer) {
-          border-top: 2px darkgrey solid;
+        kds-tab-container::part(header) {
+          border-bottom: 2px darkgrey solid;
         }
 
         button[slot="tabs"][active] {
-          border-top: 2px white solid;
+          border-bottom: 2px white solid;
+          margin-bottom: -2px;
           border-left: 2px darkgrey solid;
           border-right: 2px darkgrey solid;
           font-weight: bold;
           z-index: 2;
-          margin-top: -2px;
+        }
+
+        button[slot="tabs"][first] {
+          border-left: 0;
         }
 
         label {
@@ -235,7 +239,7 @@ class EtwAgent extends LitMvvmElement {
           position:absolute;
           left: 0;
           right: 0;
-          top: 2em;
+          top: 0;
           bottom: 2em;
         }
 
@@ -252,9 +256,8 @@ class EtwAgent extends LitMvvmElement {
           min-width: 12rem;
         }
 
-        event-sink-config {
-          margin-top: 10px;
-          margin-bottom: 10px;
+        #providers, #event-sinks, #live-view, #processing {
+          margin: 1rem;
         }
 
         #live-view {
@@ -294,23 +297,35 @@ class EtwAgent extends LitMvvmElement {
     const activeAgentState = this.model.activeAgentState;
     const processingModel = activeAgentState.processingModel;
     return html`
-      <kds-tab-container id="main" reverse>
+      <kds-tab-container id="main">
         ${this.model._kds_tabs.items.map((tab, index) => {
           const active = index === this.model._kds_activeTab;
+          let modified = false;
+          switch (index) {
+            case 0:
+              modified = this.model.getProvidersModified(activeEntry);
+              break;
+            case 1:
+              modified = this.model.getEventSinksModified(activeEntry);
+              break;
+            case 2:
+              modified = this.model.getLiveViewOptionsModified(activeEntry);
+              break;
+            case 3:
+              modified = this.model.getProcessingModified(activeEntry);
+            break;
+          }
+          const modifiedClass = modified ? 'italic text-red-500' : '';
           return html`
-            <button type="button" slot="tabs" class="px-2 py-1 bg-white" ?active=${active}
+            <button type="button" slot="tabs" class="px-2 py-1 bg-white" ?active=${active} ?first=${index===0}
                 @click=${() => { this.model._kds_activeTab = index; }}
-            >${tab}</button>`;
+            >
+              <span class="${modifiedClass}">${tab}</span>
+            </button>`;
           }
         )}
 
         <form id="providers" class="border" style="${this.model._kds_activeTab === 0 ? '' : 'display:none'}">
-          <div class="form-header flex my-2 pr-2">
-            <span class="font-semibold ${this.model.getProvidersModified(activeEntry) ? 'italic text-red-500' : ''}">Event Providers</span>
-            <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
-              @click=${e => this._addProviderClick(e, activeAgentState)}>
-            </span>
-          </div>
           <div class="form-body providers border">
             ${activeAgentState.enabledProviders.map(provider => html`
               <provider-config
@@ -320,7 +335,10 @@ class EtwAgent extends LitMvvmElement {
             `)}
           </div>
           <div class="form-footer flex flex-wrap mt-2 bt-1">
-            <button type="button" class="py-1 px-2 ml-auto" @click=${() => this.model.applyProviders(activeAgentState)} title="Apply">
+            <button type="button" class="py-1 px-2 ml-auto" @click=${e => this._addProviderClick(e, activeAgentState)}>
+              <i class="fas fa-lg fa-plus text-gray-500"></i>
+            </span>
+            <button type="button" class="py-1 px-2 ml-4" @click=${() => this.model.applyProviders(activeAgentState)} title="Apply">
               <i class="fas fa-lg fa-check text-green-500"></i>
             </button>
             <button type="button" class="py-1 px-2" @click=${() => this.model.resetProviders(activeEntry)} title="Reset to Current">
@@ -330,18 +348,12 @@ class EtwAgent extends LitMvvmElement {
         </form>
 
         <form id="event-sinks" class="border" style="${this.model._kds_activeTab === 1 ? '' : 'display:none'}">
-          <div class="form-header flex my-2 pr-2">
-            <span class="font-semibold ${this.model.getEventSinksModified(activeEntry) ? 'italic text-red-500' : ''}">Event Sinks</span>
-            <span class="self-center text-gray-500 fas fa-lg fa-plus ml-auto cursor-pointer select-none"
-              @click=${this._addEventSinkClick}>
-            </span>
-          </div>
           <div class="form-body eventSinks border">
             ${repeat(
               Object.entries(activeAgentState.eventSinks),
               entry => entry[0],
               entry => html`
-                <event-sink-config class="bg-gray-300 px-2 my-3"
+                <event-sink-config class="bg-gray-300"
                   .model=${entry[1]}
                   @delete=${e => this._deleteEventSinkClick(e, activeAgentState)}>
                 </event-sink-config>
@@ -358,7 +370,10 @@ class EtwAgent extends LitMvvmElement {
             <button type="button" class="py-1 px-2" @click=${e => this._exportEventSinks(e, activeAgentState)} title="Export">
               <i class="fas fa-lg fa-file-export text-gray-600"></i>
             </button>
-            <button type="button" class="py-1 px-2 ml-auto" @click=${e => this._updateEventSinks(e, activeAgentState)} title="Apply">
+            <button type="button" class="py-1 px-2 ml-auto" @click=${this._addEventSinkClick}>
+              <i class="fas fa-lg fa-plus text-gray-500"></i>
+            </span>
+            <button type="button" class="py-1 px-2 ml-4" @click=${e => this._updateEventSinks(e, activeAgentState)} title="Apply">
               <i class="fas fa-lg fa-check text-green-500"></i>
             </button>
             <button type="button" class="py-1 px-2" @click=${() => this.model.resetEventSinks(activeEntry)} title="Reset to Current" autofocus>
@@ -368,9 +383,6 @@ class EtwAgent extends LitMvvmElement {
         </form>
 
         <form id="live-view" class="border" style="${this.model._kds_activeTab === 2 ? '' : 'display:none'}">
-          <div class="form-header flex my-2 pr-2">
-            <span class="font-semibold ${this.model.getLiveViewOptionsModified(activeEntry) ? 'italic text-red-500' : ''}">Live View</span>
-          </div>
           <live-view-config class="form-body"
             .model=${activeAgentState.liveViewConfigModel}
             .changeCallback=${opts => this.model.updateLiveViewOptions(activeEntry, opts)}
@@ -387,9 +399,6 @@ class EtwAgent extends LitMvvmElement {
 
         <form id="processing" class="border" style="${this.model._kds_activeTab === 3 ? '' : 'display:none'}"
            @change=${e => this._processingFieldChange(e, activeAgentState)}>
-          <div class="form-header flex my-2 pr-2">
-            <span class="font-semibold ${this.model.getProcessingModified(activeEntry) ? 'italic text-red-500' : ''}">Filter</span>
-          </div>
           <filter-edit id="filterEdit" class="form-body p-2" .model=${processingModel.filter}></filter-edit>
           <div class="form-footer flex flex-wrap mt-2 bt-1">
             <button type="button" class="py-1 px-2" @click=${() => this.model.testFilter(activeAgentState)} title="Test">
