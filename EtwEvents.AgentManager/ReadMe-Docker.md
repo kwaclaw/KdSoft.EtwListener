@@ -3,9 +3,9 @@
 ## Import Styles before production build/publish or development run
 
 Any CSS that is not available as CSS-in-JS in the form of lit-element css`...my styles...` must
-be imported/converted to that format. Place your CSS into `wwwroot/css` and then run `npm run prepare` in `wwwroot`.
+be imported/converted to that format. Place your CSS into `wwwroot/css` and then run `npm run build` in `wwwroot`.
 
-Or better, just run `npm run build` in `wwwroot`, which performs an NPM install followed by all other processing.
+Or better, just run `npm install` in `wwwroot`, which performs an NPM install followed by `npm run build`.
 
 ## Debug with Visual Studio in Docker
 
@@ -24,9 +24,9 @@ Or better, just run `npm run build` in `wwwroot`, which performs an NPM install 
 
 Use the `docker run` command with arguments as described below. As an example review `run-docker.cmd` in the `EtwEvents.AgentManager` directory.
 
-#### Asp.NET 6.0 specific arguments
+#### Asp.NET 7.0 specific arguments
 
-We neeed to mount some directories required by Asp.NET 6.0 into pre-determined paths in the container:
+We neeed to mount some directories required by Asp.NET 7.0 into pre-determined paths in the container:
 
 - ONLY IN DEVELOPMENT ENVIRONMENT (Debugging): Mount user secrets directory to `/root/.microsoft/usersecrets`
   e.g. `--mount type=bind,src="%APPDATA%\\Microsoft\\UserSecrets\\",dst=/root/.microsoft/usersecrets/,readonly`

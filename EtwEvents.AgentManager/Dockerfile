@@ -1,6 +1,6 @@
 #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS base
 # need custom root certificate in dev and prod images
 WORKDIR /usr/local/share/ca-certificates
 COPY ["./EtwEvents.AgentManager/certificates/Kd-Soft.crt", "./"]
@@ -9,7 +9,7 @@ WORKDIR /app
 EXPOSE 80
 EXPOSE 443
 
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 # we need node/npm for SPA build steps in wwwroot
 RUN apt-get update
 RUN apt-get install -y curl
@@ -18,6 +18,9 @@ RUN curl -sL https://deb.nodesource.com/setup_lts.x | bash -
 RUN apt-get install -y nodejs
 # projects
 WORKDIR /src
+COPY ["common.props", "common.props"]
+COPY ["EventSinks/eventSink.props", "EventSinks/eventSink.props"]
+COPY ["EventSinks/eventSink.targets", "EventSinks/eventSink.targets"]
 # shared projects
 COPY ["EtwEvents.Shared/EtwEvents.Shared.csproj", "EtwEvents.Shared/"]
 COPY ["EtwEvents.Shared.EventSink/EtwEvents.Shared.EventSink.csproj", "EtwEvents.Shared.EventSink/"]
@@ -33,7 +36,8 @@ RUN dotnet restore "EtwEvents.AgentManager/EtwEvents.AgentManager.csproj"
 COPY . .
 # SPA build steps
 WORKDIR "/src/EtwEvents.AgentManager/wwwroot"
-RUN npm run build
+RUN npm install
+RUN npm run prepare-release
 # build AgentManager
 WORKDIR "/src/EtwEvents.AgentManager"
 RUN dotnet build "EtwEvents.AgentManager.csproj" -c Release -o /app/build

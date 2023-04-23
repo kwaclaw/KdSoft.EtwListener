@@ -16,15 +16,16 @@ docker run -dt -p 50301:80 -p 50300:443 ^
     -e "Kestrel:Endpoints:Https:Certificate:Password=%certPwd%" ^
     -e "ASPNETCORE_ENVIRONMENT=Production" ^
     --name "KdSoft_ETW_AgentManager" ^
-    waclawek/kdsoft-etw-agent-manager:1.1.1
+    waclawek/kdsoft-etw-agent-manager:1.2.0
 ::  if a network is specified, use the option --network=XXX
 
 :: clear certificate password
 set certPwd=
 
 :: install root certificate
-@echo Installing root certificate C:/Temp/etw-manager/certs/Kd-Soft.crt
-docker cp "C:/Temp/etw-manager/certs/Kd-Soft.crt" KdSoft_ETW_AgentManager:"/usr/local/share/ca-certificates"
+@echo Installing root certificate C:/Temp/etw-manager/certs/Kd-Soft_Root_CA.crt and Kd-Soft_ETW-Signing_CA.crt
+docker cp "C:/Temp/etw-manager/certs/Kd-Soft_Root_CA.crt" KdSoft_ETW_AgentManager:"/usr/local/share/ca-certificates"
+docker cp "C:/Temp/etw-manager/certs/Kd-Soft_ETW-Signing_CA.crt" KdSoft_ETW_AgentManager:"/usr/local/share/ca-certificates"
 docker exec -dt -w "/usr/local/share/ca-certificates" KdSoft_ETW_AgentManager update-ca-certificates
 
 popd

@@ -24,7 +24,7 @@ var opts = new WebApplicationOptions {
     Args = args,
 #if DEBUG
     // The program may change files that would be under revision control with the default ContentRootPath,
-    // so we change the content root path to be the output directory (e.g. bin/Debug/net6.0).
+    // so we change the content root path to be the output directory (e.g. bin/Debug/net7.0).
     ContentRootPath = AppContext.BaseDirectory,
     // But we want to retain the default WebRootPath.
     WebRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot")
