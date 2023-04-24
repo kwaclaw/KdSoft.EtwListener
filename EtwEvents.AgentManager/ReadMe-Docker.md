@@ -46,7 +46,7 @@ We neeed to mount some directories required by Asp.NET 7.0 into pre-determined p
 - Place it in a directory and mount that directory into the docker container:
    e.g. `--mount type=bind,src=c:/apps/certificates/,dst=/app/certs/,readonly`
 
-- Override the certificate path in `appsettings.json`
+- Override the certificate path in `appsettings.json` (or pass it to "docker run")
   e.g. `-e "Kestrel:Endpoints:Https:Certificate:Path=/app/certs/server-cert.p12"`
 
 - Override the certificate password in `appsettings.json` (or pass it to "docker run")

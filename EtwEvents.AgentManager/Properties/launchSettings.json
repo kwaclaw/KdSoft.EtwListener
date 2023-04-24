@@ -42,15 +42,17 @@
     "Docker": {
       "commandName": "Docker",
       "launchBrowser": true,
-      "environmentVariables": {
-        "Kestrel:Endpoints:Https:Certificate:Path": "/app/certs/localhost.p12",
-        "Kestrel:Endpoints:Https:Certificate:Password": "dummy"
-      },
-      "launchUrl": "https://localhost:50300",
-      "DockerfileRunArguments": "-v {ProjectDir}\\certificates:/app/certs:ro",
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
       "httpPort": 50301,
       "useSSL": true,
-      "sslPort": 50300
+      "sslPort": 50300,
+      "environmentVariables": {
+        "Kestrel__Endpoints__Http__Url": "http://0.0.0.0:80",
+        "Kestrel__Endpoints__Https__Url": "https://0.0.0.0:443",
+        "Kestrel__Endpoints__Https__Certificate__Path": "/app/certs/localhost.p12",
+        "Kestrel__Endpoints__Https__Certificate__Password": "dummy"
+      },
+      "DockerfileRunArguments": "--mount type=bind,src={ProjectDir}\\certificates,dst=/app/certs,readonly"
     }
   }
 }
