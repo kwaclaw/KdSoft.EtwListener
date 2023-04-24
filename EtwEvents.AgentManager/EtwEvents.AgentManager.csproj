@@ -76,6 +76,7 @@
   </Target>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)' == 'Release'">
-    <Exec Command="pushd wwwroot&#xD;&#xA;call npm install&#xD;&#xA;call npm run prepare-release&#xD;&#xA;popd" />
+    <Exec Command="npm install" WorkingDirectory="$(ProjectDir)wwwroot" />
+    <Exec Command="npm run prepare-release" WorkingDirectory="$(ProjectDir)wwwroot" />
   </Target>
 </Project>
