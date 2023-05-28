@@ -1,11 +1,13 @@
 ## Prepare Install Package
 
 - Open project EtwEvents.PushAgent and publish it using either the Platform or the SelfContained profile.
-- If using the Platform profile, it is a requirement that the target system has the target framework (specified in the profile) installed.
+  - This will copy the published files to the `publish` folder in the `deploy` directory.
+- Note: If using the Platform profile, it is a requirement that the target system has the target framework (specified in the profile) installed.
+- The `deploy` directory becomes the install package.
 
 ## Install Package
 
-- After preparing the install package, copy the project folder `deploy` to a (temporary) location on the target system.
+- After preparing the install package, copy the `deploy` folder to a (temporary) location on the target system.
   - It is recommended to distribute the `deploy` folder as a zip archive.
 - If applicable, check that the publish profile's target framework is installed.
 - On a new installation
