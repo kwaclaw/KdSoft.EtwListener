@@ -179,7 +179,7 @@ namespace KdSoft.EtwEvents.EventSinks
                 FileStream? stream = null;
                 try {
                     // checks rollover conditions and returns appropriate file stream
-                    stream = await _fileFactory.GetCurrentFileStream().ConfigureAwait(false);
+                    stream = _fileFactory.GetCurrentFileStream();
                     isCompleted = await ProcessBatchToBuffer().ConfigureAwait(false);
                 }
                 catch (Exception ex) {
