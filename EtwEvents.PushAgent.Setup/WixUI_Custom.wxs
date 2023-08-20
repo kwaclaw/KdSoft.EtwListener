@@ -1,0 +1,34 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+    <Fragment>
+        <UI Id="WixUI_Custom">
+            <DialogRef Id="ConfigDlg"/>
+
+            <!-- Insert into dialog sequencing by inserting control events on previous and next dialogs-->
+            <Publish Dialog="LicenseAgreementDlg" Control="Next" Event="NewDialog" Value="ConfigDlg" />
+            <Publish Dialog="ConfigDlg" Control="Back" Event="NewDialog" Value="ConfigDlg" Order="3" Condition="NOT Installed" />
+        </UI>
+
+        <!-- Make Property a SecureCustom Property-->
+        <Property Id="MANAGER_URL" Secure="yes" />
+
+        <!-- Note: You must author a registry component somewhere in your installer to persist the property for later retrieval
+        Example:
+        ...
+        <Component Id='RememberCustom' Guid='{????????-????-????-????-????????????}' KeyPath='yes' Permanent='yes'>
+          <RegistryValue Root='HKLM' Key='SOFTWARE\CompanyName\ProductName' Name='Custom' Type='string' Value='[CUSTOM]'/>
+        </Component>
+        ...
+        -->
+
+        <!-- Attempt to retrieve previously persisted property -->
+        <!--<Property Id="FINDCUSTOM" Secure="yes">
+            <RegistrySearch Id="CustomerNumber" Root="HKLM" Key="SOFTWARE\CompanyName\ProductName" Name="Custom" Type="raw" />
+        </Property>-->
+
+        <!-- Assign default value if retrieval failed -->
+        <!--<SetProperty Id="FINDCUSTOM" Value="default value" After="AppSearch" Sequence="first" Condition="Not FINDCUSTOM" />-->
+
+        <!-- Assign retrieved / defaulted value to actual property if it doesn't already have a value -->
+        <!--<SetProperty Id="CUSTOM" Value="[FINDCUSTOM]" After="SetFINDCUSTOM" Sequence="first" Condition="Not CUSTOM" />-->
+    </Fragment>
+</Wix>

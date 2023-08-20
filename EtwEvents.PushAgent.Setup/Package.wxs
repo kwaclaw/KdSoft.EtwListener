@@ -1,0 +1,15 @@
+﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+  <Package Name="EtwEvents.PushAgent" Manufacturer="KD Soft"  Version="1.0.1.0" UpgradeCode="92ba2f4a-5b30-438c-9ae2-158382011ca9">
+    <MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" />
+
+    <Feature Id="Main" Title="ETW Agent Service">
+      <ComponentGroupRef Id="MainComponents" />
+    </Feature>
+
+      <ui:WixUI Id="WixUI_FeatureTree" />
+      <UIRef Id="WixUI_Custom"/>
+
+      <WixVariable Id="WixUILicenseRtf" Value="MIT_License.rtf" />
+  </Package>
+</Wix>

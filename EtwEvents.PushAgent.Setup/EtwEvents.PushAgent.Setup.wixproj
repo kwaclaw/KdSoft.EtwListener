@@ -1,0 +1,42 @@
+﻿<Project Sdk="WixToolset.Sdk/4.0.1">
+  <PropertyGroup>
+    <EnableProjectHarvesting>true</EnableProjectHarvesting>
+    <HarvestProjectsSuppressUniqueIds>true</HarvestProjectsSuppressUniqueIds>
+    <HarvestProjectsDirectoryIds>HARVESTROOT</HarvestProjectsDirectoryIds>
+    <HarvestProjectsVerboseOutput>true</HarvestProjectsVerboseOutput>
+    <HarvestFileGenerateGuidsNow>true</HarvestFileGenerateGuidsNow>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <SuppressSpecificWarnings>5150;5151</SuppressSpecificWarnings>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="WixToolset.UI.wixext" Version="4.0.1" />
+    <PackageReference Include="WixToolset.Util.wixext" Version="4.0.1" />
+    <PackageReference Include="WixToolset.Heat" Version="4.0.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <HarvestDirectory Include="../EtwEvents.PushAgent/deploy/publish/" Transforms="./RemoveServiceExe.xslt">
+      <ComponentGroupName>Published</ComponentGroupName>
+      <DirectoryRefId>INSTALLFOLDER</DirectoryRefId>
+      <SuppressRootDirectory>true</SuppressRootDirectory>
+      <Transforms>./RemoveServiceExe.xslt</Transforms>
+    </HarvestDirectory>
+    <!--
+    Need UI for URL, Account and certificate
+    -->
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="MIT_License.rtf" />
+    <None Include="RemoveServiceExe.xslt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../EtwEvents.PushAgent/EtwEvents.PushAgent.csproj" DoNotHarvest="true">
+      <!-- The publish directory must be specified even if the publish profile already contains it -->
+      <PublishDir>../EtwEvents.PushAgent/deploy/publish/</PublishDir>
+      <!-- This seems to be the only way to specify the publish profile correctly -->
+      <!--<Properties>PublishProfile=../EtwEvents.PushAgent/Properties/PublishProfiles/Platform.pubxml</Properties>-->
+      <Properties>PublishProfile=../EtwEvents.PushAgent/Properties/PublishProfiles/SelfContained.pubxml</Properties>
+    </ProjectReference>
+  </ItemGroup>
+  <!-- https://github.com/iswix-llc/iswix-tutorials/tree/master/WiX-v4-HeatWave -->
+</Project>
