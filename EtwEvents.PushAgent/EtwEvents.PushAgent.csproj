@@ -4,7 +4,6 @@
 
   <PropertyGroup>
     <VersionPrefix>1.1.3</VersionPrefix>
-    <LangVersion>Latest</LangVersion>
     <UserSecretsId>dotnet-EtwEvents.PushAgent-2DA4777E-5631-4E75-9630-82767D1F596C</UserSecretsId>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
