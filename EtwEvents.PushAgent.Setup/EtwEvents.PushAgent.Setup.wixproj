@@ -15,7 +15,7 @@
     <PackageReference Include="WixToolset.Heat" Version="4.0.1" />
   </ItemGroup>
   <ItemGroup>
-    <HarvestDirectory Include="../EtwEvents.PushAgent/deploy/publish/" Transforms="./RemoveServiceExe.xslt">
+    <HarvestDirectory Include="../EtwEvents.PushAgent/deploy/publish/">
       <ComponentGroupName>Published</ComponentGroupName>
       <DirectoryRefId>INSTALLFOLDER</DirectoryRefId>
       <SuppressRootDirectory>true</SuppressRootDirectory>
@@ -26,6 +26,7 @@
     -->
   </ItemGroup>
   <ItemGroup>
+    <None Include="Debug.cmd" />
     <None Include="MIT_License.rtf" />
     <None Include="RemoveServiceExe.xslt" />
   </ItemGroup>
