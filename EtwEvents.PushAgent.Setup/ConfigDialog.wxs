@@ -4,25 +4,25 @@
             <Dialog Id="ConfigDlg" Width="370" Height="270" Title="Configure Setup">
                 <!-- Header -->
                 <Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44" Text="WixUI_Bmp_Banner" />
-                <Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Text="{\WixUI_Font_Title}COnfiguration Dialog" Transparent="yes" />
+                <Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Text="{\WixUI_Font_Title}Configuration Dialog" Transparent="yes" />
                 <Control Id="Description" Type="Text" X="25" Y="23" Width="280" Height="15" Text="Configure Install Settings" Transparent="yes" />
                 <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
 
                 <!-- Body  -->
-                <Control Id="CustomLabel" Type="Text" X="20" Y="60" Width="290" Height="15" Text="Manager URL:" TabSkip="yes" />
-                <Control Id="Custom" Type="Edit" X="20" Y="80" Width="320" Height="18" Property="MANAGER_URL" />
-
+                <Control Id="ManagerUrlLabel" Type="Text" X="20" Y="60" Width="290" Height="15" Text="Manager URL:" />
+                <Control Id="ManagerUrl" Type="Edit" X="20" Y="75" Width="320" Height="18" Property="MANAGER_URL" />
+                
+                <Control Id="CertsLabel" Type="Text" X="20" Y="100" Width="290" Height="15" Text="Certificates:" />
+                <Control Id="Certs" Type="Edit" X="20" Y="115" Width="320" Height="36" Multiline="yes" Property="CERTIFICATES" />
+                <Control Id="ChangeCerts" Type="PushButton" X="20" Y="151" Width="56" Height="17" Text="Change..." />
+                
                 <!-- Footer -->
                 <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
-                <Control Id="Next" Type="PushButton" Text="&amp;Next" TabSkip="no" Default="yes" Height="17" Width="56" X="236" Y="243">
-                    <Publish Event="NewDialog" Value="CustomizeDlg" />
-                </Control>
+                <Control Id="Next" Type="PushButton" Text="&amp;Next" TabSkip="no" Default="yes" Height="17" Width="56" X="236" Y="243" />
                 <Control Id="Cancel" Type="PushButton" Text="Cancel" TabSkip="no" Height="17" Width="56" X="304" Y="243" Cancel="yes">
                     <Publish Event="SpawnDialog" Value="CancelDlg" />
                 </Control>
-                <Control Id="Back" Type="PushButton" Text="&amp;Back" TabSkip="no" Height="17" Width="56" X="180" Y="243">
-                    <Publish Event="NewDialog" Value="LicenseAgreementDlg" />
-                </Control>
+                <Control Id="Back" Type="PushButton" Text="&amp;Back" TabSkip="no" Height="17" Width="56" X="180" Y="243" />
             </Dialog>
         </UI>
     </Fragment>

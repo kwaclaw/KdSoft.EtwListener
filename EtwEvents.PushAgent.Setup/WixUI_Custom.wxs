@@ -1,15 +1,47 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
     <Fragment>
+
         <UI Id="WixUI_Custom">
             <DialogRef Id="ConfigDlg"/>
+            <DialogRef Id="BrowseDlg" />
+            <DialogRef Id="DiskCostDlg" />
 
-            <!-- Insert into dialog sequencing by inserting control events on previous and next dialogs-->
-            <Publish Dialog="LicenseAgreementDlg" Control="Next" Event="NewDialog" Value="ConfigDlg" />
-            <Publish Dialog="ConfigDlg" Control="Back" Event="NewDialog" Value="ConfigDlg" Order="3" Condition="NOT Installed" />
+            <!-- Based on
+                https://github.com/wixtoolset/wix/blob/develop/src/ext/UI/wixlib/WixUI_FeatureTree.wxs
+                and
+                https://github.com/wixtoolset/wix/blob/develop/src/ext/UI/wixlib/WixUI_InstallDir.wxs
+            -->
+            <Publish Dialog="BrowseDlg" Control="OK" Event="DoAction" Value="WixUIValidatePath_X64" Order="3" Condition="NOT WIXUI_DONTVALIDATEPATH" />
+            <Publish Dialog="BrowseDlg" Control="OK" Event="SpawnDialog" Value="InvalidDirDlg" Order="4" Condition="NOT WIXUI_DONTVALIDATEPATH AND WIXUI_INSTALLDIR_VALID&lt;&gt;&quot;1&quot;" />
+
+            <Publish Dialog="LicenseAgreementDlg" Control="Next" Event="NewDialog" Value="ConfigDlg" Condition="LicenseAccepted = &quot;1&quot;" />
+
+            <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="ConfigDlg" />
+            <Publish Dialog="InstallDirDlg" Control="Next" Event="SetTargetPath" Value="[WIXUI_INSTALLDIR]" Order="1" />
+            <Publish Dialog="InstallDirDlg" Control="Next" Event="DoAction" Value="WixUIValidatePath_X64" Order="2" Condition="NOT WIXUI_DONTVALIDATEPATH" />
+            <Publish Dialog="InstallDirDlg" Control="Next" Event="SpawnDialog" Value="InvalidDirDlg" Order="3" Condition="NOT WIXUI_DONTVALIDATEPATH AND WIXUI_INSTALLDIR_VALID&lt;&gt;&quot;1&quot;" />
+            <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="4" Condition="WIXUI_DONTVALIDATEPATH OR WIXUI_INSTALLDIR_VALID=&quot;1&quot;" />
+            <Publish Dialog="InstallDirDlg" Control="ChangeFolder" Property="_BrowseProperty" Value="[WIXUI_INSTALLDIR]" Order="1" />
+            <Publish Dialog="InstallDirDlg" Control="ChangeFolder" Event="SpawnDialog" Value="BrowseDlg" Order="2" />
+
+            <Publish Dialog="ConfigDlg" Control="Back" Event="NewDialog" Value="LicenseAgreementDlg" />
+            <Publish Dialog="ConfigDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" />
+            <Publish Dialog="ConfigDlg" Control="ChangeCerts" Property="_FileDlgFilter" Value="Certificates (*.p12;*.cer)|*.p12;*.cer" Order="1" />
+            <!--<Publish Dialog="ConfigDlg" Control="ChangeCerts" Property="_FileDglDir" Value="C:\Windows" Order="2" />-->
+            <Publish Dialog="ConfigDlg" Control="ChangeCerts" Property="_FileDlgTitle" Value="Select Client (optionally Root) Certificates" Order="3" />
+            <Publish Dialog="ConfigDlg" Control="ChangeCerts" Property="_FileNamesProperty" Value="CERTIFICATES" Order="4" />
+            <!-- We need to wrap the file dialog in a reset and a property re-assignment so that the Edit control gets refreshed. -->
+            <Publish Dialog="ConfigDlg" Control="ChangeCerts" Event="Reset" Value="1" Order="5" />
+            <Publish Dialog="ConfigDlg" Control="ChangeCerts" Event="DoAction" Value="OpenFileDialog" Order="6" />
+            <Publish Dialog="ConfigDlg" Control="ChangeCerts" Property="CERTIFICATES" Value="[CERTIFICATES]" Order="7" />
+
+            <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="InstallDirDlg" Order="1" Condition="NOT Installed" />
+
+            <Property Id="ARPNOMODIFY" Value="1" />
         </UI>
 
-        <!-- Make Property a SecureCustom Property-->
-        <Property Id="MANAGER_URL" Secure="yes" />
+        <Property Id="MANAGER_URL" Value="https://agent-manager.mycompany.com" />
+        <Property Id="CERTIFICATES" Value="Root.cer"/>
 
         <!-- Note: You must author a registry component somewhere in your installer to persist the property for later retrieval
         Example:
