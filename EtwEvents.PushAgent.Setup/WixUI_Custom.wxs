@@ -26,14 +26,26 @@
 
             <Publish Dialog="ConfigDlg" Control="Back" Event="NewDialog" Value="LicenseAgreementDlg" />
             <Publish Dialog="ConfigDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" />
-            <Publish Dialog="ConfigDlg" Control="ChangeCerts" Property="_FileDlgFilter" Value="Certificates (*.p12;*.cer)|*.p12;*.cer" Order="1" />
-            <!--<Publish Dialog="ConfigDlg" Control="ChangeCerts" Property="_FileDglDir" Value="C:\Windows" Order="2" />-->
-            <Publish Dialog="ConfigDlg" Control="ChangeCerts" Property="_FileDlgTitle" Value="Select Client (optionally Root) Certificates" Order="3" />
-            <Publish Dialog="ConfigDlg" Control="ChangeCerts" Property="_FileNamesProperty" Value="CERTIFICATES" Order="4" />
+            
+            <Publish Dialog="ConfigDlg" Control="ChangeRootCerts" Property="_FileDlgFilter" Value="Certificates (*.cer)|*.cer" Order="1" />
+            <!--<Publish Dialog="ConfigDlg" Control="ChangeRootCerts" Property="_FileDglDir" Value="C:\Windows" Order="2" />-->
+            <Publish Dialog="ConfigDlg" Control="ChangeRootCerts" Property="_FileDlgTitle" Value="Select Root/Intermediate Certificates" Order="3" />
+            <Publish Dialog="ConfigDlg" Control="ChangeRootCerts" Property="_FileNamesProperty" Value="ROOT_CERTIFICATES" Order="4" />
             <!-- We need to wrap the file dialog in a reset and a property re-assignment so that the Edit control gets refreshed. -->
-            <Publish Dialog="ConfigDlg" Control="ChangeCerts" Event="Reset" Value="1" Order="5" />
-            <Publish Dialog="ConfigDlg" Control="ChangeCerts" Event="DoAction" Value="OpenFileDialog" Order="6" />
-            <Publish Dialog="ConfigDlg" Control="ChangeCerts" Property="CERTIFICATES" Value="[CERTIFICATES]" Order="7" />
+            <Publish Dialog="ConfigDlg" Control="ChangeRootCerts" Event="Reset" Value="1" Order="5" />
+            <Publish Dialog="ConfigDlg" Control="ChangeRootCerts" Event="DoAction" Value="OpenFileDialog" Order="6" />
+            <Publish Dialog="ConfigDlg" Control="ChangeRootCerts" Property="ROOT_CERTIFICATES" Value="[ROOT_CERTIFICATES]" Order="7" />
+
+            <Publish Dialog="ConfigDlg" Control="ChangeClientCert" Property="_FileDlgFilter" Value="Certificates (*.p12;*.pfx)|*.p12;*.pfx" Order="1" />
+            <!--<Publish Dialog="ConfigDlg" Control="ChangeClientCert" Property="_FileDglDir" Value="C:\Windows" Order="2" />-->
+            <Publish Dialog="ConfigDlg" Control="ChangeClientCert" Property="_FileDlgTitle" Value="Select Client Certificate" Order="3" />
+            <Publish Dialog="ConfigDlg" Control="ChangeClientCert" Property="_FileNamesProperty" Value="CLIENT_CERTIFICATE" Order="4" />
+            <!-- We need to wrap the file dialog in a reset and a property re-assignment so that the Edit control gets refreshed. -->
+            <Publish Dialog="ConfigDlg" Control="ChangeClientCert" Event="Reset" Value="1" Order="5" />
+            <Publish Dialog="ConfigDlg" Control="ChangeClientCert" Event="DoAction" Value="OpenFileDialog" Order="6" />
+            <Publish Dialog="ConfigDlg" Control="ChangeClientCert" Property="CLIENT_CERTIFICATE" Value="[CLIENT_CERTIFICATE]" Order="7" />
+            
+            <Publish Dialog="ConfigDlg" Control="ClientCertPwd" Property="CLIENT_CERTIFICATE_PASSWORD" Value="[CLIENT_CERTIFICATE_PASSWORD]" Order="1" />
 
             <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="InstallDirDlg" Order="1" Condition="NOT Installed" />
 
@@ -41,7 +53,7 @@
         </UI>
 
         <Property Id="MANAGER_URL" Value="https://agent-manager.mycompany.com" />
-        <Property Id="CERTIFICATES" Value="Root.cer"/>
+        <Property Id="CLIENT_CERTIFICATE" Value="C:\Windows\Temp\ClientCert.p12"/>
 
         <!-- Note: You must author a registry component somewhere in your installer to persist the property for later retrieval
         Example:
