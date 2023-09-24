@@ -1,42 +1,46 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
     <Fragment>
         <UI>
-            <Dialog Id="ConfigDlg" Width="370" Height="324" Title="Configure Setup">
+            <Dialog Id="ConfigDlg" Width="370" Height="390" Title="!(loc.ConfigDlgTitle)">
                 <!-- Header -->
                 <Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44" Text="WixUI_Bmp_Banner" />
-                <Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Text="{\WixUI_Font_Title}Configuration Dialog" Transparent="yes" />
-                <Control Id="Description" Type="Text" X="25" Y="23" Width="280" Height="15" Text="Configure Install Settings" Transparent="yes" />
+                <Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Text="{\WixUI_Font_Title}!(loc.ConfigDlgHeader)" Transparent="yes" />
+                <Control Id="Description" Type="Text" X="25" Y="23" Width="280" Height="15" Text="!(loc.ConfigDlgDescription)" Transparent="yes" />
                 <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
 
                 <!-- Body  -->
-                <Control Id="ManagerUrlLabel" Type="Text" X="20" Y="60" Width="290" Height="15" Text="Manager URL:" />
+                <Control Id="ManagerUrlLabel" Type="Text" X="20" Y="60" Width="290" Height="15" Text="!(loc.ManagerUrlLabel)" />
                 <Control Id="ManagerUrl" Type="Edit" X="20" Y="75" Width="320" Height="18" Property="MANAGER_URL" />
                 
-                <Control Id="RootCertsLabel" Type="Text" X="20" Y="100" Width="290" Height="15" Text="Root/Intermediate Certificates:" />
+                <Control Id="RootCertsLabel" Type="Text" X="20" Y="101" Width="290" Height="14" Text="!(loc.RootCertsLabel)" />
                 <Control Id="RootCerts" Type="Edit" X="20" Y="115" Width="320" Height="36" Multiline="yes" Property="ROOT_CERTIFICATES" />
-                <Control Id="ChangeRootCerts" Type="PushButton" X="20" Y="154" Width="56" Height="17" Text="Change..." />
+                <Control Id="ChangeRootCerts" Type="PushButton" X="20" Y="154" Width="56" Height="17" Text="!(loc.ChangeRootCertsText)" />
                 
-                <Control Id="ClientCertLabel" Type="Text" X="20" Y="179" Width="290" Height="15" Text="Client Certificate:" />
+                <Control Id="ClientCertLabel" Type="Text" X="20" Y="180" Width="290" Height="14" Text="!(loc.ClientCertLabel)" />
                 <Control Id="ClientCert" Type="Edit" X="20" Y="194" Width="320" Height="18" Property="CLIENT_CERTIFICATE" />
-                <Control Id="ChangeClientCert" Type="PushButton" X="20" Y="213" Width="56" Height="17" Text="Change..." />
+                <Control Id="ChangeClientCert" Type="PushButton" X="20" Y="213" Width="56" Height="17" Text="!(loc.ChangeClientCertText)" />
                 
-                <Control Id="ClientCertPwdLabel" Type="Text" X="20" Y="238" Width="290" Height="15" Text="Client Certificate Password:" />
+                <Control Id="ClientCertPwdLabel" Type="Text" X="20" Y="239" Width="290" Height="14" Text="!(loc.ClientCertPwdLabel)" />
                 <Control Id="ClientCertPwd" Type="Edit" Password="true" X="20" Y="253" Width="320" Height="18" Property="CLIENT_CERTIFICATE_PASSWORD" />
+                
+                <Control Id="SettingsOverrideLabel" Type="Text" X="20" Y="279" Width="290" Height="14" Text="!(loc.SettingsOverrideLabel)" />
+                <Control Id="SettingsOverride" Type="Edit" X="20" Y="293" Width="320" Height="18" Property="SETTINGS_OVERRIDE" />
+                <Control Id="ChangeSettingsOverride" Type="PushButton" X="20" Y="312" Width="56" Height="17" Text="!(loc.ChangeSettingsOverrideText)" />
                 
                 <!-- We need
                     * Optional root certificate
-                    * Required client certificate
-                    * Required client cert password
+                    * Optional client certificate
+                    * Optional client cert password
                     * Optional appsettings.Local.json
                 -->
                 
                 <!-- Footer -->
-                <Control Id="BottomLine" Type="Line" X="0" Y="288" Width="370" Height="0" />
-                <Control Id="Next" Type="PushButton" Text="&amp;Next" TabSkip="no" Default="yes" Height="17" Width="56" X="236" Y="296" />
-                <Control Id="Cancel" Type="PushButton" Text="Cancel" TabSkip="no" Height="17" Width="56" X="304" Y="296" Cancel="yes">
+                <Control Id="BottomLine" Type="Line" X="0" Y="354" Width="370" Height="0" />
+                <Control Id="Next" Type="PushButton" Text="!(loc.ConfigDlgNextText)" TabSkip="no" Default="yes" Height="17" Width="56" X="236" Y="362" />
+                <Control Id="Cancel" Type="PushButton" Text="!(loc.ConfigDlgCancelText)" TabSkip="no" Height="17" Width="56" X="304" Y="362" Cancel="yes">
                     <Publish Event="SpawnDialog" Value="CancelDlg" />
                 </Control>
-                <Control Id="Back" Type="PushButton" Text="&amp;Back" TabSkip="no" Height="17" Width="56" X="180" Y="296" />
+                <Control Id="Back" Type="PushButton" Text="!(loc.ConfigDlgBackText)" TabSkip="no" Height="17" Width="56" X="180" Y="362" />
             </Dialog>
         </UI>
     </Fragment>

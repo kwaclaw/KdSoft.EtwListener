@@ -25,30 +25,41 @@
             <Publish Dialog="InstallDirDlg" Control="ChangeFolder" Event="SpawnDialog" Value="BrowseDlg" Order="2" />
 
             <Publish Dialog="ConfigDlg" Control="Back" Event="NewDialog" Value="LicenseAgreementDlg" />
-            <Publish Dialog="ConfigDlg" Control="Next" Event="DoAction" Value="ValidateClientCertificate" Order="1" />
-            <Publish Dialog="ConfigDlg" Control="Next" Event="DoAction" Value="ValidateRootCertificates" Order="2" Condition="CLIENT_CERTIFICATE_VALID = &quot;1&quot;"/>
-            <Publish Dialog="ConfigDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" Order="3" Condition="CLIENT_CERTIFICATE_VALID = &quot;1&quot; AND ROOT_CERTIFICATES_VALID = &quot;1&quot;"/>
+            <Publish Dialog="ConfigDlg" Control="Next" Property="_validateErrorTitle" Value="!(loc.ValidateRootCertsErrorTitle)" Order="1" />
+            <Publish Dialog="ConfigDlg" Control="Next" Event="DoAction" Value="ValidateRootCertificates" Order="2" />
+            <Publish Dialog="ConfigDlg" Control="Next" Property="_validateErrorTitle" Value="!(loc.ValidateClientCertErrorTitle)" Order="3" />
+            <Publish Dialog="ConfigDlg" Control="Next" Event="DoAction" Value="ValidateClientCertificate" Order="4" Condition="ROOT_CERTIFICATES_VALID = &quot;1&quot;"/>
+            <Publish Dialog="ConfigDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" Order="5" Condition="CLIENT_CERTIFICATE_VALID = &quot;1&quot; AND ROOT_CERTIFICATES_VALID = &quot;1&quot;"/>
             
             <Publish Dialog="ConfigDlg" Control="ChangeRootCerts" Property="_FileDlgFilter" Value="Certificates (*.cer)|*.cer" Order="1" />
             <Publish Dialog="ConfigDlg" Control="ChangeRootCerts" Property="_FileDglMultiSelect" Value="true" Order="2" />
-            <Publish Dialog="ConfigDlg" Control="ChangeRootCerts" Property="_FileDlgTitle" Value="Select Root/Intermediate Certificates" Order="3" />
+            <Publish Dialog="ConfigDlg" Control="ChangeRootCerts" Property="_FileDlgTitle" Value="!(loc.SelectRootCerts)" Order="3" />
             <Publish Dialog="ConfigDlg" Control="ChangeRootCerts" Property="_FileNamesProperty" Value="ROOT_CERTIFICATES" Order="4" />
             <Publish Dialog="ConfigDlg" Control="ChangeRootCerts" Event="DoAction" Value="OpenFileDialog" Order="6" />
-            <!-- We need a property re-assignment so that the Edit control gets refreshed. -->
-            <Publish Dialog="ConfigDlg" Control="ChangeRootCerts" Property="ROOT_CERTIFICATES" Value="[ROOT_CERTIFICATES]" Order="7" />
+            <!-- We need a property re-assignment (with a true condition) so that the Edit control gets refreshed. -->
+            <Publish Dialog="ConfigDlg" Control="ChangeRootCerts" Property="ROOT_CERTIFICATES" Value="[ROOT_CERTIFICATES]" Order="7" Condition="1 = 1" />
             <!--<Publish Dialog="ConfigDlg" Control="ChangeRootCerts" Property="_FileDglDir" Value="C:\Windows" Order="8" />-->
 
             <Publish Dialog="ConfigDlg" Control="ChangeClientCert" Property="_FileDlgFilter" Value="Certificates (*.p12;*.pfx)|*.p12;*.pfx" Order="1" />
             <!--<Publish Dialog="ConfigDlg" Control="ChangeClientCert" Property="_FileDglMultiSelect" Value="false" Order="2" />-->
-            <Publish Dialog="ConfigDlg" Control="ChangeClientCert" Property="_FileDlgTitle" Value="Select Client Certificate" Order="3" />
+            <Publish Dialog="ConfigDlg" Control="ChangeClientCert" Property="_FileDlgTitle" Value="!(loc.SelectClientCert)" Order="3" />
             <Publish Dialog="ConfigDlg" Control="ChangeClientCert" Property="_FileNamesProperty" Value="CLIENT_CERTIFICATE" Order="4" />
             <Publish Dialog="ConfigDlg" Control="ChangeClientCert" Event="DoAction" Value="OpenFileDialog" Order="6" />
-            <!-- We need a property re-assignment so that the Edit control gets refreshed. -->
-            <Publish Dialog="ConfigDlg" Control="ChangeClientCert" Property="CLIENT_CERTIFICATE" Value="[CLIENT_CERTIFICATE]" Order="7" />
+            <!-- We need a property re-assignment (with a true condition) so that the Edit control gets refreshed. -->
+            <Publish Dialog="ConfigDlg" Control="ChangeClientCert" Property="CLIENT_CERTIFICATE" Value="[CLIENT_CERTIFICATE]" Order="7" Condition="1 = 1" />
             <!--<Publish Dialog="ConfigDlg" Control="ChangeClientCert" Property="_FileDglDir" Value="C:\Windows" Order="8" />-->
             
             <Publish Dialog="ConfigDlg" Control="ClientCertPwd" Property="CLIENT_CERTIFICATE_PASSWORD" Value="[CLIENT_CERTIFICATE_PASSWORD]" Order="1" />
 
+            <Publish Dialog="ConfigDlg" Control="ChangeSettingsOverride" Property="_FileDlgFilter" Value="JSON Files (*.json)|*.json" Order="1" />
+            <!--<Publish Dialog="ConfigDlg" Control="ChangeClientCert" Property="_FileDglMultiSelect" Value="false" Order="2" />-->
+            <Publish Dialog="ConfigDlg" Control="ChangeSettingsOverride" Property="_FileDlgTitle" Value="!(loc.SelectSettingsOverride)" Order="3" />
+            <Publish Dialog="ConfigDlg" Control="ChangeSettingsOverride" Property="_FileNamesProperty" Value="SETTINGS_OVERRIDE" Order="4" />
+            <Publish Dialog="ConfigDlg" Control="ChangeSettingsOverride" Event="DoAction" Value="OpenFileDialog" Order="6" />
+            <!-- We need a property re-assignment (with a true condition) so that the Edit control gets refreshed. -->
+            <Publish Dialog="ConfigDlg" Control="ChangeSettingsOverride" Property="SETTINGS_OVERRIDE" Value="[SETTINGS_OVERRIDE]" Order="7" Condition="1 = 1" />
+            <!--<Publish Dialog="ConfigDlg" Control="ChangeSettingsOverride" Property="_FileDglDir" Value="C:\Windows" Order="8" />-->
+            
             <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="InstallDirDlg" Order="1" Condition="NOT Installed" />
 
             <Property Id="ARPNOMODIFY" Value="1" />

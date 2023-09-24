@@ -41,7 +41,8 @@ namespace EtwEvents.PushAgent.Setup.Tools
             catch (Exception ex) {
                 session["CLIENT_CERTIFICATE_VALID"] = "0";
                 session.Log("Error in ValidateClientCertificate: {0}\r\n StackTrace: {1}", ex.Message, ex.StackTrace);
-                ShowMessageDialog(ex.Message, "Client Certificate Not Valid", MessageBoxIcon.Exclamation);
+                var errorDlgTitle = session["_validateErrorTitle"] ?? "Client Certificate Not Valid";
+                ShowMessageDialog(ex.Message, errorDlgTitle, MessageBoxIcon.Exclamation);
             }
             return ActionResult.Success;
         }
@@ -84,7 +85,8 @@ namespace EtwEvents.PushAgent.Setup.Tools
             catch (Exception ex) {
                 session["ROOT_CERTIFICATES_VALID"] = "0";
                 session.Log("Error in ValidateRootCertificates: {0}\r\n StackTrace: {1}", ex.Message, ex.StackTrace);
-                ShowMessageDialog(currentCertPath + "\n\t" + ex.Message, "Root Certificate Not Valid", MessageBoxIcon.Exclamation);
+                var errorDlgTitle = session["_validateErrorTitle"] ?? "Root Certificate Not Valid";
+                ShowMessageDialog(currentCertPath + "\n    " + ex.Message, errorDlgTitle, MessageBoxIcon.Exclamation);
             }
             return ActionResult.Success;
         }
