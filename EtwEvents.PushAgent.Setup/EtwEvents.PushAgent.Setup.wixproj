@@ -10,9 +10,10 @@
     <SuppressSpecificWarnings>5150;5151</SuppressSpecificWarnings>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="WixToolset.UI.wixext" Version="4.0.1" />
-    <PackageReference Include="WixToolset.Util.wixext" Version="4.0.1" />
-    <PackageReference Include="WixToolset.Heat" Version="4.0.1" />
+    <PackageReference Include="WixToolset.Iis.wixext" Version="4.0.2" />
+    <PackageReference Include="WixToolset.UI.wixext" Version="4.0.2" />
+    <PackageReference Include="WixToolset.Util.wixext" Version="4.0.2" />
+    <PackageReference Include="WixToolset.Heat" Version="4.0.2" />
   </ItemGroup>
   <ItemGroup>
     <HarvestDirectory Include="../EtwEvents.PushAgent/deploy/publish/">
