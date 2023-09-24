@@ -5,6 +5,8 @@
 
         <Feature Id="Main" Title="ETW Agent Service">
             <ComponentGroupRef Id="MainComponents" />
+            <!-- This does not work
+            <ComponentGroupRef Id="Certificates" />-->
         </Feature>
 
         <ui:WixUI Id="WixUI_FeatureTree" InstallDirectory="INSTALLFOLDER"/>
@@ -12,7 +14,16 @@
 
         <WixVariable Id="WixUILicenseRtf" Value="MIT_License.rtf" />
 
-        <Binary Id="MyCustomActions" SourceFile="$(var.EtwEvents.PushAgent.Setup.Tools.TargetDir)$(var.EtwEvents.PushAgent.Setup.Tools.TargetName).CA.dll" />        
+        <Binary Id="MyCustomActions" SourceFile="$(var.EtwEvents.PushAgent.Setup.Tools.TargetDir)$(var.EtwEvents.PushAgent.Setup.Tools.TargetName).CA.dll" />
         <CustomAction Id="OpenFileDialog" BinaryRef="MyCustomActions" DllEntry="OpenFileDialog" Execute="immediate" Return="check" />
+        <CustomAction Id="ValidateClientCertificate" BinaryRef="MyCustomActions" DllEntry="ValidateClientCertificate" Execute="immediate" Return="check" />
+        <CustomAction Id="InstallClientCertificate" BinaryRef="MyCustomActions" DllEntry="InstallClientCertificate" Execute="immediate" Return="check" />
+        <CustomAction Id="ValidateRootCertificates" BinaryRef="MyCustomActions" DllEntry="ValidateRootCertificates" Execute="immediate" Return="check" />
+        <CustomAction Id="InstallRootCertificates" BinaryRef="MyCustomActions" DllEntry="InstallRootCertificates" Execute="immediate" Return="check" />
+
+        <InstallExecuteSequence>
+            <Custom Action="InstallClientCertificate" Before="InstallFinalize" />
+            <Custom Action="InstallRootCertificates" Before="InstallFinalize" />
+        </InstallExecuteSequence>
     </Package>
 </Wix>
