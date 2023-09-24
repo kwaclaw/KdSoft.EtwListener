@@ -1,1 +1,1 @@
-msiexec /i bin\x64\Debug\en-US\EtwEvents.PushAgent.Setup.msi /l*vx install.log
+msiexec /i bin\x64\Debug\en-US\EtwEvents.PushAgent.Setup.msi /l!*vx install.log
