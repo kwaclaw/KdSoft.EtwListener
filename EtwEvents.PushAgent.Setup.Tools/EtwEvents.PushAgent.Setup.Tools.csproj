@@ -18,7 +18,7 @@
 
   <ItemGroup>
     <PackageReference Include="KdSoft.Utils.Portable" Version="4.2.1" />
-    <PackageReference Include="WixToolset.Dtf.CustomAction" Version="4.0.1" />
+    <PackageReference Include="WixToolset.Dtf.CustomAction" Version="4.0.2" />
   </ItemGroup>
 
   <ItemGroup>
