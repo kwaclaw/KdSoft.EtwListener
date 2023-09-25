@@ -7,6 +7,7 @@
             <ComponentGroupRef Id="MainComponents" />
             <!-- This does not work
             <ComponentGroupRef Id="Certificates" />-->
+            <ComponentRef Id="INSTALLFOLDER_Permission"/>
         </Feature>
 
         <ui:WixUI Id="WixUI_FeatureTree" InstallDirectory="INSTALLFOLDER"/>
@@ -20,6 +21,8 @@
         <CustomAction Id="InstallClientCertificate" BinaryRef="MyCustomActions" DllEntry="InstallClientCertificate" Execute="immediate" Return="check" />
         <CustomAction Id="ValidateRootCertificates" BinaryRef="MyCustomActions" DllEntry="ValidateRootCertificates" Execute="immediate" Return="check" />
         <CustomAction Id="InstallRootCertificates" BinaryRef="MyCustomActions" DllEntry="InstallRootCertificates" Execute="immediate" Return="check" />
+        
+        <!-- https://stackoverflow.com/questions/65358312/wix-custom-action-modify-file-in-installfolder-after-installfinalize -->
 
         <InstallExecuteSequence>
             <Custom Action="InstallClientCertificate" Before="InstallFinalize" />

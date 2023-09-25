@@ -28,5 +28,9 @@ This file contains the declaration of all the localizable strings.
   <String Id="ConfigDlgNextText" Value="&amp;Next" />
   <String Id="ConfigDlgCancelText" Value="Cancel" />
   <String Id="ConfigDlgBackText" Value="Back" />
+    
+  <String Id="ServiceDisplayName" Value="ETW Events Agent" />
+  <String Id="ServiceDescription" Value="Forwards ETW Events to an Event Sink" />
+    
 
 </WixLocalization>

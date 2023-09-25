@@ -1,11 +1,40 @@
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
-  <Fragment>
-      <Component Id="ServiceComponent" Guid="{F0446A09-ABAF-4C90-AF96-46A62246745D}" Directory="INSTALLFOLDER">
-          <File Source="../EtwEvents.PushAgent/deploy/publish/KdSoft.EtwEvents.PushAgent.exe" KeyPath="true"/>
-          <ServiceInstall  Name="EtwEvents.PushAgent2" DisplayName="ETW Events Agent" Type="ownProcess"
-                          Start="demand" ErrorControl="normal" Account="LocalSystem" Description="Forwards ETW Events to an Event Sink">
-          </ServiceInstall>
-          <ServiceControl Name="EtwEvents.PushAgent2" Remove="uninstall" />
-      </Component>
-  </Fragment>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util" >
+    <Fragment>
+        <Component Id="ServiceComponent" Guid="{F0446A09-ABAF-4C90-AF96-46A62246745D}" Directory="INSTALLFOLDER">
+            <File Source="../EtwEvents.PushAgent/deploy/publish/KdSoft.EtwEvents.PushAgent.exe" KeyPath="true"/>
+            <ServiceInstall Name="EtwEvents.PushAgent2" DisplayName="!(loc.ServiceDisplayName)" Type="ownProcess"
+                            Start="demand" ErrorControl="normal" Account="[SERVICE_ACCOUNT]" Description="!(loc.ServiceDescription)">
+                <!-- do we need to configure the service account like we do in PowerShell?
+                if ($cred.UserName -like 'NT SERVICE\*') {
+                    # for a virtual account (NT SERVICE\*) we need to pass a null password which PSCredential does not support, so we use $newService.Change()
+                    New-Service -Name $serviceName -BinaryPathName $filepath -Description $serviceDescription -DisplayName $serviceDisplayName -StartupType Automatic
+                    $newService  = Get-WmiObject -Class Win32_Service -Filter "Name='$serviceName'"
+                    $ChangeStatus = $newService.Change($null, $null, $null, $null, $null, $null, $cred.UserName, $null, $null, $null, $null)
+                    if ($ChangeStatus.ReturnValue -eq '0')  {
+                        Write-host Log on account updated sucessfully for the service $newService -f Green
+                        # for lack of a better understanding of minimum permissions, we use Administrator rights
+                        net localgroup Administrators /delete $cred.UserName
+                        net localgroup Administrators /add $cred.UserName
+                    } else {
+                        Write-host Failed to update Log on account in the service $newService. Error code: $($ChangeStatus.ReturnValue) -f Red
+                    }
+                } else {
+                    New-Service -Name $serviceName -BinaryPathName $filepath -Credential $cred -Description $serviceDescription -DisplayName $serviceDisplayName -StartupType Automatic
+                }
+              -->
+                
+                <!-- this should configure the service like we do in PowerShell?
+                    sc.exe failure $serviceName reset= 86400 actions= restart/6000/restart/6000/restart/6000
+                -->
+                <util:ServiceConfig
+                    ResetPeriodInDays="1"
+                    FirstFailureActionType="restart"
+                    SecondFailureActionType="restart"
+                    ThirdFailureActionType="restart"
+                    RestartServiceDelayInSeconds="6" />
+            </ServiceInstall>
+            <ServiceControl Name="EtwEvents.PushAgent2" Remove="uninstall" />
+        </Component>
+    </Fragment>
 </Wix>
