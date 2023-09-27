@@ -2,6 +2,7 @@
     <Fragment>
         <ComponentGroup Id="MainComponents" Directory="INSTALLFOLDER">
             <ComponentGroupRef Id="Published" />
+            <ComponentGroupRef Id="ServiceUser" />
             <ComponentRef Id="ServiceComponent" />
         </ComponentGroup>
     </Fragment>

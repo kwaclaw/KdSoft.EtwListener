@@ -1,10 +1,36 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util" >
     <Fragment>
+        <util:Group Id="USERS" Name="Users" />
+        <util:Group Id="PERF_LOG_USERS" Name="Performance Log Users" />
+
+        <ComponentGroup Id="ServiceUser" Directory="INSTALLFOLDER">
+            <!-- A local user can be created if necessary -->
+            <Component Id="LocalUser" Guid="{CC827294-6945-435E-9CBD-F48DFC637C14}" 
+                       Condition="(SERVICE_ACCOUNT &lt;&gt; &quot;LocalSystem&quot;) AND (SERVICE_DOMAIN = &quot;&quot; OR SERVICE_DOMAIN = &quot;.&quot;)">
+                <!-- if the domain is local then we must not specify it even if it is just "." -->
+                <util:User Name="[SERVICE_ACCOUNT]" Password="[SERVICE_PASSWORD]" PasswordExpired="no" PasswordNeverExpires="yes"
+                           CreateUser="yes" FailIfExists="no" UpdateIfExists="yes" LogonAsService="yes" RemoveOnUninstall="no">
+                    <util:GroupRef Id="USERS" />
+                    <util:GroupRef Id="PERF_LOG_USERS" />
+                </util:User>
+            </Component>
+            <!-- A domain user must already exist -->
+            <Component Id="DomainUser" Guid="{065DCD0D-2003-40E7-B8B6-FDF041B543AA}" 
+                       Condition="(SERVICE_ACCOUNT &lt;&gt; &quot;LocalSystem&quot;) AND (SERVICE_DOMAIN &lt;&gt; &quot;&quot; AND SERVICE_DOMAIN &lt;&gt; &quot;.&quot;)">
+                <util:User Name="[SERVICE_ACCOUNT]" Domain="[SERVICE_DOMAIN]" Password="[SERVICE_PASSWORD]"
+                           CreateUser="no" FailIfExists="no" UpdateIfExists="yes" LogonAsService="yes" RemoveOnUninstall="no">
+                    <util:GroupRef Id="USERS" />
+                    <util:GroupRef Id="PERF_LOG_USERS" />
+                </util:User>
+            </Component>
+        </ComponentGroup>
+        
         <Component Id="ServiceComponent" Guid="{F0446A09-ABAF-4C90-AF96-46A62246745D}" Directory="INSTALLFOLDER">
             <File Source="../EtwEvents.PushAgent/deploy/publish/KdSoft.EtwEvents.PushAgent.exe" KeyPath="true"/>
-            <ServiceInstall Name="EtwEvents.PushAgent2" DisplayName="!(loc.ServiceDisplayName)" Type="ownProcess"
-                            Start="demand" ErrorControl="normal" Account="[SERVICE_ACCOUNT]" Description="!(loc.ServiceDescription)">
+            
+            <ServiceInstall Name="EtwEvents.PushAgent" DisplayName="!(loc.ServiceDisplayName)" Type="ownProcess" Description="!(loc.ServiceDescription)"
+                            Start="demand" ErrorControl="normal" Account="[QUALIFIED_SERVICE_ACCOUNT]" Password="[SERVICE_PASSWORD]">
                 <!-- do we need to configure the service account like we do in PowerShell?
                 if ($cred.UserName -like 'NT SERVICE\*') {
                     # for a virtual account (NT SERVICE\*) we need to pass a null password which PSCredential does not support, so we use $newService.Change()
@@ -34,7 +60,7 @@
                     ThirdFailureActionType="restart"
                     RestartServiceDelayInSeconds="6" />
             </ServiceInstall>
-            <ServiceControl Name="EtwEvents.PushAgent2" Remove="uninstall" />
+            <ServiceControl Name="EtwEvents.PushAgent" Remove="uninstall" />
         </Component>
     </Fragment>
 </Wix>

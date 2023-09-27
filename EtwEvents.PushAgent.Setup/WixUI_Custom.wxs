@@ -65,9 +65,6 @@
             <Property Id="ARPNOMODIFY" Value="1" />
         </UI>
 
-        <Property Id="MANAGER_URL" Value="https://agent-manager.mycompany.com" />
-        <Property Id="SERVICE_ACCOUNT" Value="LocalSystem" />
-
         <!-- Note: You must author a registry component somewhere in your installer to persist the property for later retrieval
         Example:
         ...
