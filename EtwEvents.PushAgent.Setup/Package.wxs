@@ -1,7 +1,12 @@
 ﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui"
      xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
-    <Package Name="EtwEvents.PushAgent" Manufacturer="KD Soft"  Version="1.0.1.0" UpgradeCode="92ba2f4a-5b30-438c-9ae2-158382011ca9">
+    <Package Name="EtwEvents.PushAgent"
+             Manufacturer="KD Soft"
+             Version="1.0.1.0"
+             Scope="perMachine"
+             UpgradeCode="92ba2f4a-5b30-438c-9ae2-158382011ca9"
+     >
         <MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" />
 
         <Feature Id="Main" Title="ETW Agent Service">
@@ -22,25 +27,27 @@
         <CustomAction Id="InstallClientCertificate" BinaryRef="MyCustomActions" DllEntry="InstallClientCertificate" Execute="immediate" Return="check" />
         <CustomAction Id="ValidateRootCertificates" BinaryRef="MyCustomActions" DllEntry="ValidateRootCertificates" Execute="immediate" Return="check" />
         <CustomAction Id="InstallRootCertificates" BinaryRef="MyCustomActions" DllEntry="InstallRootCertificates" Execute="immediate" Return="check" />
-        
+
         <!-- https://stackoverflow.com/questions/65358312/wix-custom-action-modify-file-in-installfolder-after-installfinalize -->
 
         <InstallExecuteSequence>
-            <Custom Action="InstallClientCertificate" Before="InstallFinalize" />
             <Custom Action="InstallRootCertificates" Before="InstallFinalize" />
+            <Custom Action="InstallClientCertificate" Before="InstallFinalize" />
         </InstallExecuteSequence>
 
         <Property Id="MANAGER_URL" Value="https://agent-manager.mycompany.com" />
-        
+
         <!-- these properties can currently only be set at the command line, e.g.
              msiexec /i C:\Temp\Example.msi SERVICE_ACCOUNT="Test User" SERVICE_PASSWORD="blahblah" -->
         <Property Id="SERVICE_ACCOUNT" Value="LocalSystem" />
-        <Property Id="SERVICE_DOMAIN" Value="." />
-        <Property Id="SERVICE_PASSWORD" />
+        <!--<Property Id="SERVICE_DOMAIN" Value="." />-->
+        <!--<Property Id="SERVICE_PASSWORD" />-->
+
+        <!-- example for a domain user -->
         <!--<Property Id="SERVICE_ACCOUNT" Value="test-user" />
         <Property Id="SERVICE_DOMAIN" Value="KWACLAWEK-DEV2" />
         <Property Id="SERVICE_PASSWORD" Value="humptydumpty" />-->
-        
+
         <!-- the ServiceInstall element needs a fully qualified account name -->
         <SetProperty Id="QUALIFIED_SERVICE_ACCOUNT" Action="LocalAccount" Sequence="execute" Before="InstallInitialize" Value=".\[SERVICE_ACCOUNT]"
                      Condition="SERVICE_DOMAIN = &quot;&quot; OR SERVICE_DOMAIN = &quot;.&quot;"/>

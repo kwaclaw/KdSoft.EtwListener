@@ -19,7 +19,7 @@
               -->
             <Component Id="INSTALLFOLDER_Permission" Guid="{F905FA6F-8539-48FF-BB25-F5A355C9670E}">
                 <CreateFolder>
-                    <util:PermissionEx User="[SERVICE_ACCOUNT]" GenericAll="yes" Read="yes" Inheritable="yes" />
+                    <util:PermissionEx User="[SERVICE_ACCOUNT]" Domain="[SERVICE_DOMAIN]" GenericAll="yes" Read="yes" Inheritable="yes" />
                 </CreateFolder>
             </Component>
         </DirectoryRef>
