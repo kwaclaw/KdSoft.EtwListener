@@ -6,20 +6,14 @@
         </StandardDirectory>
 
         <DirectoryRef Id="INSTALLFOLDER">
-              <!-- this should cover the directory permissions like we do in the PowerShell installer (for non LocalSystem accounts)?
-                $acl = Get-Acl "$targetDirPath"
-                $aclRuleArgs = $cred.UserName, "Read,Write,ReadAndExecute", "ContainerInherit,ObjectInherit", "None", "Allow"
-                $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($aclRuleArgs)
-                $acl.SetAccessRule($accessRule)
-                $acl | Set-Acl "$targetDirPath"
-                
-                https://stackoverflow.com/questions/68246224/wix-toolset-cant-grant-permission-to-user-in-install-directory
-                https://subscription.packtpub.com/book/cloud-and-networking/9781849513722/2/ch02lvl1sec22/setting-file-permissions
-                https://learn.microsoft.com/en-ca/windows/win32/secauthz/security-descriptor-string-format?redirectedfrom=MSDN
-              -->
             <Component Id="INSTALLFOLDER_Permission" Guid="{F905FA6F-8539-48FF-BB25-F5A355C9670E}">
-                <CreateFolder>
-                    <util:PermissionEx User="[SERVICE_ACCOUNT]" Domain="[SERVICE_DOMAIN]" GenericAll="yes" Read="yes" Inheritable="yes" />
+                <CreateFolder >
+                    <util:PermissionEx
+                        User="[SERVICE_ACCOUNT]"
+                        Domain="[SERVICE_DOMAIN]"
+                        ChangePermission="yes"
+                        GenericAll="yes"
+                        Inheritable="yes" />
                 </CreateFolder>
             </Component>
         </DirectoryRef>

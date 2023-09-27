@@ -31,28 +31,6 @@
             
             <ServiceInstall Name="EtwEvents.PushAgent" DisplayName="!(loc.ServiceDisplayName)" Type="ownProcess" Description="!(loc.ServiceDescription)"
                             Start="demand" ErrorControl="normal" Account="[QUALIFIED_SERVICE_ACCOUNT]" Password="[SERVICE_PASSWORD]">
-                <!-- do we need to configure the service account like we do in PowerShell?
-                if ($cred.UserName -like 'NT SERVICE\*') {
-                    # for a virtual account (NT SERVICE\*) we need to pass a null password which PSCredential does not support, so we use $newService.Change()
-                    New-Service -Name $serviceName -BinaryPathName $filepath -Description $serviceDescription -DisplayName $serviceDisplayName -StartupType Automatic
-                    $newService  = Get-WmiObject -Class Win32_Service -Filter "Name='$serviceName'"
-                    $ChangeStatus = $newService.Change($null, $null, $null, $null, $null, $null, $cred.UserName, $null, $null, $null, $null)
-                    if ($ChangeStatus.ReturnValue -eq '0')  {
-                        Write-host Log on account updated sucessfully for the service $newService -f Green
-                        # for lack of a better understanding of minimum permissions, we use Administrator rights
-                        net localgroup Administrators /delete $cred.UserName
-                        net localgroup Administrators /add $cred.UserName
-                    } else {
-                        Write-host Failed to update Log on account in the service $newService. Error code: $($ChangeStatus.ReturnValue) -f Red
-                    }
-                } else {
-                    New-Service -Name $serviceName -BinaryPathName $filepath -Credential $cred -Description $serviceDescription -DisplayName $serviceDisplayName -StartupType Automatic
-                }
-              -->
-                
-                <!-- this should configure the service like we do in PowerShell?
-                    sc.exe failure $serviceName reset= 86400 actions= restart/6000/restart/6000/restart/6000
-                -->
                 <util:ServiceConfig
                     ResetPeriodInDays="1"
                     FirstFailureActionType="restart"

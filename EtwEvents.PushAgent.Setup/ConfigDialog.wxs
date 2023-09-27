@@ -27,13 +27,6 @@
                 <Control Id="SettingsOverride" Type="Edit" X="20" Y="293" Width="320" Height="18" Property="SETTINGS_OVERRIDE" />
                 <Control Id="ChangeSettingsOverride" Type="PushButton" X="20" Y="312" Width="56" Height="17" Text="!(loc.ChangeSettingsOverrideText)" />
                 
-                <!-- We need
-                    * Optional root certificate
-                    * Optional client certificate
-                    * Optional client cert password
-                    * Optional appsettings.Local.json
-                -->
-                
                 <!-- Footer -->
                 <Control Id="BottomLine" Type="Line" X="0" Y="354" Width="370" Height="0" />
                 <Control Id="Next" Type="PushButton" Text="!(loc.ConfigDlgNextText)" TabSkip="no" Default="yes" Height="17" Width="56" X="236" Y="362" />
