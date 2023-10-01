@@ -121,6 +121,7 @@ namespace EtwEvents.PushAgent.Setup.Tools
         [CustomAction]
         public static ActionResult SetMergeSettingsOverrideData(Session session) {
             var data = new CustomActionData();
+            data["MANAGER_URL"] = session["MANAGER_URL"];
             data["SETTINGS_OVERRIDE"] = session["SETTINGS_OVERRIDE"];
             data["INSTALLFOLDER"] = session["INSTALLFOLDER"];
             data["SETTINGS_OVERRIDE_PATH"] = session["SETTINGS_OVERRIDE_PATH"];
@@ -143,31 +144,51 @@ namespace EtwEvents.PushAgent.Setup.Tools
                 var data = session.CustomActionData;
                 session.Log("Got CustomActionData: {0}", data.ToString());
 
-                var overrideJson = data["SETTINGS_OVERRIDE"];
-                if (string.IsNullOrEmpty(overrideJson))
-                    return ActionResult.Success;
-                if (!File.Exists(overrideJson))
-                    return ActionResult.Failure;
-
-                string settingsOverrideDestination;
                 var installFolder = data["INSTALLFOLDER"];
+                string settingsOverrideDestination;
                 // the installed location might be a subfolder of the INSTALLFOLDER
-                var settingsOverridePath = data["SETTINGS_OVERRIDE_PATH"];
-                if (string.IsNullOrEmpty(settingsOverridePath))
+                if (!data.TryGetValue("SETTINGS_OVERRIDE_PATH", out var settingsOverridePath) || string.IsNullOrEmpty(settingsOverridePath)) {
                     settingsOverrideDestination = installFolder;
-                else
+                }
+                else {
                     settingsOverrideDestination = Path.Combine(installFolder, settingsOverridePath);
+                }
 
-                var fileName = Path.GetFileName(overrideJson);
+                JObject newObj;
+                if (!data.TryGetValue("SETTINGS_OVERRIDE", out var overrideJson) || !File.Exists(overrideJson)) {
+                    newObj = new JObject();
+                    overrideJson = null;
+                }
+                else {
+                    newObj = JObject.Parse(File.ReadAllText(overrideJson));
+                }
+
+                // we set the MANAGER_URL if one was entered by the user
+                if (data.TryGetValue("MANAGER_URL", out var managerUrl) && !string.IsNullOrEmpty(managerUrl)) {
+                    var controlToken = newObj["Control"] as JObject;
+                    if (controlToken is null) {
+                        controlToken = new JObject();
+                        newObj.Add("Control", controlToken);
+                    }
+
+                    var uriProp = controlToken["Uri"] as JProperty;
+                    if (uriProp is null) {
+                        controlToken.Add("Uri", managerUrl);
+                    }
+                    else {
+                        uriProp.Value = managerUrl;
+                    }
+                }
+
+                var fileName = "appsettings.Local.json";
                 var installedOverrideJson = Path.Combine(settingsOverrideDestination, fileName);
                 if (!File.Exists(installedOverrideJson)) {
-                    File.Copy(overrideJson, installedOverrideJson, true);
+                    File.WriteAllText(installedOverrideJson, newObj.ToString(), Encoding.UTF8);
                     session.Log("No settings override file installed: {0}", installedOverrideJson);
                     return ActionResult.Success;
                 }
 
                 var installedObj = JObject.Parse(File.ReadAllText(installedOverrideJson));
-                var newObj = JObject.Parse(File.ReadAllText(overrideJson));
                 var mergeSettings = new JsonMergeSettings {
                     MergeArrayHandling = MergeArrayHandling.Union,
                     MergeNullValueHandling = MergeNullValueHandling.Merge,

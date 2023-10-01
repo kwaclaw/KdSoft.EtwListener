@@ -40,7 +40,7 @@
             <Custom Action="InstallClientCertificate" Before="InstallFinalize" />
         </InstallExecuteSequence>
 
-        <Property Id="MANAGER_URL" Value="https://agent-manager.mycompany.com" />
+        <!--<Property Id="MANAGER_URL" Value="https://agent-manager.mycompany.com" />-->
 
         <!-- these properties can currently only be set at the command line, e.g.
              msiexec /i C:\Temp\Example.msi SERVICE_ACCOUNT="Test User" SERVICE_PASSWORD="blahblah" -->
