@@ -1,5 +1,4 @@
-﻿using KdSoft.EtwEvents;
-using KdSoft.EtwLogging;
+﻿using KdSoft.EtwLogging;
 
 namespace KdSoft.EtwEvents.Tests
 {

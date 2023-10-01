@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using KdSoft.EtwEvents;
 
 namespace KdSoft.EtwEvents.Tests
 {

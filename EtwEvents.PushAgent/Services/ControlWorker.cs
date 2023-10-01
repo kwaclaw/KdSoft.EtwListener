@@ -13,8 +13,8 @@ using Google.Protobuf.WellKnownTypes;
 using KdSoft.EtwEvents.Server;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Options;
-using Kdfu = KdSoft.EtwEvents.FilterUtils;
 using Gpb = Google.Protobuf;
+using Kdfu = KdSoft.EtwEvents.FilterUtils;
 
 namespace KdSoft.EtwEvents.PushAgent
 {

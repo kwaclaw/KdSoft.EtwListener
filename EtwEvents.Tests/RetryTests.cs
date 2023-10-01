@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
 using Google.Protobuf.WellKnownTypes;
-using KdSoft.EtwEvents;
 using KdSoft.EtwEvents.EventSinks;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Logging;

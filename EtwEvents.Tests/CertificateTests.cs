@@ -1,5 +1,4 @@
 ﻿using System.Security.Cryptography.X509Certificates;
-using KdSoft.EtwEvents;
 using KdSoft.EtwEvents.AgentManager;
 using Xunit;
 using Xunit.Abstractions;
