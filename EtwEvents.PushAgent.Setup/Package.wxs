@@ -34,8 +34,8 @@
         <!-- https://stackoverflow.com/questions/65358312/wix-custom-action-modify-file-in-installfolder-after-installfinalize -->
 
         <InstallExecuteSequence>
-            <Custom Action="SetMergeSettingsOverrideData" Before="MergeSettingsOverride" />
-            <Custom Action="MergeSettingsOverride" After="InstallInitialize" />
+            <Custom Action="SetMergeSettingsOverrideData" Before="MergeSettingsOverride" Condition="NOT(REMOVE~=&quot;ALL&quot;) OR (Installed AND (InstallMode~=&quot;Repair&quot;))" />
+            <Custom Action="MergeSettingsOverride" After="InstallInitialize" Condition="NOT(REMOVE~=&quot;ALL&quot;) OR (Installed AND (InstallMode~=&quot;Repair&quot;))" />
             <Custom Action="InstallRootCertificates" Before="InstallFinalize" />
             <Custom Action="InstallClientCertificate" Before="InstallFinalize" />
         </InstallExecuteSequence>
