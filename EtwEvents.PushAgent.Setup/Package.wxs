@@ -27,10 +27,15 @@
         <CustomAction Id="InstallClientCertificate" BinaryRef="MyCustomActions" DllEntry="InstallClientCertificate" Execute="immediate" Return="check" />
         <CustomAction Id="ValidateRootCertificates" BinaryRef="MyCustomActions" DllEntry="ValidateRootCertificates" Execute="immediate" Return="check" />
         <CustomAction Id="InstallRootCertificates" BinaryRef="MyCustomActions" DllEntry="InstallRootCertificates" Execute="immediate" Return="check" />
+        <CustomAction Id="SetMergeSettingsOverrideData" BinaryRef="MyCustomActions" DllEntry="SetMergeSettingsOverrideData" Execute="immediate" Return="check" />
+        <!-- this action needs to run with elevated privileges -->
+        <CustomAction Id="MergeSettingsOverride" BinaryRef="MyCustomActions" DllEntry="MergeSettingsOverride" Execute="deferred" Impersonate="no" Return="check" />
 
         <!-- https://stackoverflow.com/questions/65358312/wix-custom-action-modify-file-in-installfolder-after-installfinalize -->
 
         <InstallExecuteSequence>
+            <Custom Action="SetMergeSettingsOverrideData" Before="MergeSettingsOverride" />
+            <Custom Action="MergeSettingsOverride" After="InstallInitialize" />
             <Custom Action="InstallRootCertificates" Before="InstallFinalize" />
             <Custom Action="InstallClientCertificate" Before="InstallFinalize" />
         </InstallExecuteSequence>

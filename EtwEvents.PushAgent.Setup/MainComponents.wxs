@@ -4,10 +4,6 @@
             <ComponentGroupRef Id="Published" />
             <ComponentGroupRef Id="ServiceUser" />
             <ComponentRef Id="ServiceComponent" />
-            <Component Id="AppSettingsOverride" Guid="{8EFF4E2D-22DE-4F89-9D69-0DA79BFF46DF}" Condition="SETTINGS_OVERRIDE &lt;&gt; &quot;&quot;">
-                <!-- it seems this will silently fail if the source file does not exist -->
-                <CopyFile Id="appsettings.Local.json" SourceProperty="SETTINGS_OVERRIDE" DestinationProperty="INSTALLFOLDER"  DestinationName="appsettings.Local.json"/>
-            </Component>
         </ComponentGroup>
     </Fragment>
 </Wix>

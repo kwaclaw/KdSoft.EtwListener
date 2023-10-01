@@ -51,7 +51,7 @@
             
             <Publish Dialog="ConfigDlg" Control="ClientCertPwd" Property="CLIENT_CERTIFICATE_PASSWORD" Value="[CLIENT_CERTIFICATE_PASSWORD]" Order="1" />
 
-            <Publish Dialog="ConfigDlg" Control="ChangeSettingsOverride" Property="_FileDlgFilter" Value="JSON Files (*.json)|*.json" Order="1" />
+            <Publish Dialog="ConfigDlg" Control="ChangeSettingsOverride" Property="_FileDlgFilter" Value="Settings|appsettings.Local.json" Order="1" />
             <!--<Publish Dialog="ConfigDlg" Control="ChangeClientCert" Property="_FileDglMultiSelect" Value="false" Order="2" />-->
             <Publish Dialog="ConfigDlg" Control="ChangeSettingsOverride" Property="_FileDlgTitle" Value="!(loc.SelectSettingsOverride)" Order="3" />
             <Publish Dialog="ConfigDlg" Control="ChangeSettingsOverride" Property="_FileNamesProperty" Value="SETTINGS_OVERRIDE" Order="4" />

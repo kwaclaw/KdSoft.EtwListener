@@ -1,9 +1,12 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using KdSoft.Utils;
+using Newtonsoft.Json.Linq;
 using WixToolset.Dtf.WindowsInstaller;
 
 namespace EtwEvents.PushAgent.Setup.Tools
@@ -107,6 +110,76 @@ namespace EtwEvents.PushAgent.Setup.Tools
             }
             catch (Exception ex) {
                 session.Log("Error in InstallRootCertificates: {0}\r\n StackTrace: {1}", ex.Message, ex.StackTrace);
+                return ActionResult.Failure;
+            }
+            return ActionResult.Success;
+        }
+
+        /// <summary>
+        /// Populates CustomActionData for MergeSettingsOverride deferred custom action.
+        /// </summary>
+        [CustomAction]
+        public static ActionResult SetMergeSettingsOverrideData(Session session) {
+            var data = new CustomActionData();
+            data["SETTINGS_OVERRIDE"] = session["SETTINGS_OVERRIDE"];
+            data["INSTALLFOLDER"] = session["INSTALLFOLDER"];
+            data["SETTINGS_OVERRIDE_PATH"] = session["SETTINGS_OVERRIDE_PATH"];
+
+            var dataStr = data.ToString();
+            session.Log("Set CustomActionData: {0}", dataStr);
+            session["MergeSettingsOverride"] = dataStr;
+
+            return ActionResult.Success;
+        }
+
+        /// <summary>
+        /// Merges the JSON file referenced in the "SETTINGS_OVERRIDE" property (the source file) with the currently installed copy of the same file,
+        /// and replaces the installed file with the merge result, this simply copies the source file to the install location.
+        /// </summary>
+        /// <remarks>Due to file copying this action requires elevated privileges: deferred with impersonate="no".</remarks>
+        [CustomAction]
+        public static ActionResult MergeSettingsOverride(Session session) {
+            try {
+                var data = session.CustomActionData;
+                session.Log("Got CustomActionData: {0}", data.ToString());
+
+                var overrideJson = data["SETTINGS_OVERRIDE"];
+                if (string.IsNullOrEmpty(overrideJson))
+                    return ActionResult.Success;
+                if (!File.Exists(overrideJson))
+                    return ActionResult.Failure;
+
+                string settingsOverrideDestination;
+                var installFolder = data["INSTALLFOLDER"];
+                // the installed location might be a subfolder of the INSTALLFOLDER
+                var settingsOverridePath = data["SETTINGS_OVERRIDE_PATH"];
+                if (string.IsNullOrEmpty(settingsOverridePath))
+                    settingsOverrideDestination = installFolder;
+                else
+                    settingsOverrideDestination = Path.Combine(installFolder, settingsOverridePath);
+
+                var fileName = Path.GetFileName(overrideJson);
+                var installedOverrideJson = Path.Combine(settingsOverrideDestination, fileName);
+                if (!File.Exists(installedOverrideJson)) {
+                    File.Copy(overrideJson, installedOverrideJson, true);
+                    session.Log("No settings override file installed: {0}", installedOverrideJson);
+                    return ActionResult.Success;
+                }
+
+                var installedObj = JObject.Parse(File.ReadAllText(installedOverrideJson));
+                var newObj = JObject.Parse(File.ReadAllText(overrideJson));
+                var mergeSettings = new JsonMergeSettings {
+                    MergeArrayHandling = MergeArrayHandling.Union,
+                    MergeNullValueHandling = MergeNullValueHandling.Merge,
+                    PropertyNameComparison = StringComparison.OrdinalIgnoreCase
+                };
+
+                installedObj.Merge(newObj, mergeSettings);
+                File.WriteAllText(installedOverrideJson, installedObj.ToString(), Encoding.UTF8);
+                session.Log("Settings override file merged: {0}", installedOverrideJson);
+            }
+            catch (Exception ex) {
+                session.Log("Error in MergeSettingsOverride: {0}\r\n StackTrace: {1}", ex.Message, ex.StackTrace);
                 return ActionResult.Failure;
             }
             return ActionResult.Success;

@@ -6,7 +6,7 @@
 
         <ComponentGroup Id="ServiceUser" Directory="INSTALLFOLDER">
             <!-- A local user can be created if necessary -->
-            <Component Id="LocalUser" Guid="{CC827294-6945-435E-9CBD-F48DFC637C14}" 
+            <Component Id="LocalUser" Guid="{CC827294-6945-435E-9CBD-F48DFC637C14}"
                        Condition="(SERVICE_ACCOUNT &lt;&gt; &quot;LocalSystem&quot;) AND (SERVICE_DOMAIN = &quot;&quot; OR SERVICE_DOMAIN = &quot;.&quot;)">
                 <!-- if the domain is local then we must not specify it even if it is just "." -->
                 <util:User Name="[SERVICE_ACCOUNT]" Password="[SERVICE_PASSWORD]" PasswordExpired="no" PasswordNeverExpires="yes"
@@ -16,7 +16,7 @@
                 </util:User>
             </Component>
             <!-- A domain user must already exist -->
-            <Component Id="DomainUser" Guid="{065DCD0D-2003-40E7-B8B6-FDF041B543AA}" 
+            <Component Id="DomainUser" Guid="{065DCD0D-2003-40E7-B8B6-FDF041B543AA}"
                        Condition="(SERVICE_ACCOUNT &lt;&gt; &quot;LocalSystem&quot;) AND (SERVICE_DOMAIN &lt;&gt; &quot;&quot; AND SERVICE_DOMAIN &lt;&gt; &quot;.&quot;)">
                 <util:User Name="[SERVICE_ACCOUNT]" Domain="[SERVICE_DOMAIN]" Password="[SERVICE_PASSWORD]"
                            CreateUser="no" FailIfExists="no" UpdateIfExists="yes" LogonAsService="yes" RemoveOnUninstall="no">
@@ -25,10 +25,10 @@
                 </util:User>
             </Component>
         </ComponentGroup>
-        
+
         <Component Id="ServiceComponent" Guid="{F0446A09-ABAF-4C90-AF96-46A62246745D}" Directory="INSTALLFOLDER">
             <File Source="../EtwEvents.PushAgent/deploy/publish/KdSoft.EtwEvents.PushAgent.exe" KeyPath="true"/>
-            
+
             <ServiceInstall Name="EtwEvents.PushAgent" DisplayName="!(loc.ServiceDisplayName)" Type="ownProcess" Description="!(loc.ServiceDescription)"
                             Start="demand" ErrorControl="normal" Account="[QUALIFIED_SERVICE_ACCOUNT]" Password="[SERVICE_PASSWORD]">
                 <util:ServiceConfig

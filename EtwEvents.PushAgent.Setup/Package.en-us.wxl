@@ -7,30 +7,30 @@ This file contains the declaration of all the localizable strings.
   <String Id="ConfigDlgTitle" Value="Configure Setup" />
   <String Id="ConfigDlgHeader" Value="Configuration Dialog" />
   <String Id="ConfigDlgDescription" Value="Configure Install Settings" />
-    
+
   <String Id="ManagerUrlLabel" Value="Manager URL" />
-    
+
   <String Id="SelectRootCerts" Value="Select Root/Intermediate Certificates" />
   <String Id="RootCertsLabel" Value="Root/Intermediate Certificates" />
   <String Id="ChangeRootCertsText" Value="Change..." />
   <String Id="ValidateRootCertsErrorTitle" Value="Root Certificate Not Valid" />
-    
+
   <String Id="SelectClientCert" Value="Select Client Certificate" />
   <String Id="ClientCertLabel" Value="Client Certificate" />
   <String Id="ChangeClientCertText" Value="Change..." />
   <String Id="ValidateClientCertErrorTitle" Value="Client Certificate Not Valid" />
   <String Id="ClientCertPwdLabel" Value="Client Certificate Password" />
-    
+
   <String Id="SelectSettingsOverride" Value="Select Settings Override File" />
   <String Id="SettingsOverrideLabel" Value="Settings Override File (.json)" />
   <String Id="ChangeSettingsOverrideText" Value="Change..." />
-    
+
   <String Id="ConfigDlgNextText" Value="&amp;Next" />
   <String Id="ConfigDlgCancelText" Value="Cancel" />
   <String Id="ConfigDlgBackText" Value="Back" />
-    
+
   <String Id="ServiceDisplayName" Value="ETW Events Agent" />
   <String Id="ServiceDescription" Value="Forwards ETW Events to an Event Sink" />
-    
+
 
 </WixLocalization>
