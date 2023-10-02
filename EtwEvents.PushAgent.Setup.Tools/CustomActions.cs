@@ -37,6 +37,11 @@ namespace EtwEvents.PushAgent.Setup.Tools
                 if (certPath != string.Empty) {
                     var certPwd = session["CLIENT_CERTIFICATE_PASSWORD"] ?? "";
                     var certToInstall = new X509Certificate2(certPath, certPwd, X509KeyStorageFlags.PersistKeySet);
+
+                    // X509NameType.SimpleName extracts CN from subject (common name)
+                    var subjectCN = certToInstall.GetNameInfo(X509NameType.SimpleName, false);
+                    session["CLIENT_CERTIFICATE_SUBJECT_CN"] = subjectCN;
+
                     session.Log($"Validated client certificate {certPath}");
                 }
                 session["CLIENT_CERTIFICATE_VALID"] = "1";
@@ -53,12 +58,16 @@ namespace EtwEvents.PushAgent.Setup.Tools
         [CustomAction]
         public static ActionResult InstallClientCertificate(Session session) {
             try {
-                var certPath = (session["CLIENT_CERTIFICATE"] ?? "").Trim();
+                var data = session.CustomActionData;
+                session.Log("InstallClientCertificate - Got CustomActionData: {0}", data.ToString());
+
+                var certPath = (data["CLIENT_CERTIFICATE"] ?? "").Trim();
                 if (certPath == string.Empty)
                     return ActionResult.Success;
 
-                var certPwd = session["CLIENT_CERTIFICATE_PASSWORD"] ?? "";
+                var certPwd = data["CLIENT_CERTIFICATE_PASSWORD"] ?? "";
                 var certToInstall = new X509Certificate2(certPath, certPwd, X509KeyStorageFlags.PersistKeySet);
+
                 InstallMachineCertificate(certToInstall);
                 session.Log($"Installed client certificate {certPath}");
             }
@@ -97,13 +106,17 @@ namespace EtwEvents.PushAgent.Setup.Tools
         [CustomAction]
         public static ActionResult InstallRootCertificates(Session session) {
             try {
-                var certPaths = (session["ROOT_CERTIFICATES"] ?? "").Split(new[] { ';', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                var data = session.CustomActionData;
+                session.Log("InstallRootCertificates - Got CustomActionData: {0}", data.ToString());
+
+                var certPaths = (data["ROOT_CERTIFICATES"] ?? "").Split(new[] { ';', '\n' }, StringSplitOptions.RemoveEmptyEntries);
                 foreach (var certPath in certPaths) {
                     var trimmedPath = certPath.Trim();
                     if (trimmedPath == string.Empty)
                         continue;
 
                     var certToInstall = new X509Certificate2(certPath);
+
                     InstallMachineCertificate(certToInstall);
                     session.Log($"Installed root certificate {certPath}");
                 }
@@ -116,20 +129,33 @@ namespace EtwEvents.PushAgent.Setup.Tools
         }
 
         /// <summary>
-        /// Populates CustomActionData for MergeSettingsOverride deferred custom action.
+        /// Populates CustomActionData for deferred custom actions.
         /// </summary>
         [CustomAction]
-        public static ActionResult SetMergeSettingsOverrideData(Session session) {
+        public static ActionResult SetDeferredActionData(Session session) {
             var data = new CustomActionData();
+            data["ROOT_CERTIFICATES"] = session["ROOT_CERTIFICATES"];
+            var dataStr = data.ToString();
+            session.Log("InstallRootCertificates - Set CustomActionData for: {0}", dataStr);
+            session["InstallRootCertificates"] = dataStr;
+
+            data = new CustomActionData();
+            data["CLIENT_CERTIFICATE"] = session["CLIENT_CERTIFICATE"];
+            data["CLIENT_CERTIFICATE_PASSWORD"] = session["CLIENT_CERTIFICATE_PASSWORD"];
+            dataStr = data.ToString();
+            session.Log("InstallClientCertificate - Set CustomActionData: {0}", dataStr);
+            session["InstallClientCertificate"] = dataStr;
+
+            data = new CustomActionData();
             data["MANAGER_URL"] = session["MANAGER_URL"];
+            data["CLIENT_CERTIFICATE_SUBJECT_CN"] = session["CLIENT_CERTIFICATE_SUBJECT_CN"];
             data["SETTINGS_OVERRIDE"] = session["SETTINGS_OVERRIDE"];
             data["INSTALLFOLDER"] = session["INSTALLFOLDER"];
             data["SETTINGS_OVERRIDE_PATH"] = session["SETTINGS_OVERRIDE_PATH"];
 
-            var dataStr = data.ToString();
-            session.Log("Set CustomActionData: {0}", dataStr);
+            dataStr = data.ToString();
+            session.Log("MergeSettingsOverride - Set CustomActionData: {0}", dataStr);
             session["MergeSettingsOverride"] = dataStr;
-
             return ActionResult.Success;
         }
 
@@ -142,7 +168,7 @@ namespace EtwEvents.PushAgent.Setup.Tools
         public static ActionResult MergeSettingsOverride(Session session) {
             try {
                 var data = session.CustomActionData;
-                session.Log("Got CustomActionData: {0}", data.ToString());
+                session.Log("MergeSettingsOverride - Got CustomActionData: {0}", data.ToString());
 
                 var installFolder = data["INSTALLFOLDER"];
                 string settingsOverrideDestination;
@@ -163,21 +189,30 @@ namespace EtwEvents.PushAgent.Setup.Tools
                     newObj = JObject.Parse(File.ReadAllText(overrideJson));
                 }
 
-                // we set the MANAGER_URL if one was entered by the user
                 if (data.TryGetValue("MANAGER_URL", out var managerUrl) && !string.IsNullOrEmpty(managerUrl)) {
-                    var controlToken = newObj["Control"] as JObject;
-                    if (controlToken is null) {
-                        controlToken = new JObject();
-                        newObj.Add("Control", controlToken);
+                    var controlObj = newObj["Control"];
+                    if (controlObj is null) {
+                        controlObj = new JObject();
+                        newObj["Control"] = controlObj;
+                    }
+                    controlObj["Uri"] = managerUrl;
+                }
+
+                // we set the CLIENT_CERTIFICATE's SubjectCN if one was entered by the user
+                if (data.TryGetValue("CLIENT_CERTIFICATE_SUBJECT_CN", out var clientCertSubjectCN) && !string.IsNullOrEmpty(clientCertSubjectCN)) {
+                    var controlObj = newObj["Control"];
+                    if (controlObj is null) {
+                        controlObj = new JObject();
+                        newObj["Control"] = controlObj;
                     }
 
-                    var uriProp = controlToken["Uri"] as JProperty;
-                    if (uriProp is null) {
-                        controlToken.Add("Uri", managerUrl);
+                    var clientCertObj = controlObj["ClientCertificate"];
+                    if (clientCertObj is null) {
+                        clientCertObj = new JObject();
+                        controlObj["ClientCertificate"] = clientCertObj;
                     }
-                    else {
-                        uriProp.Value = managerUrl;
-                    }
+
+                    clientCertObj["SubjectCN"] = clientCertSubjectCN;
                 }
 
                 var fileName = "appsettings.Local.json";
