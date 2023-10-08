@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 namespace KdSoft.EtwEvents.EventSinks
 {
     [EventSink(nameof(DataCollectorSink))]
-    public class DataCollectorSinkFactory: IEventSinkFactory
+    public partial class DataCollectorSinkFactory: IEventSinkFactory
     {
         static readonly JsonSerializerOptions _serializerOptions;
 
@@ -14,6 +14,9 @@ namespace KdSoft.EtwEvents.EventSinks
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
         }
+
+        [GeneratedRegex("[^A-Za-z0-9_]")]
+        private static partial Regex FixLogTypeRegex();
 
         // The name of a field in the data that contains the timestamp of the data item.
         // If you specify a field, its contents are used for TimeGenerated.
@@ -38,7 +41,7 @@ namespace KdSoft.EtwEvents.EventSinks
                 if (string.IsNullOrWhiteSpace(logType))
                     logType = "Default";
                 // replace invalid characters with '_'
-                logType = Regex.Replace(logType, "[^A-Za-z0-9_]", "_");
+                logType = FixLogTypeRegex().Replace(logType, "_");
                 // enforce max length constraint by trimming extra length
                 if (logType.Length > 100)
                     logType = logType[..100];

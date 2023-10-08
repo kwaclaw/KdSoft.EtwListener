@@ -7,17 +7,20 @@ using Microsoft.Extensions.Logging;
 
 namespace KdSoft.EtwEvents.EventSinks
 {
-    // There is no .NET Seq-Api needed for sending data, for an examples see
+    // There is no .NET Seq-Api needed for sending data, for examples see
     // - https://github.com/datalust/nlog-targets-seq, look at SeqTarget.cs
     // - https://github.com/serilog/serilog-sinks-seq
     // See also https://docs.datalust.co/docs/posting-raw-events
-    public class SeqSink: IEventSink
+    public partial class SeqSink: IEventSink
     {
         public const string BulkUploadResource = "api/events/raw?clef";
         public const string ApiKeyHeaderName = "X-Seq-ApiKey";
 
-        public static Regex MinLevelRegex = new Regex(@"""MinimumLevelAccepted""\s*:\s*""(.+)""\s*[,\}]", RegexOptions.Compiled);
-        public static Regex ErrorRegex = new Regex(@"""Error""\s*:\s*""(.+)""\s*[,\}]", RegexOptions.Compiled);
+        [GeneratedRegex("\"MinimumLevelAccepted\"\\s*:\\s*\"(.+)\"\\s*[,\\}]", RegexOptions.Compiled)]
+        public static partial Regex MinLevelRegex();
+
+        [GeneratedRegex("\"Error\"\\s*:\\s*\"(.+)\"\\s*[,\\}]", RegexOptions.Compiled)]
+        public static partial Regex ErrorRegex();
 
         readonly HttpClient _http;
         readonly IEventSinkContext _context;
@@ -87,7 +90,7 @@ namespace KdSoft.EtwEvents.EventSinks
                 // parse server's mimimum accepted level and use it for future requests
                 // might send an empty message first (after construction), to get this returned.
                 var levelString = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                var match = MinLevelRegex.Match(levelString);
+                var match = MinLevelRegex().Match(levelString);
                 if (match.Success && Enum.TryParse(match.Groups[1].Value, out SeqLogLevel minLevel)) {
                     return minLevel;
                 }
@@ -95,7 +98,7 @@ namespace KdSoft.EtwEvents.EventSinks
             }
             else {
                 var errorJson = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                var errorMsg = ErrorRegex.Match(errorJson).Groups[1].Value;
+                var errorMsg = ErrorRegex().Match(errorJson).Groups[1].Value;
                 throw new HttpRequestException(errorMsg, null, response.StatusCode);
             }
         }

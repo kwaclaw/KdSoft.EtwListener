@@ -10,7 +10,8 @@ namespace KdSoft.EtwLogging
             this.Version = "1.0";
         }
 
-        public static readonly Regex StripWhiteSpace = new Regex(@"\s(?=([^""]* ""[^""]*"")*[^""]*$)", RegexOptions.Compiled | RegexOptions.Multiline);
+        [GeneratedRegex("\\s(?=([^\"]* \"[^\"]*\")*[^\"]*$)", RegexOptions.Multiline | RegexOptions.Compiled)]
+        private static partial Regex StripWhiteSpace();
 
         /// <summary>
         /// Matches two EventSinkProfiles based on options, credentials and context.
@@ -19,12 +20,12 @@ namespace KdSoft.EtwLogging
             if (xProfile.PersistentChannel != yProfile.PersistentChannel)
                 return false;
             // we try to compare JSON based settings by removing redundant whitespace
-            var xOptions = StripWhiteSpace.Replace(xProfile.Options, "");
-            var yOptions = StripWhiteSpace.Replace(yProfile.Options, "");
+            var xOptions = StripWhiteSpace().Replace(xProfile.Options, "");
+            var yOptions = StripWhiteSpace().Replace(yProfile.Options, "");
             if (xOptions != yOptions)
                 return false;
-            var xCredentials = StripWhiteSpace.Replace(xProfile.Credentials, "");
-            var yCredentials = StripWhiteSpace.Replace(yProfile.Credentials, "");
+            var xCredentials = StripWhiteSpace().Replace(xProfile.Credentials, "");
+            var yCredentials = StripWhiteSpace().Replace(yProfile.Credentials, "");
             return xCredentials == yCredentials;
         }
     }
