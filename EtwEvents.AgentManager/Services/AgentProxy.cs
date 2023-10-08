@@ -54,8 +54,7 @@ namespace KdSoft.EtwEvents.AgentManager
 
         public Task<string> CallAsync(string eventId, ControlEvent evt, CancellationToken cancelToken) {
             if (!_channel.Writer.TryWrite(evt))
-                //TODO better Exception type
-                throw new Exception("Could not post event.");
+                throw new InvalidOperationException("Could not post event.");
 
             var tcs = new TaskCompletionSource<string>();
             cancelToken.Register(() => {

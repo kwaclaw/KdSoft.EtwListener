@@ -65,7 +65,7 @@ namespace KdSoft.EtwEvents.Server
                 throw new InvalidOperationException("Already processing");
             }
             var runTask = ProcessBatches(stoppingToken);
-            this.RunTask = runTask.ContinueWith(continuation);
+            this.RunTask = runTask.ContinueWith(continuation, stoppingToken);
         }
 
         public virtual ValueTask DisposeAsync() {

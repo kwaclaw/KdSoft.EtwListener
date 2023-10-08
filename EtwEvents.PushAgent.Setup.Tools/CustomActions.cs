@@ -128,6 +128,7 @@ namespace EtwEvents.PushAgent.Setup.Tools
             return ActionResult.Success;
         }
 
+#pragma warning disable IDE0028
         /// <summary>
         /// Populates CustomActionData for deferred custom actions.
         /// </summary>
@@ -158,6 +159,7 @@ namespace EtwEvents.PushAgent.Setup.Tools
             session["MergeSettingsOverride"] = dataStr;
             return ActionResult.Success;
         }
+#pragma warning restore IDE0028
 
         /// <summary>
         /// Merges the JSON file referenced in the "SETTINGS_OVERRIDE" property (the source file) with the currently installed copy of the same file,

@@ -22,7 +22,7 @@ namespace KdSoft.EtwEvents.EventSinks
 
         public Task<IEventSink> Create(RollingFileSinkOptions options, IEventSinkContext context) {
             try {
-                Func<DateTimeOffset, string> fileNameSelector = (dto) => string.Format(options.FileNameFormat, dto);
+                string fileNameSelector(DateTimeOffset dto) => string.Format(options.FileNameFormat, dto);
                 // returns options.Directory if it is an absolute path
                 var absoluteDirectory = Path.Combine(_evtSinkDir, options.Directory);
                 var dirInfo = new DirectoryInfo(absoluteDirectory);

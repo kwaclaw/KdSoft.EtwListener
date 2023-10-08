@@ -152,7 +152,7 @@ namespace KdSoft.EtwEvents.EventSinks
         async Task<bool> FlushAsyncInternal(ReadOnlyMemory<byte> evtBatchBytes) {
             var minSeqLevel = await PostAsync(_http, _requestUri, evtBatchBytes).ConfigureAwait(false);
             if (minSeqLevel != null) {
-                this._maxTraceEventLevel = FromSeqLogLevel(minSeqLevel.Value);
+                _maxTraceEventLevel = FromSeqLogLevel(minSeqLevel.Value);
             }
             return true;
         }

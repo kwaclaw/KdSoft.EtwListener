@@ -32,6 +32,7 @@ namespace KdSoft.EtwEvents.PushAgent
             this._runtimeAssemblyPaths = Directory.GetFiles(RuntimeEnvironment.GetRuntimeDirectory(), "*.dll");
         }
 
+#pragma warning disable CA1806 // Do not ignore method results
         static EventSinkService() {
             // Shared assemblies should be loaded before requested by the EventSinkLoadContext, because
             // otherwise they would be loaded using default probing which requires the version to match.
@@ -41,6 +42,7 @@ namespace KdSoft.EtwEvents.PushAgent
             new EtwEventBatch();
             // more? ILogger should get loaded in the contructor
         }
+#pragma warning restore CA1806 // Do not ignore method results
 
         public Type? GetEventSinkFactoryType(DirectoryInfo evtSinkDirInfo, string sinkType, string version) {
             var assemblyPaths = new HashSet<string>(_runtimeAssemblyPaths, StringComparer.CurrentCultureIgnoreCase);

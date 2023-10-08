@@ -21,7 +21,7 @@ namespace KdSoft.EtwEvents.PushAgent
         readonly ArrayBufferWriter<byte> _bufferWriter;
 
         const string DataProtectionPurpose = "sink-credentials";
-        const string localSettingsFile = "appsettings.Local.json";
+        const string LocalSettingsFile = "appsettings.Local.json";
 
         static readonly JsonFormatter _jsonFormatter = new(
             JsonFormatter.Settings.Default.WithFormatDefaultValues(true).WithFormatEnumsAsIntegers(true)
@@ -120,7 +120,7 @@ namespace KdSoft.EtwEvents.PushAgent
         #region DataProtectionOptions
 
         void SaveDataProtectionOptions(DataProtectionOptions dataProtectionOptions) {
-            var jsonFile = Path.Combine(_context.HostingEnvironment.ContentRootPath, localSettingsFile);
+            var jsonFile = Path.Combine(_context.HostingEnvironment.ContentRootPath, LocalSettingsFile);
             JsonObject? docObj;
 
             try {
