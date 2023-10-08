@@ -8,7 +8,7 @@ namespace KdSoft.EtwEvents.AgentManager
         readonly AgentProxyManager _agentProxyManager;
         readonly ILogger<LiveViewSinkService> _logger;
 
-        string GetAgentIdentity(ServerCallContext context) {
+        static string GetAgentIdentity(ServerCallContext context) {
             var ids = context.AuthContext.PeerIdentity;
             if (ids != null) {
                 foreach (var id in ids) {

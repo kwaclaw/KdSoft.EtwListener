@@ -53,7 +53,7 @@ namespace KdSoft.EtwEvents.Tests
             _entries.Add(logEntry);
 
             var builder = new StringBuilder($"{_categoryName}[{eventId}]\n");
-            void callback(object? scope, StringBuilder sb) {
+            static void callback(object? scope, StringBuilder sb) {
                 sb.Append(" => ");
                 if (scope is IEnumerable<KeyValuePair<string, object>> properties) {
                     foreach (var pair in properties) {

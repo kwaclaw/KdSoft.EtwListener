@@ -74,7 +74,7 @@ namespace KdSoft.EtwEvents.PushAgent
             LoadSinkProfiles();
         }
 
-        public JsonFormatter JsonFormatter => _jsonFormatter;
+        public static JsonFormatter JsonFormatter => _jsonFormatter;
 
         void SaveNodeAtomic(string filePath, JsonNode node) {
             _bufferWriter.Clear();

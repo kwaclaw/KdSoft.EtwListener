@@ -73,7 +73,7 @@ namespace KdSoft.EtwEvents.AgentManager
             }
         }
 
-        string GetEventSinkZipFileName(string sinkType, string version) {
+        static string GetEventSinkZipFileName(string sinkType, string version) {
             return $"{sinkType}~{version}.zip";
         }
 

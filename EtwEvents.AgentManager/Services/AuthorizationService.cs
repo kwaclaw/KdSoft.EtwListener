@@ -42,7 +42,7 @@ namespace KdSoft.EtwEvents.AgentManager
 
         ImmutableDictionary<string, List<Role>> _roleMap;
 
-        ImmutableDictionary<string, List<Role>> CreateRoleMap(string[] agentNames, string[] managerNames) {
+        static ImmutableDictionary<string, List<Role>> CreateRoleMap(string[] agentNames, string[] managerNames) {
             var builder = ImmutableDictionary.CreateBuilder<string, List<Role>>();
             if (agentNames != null) {
                 foreach (var agentName in agentNames) {

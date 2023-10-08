@@ -37,7 +37,7 @@ namespace KdSoft.EtwEvents.EventSinks
             return channel;
         }
 
-        X509Certificate2? GetCertificate(gRPCSinkCredentials creds) {
+        static X509Certificate2? GetCertificate(gRPCSinkCredentials creds) {
             if (creds.CertificatePem != null && creds.CertificateKeyPem != null) {
                 return X509Certificate2.CreateFromPem(creds.CertificatePem, creds.CertificateKeyPem);
             }

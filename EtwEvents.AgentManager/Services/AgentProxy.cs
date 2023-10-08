@@ -119,7 +119,7 @@ namespace KdSoft.EtwEvents.AgentManager
             Interlocked.MemoryBarrier();
         }
 
-        void InitializeResponse(HttpResponse response) {
+        static void InitializeResponse(HttpResponse response) {
             response.ContentType = Constants.EventStreamHeaderValue;
             response.Headers[HeaderNames.CacheControl] = "no-cache";
             response.Headers[HeaderNames.Pragma] = "no-cache";
