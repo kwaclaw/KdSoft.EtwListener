@@ -62,17 +62,26 @@
         /// <param name="retryHolder">Holds retry information.</param>
         /// <returns>Callback result.</returns>
         public ValueTask<T> ExecuteAsync(Func<int, TimeSpan, ValueTask<T>> callback, ValueHolder<RetryStatus>? retryHolder = null) {
-            // check fast path (sync completion)
             var task = callback(0, default);
-            if (task.IsCompleted) {
-                var result = task.GetAwaiter().GetResult();
+
+            // use this so we won't re-use task, as it is a ValueTask
+            ValueTask<T> resultTask;
+
+            // check fast path (sync completion)
+            if (task.IsCompletedSuccessfully) {
+                var result = task.Result;
+                resultTask = ValueTask.FromResult(result);
                 if (_succeeded(result)) {
-                    return ValueTask.FromResult(result);
+                    return resultTask;
                 }
             }
+            else {
+                resultTask = task;
+            }
+
             // otherwise go full async
             _retryStrategy.Reset();
-            return ExecuteAsyncAsync(task, callback, retryHolder);
+            return ExecuteAsyncAsync(resultTask, callback, retryHolder);
         }
 
         #endregion
@@ -119,17 +128,26 @@
             P arg,
             ValueHolder<RetryStatus>? retryHolder = null
         ) {
-            // check fast path (sync completion)
             var task = callback(arg, 0, default);
+
+            // use this so we won't re-use task, as it is a ValueTask
+            ValueTask<T> resultTask;
+
+            // check fast path (sync completion)
             if (task.IsCompleted) {
-                var result = task.GetAwaiter().GetResult();
+                var result = task.Result;
+                resultTask = ValueTask.FromResult(result);
                 if (_succeeded(result)) {
-                    return ValueTask.FromResult(result);
+                    return resultTask;
                 }
             }
+            else {
+                resultTask = task;
+            }
+
             // otherwise go full async
             _retryStrategy.Reset();
-            return ExecuteAsyncAsync(task, callback, arg, retryHolder);
+            return ExecuteAsyncAsync(resultTask, callback, arg, retryHolder);
         }
 
         #endregion
@@ -180,17 +198,26 @@
             Q argQ,
             ValueHolder<RetryStatus>? retryHolder = null
         ) {
-            // check fast path (sync completion)
             var task = callback(argP, argQ, 0, default);
+
+            // use this so we won't re-use task, as it is a ValueTask
+            ValueTask<T> resultTask;
+
+            // check fast path (sync completion)
             if (task.IsCompleted) {
-                var result = task.GetAwaiter().GetResult();
+                var result = task.Result;
+                resultTask = ValueTask.FromResult(result);
                 if (_succeeded(result)) {
-                    return ValueTask.FromResult(result);
+                    return resultTask;
                 }
             }
+            else {
+                resultTask = task;
+            }
+
             // otherwise go full async
             _retryStrategy.Reset();
-            return ExecuteAsyncAsync(task, callback, argP, argQ, retryHolder);
+            return ExecuteAsyncAsync(resultTask, callback, argP, argQ, retryHolder);
         }
 
         #endregion
