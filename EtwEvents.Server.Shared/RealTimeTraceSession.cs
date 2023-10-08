@@ -81,6 +81,7 @@ namespace KdSoft.EtwEvents.Server
 
         // not necessary to call explicitly as life cycle management already does it
         public void Dispose() {
+            GC.SuppressFinalize(this);
             Close();
         }
 

@@ -163,6 +163,7 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         public override void Dispose() {
+            GC.SuppressFinalize(this);
             _stopRegistration?.Dispose();
             _fileChangeDetector.Dispose();
             base.Dispose();

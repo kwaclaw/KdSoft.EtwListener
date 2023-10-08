@@ -65,6 +65,7 @@ namespace KdSoft.EtwEvents
         }
 
         public async ValueTask DisposeAsync() {
+            GC.SuppressFinalize(this);
             _disposing = 99;
             _retrier.Stop();
             var sink = Interlocked.Exchange(ref _sink, null);

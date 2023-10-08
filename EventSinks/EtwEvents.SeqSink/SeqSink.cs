@@ -76,6 +76,7 @@ namespace KdSoft.EtwEvents.EventSinks
 
         // Warning: ValueTasks should not be awaited multiple times
         public ValueTask DisposeAsync() {
+            GC.SuppressFinalize(this);
             Dispose();
             return ValueTask.CompletedTask;
         }

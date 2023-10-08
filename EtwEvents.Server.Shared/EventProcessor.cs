@@ -154,6 +154,7 @@ namespace KdSoft.EtwEvents.Server
                 cts.Cancel();
             }
 
+            GC.SuppressFinalize(this);
             try {
                 var activeRunTasks = activeChannels.Select(ac => ac.Value.RunTask!).Where(rt => rt != null).ToList();
                 var waitAllTask = Task.WhenAll(activeRunTasks).ContinueWith(art => art.Exception); // observe Exception

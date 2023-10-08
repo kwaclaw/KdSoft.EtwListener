@@ -69,6 +69,7 @@ namespace KdSoft.EtwEvents.Server
         }
 
         public virtual ValueTask DisposeAsync() {
+            GC.SuppressFinalize(this);
             var tm = _timer;
             if (tm != null) {
                 _timer = null;

@@ -183,6 +183,7 @@ namespace KdSoft.EtwEvents.Server
             var cts = Interlocked.Exchange(ref _stoppingTokenSource, null);
             if (cts == null)  // already disposed
                 return;
+            GC.SuppressFinalize(this);
             try {
                 cts.Cancel();
                 var runTask = this.RunTask;

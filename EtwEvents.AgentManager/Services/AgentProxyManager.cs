@@ -30,6 +30,7 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         public void Dispose() {
+            GC.SuppressFinalize(this);
             _keepAliveTimer.Dispose();
             foreach (var entry in _proxies) {
                 entry.Value.TryComplete();

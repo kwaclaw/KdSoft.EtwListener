@@ -82,6 +82,7 @@ namespace KdSoft.EtwEvents.EventSinks
         // Warning: ValueTasks should not be awaited multiple times
         public async ValueTask DisposeAsync() {
             if (InternalDispose()) {
+                GC.SuppressFinalize(this);
                 try {
                     await _channel.Reader.Completion.ConfigureAwait(false);
                     await _jsonWriter.DisposeAsync().ConfigureAwait(false);
