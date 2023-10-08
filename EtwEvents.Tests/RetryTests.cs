@@ -153,21 +153,21 @@ namespace KdSoft.EtwEvents.Tests
 
             // op.Execute always fails
             var op = new Operation(int.MaxValue);
-            var result = await retrier.ExecuteAsync(op.Execute, retryHolder).ConfigureAwait(false);
+            var result = await retrier.ExecuteAsync(op.Execute, retryHolder);
             _output.WriteLine($"Retrier with {retryHolder.Value.NumRetries} retries, all failing, duration: {retryStrategy.TotalDelay}");
             Assert.False(result);
             Assert.Equal(retryHolder.Value.NumRetries, retryStrategy.TotalRetries);
 
             // op.Execute succeeds after 10 counts - before retrier gives up
             op = new Operation(10);
-            result = await retrier.ExecuteAsync(op.Execute, retryHolder).ConfigureAwait(false);
+            result = await retrier.ExecuteAsync(op.Execute, retryHolder);
             _output.WriteLine($"Retrier with {retryHolder.Value.NumRetries} retries, 10 failing, duration: {retryStrategy.TotalDelay}");
             Assert.True(result);
             Assert.Equal(retryHolder.Value.NumRetries, retryStrategy.TotalRetries);
 
             // op.Execute succeeds after 21 counts - after retrier gives up
             op = new Operation(21);
-            result = await retrier.ExecuteAsync(op.Execute, retryHolder).ConfigureAwait(false);
+            result = await retrier.ExecuteAsync(op.Execute, retryHolder);
             _output.WriteLine($"Retrier with {retryHolder.Value.NumRetries} retries, 21 failing, duration: {retryStrategy.TotalDelay}");
             Assert.False(result);
             Assert.Equal(retryHolder.Value.NumRetries, retryStrategy.TotalRetries);
@@ -213,10 +213,10 @@ namespace KdSoft.EtwEvents.Tests
                 var evt = new KdSoft.EtwLogging.EtwEvent() { Id = (uint)i, TimeStamp = DateTimeOffset.UtcNow.ToTimestamp() };
                 batch.Events.Clear();
                 batch.Events.Add(evt);
-                await retryProxy.WriteAsync(batch).ConfigureAwait(false);
+                await retryProxy.WriteAsync(batch);
             }
 
-            await retryProxy.DisposeAsync().ConfigureAwait(false);
+            await retryProxy.DisposeAsync();
         }
 
         [Fact]
@@ -282,8 +282,8 @@ namespace KdSoft.EtwEvents.Tests
                 }
             }
 
-            await retryProxy.DisposeAsync().ConfigureAwait(false);
-            await retryProxy.RunTask.ConfigureAwait(false);
+            await retryProxy.DisposeAsync();
+            await retryProxy.RunTask;
 
             _output.WriteLine("");
             _output.WriteLine($"Total life cycles: {sinkFactory.SinkLifeCycles.Count}");
