@@ -90,20 +90,19 @@ namespace KdSoft.EtwEvents
         /// <returns>Matching certificates, or an empty collection if none were found.</returns>
         public static IEnumerable<X509Certificate2> GetCertificates(StoreLocation location, string subjectCN, params string[] ekus) {
             // find matching certificate, use thumbprint if available, otherwise use subject common name (CN)
-            using (var store = new X509Store(location)) {
-                store.Open(OpenFlags.ReadOnly);
-                var certs = store.Certificates.Find(X509FindType.FindBySubjectName, subjectCN, true);
-                foreach (var matchingCert in certs) {
-                    // X509NameType.SimpleName extracts CN from subject (common name)
-                    var cn = matchingCert.GetNameInfo(X509NameType.SimpleName, false);
-                    if (string.Equals(cn, subjectCN, StringComparison.InvariantCultureIgnoreCase)) {
-                        var matchesEkus = true;
-                        foreach (var oid in ekus) {
-                            matchesEkus = matchesEkus && matchingCert.SupportsEnhancedKeyUsage(oid);
-                        }
-                        if (matchesEkus) {
-                            yield return matchingCert;
-                        }
+            using var store = new X509Store(location);
+            store.Open(OpenFlags.ReadOnly);
+            var certs = store.Certificates.Find(X509FindType.FindBySubjectName, subjectCN, true);
+            foreach (var matchingCert in certs) {
+                // X509NameType.SimpleName extracts CN from subject (common name)
+                var cn = matchingCert.GetNameInfo(X509NameType.SimpleName, false);
+                if (string.Equals(cn, subjectCN, StringComparison.InvariantCultureIgnoreCase)) {
+                    var matchesEkus = true;
+                    foreach (var oid in ekus) {
+                        matchesEkus = matchesEkus && matchingCert.SupportsEnhancedKeyUsage(oid);
+                    }
+                    if (matchesEkus) {
+                        yield return matchingCert;
                     }
                 }
             }
@@ -137,13 +136,12 @@ namespace KdSoft.EtwEvents
             if (policyOID.Length == 0)
                 return Enumerable.Empty<X509Certificate2>();
 
-            using (var store = new X509Store(location)) {
-                store.Open(OpenFlags.ReadOnly);
-                var certs = store.Certificates.Find(X509FindType.FindByApplicationPolicy, policyOID, true);
-                if (certs.Count == 0 || predicate == null)
-                    return certs;
-                return certs.Where(crt => predicate(crt));
-            }
+            using var store = new X509Store(location);
+            store.Open(OpenFlags.ReadOnly);
+            var certs = store.Certificates.Find(X509FindType.FindByApplicationPolicy, policyOID, true);
+            if (certs.Count == 0 || predicate == null)
+                return certs;
+            return certs.Where(crt => predicate(crt));
         }
 
         /// <summary>
@@ -193,8 +191,7 @@ namespace KdSoft.EtwEvents
         /// <param name="certificate">The <see cref="X509Certificate2"/> to install.</param>
         public static void InstallMachineCertificate(X509Certificate2 certificate) {
             var storeName = StoreName.My;
-            var basicConstraintExt = certificate.Extensions["2.5.29.19"] as X509BasicConstraintsExtension;
-            if (basicConstraintExt != null) {
+            if (certificate.Extensions["2.5.29.19"] is X509BasicConstraintsExtension basicConstraintExt) {
                 if (basicConstraintExt.CertificateAuthority) {
                     if (certificate.IsSelfSigned())
                         storeName = StoreName.Root;  // root CA
@@ -215,17 +212,13 @@ namespace KdSoft.EtwEvents
             catch (CryptographicException) {
                 contentType = X509ContentType.Unknown;
             }
-            switch (contentType) {
+            return contentType switch {
                 // we assume it is a PEM certificate with the unencrypted private key included
-                case X509ContentType.Unknown:
-                    return X509Certificate2.CreateFromPemFile(filePath, filePath);
-                case X509ContentType.Cert:
-                    return new X509Certificate2(filePath);
-                case X509ContentType.Pfx:
-                    return new X509Certificate2(filePath, (string?)null, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
-                default:
-                    throw new ArgumentException($"Unrecognized certificate type in file: {filePath}");
-            }
+                X509ContentType.Unknown => X509Certificate2.CreateFromPemFile(filePath, filePath),
+                X509ContentType.Cert => new X509Certificate2(filePath),
+                X509ContentType.Pfx => new X509Certificate2(filePath, (string?)null, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable),
+                _ => throw new ArgumentException($"Unrecognized certificate type in file: {filePath}"),
+            };
         }
 
         public static X509Certificate2 LoadCertificate(ReadOnlySpan<byte> rawData, Encoding? encoding = null) {

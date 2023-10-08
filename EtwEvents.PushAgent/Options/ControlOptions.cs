@@ -27,8 +27,7 @@
         public ClientCertOptions ClientCertificate { get; set; } = new ClientCertOptions();
 
         public override bool Equals(object? obj) {
-            var other = obj as ControlOptions;
-            if (other == null)
+            if (obj is not ControlOptions other)
                 return false;
             if (ReferenceEquals(this, other))
                 return true;

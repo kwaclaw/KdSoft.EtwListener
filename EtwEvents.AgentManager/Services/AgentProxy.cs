@@ -11,7 +11,7 @@ namespace KdSoft.EtwEvents.AgentManager
     {
         readonly Channel<ControlEvent> _channel;
         readonly ILogger _logger;
-        readonly object _syncObj = new object();
+        readonly object _syncObj = new();
         readonly Dictionary<string, TaskCompletionSource<string>> _pendingResponses;
 
         CancellationTokenSource? _connectionTokenSource;
@@ -77,9 +77,8 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         public bool CompleteResponse(string eventId, string responseJson) {
-            TaskCompletionSource<string>? tcs;
             lock (_syncObj) {
-                if (!_pendingResponses.Remove(eventId, out tcs))
+                if (!_pendingResponses.Remove(eventId, out var tcs))
                     return false;
                 return tcs.TrySetResult(responseJson);
             }
@@ -197,18 +196,14 @@ namespace KdSoft.EtwEvents.AgentManager
 
         Task<int> CompleteEventStream(Task<int> processingTask) {
             var oldSource = Interlocked.Exchange(ref _eventStreamSource, null);
-            if (oldSource != null) {
-                oldSource.TrySetCanceled();
-            }
+            oldSource?.TrySetCanceled();
             return processingTask;
         }
 
         public Task<IAsyncStreamReader<EtwEventBatch>?> GetEtwEventStream(TaskCompletionSource<int> processingSource) {
             var tcs = new TaskCompletionSource<IAsyncStreamReader<EtwEventBatch>?>();
             var oldSource = Interlocked.Exchange(ref _eventStreamSource, tcs);
-            if (oldSource != null) {
-                oldSource.TrySetCanceled();
-            }
+            oldSource?.TrySetCanceled();
 
             var processingTask = processingSource.Task.ContinueWith(CompleteEventStream).Unwrap();
             var oldProcessingTask = Interlocked.Exchange(ref _eventProcessingTask, processingTask);

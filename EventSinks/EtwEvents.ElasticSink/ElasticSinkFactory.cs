@@ -14,12 +14,8 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         public Task<IEventSink> Create(string optionsJson, string credentialsJson, IEventSinkContext context) {
-            var options = JsonSerializer.Deserialize<ElasticSinkOptions>(optionsJson, _serializerOptions);
-            if (options == null)
-                throw new ArgumentException("Missing ElasticSinkOptions", nameof(options));
-            var creds = JsonSerializer.Deserialize<ElasticSinkCredentials>(credentialsJson, _serializerOptions);
-            if (creds == null)
-                throw new ArgumentException("Missing ElasticSinkCredentials", nameof(creds));
+            var options = JsonSerializer.Deserialize<ElasticSinkOptions>(optionsJson, _serializerOptions) ?? throw new ArgumentException("Missing ElasticSinkOptions", nameof(optionsJson));
+            var creds = JsonSerializer.Deserialize<ElasticSinkCredentials>(credentialsJson, _serializerOptions) ?? throw new ArgumentException("Missing ElasticSinkCredentials", nameof(credentialsJson));
             var result = new ElasticSink(options, creds, context);
             return Task.FromResult((IEventSink)result);
         }

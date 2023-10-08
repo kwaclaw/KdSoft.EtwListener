@@ -275,8 +275,7 @@ namespace EtwEvents.PushAgent.Setup.Tools
         /// <param name="certificate">The <see cref="X509Certificate2"/> to install.</param>
         static void InstallMachineCertificate(X509Certificate2 certificate) {
             var storeName = StoreName.My;
-            var basicConstraintExt = certificate.Extensions["2.5.29.19"] as X509BasicConstraintsExtension;
-            if (basicConstraintExt != null) {
+            if (certificate.Extensions["2.5.29.19"] is X509BasicConstraintsExtension basicConstraintExt) {
                 if (basicConstraintExt.CertificateAuthority) {
                     if (IsSelfSigned(certificate))
                         storeName = StoreName.Root;  // root CA

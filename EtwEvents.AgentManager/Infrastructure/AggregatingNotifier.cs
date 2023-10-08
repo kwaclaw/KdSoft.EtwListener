@@ -20,7 +20,7 @@ namespace KdSoft.EtwEvents
             }
         }
 
-        readonly object _enumeratorSync = new object();
+        readonly object _enumeratorSync = new();
         ImmutableList<ChangeEnumerator> _changeEnumerators = ImmutableList<ChangeEnumerator>.Empty;
 
         void AddEnumerator(ChangeEnumerator enumerator) {

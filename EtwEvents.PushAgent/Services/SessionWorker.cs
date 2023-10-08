@@ -72,9 +72,7 @@ namespace KdSoft.EtwEvents.PushAgent
         #region Provider Settings
 
         public void UpdateProviders(RepeatedField<ProviderSetting> providerSettings) {
-            var ses = _session;
-            if (ses == null)
-                throw new InvalidOperationException("No trace session active.");
+            var ses = _session ?? throw new InvalidOperationException("No trace session active.");
             var providersToBeDisabled = ses.EnabledProviders.Select(ep => ep.Name).ToHashSet();
             foreach (var setting in providerSettings) {
                 ses.EnableProvider(setting);
@@ -113,9 +111,7 @@ namespace KdSoft.EtwEvents.PushAgent
         }
 
         public BuildFilterResult ApplyProcessingOptions(ProcessingOptions options) {
-            var ses = _session;
-            if (ses == null)
-                throw new InvalidOperationException("No trace session active.");
+            var ses = _session ?? throw new InvalidOperationException("No trace session active.");
             var result = new BuildFilterResult();
 
             if (options.Filter.FilterParts.Count > 0) {

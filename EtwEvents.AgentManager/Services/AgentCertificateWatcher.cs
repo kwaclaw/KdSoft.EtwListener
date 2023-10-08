@@ -42,8 +42,7 @@ namespace KdSoft.EtwEvents.AgentManager
         /// <param name="thumbprint">Thumbprint of certificate to remove.</param>
         /// <returns><c>true</c> if certificate was successfully removed, <c>false</c> otherwise.</returns>
         public bool TryRemoveCertificate(string commonName, string thumbprint) {
-            (X509Certificate2, string) entry;
-            if (_certificates.TryGetValue(commonName, out entry)) {
+            if (_certificates.TryGetValue(commonName, out var entry)) {
                 if (entry.Item1.Thumbprint.ToLower() == thumbprint.ToLower()) {
                     var result = ImmutableInterlocked.TryRemove(ref _certificates, commonName, out entry);
                     if (result) {

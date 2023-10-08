@@ -2,6 +2,6 @@
 {
     public class CertificateValidationOptions
     {
-        public string[] AuthorizedCommonNames { get; set; } = new string[0];
+        public string[] AuthorizedCommonNames { get; set; } = Array.Empty<string>();
     }
 }

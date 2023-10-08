@@ -106,8 +106,7 @@ namespace KdSoft.EtwEvents.AgentManager
                     await _agentCertFileService.SaveAsync(formFile, cancelToken).ConfigureAwait(false);
                 }
                 catch (Exception ex) {
-                    if (sb is null)
-                        sb = new StringBuilder();
+                    sb ??= new StringBuilder();
                     sb.AppendLine($"\t{formFile.FileName}");
                     _logger.LogError(ex, "Error saving uploaded file {file}.", formFile.FileName);
                 }
@@ -126,7 +125,7 @@ namespace KdSoft.EtwEvents.AgentManager
 
         [Authorize(Roles = "Admin")]
         [HttpGet]
-        public IActionResult GetRevokedCerts(CancellationToken cancelToken) {
+        public IActionResult GetRevokedCerts() {
             var revokedList = _authOpts.CurrentValue.RevokedCertificates
                 .Select(rv => new CertInfo { Name = rv.Value, Thumbprint = rv.Key })
                 .OrderBy(ci => ci.Name);
@@ -135,7 +134,7 @@ namespace KdSoft.EtwEvents.AgentManager
 
         [Authorize(Roles = "Admin")]
         [HttpPost]
-        public IActionResult RevokeCert([FromBody] CertInfo cert, CancellationToken cancelToken) {
+        public IActionResult RevokeCert([FromBody] CertInfo cert) {
             var revokedCerts = _authService.RevokeCertificate(cert.Thumbprint, cert.Name);
             if (revokedCerts is null) {
                 var problemDetails = new ProblemDetails {
@@ -205,7 +204,7 @@ namespace KdSoft.EtwEvents.AgentManager
 
         [Authorize(Roles = "Admin")]
         [HttpPost]
-        public IActionResult CancelCertRevocation([FromBody] CertInfo cert, CancellationToken cancelToken) {
+        public IActionResult CancelCertRevocation([FromBody] CertInfo cert) {
             var revokedCerts = _authService.CancelCertificateRevocation(cert.Thumbprint);
             if (revokedCerts is null) {
                 var problemDetails = new ProblemDetails {
@@ -403,15 +402,16 @@ namespace KdSoft.EtwEvents.AgentManager
                 foreach (var eventSinkProfile in eventSinkProfiles.EnumerateArray()) {
                     if (eventSinkProfile.ValueKind != JsonValueKind.Object)
                         continue;
-                    var profile = new EventSinkProfile();
-                    profile.Name = eventSinkProfile.GetProperty("name").GetString();
-                    profile.SinkType = eventSinkProfile.GetProperty("sinkType").GetString();
-                    profile.Version = eventSinkProfile.GetProperty("version").GetString();
-                    profile.BatchSize = eventSinkProfile.GetProperty("batchSize").GetUInt32();
-                    profile.MaxWriteDelayMSecs = eventSinkProfile.GetProperty("maxWriteDelayMSecs").GetUInt32();
-                    profile.PersistentChannel = eventSinkProfile.GetProperty("persistentChannel").GetBoolean();
-                    profile.Options = eventSinkProfile.GetProperty("options").ToString();
-                    profile.Credentials = eventSinkProfile.GetProperty("credentials").ToString();
+                    var profile = new EventSinkProfile {
+                        Name = eventSinkProfile.GetProperty("name").GetString(),
+                        SinkType = eventSinkProfile.GetProperty("sinkType").GetString(),
+                        Version = eventSinkProfile.GetProperty("version").GetString(),
+                        BatchSize = eventSinkProfile.GetProperty("batchSize").GetUInt32(),
+                        MaxWriteDelayMSecs = eventSinkProfile.GetProperty("maxWriteDelayMSecs").GetUInt32(),
+                        PersistentChannel = eventSinkProfile.GetProperty("persistentChannel").GetBoolean(),
+                        Options = eventSinkProfile.GetProperty("options").ToString(),
+                        Credentials = eventSinkProfile.GetProperty("credentials").ToString()
+                    };
                     result.EventSinkProfiles.Add(profile.Name ?? "unknown", profile);
                 }
             }
@@ -441,7 +441,7 @@ namespace KdSoft.EtwEvents.AgentManager
             var receivingSource = new TaskCompletionSource<int>();
             var etwEventStream = await proxy.GetEtwEventStream(receivingSource).ConfigureAwait(false);
             if (etwEventStream == null) {
-                receivingSource.TrySetCanceled();
+                receivingSource.TrySetCanceled(cancelToken);
                 return new EmptyResult();
             }
 

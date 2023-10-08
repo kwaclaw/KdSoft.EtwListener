@@ -23,11 +23,11 @@ namespace KdSoft.EtwEvents.PushAgent
         const string DataProtectionPurpose = "sink-credentials";
         const string localSettingsFile = "appsettings.Local.json";
 
-        static readonly JsonFormatter _jsonFormatter = new JsonFormatter(
+        static readonly JsonFormatter _jsonFormatter = new(
             JsonFormatter.Settings.Default.WithFormatDefaultValues(true).WithFormatEnumsAsIntegers(true)
         );
 
-        static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions {
+        static readonly JsonSerializerOptions _jsonOptions = new() {
             WriteIndented = true,
             ReadCommentHandling = JsonCommentHandling.Skip,
             AllowTrailingCommas = true,
@@ -35,16 +35,16 @@ namespace KdSoft.EtwEvents.PushAgent
             Converters = { new JsonStringEnumConverter() }
         };
 
-        static readonly JsonWriterOptions _writerOptions = new JsonWriterOptions {
+        static readonly JsonWriterOptions _writerOptions = new() {
             Indented = true,
             SkipValidation = true
         };
 
-        static readonly JsonNodeOptions _nodeOptions = new JsonNodeOptions {
+        static readonly JsonNodeOptions _nodeOptions = new() {
             PropertyNameCaseInsensitive = true,
         };
 
-        static readonly JsonDocumentOptions _docOptions = new JsonDocumentOptions {
+        static readonly JsonDocumentOptions _docOptions = new() {
             CommentHandling = JsonCommentHandling.Skip,
             AllowTrailingCommas = true,
         };
@@ -88,7 +88,7 @@ namespace KdSoft.EtwEvents.PushAgent
         void SaveUtf8FileAtomic(string filePath, string text) {
             _bufferWriter.Clear();
             var buffer = _bufferWriter.GetSpan(text.Length * 3);
-            var status = Utf8.FromUtf16(text, buffer, out int charsRead, out int bytesWritten, true, true);
+            var status = Utf8.FromUtf16(text, buffer, out int _, out int bytesWritten, true, true);
             if (status == OperationStatus.Done) {
                 _bufferWriter.Advance(bytesWritten);
                 FileUtils.WriteFileAtomic(_bufferWriter.WrittenSpan, filePath);
@@ -102,20 +102,18 @@ namespace KdSoft.EtwEvents.PushAgent
         }
 
         JsonNode? ReadNode(string filePath) {
-            using (var fs = FileUtils.OpenFileWithRetry(filePath, FileMode.OpenOrCreate, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan)) {
-                using (var buffer = MemoryPool<byte>.Shared.Rent((int)fs.Length)) {
-                    var byteCount = fs.Read(buffer.Memory.Span);
-                    if (byteCount == 0) {
-                        return null;
-                    }
-                    try {
-                        return JsonObject.Parse(buffer.Memory.Span[..byteCount], _nodeOptions, _docOptions);
-                    }
-                    catch (Exception ex) {
-                        _logger.LogError(ex, "Error in {method}.", nameof(ReadNode));
-                        return null;
-                    }
-                }
+            using var fs = FileUtils.OpenFileWithRetry(filePath, FileMode.OpenOrCreate, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan);
+            using var buffer = MemoryPool<byte>.Shared.Rent((int)fs.Length);
+            var byteCount = fs.Read(buffer.Memory.Span);
+            if (byteCount == 0) {
+                return null;
+            }
+            try {
+                return JsonObject.Parse(buffer.Memory.Span[..byteCount], _nodeOptions, _docOptions);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error in {method}.", nameof(ReadNode));
+                return null;
             }
         }
 
@@ -128,9 +126,7 @@ namespace KdSoft.EtwEvents.PushAgent
             try {
                 var docNode = ReadNode(jsonFile);
                 docObj = docNode as JsonObject;
-                if (docObj is null) {
-                    docObj = new JsonObject(_nodeOptions);
-                }
+                docObj ??= new JsonObject(_nodeOptions);
             }
             catch (IOException) {
                 docObj = new JsonObject();
@@ -243,7 +239,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
         string EventSinkOptionsPath => Path.Combine(_context.HostingEnvironment.ContentRootPath, "eventSinks.json");
 
-        Dictionary<string, EventSinkProfile> _sinkProfiles = new Dictionary<string, EventSinkProfile>(StringComparer.CurrentCultureIgnoreCase);
+        Dictionary<string, EventSinkProfile> _sinkProfiles = new(StringComparer.CurrentCultureIgnoreCase);
         public IReadOnlyDictionary<string, EventSinkProfile> SinkProfiles => _sinkProfiles;
 
         bool LoadSinkProfiles() {
@@ -257,7 +253,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     if (profile.Credentials.StartsWith('*')) {
                         try {
                             var dataProtector = _dpProvider.CreateProtector(DataProtectionPurpose);
-                            var rawCredentials = dataProtector.Unprotect(profile.Credentials.Substring(1));
+                            var rawCredentials = dataProtector.Unprotect(profile.Credentials[1..]);
                             profile.Credentials = rawCredentials;
                         }
                         catch (Exception ex) {

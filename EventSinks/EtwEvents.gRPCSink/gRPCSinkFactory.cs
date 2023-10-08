@@ -46,10 +46,7 @@ namespace KdSoft.EtwEvents.EventSinks
 
         public Task<IEventSink> Create(gRPCSinkOptions options, gRPCSinkCredentials creds, IEventSinkContext context) {
             try {
-                var cert = GetCertificate(creds);
-                if (cert == null) {
-                    throw new ArgumentException("Credentials do not specify certificate.");
-                }
+                var cert = GetCertificate(creds) ?? throw new ArgumentException("Credentials do not specify certificate.");
                 var host = options.Host;
                 if (string.IsNullOrWhiteSpace(host)) {
                     throw new ArgumentException("Options do not specify host URI.");
@@ -58,8 +55,9 @@ namespace KdSoft.EtwEvents.EventSinks
                 var client = new EtwSinkClient(channel);
 
                 //TODO is this the best way to add the event source/site to the event sink?
-                var metaData = new Grpc.Core.Metadata();
-                metaData.Add("site", context.SiteName);
+                var metaData = new Grpc.Core.Metadata {
+                    { "site", context.SiteName }
+                };
 
                 var eventStream = client.SendEvents(metaData);
 

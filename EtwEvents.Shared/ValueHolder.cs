@@ -2,7 +2,7 @@
 {
     public class ValueHolder<T> where T : notnull, new()
     {
-        public T Value = new T();
+        public T Value = new();
 
         public void Reset() {
             Value = new T();
@@ -13,12 +13,12 @@
         where T : notnull, new()
         where V : notnull, new()
     {
-        public T Value1 = new T();
-        public V Value2 = new V();
+        public T Value1 = new();
+        public V Value2 = new();
 
         public void Reset() {
-            Value1 = new T();
-            Value2 = new V();
+            Value1 = new();
+            Value2 = new();
         }
     }
 
@@ -27,14 +27,14 @@
         where U : notnull, new()
         where V : notnull, new()
     {
-        public T Value1 = new T();
-        public U Value2 = new U();
-        public V Value3 = new V();
+        public T Value1 = new();
+        public U Value2 = new();
+        public V Value3 = new();
 
         public void Reset() {
-            Value1 = new T();
-            Value2 = new U();
-            Value3 = new V();
+            Value1 = new();
+            Value2 = new();
+            Value3 = new();
         }
     }
 }

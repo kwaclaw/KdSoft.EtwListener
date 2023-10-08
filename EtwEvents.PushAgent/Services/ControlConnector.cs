@@ -5,7 +5,7 @@ namespace KdSoft.EtwEvents.PushAgent
 {
     class ControlConnector: IDisposable
     {
-        public static readonly ControlEvent GetStateMessage = new ControlEvent { Event = Constants.GetStateEvent };
+        public static readonly ControlEvent GetStateMessage = new() { Event = Constants.GetStateEvent };
 
         readonly SocketsHandlerCache _httpHandlerCache;
         readonly Channel<ControlEvent> _channel;

@@ -36,7 +36,7 @@ namespace KdSoft.EtwEvents.PushAgent
             // Shared assemblies should be loaded before requested by the EventSinkLoadContext, because
             // otherwise they would be loaded using default probing which requires the version to match.
             new EventSinkException(); // (for IEventSinkFactory)
-            var bs = global::Google.Protobuf.ByteString.Empty;
+            var _ = global::Google.Protobuf.ByteString.Empty;
             new RetryStatus(); // (for IEventFilter)
             new EtwEventBatch();
             // more? ILogger should get loaded in the contructor

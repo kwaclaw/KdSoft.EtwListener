@@ -28,15 +28,15 @@ namespace KdSoft.EtwEvents.EventSinks
                 }
                 else {
                     connectionUrl = options.GetConnectionUrl();
-                    var cert = CertUtils.GetCertificate(StoreLocation.CurrentUser, string.Empty, creds.CertificateCommonName);
-                    if (cert == null)
-                        cert = CertUtils.GetCertificate(StoreLocation.LocalMachine, string.Empty, creds.CertificateCommonName);
-                    if (cert == null)
-                        throw new ArgumentException($"Cannot find certificate for common name '{creds.CertificateCommonName}'.");
+                    var cert = CertUtils.GetCertificate(StoreLocation.CurrentUser, string.Empty, creds.CertificateCommonName)
+                        ?? CertUtils.GetCertificate(StoreLocation.LocalMachine, string.Empty, creds.CertificateCommonName)
+                        ?? throw new ArgumentException($"Cannot find certificate for common name '{creds.CertificateCommonName}'.");
                     // if provided the user name would have to match the certificate's Subject DN exactly
                     credential = MongoCredential.CreateMongoX509Credential(null);
-                    sslSettings = new SslSettings { ClientCertificates = new[] { cert } };
-                    sslSettings.CheckCertificateRevocation = false;
+                    sslSettings = new() {
+                        ClientCertificates = new[] { cert },
+                        CheckCertificateRevocation = false
+                    };
                 }
 
                 var mcs = MongoClientSettings.FromUrl(connectionUrl);

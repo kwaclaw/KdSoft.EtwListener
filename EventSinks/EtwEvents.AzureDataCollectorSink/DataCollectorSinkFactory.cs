@@ -41,7 +41,7 @@ namespace KdSoft.EtwEvents.EventSinks
                 logType = Regex.Replace(logType, "[^A-Za-z0-9_]", "_");
                 // enforce max length constraint by trimming extra length
                 if (logType.Length > 100)
-                    logType = logType.Substring(0, 100);
+                    logType = logType[..100];
                 http.DefaultRequestHeaders.Add("Log-Type", logType);
 
                 if (!string.IsNullOrWhiteSpace(options.ResourceId))

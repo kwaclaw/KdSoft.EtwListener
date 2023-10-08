@@ -5,7 +5,7 @@ namespace KdSoft.EtwEvents.Server
 {
     public class EventProcessor: IAsyncDisposable
     {
-        readonly object _eventChannelLock = new object();
+        readonly object _eventChannelLock = new();
 
         ImmutableDictionary<string, EventChannel> _activeEventChannels;
         ImmutableDictionary<string, EventChannel> _closedEventChannels;
@@ -170,10 +170,7 @@ namespace KdSoft.EtwEvents.Server
                 foreach (var vt in taskList) {
                     await vt.ConfigureAwait(false);
                 }
-
-                if (cts != null) {
-                    cts.Dispose();
-                }
+                cts?.Dispose();
             }
         }
     }

@@ -5,12 +5,12 @@ namespace KdSoft.EtwEvents.PushAgent
     static class EventSinkExtensions
     {
         static async Task<(IEventSinkFactory?, EventSinkLoadContext? loadContext)> LoadSinkFactory(EventSinkService sinkService, string sinkType, string version, ILogger logger) {
-            var (sinkFactory, loadContext) = sinkService.LoadEventSinkFactory(sinkType, version);
+            var (sinkFactory, _) = sinkService.LoadEventSinkFactory(sinkType, version);
             if (sinkFactory == null) {
                 logger.LogInformation("Downloading event sink factory '{sinkType}~{version}'.", sinkType, version);
                 await sinkService.DownloadEventSink(sinkType, version);
             }
-            (sinkFactory, loadContext) = sinkService.LoadEventSinkFactory(sinkType, version);
+            (sinkFactory, var loadContext) = sinkService.LoadEventSinkFactory(sinkType, version);
             return (sinkFactory, loadContext);
         }
 

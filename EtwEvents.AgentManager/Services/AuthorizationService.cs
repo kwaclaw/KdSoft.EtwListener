@@ -18,24 +18,24 @@ namespace KdSoft.EtwEvents.AgentManager
         readonly IWebHostEnvironment _env;
         readonly ILogger<AuthorizationService> _logger;
         readonly ArrayBufferWriter<byte> _bufferWriter;
-        readonly object _syncObj = new object();
+        readonly object _syncObj = new();
 
         static readonly IReadOnlyList<Role> _emptyRoles = new List<Role>().AsReadOnly();
         static readonly ObjectPool<HashSet<Role>> _roleSetPool = new DefaultObjectPool<HashSet<Role>>(new DefaultPooledObjectPolicy<HashSet<Role>>());
-        static readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions {
+        static readonly JsonSerializerOptions _serializerOptions = new() {
             WriteIndented = true,
             ReadCommentHandling = JsonCommentHandling.Skip,
             AllowTrailingCommas = true,
             PropertyNameCaseInsensitive = true,
         };
-        static readonly JsonWriterOptions _writerOptions = new JsonWriterOptions {
+        static readonly JsonWriterOptions _writerOptions = new() {
             Indented = true,
             SkipValidation = true
         };
-        static readonly JsonNodeOptions _nodeOptions = new JsonNodeOptions {
+        static readonly JsonNodeOptions _nodeOptions = new() {
             PropertyNameCaseInsensitive = true,
         };
-        static readonly JsonDocumentOptions _docOptions = new JsonDocumentOptions {
+        static readonly JsonDocumentOptions _docOptions = new() {
             CommentHandling = JsonCommentHandling.Skip,
             AllowTrailingCommas = true,
         };
@@ -144,20 +144,18 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         JsonNode? ReadNode(string filePath) {
-            using (var fs = FileUtils.OpenFileWithRetry(filePath, FileMode.OpenOrCreate, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan)) {
-                using (var buffer = MemoryPool<byte>.Shared.Rent((int)fs.Length)) {
-                    var byteCount = fs.Read(buffer.Memory.Span);
-                    if (byteCount == 0) {
-                        return null;
-                    }
-                    try {
-                        return JsonObject.Parse(buffer.Memory.Span.Slice(0, byteCount), _nodeOptions, _docOptions);
-                    }
-                    catch (Exception ex) {
-                        _logger.LogError(ex, "Error in {method}.", nameof(ReadNode));
-                        return null;
-                    }
-                }
+            using var fs = FileUtils.OpenFileWithRetry(filePath, FileMode.OpenOrCreate, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan);
+            using var buffer = MemoryPool<byte>.Shared.Rent((int)fs.Length);
+            var byteCount = fs.Read(buffer.Memory.Span);
+            if (byteCount == 0) {
+                return null;
+            }
+            try {
+                return JsonObject.Parse(buffer.Memory.Span[..byteCount], _nodeOptions, _docOptions);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error in {method}.", nameof(ReadNode));
+                return null;
             }
         }
 
@@ -230,9 +228,8 @@ namespace KdSoft.EtwEvents.AgentManager
                 roleSet.Clear();
                 // primary identity gets roles specified in certificate
                 GetRoles(roleSet, clientCertificate);
-                var primaryIdentity = principal?.Identity as ClaimsIdentity;
                 // ClaimsIdentity.Name here is the certificate's Subject Common Name (CN)
-                if (primaryIdentity != null) {
+                if (principal?.Identity is ClaimsIdentity primaryIdentity) {
                     foreach (var role in roleSet) {
                         primaryIdentity?.AddClaim(new Claim(ClaimTypes.Role, role.ToString()));
                     }

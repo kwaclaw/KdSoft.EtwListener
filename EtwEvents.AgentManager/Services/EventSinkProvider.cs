@@ -22,14 +22,15 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         public IEnumerable<(EventSinkInfo, DirectoryInfo?)> GetEventSinkInfos(DirectoryInfo evtSinkDirInfo) {
-            var assemblyPaths = new HashSet<string>(_runtimeAssemblyPaths, StringComparer.CurrentCultureIgnoreCase);
-            // see https://docs.microsoft.com/en-us/dotnet/core/tutorials/creating-app-with-plugin-support 
-            // we add these explicitly, as we have them loaded locally, and the event sink should not include them
-            assemblyPaths.Add(typeof(IEventSinkFactory).Assembly.Location);
-            assemblyPaths.Add(typeof(global::Google.Protobuf.MessageParser).Assembly.Location);
-            assemblyPaths.Add(typeof(EtwEventBatch).Assembly.Location);
-            assemblyPaths.Add(typeof(IEventFilter).Assembly.Location);
-            assemblyPaths.Add(typeof(ILogger).Assembly.Location);
+            var assemblyPaths = new HashSet<string>(_runtimeAssemblyPaths, StringComparer.CurrentCultureIgnoreCase) {
+                // see https://docs.microsoft.com/en-us/dotnet/core/tutorials/creating-app-with-plugin-support 
+                // we add these explicitly, as we have them loaded locally, and the event sink should not include them
+                typeof(IEventSinkFactory).Assembly.Location,
+                typeof(global::Google.Protobuf.MessageParser).Assembly.Location,
+                typeof(EtwEventBatch).Assembly.Location,
+                typeof(IEventFilter).Assembly.Location,
+                typeof(ILogger).Assembly.Location
+            };
             var evtSinkFiles = evtSinkDirInfo.GetFiles("*.dll");
             foreach (var evtSinkFile in evtSinkFiles) {
                 assemblyPaths.Add(evtSinkFile.FullName);

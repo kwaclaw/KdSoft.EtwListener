@@ -10,12 +10,12 @@ namespace KdSoft.EtwEvents.EventSinks
 {
     public class RollingFileSink: IEventSink
     {
-        static readonly EtwEvent _emptyEvent = new EtwEvent();
+        static readonly EtwEvent _emptyEvent = new();
 
         readonly JsonWriterOptions _jsonOptions;
         readonly ArrayBufferWriter<byte> _bufferWriter;
         readonly Utf8JsonWriter _jsonWriter;
-        readonly ReadOnlyMemory<byte> _newLine = new byte[] { 10 };
+        readonly ReadOnlyMemory<byte> _newLine = "\n"u8.ToArray();
         readonly RollingFileFactory _fileFactory;
         readonly ILogger _logger;
         readonly Channel<EtwEvent> _channel;

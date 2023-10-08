@@ -8,8 +8,7 @@ namespace KdSoft.EtwEvents.PushAgent
         public StoreLocation Location { get; set; } = StoreLocation.LocalMachine;
 
         public override bool Equals(object? obj) {
-            var other = obj as DataCertOptions;
-            if (other == null)
+            if (obj is not DataCertOptions other)
                 return false;
             if (ReferenceEquals(this, other))
                 return true;

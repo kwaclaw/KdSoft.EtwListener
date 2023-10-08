@@ -4,7 +4,7 @@
     {
         readonly CancellationToken _cancelToken;
         readonly ManualResetValueTaskSource<bool> _vts;
-        readonly object _taskSync = new object();
+        readonly object _taskSync = new();
 
         public PendingAsyncEnumerator(CancellationToken cancelToken) {
             this._cancelToken = cancelToken;

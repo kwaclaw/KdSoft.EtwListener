@@ -30,9 +30,7 @@ namespace KdSoft.EtwEvents.Server
         #region Construction
 
         TraceEventSession CheckDisposed() {
-            var inst = _instance;
-            if (inst == null)
-                throw new ObjectDisposedException(nameof(RealTimeTraceSession));
+            var inst = _instance ?? throw new ObjectDisposedException(nameof(RealTimeTraceSession));
             return inst;
         }
 
@@ -254,9 +252,8 @@ namespace KdSoft.EtwEvents.Server
             if (filterSource == null) {
                 return ImmutableArray<Diagnostic>.Empty;
             }
-            using (var ms = new MemoryStream()) {
-                return GenerateFilter(filterSource, ms);
-            }
+            using var ms = new MemoryStream();
+            return GenerateFilter(filterSource, ms);
         }
 
         public ImmutableArray<Diagnostic> SetFilter(SourceText? filterSource, IConfiguration config) {
@@ -329,7 +326,7 @@ namespace KdSoft.EtwEvents.Server
 
     public static class TplActivities
     {
-        public static readonly Guid TplEventSourceGuid = new Guid("2e5dba47-a3d2-4d16-8ee0-6671ffdcd7b5");
+        public static readonly Guid TplEventSourceGuid = new("2e5dba47-a3d2-4d16-8ee0-6671ffdcd7b5");
         public static readonly ulong TaskFlowActivityIdsKeyword = 0x80;
     }
 }

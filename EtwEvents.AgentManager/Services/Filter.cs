@@ -60,8 +60,7 @@ namespace KdSoft.EtwEvents.Server
         public static readonly ImmutableArray<FilterPart> FilterTemplateParts = SplitTemplate();
 
         public static EtwLogging.Filter MergeFilterTemplate(IReadOnlyList<string>? dynamicParts = null) {
-            if (dynamicParts == null)
-                dynamicParts = ImmutableArray<string>.Empty;
+            dynamicParts ??= ImmutableArray<string>.Empty;
 
             var filterParts = ImmutableArray<FilterPart>.Empty;
             int dynamicIndx = 0;

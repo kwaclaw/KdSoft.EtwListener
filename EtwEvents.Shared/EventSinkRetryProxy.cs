@@ -108,7 +108,7 @@ namespace KdSoft.EtwEvents
         }
 
         ValueTask<IEventSink?> GetSink() {
-            IEventSink? sink = _sink;
+            var sink = _sink;
             if (sink != null) {
                 return ValueTask.FromResult<IEventSink?>(sink);
             }
@@ -225,7 +225,7 @@ namespace KdSoft.EtwEvents
 
         #region IEventSinkStatus
 
-        static readonly RetryStatus _cleanStatus = new RetryStatus();
+        static readonly RetryStatus _cleanStatus = new();
 
         public RetryStatus Status => _retryHolder.Value;
 

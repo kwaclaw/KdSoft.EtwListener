@@ -25,7 +25,7 @@ namespace KdSoft.EtwEvents.EventSinks
         readonly ArrayBufferWriter<byte> _bufferWriter;
         readonly Utf8JsonWriter _jsonWriter;
         readonly TaskCompletionSource<bool> _tcs;
-        readonly ReadOnlyMemory<byte> _newLine = new byte[] { 10 };
+        readonly ReadOnlyMemory<byte> _newLine = "\n"u8.ToArray();
         readonly Uri _requestUri;
 
         // TraceEventLevel values are ordered opposite to SeqLogLevel values!
@@ -198,40 +198,27 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         public static TraceEventLevel FromSeqLogLevel(SeqLogLevel level) {
-            switch (level) {
-                case SeqLogLevel.Verbose:
-                    return TraceEventLevel.Always;
-                case SeqLogLevel.Debug:
-                    return TraceEventLevel.Verbose;
-                case SeqLogLevel.Information:
-                    return TraceEventLevel.Informational;
-                case SeqLogLevel.Warning:
-                    return TraceEventLevel.Warning;
-                case SeqLogLevel.Error:
-                    return TraceEventLevel.Error;
-                case SeqLogLevel.Fatal:
-                    return TraceEventLevel.Critical;
-                default:
-                    return TraceEventLevel.Critical;
-            }
+            return level switch {
+                SeqLogLevel.Verbose => TraceEventLevel.Always,
+                SeqLogLevel.Debug => TraceEventLevel.Verbose,
+                SeqLogLevel.Information => TraceEventLevel.Informational,
+                SeqLogLevel.Warning => TraceEventLevel.Warning,
+                SeqLogLevel.Error => TraceEventLevel.Error,
+                SeqLogLevel.Fatal => TraceEventLevel.Critical,
+                _ => TraceEventLevel.Critical,
+            };
         }
+
         public static SeqLogLevel FromTraceEventLevel(TraceEventLevel level) {
-            switch (level) {
-                case TraceEventLevel.Always:
-                    return SeqLogLevel.Verbose;
-                case TraceEventLevel.Verbose:
-                    return SeqLogLevel.Debug;
-                case TraceEventLevel.Informational:
-                    return SeqLogLevel.Information;
-                case TraceEventLevel.Warning:
-                    return SeqLogLevel.Warning;
-                case TraceEventLevel.Error:
-                    return SeqLogLevel.Error;
-                case TraceEventLevel.Critical:
-                    return SeqLogLevel.Fatal;
-                default:
-                    return SeqLogLevel.Fatal;
-            }
+            return level switch {
+                TraceEventLevel.Always => SeqLogLevel.Verbose,
+                TraceEventLevel.Verbose => SeqLogLevel.Debug,
+                TraceEventLevel.Informational => SeqLogLevel.Information,
+                TraceEventLevel.Warning => SeqLogLevel.Warning,
+                TraceEventLevel.Error => SeqLogLevel.Error,
+                TraceEventLevel.Critical => SeqLogLevel.Fatal,
+                _ => SeqLogLevel.Fatal,
+            };
         }
     }
 }

@@ -173,9 +173,7 @@ namespace KdSoft.EtwEvents.Server
                 // already done in registered cancellation callback
                 // await base.DisposeAsync().ConfigureAwait(false);
                 var ctsToDispose = Interlocked.Exchange(ref _stoppingTokenSource, null);
-                if (ctsToDispose != null) {
-                    ctsToDispose.Dispose();
-                }
+                ctsToDispose?.Dispose();
                 // may throw exception
                 await _sink.RunTask.ConfigureAwait(false);
             }

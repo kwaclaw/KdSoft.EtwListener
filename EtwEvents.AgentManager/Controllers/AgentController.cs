@@ -68,7 +68,7 @@ namespace KdSoft.EtwEvents.AgentManager
 
             // this could cause an recursive loop because it triggers an agent reconnect;
             // it is the agent's responsibility to *not* perform the install and re-connect if the certificate is already installed
-            var updated = CheckCertificateUpdate(agentProxy);
+            var _ = CheckCertificateUpdate(agentProxy);
 
             // initial agent state update
             agentProxy.Post(AgentProxyManager.GetStateMessage);
@@ -190,7 +190,7 @@ namespace KdSoft.EtwEvents.AgentManager
 
             // this could cause an recursive loop because it triggers an agent reconnect;
             // it is the agent's responsibility to *not* perform the install and re-connect if the certificate is already installed
-            var updated = CheckCertificateUpdate(agentProxy);
+            var _ = CheckCertificateUpdate(agentProxy);
 
             await _agentProxyManager.PostAgentStateChange().ConfigureAwait(false);
             return Ok();

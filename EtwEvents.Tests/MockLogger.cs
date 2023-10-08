@@ -56,8 +56,8 @@ namespace KdSoft.EtwEvents.Tests
             void callback(object? scope, StringBuilder sb) {
                 sb.Append(" => ");
                 if (scope is IEnumerable<KeyValuePair<string, object>> properties) {
-                    foreach (KeyValuePair<string, object> pair in properties) {
-                        sb.Append(pair.Key).Append(":").Append(pair.Value?.ToString()).Append("|");
+                    foreach (var pair in properties) {
+                        sb.Append(pair.Key).Append(':').Append(pair.Value?.ToString()).Append('|');
                     }
                     sb.Remove(sb.Length - 1, 1);
                     sb.AppendLine();

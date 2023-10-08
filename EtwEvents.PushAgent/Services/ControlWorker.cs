@@ -36,13 +36,13 @@ namespace KdSoft.EtwEvents.PushAgent
         IDisposable? _controlOptionsListener;
         CancellationTokenRegistration _cancelRegistration;
         FilterSource? _emptyFilterSource;
-        InstallCertResult _lastCertInstall = new InstallCertResult();
+        InstallCertResult _lastCertInstall = new();
 
         SessionWorker? _sessionWorker;  // only valid when _sessionWorkerAvailable != 0
         int _sessionWorkerAvailable = 0;
         SessionWorker? SessionWorker => _sessionWorkerAvailable == 0 ? null : _sessionWorker!;
 
-        static readonly byte[] _emptyBytes = new byte[0];
+        static readonly byte[] _emptyBytes = Array.Empty<byte>();
 
         public ControlWorker(
             HostBuilderContext context,

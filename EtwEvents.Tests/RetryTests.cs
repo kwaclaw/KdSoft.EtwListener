@@ -25,8 +25,8 @@ namespace KdSoft.EtwEvents.Tests
 
             var totalDelay = TimeSpan.Zero;
             bool firstIteration = false;
-            TimeSpan firstDelay = TimeSpan.Zero;
-            TimeSpan lastDelay = TimeSpan.Zero;
+            var firstDelay = TimeSpan.Zero;
+            var lastDelay = TimeSpan.Zero;
             int lastCount = 0;
             while (strategy.NextDelay(out var delay, out var count)) {
                 if (!firstIteration) {
@@ -75,8 +75,8 @@ namespace KdSoft.EtwEvents.Tests
 
             var totalDelay = TimeSpan.Zero;
             bool firstIteration = false;
-            TimeSpan firstDelay = TimeSpan.Zero;
-            TimeSpan lastDelay = TimeSpan.Zero;
+            var firstDelay = TimeSpan.Zero;
+            var lastDelay = TimeSpan.Zero;
             while (strategy.NextDelay(out var delay, out var count)) {
                 if (!firstIteration) {
                     firstIteration = true;
@@ -138,7 +138,7 @@ namespace KdSoft.EtwEvents.Tests
                 this._maxCount = maxCount;
             }
 
-            public async ValueTask<bool> Execute(int retryNum, TimeSpan delay) {
+            public async ValueTask<bool> Execute(int _, TimeSpan __) {
                 await Task.Delay(100).ConfigureAwait(false);
                 var result = ++_count > _maxCount;
                 return result;
@@ -269,17 +269,17 @@ namespace KdSoft.EtwEvents.Tests
                 var evt = new KdSoft.EtwLogging.EtwEvent() { Id = (uint)(i + 1), TimeStamp = DateTimeOffset.UtcNow.ToTimestamp() };
                 batch.Events.Clear();
                 batch.Events.Add(evt);
-                using (var scope = testLogger.BeginScope("WriteAsync: {scopeType}-{scopeId}", "w", i)) {
-                    retryStrategy.Reset();
-                    stopWatch.Restart();
-                    // when a sinks WriteAsync() succeeds then the same sink's remaining writes will be used for the next events! 
-                    var success = await retryProxy.WriteAsync(batch).ConfigureAwait(false);
-                    var elapsed = stopWatch.Elapsed;
-                    if (!success) {
-                        _output.WriteLine($"Failed write: {i}, retries: {retryStrategy.TotalRetries}, delay: {retryStrategy.TotalDelay.TotalMilliseconds}");
-                    }
-                    writeLoops.Add((evt, success, elapsed, retryStrategy.TotalRetries, retryStrategy.TotalDelay));
+
+                using var scope = testLogger.BeginScope("WriteAsync: {scopeType}-{scopeId}", "w", i);
+                retryStrategy.Reset();
+                stopWatch.Restart();
+                // when a sinks WriteAsync() succeeds then the same sink's remaining writes will be used for the next events! 
+                var success = await retryProxy.WriteAsync(batch);
+                var elapsed = stopWatch.Elapsed;
+                if (!success) {
+                    _output.WriteLine($"Failed write: {i}, retries: {retryStrategy.TotalRetries}, delay: {retryStrategy.TotalDelay.TotalMilliseconds}");
                 }
+                writeLoops.Add((evt, success, elapsed, retryStrategy.TotalRetries, retryStrategy.TotalDelay));
             }
 
             await retryProxy.DisposeAsync();
@@ -311,7 +311,7 @@ namespace KdSoft.EtwEvents.Tests
 
             for (int indx = 0; indx < 240; indx++) {
                 bool hasGroup = lifeCycleMap.TryGetValue((uint)(indx + 1), out var lcGroup);
-                var loopEntry = writeLoops[indx];
+                var (evt, success, elapsed, retries, delay) = writeLoops[indx];
 
                 int lifeCycleCount = 0;
                 if (hasGroup) {
@@ -319,12 +319,12 @@ namespace KdSoft.EtwEvents.Tests
                 }
 
                 // if life-cycle count > retry count then the WriteAsync failed
-                _output.WriteLine($"[{indx}]-{loopEntry.success} Lifecycles: {lifeCycleCount} | {loopEntry.elapsed.TotalMilliseconds},\tRetries: {loopEntry.retries} | {loopEntry.delay.TotalMilliseconds}");
+                _output.WriteLine($"[{indx}]-{success} Lifecycles: {lifeCycleCount} | {elapsed.TotalMilliseconds},\tRetries: {retries} | {delay.TotalMilliseconds}");
 
                 // tolerate difference between elasped time and total calculated retry delay of up to 330ms
-                var diffTime = loopEntry.elapsed - loopEntry.delay;
+                var diffTime = elapsed - delay;
                 Assert.True(diffTime.TotalMilliseconds < 330,
-                    $"At loop index {indx} (elapsed | delay): {loopEntry.elapsed.TotalMilliseconds} | {loopEntry.delay.TotalMilliseconds}");
+                    $"At loop index {indx} (elapsed | delay): {elapsed.TotalMilliseconds} | {delay.TotalMilliseconds}");
             }
 
             _output.WriteLine("");

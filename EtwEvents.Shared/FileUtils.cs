@@ -19,16 +19,16 @@
                         if (pathDir is null) {
                             throw;
                         }
-                        var filter = "*" + Path.GetExtension(path);
-                        using (var fileSystemWatcher = new FileSystemWatcher(pathDir, filter) { EnableRaisingEvents = true }) {
-                            fileSystemWatcher.Changed += (o, e) => {
-                                if (Path.GetFullPath(e.FullPath) == fullPath) {
-                                    autoResetEvent.Set();
-                                }
-                            };
 
-                            autoResetEvent.WaitOne();
-                        }
+                        var filter = "*" + Path.GetExtension(path);
+                        using var fileSystemWatcher = new FileSystemWatcher(pathDir, filter) { EnableRaisingEvents = true };
+                        fileSystemWatcher.Changed += (o, e) => {
+                            if (Path.GetFullPath(e.FullPath) == fullPath) {
+                                autoResetEvent.Set();
+                            }
+                        };
+
+                        autoResetEvent.WaitOne();
                     }
                     else {
                         throw;

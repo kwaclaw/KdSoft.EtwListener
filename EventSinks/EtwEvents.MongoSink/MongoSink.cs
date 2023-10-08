@@ -110,7 +110,7 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         async Task<bool> FlushAsyncInternal() {
-            var bwResult = await _coll.BulkWriteAsync(_evl, new BulkWriteOptions { IsOrdered = false }).ConfigureAwait(false);
+            var _ = await _coll.BulkWriteAsync(_evl, new BulkWriteOptions { IsOrdered = false }).ConfigureAwait(false);
             _evl.Clear();
             //return bwResult;
             return true;

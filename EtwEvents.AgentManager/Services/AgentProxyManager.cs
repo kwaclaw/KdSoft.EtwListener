@@ -12,9 +12,9 @@ namespace KdSoft.EtwEvents.AgentManager
         readonly Timer _keepAliveTimer;
         readonly ILogger<AgentProxy> _logger;
 
-        public static ControlEvent KeepAliveMessage = new ControlEvent { Event = Constants.KeepAliveEvent };
-        public static ControlEvent CloseMessage = new ControlEvent { Event = Constants.CloseEvent };
-        public static ControlEvent GetStateMessage = new ControlEvent { Event = Constants.GetStateEvent };
+        public static readonly ControlEvent KeepAliveMessage = new() { Event = Constants.KeepAliveEvent };
+        public static readonly ControlEvent CloseMessage = new() { Event = Constants.CloseEvent };
+        public static readonly ControlEvent GetStateMessage = new() { Event = Constants.GetStateEvent };
 
         public AgentProxyManager(TimeSpan keepAlivePeriod, ILogger<AgentProxy> logger) {
             _keepAliveMSecs = (int)keepAlivePeriod.TotalMilliseconds;

@@ -4,7 +4,7 @@ namespace KdSoft.EtwEvents.Tests
 {
     class MockSinkFactory: IEventSinkFactory
     {
-        readonly List<MockSinkLifeCycle> _sinkLifeCycles = new List<MockSinkLifeCycle>();
+        readonly List<MockSinkLifeCycle> _sinkLifeCycles = new();
         static readonly JsonSerializerOptions _serializerOptions;
         int _optionsCounter;
 
@@ -18,7 +18,7 @@ namespace KdSoft.EtwEvents.Tests
 
         public Task<IEventSink> Create(string optionsJson, string credentialsJson, IEventSinkContext context) {
             var options = JsonSerializer.Deserialize<MockSinkOptions>(optionsJson, _serializerOptions);
-            var creds = JsonSerializer.Deserialize<MockSinkCredentials>(credentialsJson, _serializerOptions);
+            var _ = JsonSerializer.Deserialize<MockSinkCredentials>(credentialsJson, _serializerOptions);
 
             var cycleIndex = _optionsCounter++ % options!.LifeCycles.Count;
             options.ActiveCycle = cycleIndex;
