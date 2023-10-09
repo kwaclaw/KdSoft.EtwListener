@@ -24,17 +24,19 @@ set -email=
 :: should be in double quotes
 set -extra=
 
-:: %~1 removes surrounding quotes from first parameter
-for %%a in (%*) do (
-    set arg=%%~a
-    call :setarg %%a
-)
+:: we use this loop instead of 'for %%a in (%*) do' because for..in ignores arguments with an '*'
+:loop
+  set arg=%1
+  call :setarg %1
+  shift
+if not "%~1"=="" goto loop
 goto :after
 
 :setarg
 if /i [%arg:~0,1%] == [-] (
     set param=%arg%
 ) else (
+    :: %~1 removes surrounding quotes from first parameter
     call set "%param%=%~1"
 )
 exit /b

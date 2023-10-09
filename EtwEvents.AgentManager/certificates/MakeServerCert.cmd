@@ -19,17 +19,19 @@ set -dns=
 :: email address
 set -email=
 
-:: %~1 removes surrounding quotes from first parameter
-for %%a in (%*) do (
-    set arg=%%~a
-    call :setarg %%a
-)
+:: we use this loop instead of 'for %%a in (%*) do' because for..in ignores arguments with an '*'
+:loop
+  set arg=%1
+  call :setarg %1
+  shift
+if not "%~1"=="" goto loop
 goto :after
 
 :setarg
 if /i [%arg:~0,1%] == [-] (
     set param=%arg%
 ) else (
+    :: %~1 removes surrounding quotes from first parameter
     call set "%param%=%~1"
 )
 exit /b
@@ -68,6 +70,9 @@ if %ERRORLEVEL% NEQ 0 (Exit /b)
 :: sha256 encrypted keys cannot be imported on WinServer 2016 / Win10 <= 1703 with Powershell, use TripleDES-SHA1 instead
 :: openssl pkcs12 -export -in "tmp/server.crt" -inkey "tmp/server.key" -out "out/%-dns%.p12"
 :: openssl pkcs12 -export -in "tmp/server.crt" -inkey "tmp/server.key" -macalg SHA1 -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -out "out/%-dns%.p12"
+
+:: replace wildcard character '*' with '_' (need to escape '*' as '**')
+set -dns=%-dns:**=_%
 openssl pkcs12 -export -in "tmp/server.crt" -inkey "tmp/server.key" -out "out/%-dns%.p12"
    
 popd
