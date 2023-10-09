@@ -6,26 +6,26 @@
   "license": "ISC",
   "browser": "index.js",
   "dependencies": {
-    "@kdsoft/lit-mvvm": "^2.1.4",
-    "@kdsoft/lit-mvvm-components": "^2.0.0-beta.4",
+    "@kdsoft/lit-mvvm": "^2.1.5",
+    "@kdsoft/lit-mvvm-components": "^2.0.0-beta.5",
     "@nx-js/observer-util": "^4.2.2",
     "@nx-js/queue-util": "^1.1.1",
-    "@tailwindcss/forms": "^0.5.3",
+    "@tailwindcss/forms": "^0.5.6",
     "dialog-polyfill": "^0.5.6",
-    "gettext.js": "^1.2.0",
-    "lit-html": "^2.7.2",
-    "@lit/reactive-element": "1.6.1"
+    "gettext.js": "^2.0.0",
+    "lit-html": "^2.8.0",
+    "@lit/reactive-element": "1.6.3"
   },
   "devDependencies": {
-    "@fortawesome/fontawesome-free": "^6.4.0",
-    "autoprefixer": "10.4.14",
-    "cpy-cli": "^4.2.0",
-    "eslint": "^8.39.0",
+    "@fortawesome/fontawesome-free": "^6.4.2",
+    "autoprefixer": "10.4.16",
+    "cpy-cli": "^5.0.0",
+    "eslint": "^8.51.0",
     "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-plugin-import": "^2.27.5",
-    "glob": "^10.2.1",
-    "rimraf": "^5.0.0",
-    "tailwindcss": "^3.3.1"
+    "eslint-plugin-import": "^2.28.1",
+    "glob": "^10.3.10",
+    "rimraf": "^5.0.5",
+    "tailwindcss": "^3.3.3"
   },
   "scripts": {
     "wrap-css": "node node_modules/@kdsoft/lit-mvvm-components/scripts/wrap-css.mjs",

@@ -3,7 +3,7 @@ import { css } from '@kdsoft/lit-mvvm';
 export default css`
 
 /*!
- * Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com
+ * Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com
  * License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License)
  * Copyright 2023 Fonticons, Inc.
  */
@@ -6554,6 +6554,9 @@ readers do not read off random characters that represent icons */
 .fa-edge:before {
   content: "\\f282"; }
 
+.fa-threads:before {
+  content: "\\e618"; }
+
 .fa-napster:before {
   content: "\\f3d2"; }
 
@@ -6721,6 +6724,9 @@ readers do not read off random characters that represent icons */
 
 .fa-scribd:before {
   content: "\\f28a"; }
+
+.fa-debian:before {
+  content: "\\e60b"; }
 
 .fa-openid:before {
   content: "\\f19b"; }
@@ -6961,6 +6967,9 @@ readers do not read off random characters that represent icons */
 
 .fa-neos:before {
   content: "\\f612"; }
+
+.fa-square-threads:before {
+  content: "\\e619"; }
 
 .fa-hackerrank:before {
   content: "\\f5f7"; }
@@ -7303,6 +7312,9 @@ readers do not read off random characters that represent icons */
 
 .fa-erlang:before {
   content: "\\f39d"; }
+
+.fa-x-twitter:before {
+  content: "\\e61b"; }
 
 .fa-cotton-bureau:before {
   content: "\\f89e"; }
@@ -7798,6 +7810,9 @@ readers do not read off random characters that represent icons */
 
 .fa-quora:before {
   content: "\\f2c4"; }
+
+.fa-square-x-twitter:before {
+  content: "\\e61a"; }
 
 .fa-reacteurope:before {
   content: "\\f75d"; }

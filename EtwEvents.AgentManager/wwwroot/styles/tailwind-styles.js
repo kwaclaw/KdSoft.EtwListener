@@ -3,7 +3,7 @@ import { css } from '@kdsoft/lit-mvvm';
 export default css`
 
 /*
-! tailwindcss v3.3.1 | MIT License | https://tailwindcss.com
+! tailwindcss v3.3.3 | MIT License | https://tailwindcss.com
 */
 
 /*
@@ -193,6 +193,10 @@ select,
 textarea {
   font-family: inherit;
   /* 1 */
+  font-feature-settings: inherit;
+  /* 1 */
+  font-variation-settings: inherit;
+  /* 1 */
   font-size: 100%;
   /* 1 */
   font-weight: inherit;
@@ -344,6 +348,14 @@ menu {
 }
 
 /*
+Reset default styling for dialogs.
+*/
+
+dialog {
+  padding: 0;
+}
+
+/*
 Prevent resizing textareas horizontally by default.
 */
 
@@ -417,7 +429,7 @@ video {
   display: none;
 }
 
-[type='text'],[type='email'],[type='url'],[type='password'],[type='number'],[type='date'],[type='datetime-local'],[type='month'],[type='search'],[type='tel'],[type='time'],[type='week'],[multiple],textarea,select {
+[type='text'],input:where(:not([type])),[type='email'],[type='url'],[type='password'],[type='number'],[type='date'],[type='datetime-local'],[type='month'],[type='search'],[type='tel'],[type='time'],[type='week'],[multiple],textarea,select {
   appearance: none;
   background-color: #fff;
   border-color: #6b7280;
@@ -432,7 +444,7 @@ video {
   --tw-shadow: 0 0 #0000;
 }
 
-[type='text']:focus, [type='email']:focus, [type='url']:focus, [type='password']:focus, [type='number']:focus, [type='date']:focus, [type='datetime-local']:focus, [type='month']:focus, [type='search']:focus, [type='tel']:focus, [type='time']:focus, [type='week']:focus, [multiple]:focus, textarea:focus, select:focus {
+[type='text']:focus, input:where(:not([type])):focus, [type='email']:focus, [type='url']:focus, [type='password']:focus, [type='number']:focus, [type='date']:focus, [type='datetime-local']:focus, [type='month']:focus, [type='search']:focus, [type='tel']:focus, [type='time']:focus, [type='week']:focus, [multiple]:focus, textarea:focus, select:focus {
   outline: 2px solid transparent;
   outline-offset: 2px;
   --tw-ring-inset: var(--tw-empty,/*!*/ /*!*/);
@@ -456,6 +468,11 @@ input::placeholder,textarea::placeholder {
 
 ::-webkit-date-and-time-value {
   min-height: 1.5em;
+  text-align: inherit;
+}
+
+::-webkit-datetime-edit {
+  display: inline-flex;
 }
 
 ::-webkit-datetime-edit,::-webkit-datetime-edit-year-field,::-webkit-datetime-edit-month-field,::-webkit-datetime-edit-day-field,::-webkit-datetime-edit-hour-field,::-webkit-datetime-edit-minute-field,::-webkit-datetime-edit-second-field,::-webkit-datetime-edit-millisecond-field,::-webkit-datetime-edit-meridiem-field {
@@ -473,7 +490,7 @@ select {
           print-color-adjust: exact;
 }
 
-[multiple] {
+[multiple],[size]:where(select:not([size="1"])) {
   background-image: initial;
   background-position: initial;
   background-repeat: unset;
@@ -587,6 +604,9 @@ select {
   --tw-pan-y:  ;
   --tw-pinch-zoom:  ;
   --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
   --tw-ordinal:  ;
   --tw-slashed-zero:  ;
   --tw-numeric-figure:  ;
@@ -634,6 +654,9 @@ select {
   --tw-pan-y:  ;
   --tw-pinch-zoom:  ;
   --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
   --tw-ordinal:  ;
   --tw-slashed-zero:  ;
   --tw-numeric-figure:  ;
