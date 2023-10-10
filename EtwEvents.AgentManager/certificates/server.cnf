@@ -26,3 +26,4 @@ extendedKeyUsage=serverAuth
 keyUsage=digitalSignature,nonRepudiation,keyEncipherment
 subjectKeyIdentifier=hash
 basicConstraints=critical,CA:FALSE
+subjectAltName=$ENV::SUBJ_ALT_NAME

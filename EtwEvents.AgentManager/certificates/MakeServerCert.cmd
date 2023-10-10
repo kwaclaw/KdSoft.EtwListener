@@ -58,7 +58,9 @@ openssl ecparam -out "tmp/server.key" -name secp384r1 -genkey
 if %ERRORLEVEL% NEQ 0 (Exit /b)
 
 @echo generate CSR
-openssl req -new -key "tmp/server.key" -out "tmp/server.csr" -config "server.cnf" -subj "%dn%" -addext "subjectAltName=DNS:%-dns%"
+:: since the -addext switch is broken in some versions of OpenSSL we use an environment variable referenced in server.cnf
+set SUBJ_ALT_NAME=DNS:%-dns%
+openssl req -new -key "tmp/server.key" -out "tmp/server.csr" -config "server.cnf" -subj "%dn%"
 if %ERRORLEVEL% NEQ 0 (Exit /b)
     
 @echo create and sign the server certificate    
