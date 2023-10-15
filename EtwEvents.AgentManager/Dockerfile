@@ -46,7 +46,7 @@ WORKDIR "/src/EtwEvents.AgentManager"
 RUN dotnet build "EtwEvents.AgentManager.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "EtwEvents.AgentManager.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "EtwEvents.AgentManager.csproj" -c Release -o /app/publish -p:PublishProfile=Platform.pubxml
 
 FROM base AS final
 # need custom root certificate only in dev image, for production we install it at run time (run-docker.cmd)
