@@ -1,9 +1,9 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
-    <Fragment>
-        <ComponentGroup Id="MainComponents" Directory="INSTALLFOLDER">
-            <ComponentGroupRef Id="Published" />
-            <ComponentGroupRef Id="ServiceUser" />
-            <ComponentRef Id="ServiceComponent" />
-        </ComponentGroup>
-    </Fragment>
+  <Fragment>
+    <ComponentGroup Id="MainComponents" Directory="INSTALLFOLDER">
+      <ComponentGroupRef Id="Published" />
+      <ComponentGroupRef Id="ServiceUser" />
+      <ComponentRef Id="ServiceComponent" />
+    </ComponentGroup>
+  </Fragment>
 </Wix>

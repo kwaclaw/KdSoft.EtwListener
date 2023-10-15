@@ -1,12 +1,12 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:iis="http://wixtoolset.org/schemas/v4/wxs/iis">
-    <Fragment>
-        <ComponentGroup Id="Certificates" Directory="INSTALLFOLDER">
-            <!-- This always fails with "InstallCertificates:  Error 0x80070057: Invalid Certificate.Attributes." -->
-            <Component Id="ClientCertificateComponent" Guid="{A7DADB6E-6DC2-49B6-AA4B-46E5494ABC8C}" Condition="CLIENT_CERTIFICATE &lt;&gt; &quot;&quot;">
-                <iis:Certificate Id="EtwClientCert"  CertificatePath="[CLIENT_CERTIFICATE]" PFXPassword="[CLIENT_CERTIFICATE_PASSWORD]"
-                  Name="ETW PushAgent Client Certificate" StoreLocation="localMachine" StoreName="personal" Request="no" />
-            </Component>
-        </ComponentGroup>
-    </Fragment>
+  <Fragment>
+    <ComponentGroup Id="Certificates" Directory="INSTALLFOLDER">
+      <!-- This always fails with "InstallCertificates:  Error 0x80070057: Invalid Certificate.Attributes." -->
+      <Component Id="ClientCertificateComponent" Guid="{A7DADB6E-6DC2-49B6-AA4B-46E5494ABC8C}" Condition="CLIENT_CERTIFICATE &lt;&gt; &quot;&quot;">
+        <iis:Certificate Id="EtwClientCert"  CertificatePath="[CLIENT_CERTIFICATE]" PFXPassword="[CLIENT_CERTIFICATE_PASSWORD]"
+          Name="ETW PushAgent Client Certificate" StoreLocation="localMachine" StoreName="personal" Request="no" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
 </Wix>

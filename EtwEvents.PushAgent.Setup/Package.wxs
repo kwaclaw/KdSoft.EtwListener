@@ -1,68 +1,70 @@
 ﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui"
      xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
-    <Package Name="EtwEvents.PushAgent"
-             Manufacturer="KD Soft"
-             Version="1.0.1.0"
-             Scope="perMachine"
-             UpgradeCode="92ba2f4a-5b30-438c-9ae2-158382011ca9"
+  <Package Name="EtwEvents.PushAgent"
+           Manufacturer="KD Soft"
+           Version="1.0.2.0"
+           Scope="perMachine"
+           UpgradeCode="92ba2f4a-5b30-438c-9ae2-158382011ca9"
      >
-        <MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" />
+    <MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" />
 
-        <Feature Id="Main" Title="ETW Agent Service">
-            <ComponentGroupRef Id="MainComponents" />
-            <!-- This does not work
+    <MediaTemplate EmbedCab="yes" />
+
+    <Feature Id="Main" Title="ETW Agent Service">
+      <ComponentGroupRef Id="MainComponents" />
+      <!-- This does not work
             <ComponentGroupRef Id="Certificates" />-->
-            <ComponentRef Id="INSTALLFOLDER_Permission" />
-        </Feature>
+      <ComponentRef Id="INSTALLFOLDER_Permission" />
+    </Feature>
 
-        <ui:WixUI Id="WixUI_FeatureTree" InstallDirectory="INSTALLFOLDER"/>
-        <UIRef Id="WixUI_Custom"/>
+    <ui:WixUI Id="WixUI_FeatureTree" InstallDirectory="INSTALLFOLDER"/>
+    <UIRef Id="WixUI_Custom"/>
 
-        <WixVariable Id="WixUILicenseRtf" Value="MIT_License.rtf" />
+    <WixVariable Id="WixUILicenseRtf" Value="MIT_License.rtf" />
 
-        <Binary Id="MyCustomActions" SourceFile="$(var.EtwEvents.PushAgent.Setup.Tools.TargetDir)$(var.EtwEvents.PushAgent.Setup.Tools.TargetName).CA.dll" />
-      
-        <CustomAction Id="OpenFileDialog" BinaryRef="MyCustomActions" DllEntry="OpenFileDialog" Execute="immediate" Return="check" />
-        <CustomAction Id="ValidateClientCertificate" BinaryRef="MyCustomActions" DllEntry="ValidateClientCertificate" Execute="immediate" Return="check" />
-        <CustomAction Id="ValidateRootCertificates" BinaryRef="MyCustomActions" DllEntry="ValidateRootCertificates" Execute="immediate" Return="check" />
-        <CustomAction Id="SetDeferredActionData" BinaryRef="MyCustomActions" DllEntry="SetDeferredActionData" Execute="immediate" Return="check" />
-      
-        <CustomAction Id="InstallRootCertificates" BinaryRef="MyCustomActions" DllEntry="InstallRootCertificates" Execute="deferred" Impersonate="no" Return="check" />
-        <CustomAction Id="InstallClientCertificate" BinaryRef="MyCustomActions" DllEntry="InstallClientCertificate" Execute="deferred" Impersonate="no" Return="check" />
-        <!-- this action needs to run with elevated privileges -->
-        <CustomAction Id="MergeSettingsOverride" BinaryRef="MyCustomActions" DllEntry="MergeSettingsOverride" Execute="deferred" Impersonate="no" Return="check" />
+    <Binary Id="MyCustomActions" SourceFile="$(var.EtwEvents.PushAgent.Setup.Tools.TargetDir)$(var.EtwEvents.PushAgent.Setup.Tools.TargetName).CA.dll" />
 
-        <!-- https://stackoverflow.com/questions/65358312/wix-custom-action-modify-file-in-installfolder-after-installfinalize -->
-        <!-- http://www.installsite.org/pages/en/isnews/200108/index.htm -->
-      
-        <InstallExecuteSequence>
-            <Custom Action="SetDeferredActionData" Before="InstallInitialize" />
-            <Custom Action="InstallRootCertificates" Before="InstallClientCertificate"
-                    Condition="NOT(REMOVE~=&quot;ALL&quot;) OR NOT(Installed AND (InstallMode~=&quot;Repair&quot;))" />
-            <Custom Action="InstallClientCertificate"  Before="MergeSettingsOverride"
-                    Condition="NOT(REMOVE~=&quot;ALL&quot;) OR NOT(Installed AND (InstallMode~=&quot;Repair&quot;))" />
-            <Custom Action="MergeSettingsOverride" Before="InstallFinalize"
-                    Condition="NOT(REMOVE~=&quot;ALL&quot;) OR NOT(Installed AND (InstallMode~=&quot;Repair&quot;))" />
-        </InstallExecuteSequence>
+    <CustomAction Id="OpenFileDialog" BinaryRef="MyCustomActions" DllEntry="OpenFileDialog" Execute="immediate" Return="check" />
+    <CustomAction Id="ValidateClientCertificate" BinaryRef="MyCustomActions" DllEntry="ValidateClientCertificate" Execute="immediate" Return="check" />
+    <CustomAction Id="ValidateRootCertificates" BinaryRef="MyCustomActions" DllEntry="ValidateRootCertificates" Execute="immediate" Return="check" />
+    <CustomAction Id="SetDeferredActionData" BinaryRef="MyCustomActions" DllEntry="SetDeferredActionData" Execute="immediate" Return="check" />
 
-        <!--<Property Id="MANAGER_URL" Value="https://agent-manager.mycompany.com" />-->
+    <CustomAction Id="InstallRootCertificates" BinaryRef="MyCustomActions" DllEntry="InstallRootCertificates" Execute="deferred" Impersonate="no" Return="check" />
+    <CustomAction Id="InstallClientCertificate" BinaryRef="MyCustomActions" DllEntry="InstallClientCertificate" Execute="deferred" Impersonate="no" Return="check" />
+    <!-- this action needs to run with elevated privileges -->
+    <CustomAction Id="MergeSettingsOverride" BinaryRef="MyCustomActions" DllEntry="MergeSettingsOverride" Execute="deferred" Impersonate="no" Return="check" />
 
-        <!-- these properties can currently only be set at the command line, e.g.
+    <!-- https://stackoverflow.com/questions/65358312/wix-custom-action-modify-file-in-installfolder-after-installfinalize -->
+    <!-- http://www.installsite.org/pages/en/isnews/200108/index.htm -->
+
+    <InstallExecuteSequence>
+      <Custom Action="SetDeferredActionData" Before="InstallInitialize" />
+      <Custom Action="InstallRootCertificates" Before="InstallClientCertificate"
+              Condition="NOT(REMOVE~=&quot;ALL&quot;) OR NOT(Installed AND (InstallMode~=&quot;Repair&quot;))" />
+      <Custom Action="InstallClientCertificate"  Before="MergeSettingsOverride"
+              Condition="NOT(REMOVE~=&quot;ALL&quot;) OR NOT(Installed AND (InstallMode~=&quot;Repair&quot;))" />
+      <Custom Action="MergeSettingsOverride" Before="InstallFinalize"
+              Condition="NOT(REMOVE~=&quot;ALL&quot;) OR NOT(Installed AND (InstallMode~=&quot;Repair&quot;))" />
+    </InstallExecuteSequence>
+
+    <!--<Property Id="MANAGER_URL" Value="https://agent-manager.mycompany.com" />-->
+
+    <!-- these properties can currently only be set at the command line, e.g.
              msiexec /i C:\Temp\Example.msi SERVICE_ACCOUNT="Test User" SERVICE_PASSWORD="blahblah" -->
-        <Property Id="SERVICE_ACCOUNT" Value="LocalSystem" />
-        <!--<Property Id="SERVICE_DOMAIN" Value="." />-->
-        <!--<Property Id="SERVICE_PASSWORD" />-->
+    <Property Id="SERVICE_ACCOUNT" Value="LocalSystem" />
+    <!--<Property Id="SERVICE_DOMAIN" Value="." />-->
+    <!--<Property Id="SERVICE_PASSWORD" />-->
 
-        <!-- example for a domain user -->
-        <!--<Property Id="SERVICE_ACCOUNT" Value="test-user" />
+    <!-- example for a domain user -->
+    <!--<Property Id="SERVICE_ACCOUNT" Value="test-user" />
         <Property Id="SERVICE_DOMAIN" Value="KWACLAWEK-DEV2" />
         <Property Id="SERVICE_PASSWORD" Value="humptydumpty" />-->
 
-        <!-- the ServiceInstall element needs a fully qualified account name -->
-        <SetProperty Id="QUALIFIED_SERVICE_ACCOUNT" Action="LocalAccount" Sequence="execute" Before="InstallInitialize" Value=".\[SERVICE_ACCOUNT]"
-                     Condition="SERVICE_DOMAIN = &quot;&quot; OR SERVICE_DOMAIN = &quot;.&quot;"/>
-        <SetProperty Id="QUALIFIED_SERVICE_ACCOUNT" Action="DomainAccount" Sequence="execute" Before="InstallInitialize" Value="[SERVICE_DOMAIN]\[SERVICE_ACCOUNT]"
-                     Condition="SERVICE_DOMAIN &lt;&gt; &quot;&quot; AND SERVICE_DOMAIN &lt;&gt; &quot;.&quot;"/>
-    </Package>
+    <!-- the ServiceInstall element needs a fully qualified account name -->
+    <SetProperty Id="QUALIFIED_SERVICE_ACCOUNT" Action="LocalAccount" Sequence="execute" Before="InstallInitialize" Value=".\[SERVICE_ACCOUNT]"
+                 Condition="SERVICE_DOMAIN = &quot;&quot; OR SERVICE_DOMAIN = &quot;.&quot;"/>
+    <SetProperty Id="QUALIFIED_SERVICE_ACCOUNT" Action="DomainAccount" Sequence="execute" Before="InstallInitialize" Value="[SERVICE_DOMAIN]\[SERVICE_ACCOUNT]"
+                 Condition="SERVICE_DOMAIN &lt;&gt; &quot;&quot; AND SERVICE_DOMAIN &lt;&gt; &quot;.&quot;"/>
+  </Package>
 </Wix>

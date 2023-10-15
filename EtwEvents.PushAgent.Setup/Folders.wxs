@@ -1,21 +1,21 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
-    <Fragment>
-        <StandardDirectory Id="ProgramFiles6432Folder">
-            <Directory Id="INSTALLFOLDER" Name="!(bind.Property.Manufacturer)\!(bind.Property.ProductName)" />
-        </StandardDirectory>
+  <Fragment>
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="INSTALLFOLDER" Name="!(bind.Property.Manufacturer)\!(bind.Property.ProductName)" />
+    </StandardDirectory>
 
-        <DirectoryRef Id="INSTALLFOLDER">
-            <Component Id="INSTALLFOLDER_Permission" Guid="{F905FA6F-8539-48FF-BB25-F5A355C9670E}">
-                <CreateFolder >
-                    <util:PermissionEx
-                        User="[SERVICE_ACCOUNT]"
-                        Domain="[SERVICE_DOMAIN]"
-                        ChangePermission="yes"
-                        GenericAll="yes"
-                        Inheritable="yes" />
-                </CreateFolder>
-            </Component>
-        </DirectoryRef>
-    </Fragment>
+    <DirectoryRef Id="INSTALLFOLDER">
+      <Component Id="INSTALLFOLDER_Permission" Guid="{F905FA6F-8539-48FF-BB25-F5A355C9670E}">
+        <CreateFolder >
+          <util:PermissionEx
+              User="[SERVICE_ACCOUNT]"
+              Domain="[SERVICE_DOMAIN]"
+              ChangePermission="yes"
+              GenericAll="yes"
+              Inheritable="yes" />
+        </CreateFolder>
+      </Component>
+    </DirectoryRef>
+  </Fragment>
 </Wix>
