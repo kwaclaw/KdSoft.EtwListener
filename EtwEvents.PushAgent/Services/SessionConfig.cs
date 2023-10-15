@@ -82,6 +82,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 node.WriteTo(utf8Writer, _jsonOptions);
                 utf8Writer.Flush();
             }
+            File.Open(filePath, FileMode.OpenOrCreate).Close();
             FileUtils.WriteFileAtomic(_bufferWriter.WrittenSpan, filePath);
         }
 
@@ -91,6 +92,7 @@ namespace KdSoft.EtwEvents.PushAgent
             var status = Utf8.FromUtf16(text, buffer, out int _, out int bytesWritten, true, true);
             if (status == OperationStatus.Done) {
                 _bufferWriter.Advance(bytesWritten);
+                File.Open(filePath, FileMode.OpenOrCreate).Close();
                 FileUtils.WriteFileAtomic(_bufferWriter.WrittenSpan, filePath);
             }
             else {
