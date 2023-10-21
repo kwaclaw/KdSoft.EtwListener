@@ -1,3 +1,5 @@
+INSTALL USING POWERSHELL
+
 ## Prepare Install Package
 
 - Open project EtwEvents.PushAgent and publish it using either the Platform or the SelfContained profile.
@@ -64,7 +66,7 @@ The ETW PushAgent authenticates itself to the AgentManager using a client certif
 - If we have a root or signing certificate with its private key, then we can create client certificates.
   - Modify the script `certificates\MakeKdSoftClientCert.cmd` by replacing "Kd-Soft.crt" and "Kd-Soft.key" with the file names for your root/signing certificate.
 
-- Our scripts in `EtwEvents.PushAgent/certificates`require OpenSSL 3.0 installed.
+- Our scripts in `EtwEvents.PushAgent/certificates`require OpenSSL 3.1 installed.
   - see https://slproweb.com/products/Win32OpenSSL.html or https://kb.firedaemon.com/support/solutions/articles/4000121705.
 - A useful GUI tool for creating certificates is [XCA](https://www.hohnstaedt.de/xca/).
 

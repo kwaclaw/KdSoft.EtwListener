@@ -48,7 +48,6 @@
                 }
                 // this operation is atomic, it should work when filePath is open with FileShare.Delete
                 File.Replace(replaceFile, filePath, backupPath);
-
             }
             catch {
                 if (replaceFile != null) {
