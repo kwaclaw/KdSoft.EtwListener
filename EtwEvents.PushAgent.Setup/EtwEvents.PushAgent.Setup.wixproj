@@ -1,10 +1,6 @@
-﻿<Project Sdk="WixToolset.Sdk/4.0.1">
+﻿<Project Sdk="WixToolset.Sdk/4.0.2">
   <PropertyGroup>
-    <EnableProjectHarvesting>true</EnableProjectHarvesting>
-    <HarvestProjectsSuppressUniqueIds>true</HarvestProjectsSuppressUniqueIds>
-    <HarvestProjectsDirectoryIds>HARVESTROOT</HarvestProjectsDirectoryIds>
-    <HarvestProjectsVerboseOutput>true</HarvestProjectsVerboseOutput>
-    <HarvestFileGenerateGuidsNow>true</HarvestFileGenerateGuidsNow>
+    <HarvestGenerateGuidsNow>true</HarvestGenerateGuidsNow>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <SuppressSpecificWarnings>5150;5151</SuppressSpecificWarnings>
@@ -20,6 +16,7 @@
       <ComponentGroupName>Published</ComponentGroupName>
       <DirectoryRefId>INSTALLFOLDER</DirectoryRefId>
       <SuppressRootDirectory>true</SuppressRootDirectory>
+      <SuppressCom>true</SuppressCom>
       <Transforms>./RemoveServiceExe.xslt</Transforms>
     </HarvestDirectory>
     <!--

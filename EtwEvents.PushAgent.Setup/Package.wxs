@@ -7,7 +7,8 @@
            Scope="perMachine"
            UpgradeCode="92ba2f4a-5b30-438c-9ae2-158382011ca9"
      >
-    <MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" />
+    <MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)"
+                  AllowSameVersionUpgrades="yes" />
 
     <MediaTemplate EmbedCab="yes" />
 
@@ -23,7 +24,7 @@
 
     <WixVariable Id="WixUILicenseRtf" Value="MIT_License.rtf" />
 
-    <Binary Id="MyCustomActions" SourceFile="$(var.EtwEvents.PushAgent.Setup.Tools.TargetDir)$(var.EtwEvents.PushAgent.Setup.Tools.TargetName).CA.dll" />
+    <Binary Id="MyCustomActions" SourceFile="$(EtwEvents.PushAgent.Setup.Tools.TargetDir)$(EtwEvents.PushAgent.Setup.Tools.TargetName).CA.dll" />
 
     <CustomAction Id="OpenFileDialog" BinaryRef="MyCustomActions" DllEntry="OpenFileDialog" Execute="immediate" Return="check" />
     <CustomAction Id="ValidateClientCertificate" BinaryRef="MyCustomActions" DllEntry="ValidateClientCertificate" Execute="immediate" Return="check" />
