@@ -1,19 +1,18 @@
-﻿<Project Sdk="WixToolset.Sdk/4.0.2">
+﻿<Project Sdk="WixToolset.Sdk/4.0.3">
   <PropertyGroup>
-    <EnableProjectHarvesting>true</EnableProjectHarvesting>
+    <SuppressSpecificWarnings>5150;5151;1076</SuppressSpecificWarnings>
+    <DefaultCompressionLevel>mszip</DefaultCompressionLevel>
+    <InstallerPlatform>x64</InstallerPlatform>
     <HarvestProjectsSuppressUniqueIds>true</HarvestProjectsSuppressUniqueIds>
     <HarvestProjectsDirectoryIds>HARVESTROOT</HarvestProjectsDirectoryIds>
     <HarvestProjectsVerboseOutput>true</HarvestProjectsVerboseOutput>
     <HarvestFileGenerateGuidsNow>true</HarvestFileGenerateGuidsNow>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <SuppressSpecificWarnings>5150;5151</SuppressSpecificWarnings>
-  </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="WixToolset.Iis.wixext" Version="4.0.2" />
-    <PackageReference Include="WixToolset.UI.wixext" Version="4.0.2" />
-    <PackageReference Include="WixToolset.Util.wixext" Version="4.0.2" />
-    <PackageReference Include="WixToolset.Heat" Version="4.0.2" />
+    <PackageReference Include="WixToolset.Iis.wixext" Version="4.0.3" />
+    <PackageReference Include="WixToolset.UI.wixext" Version="4.0.3" />
+    <PackageReference Include="WixToolset.Util.wixext" Version="4.0.3" />
+    <PackageReference Include="WixToolset.Heat" Version="4.0.3" />
   </ItemGroup>
   <ItemGroup>
     <HarvestDirectory Include="../EtwEvents.PushAgent/deploy/publish/">

@@ -19,7 +19,7 @@
   <ItemGroup>
     <PackageReference Include="KdSoft.Utils.Portable" Version="4.2.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="WixToolset.Dtf.CustomAction" Version="4.0.2" />
+    <PackageReference Include="WixToolset.Dtf.CustomAction" Version="4.0.3" />
   </ItemGroup>
 
   <ItemGroup>

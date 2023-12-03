@@ -3,6 +3,7 @@
   <Import Project="..\common.props" />
 
   <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <RootNamespace>KdSoft.EtwEvents.Server</RootNamespace>
     <VersionPrefix>1.0.1</VersionPrefix>
   </PropertyGroup>
@@ -11,11 +12,11 @@
     <PackageReference Include="KdSoft.Data.Models.Shared" Version="1.1.0" />
     <PackageReference Include="KdSoft.Faster" Version="2.0.4" />
     <PackageReference Include="KdSoft.Utils.Portable" Version="4.2.1" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.7.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
     <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.1.6" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="7.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
