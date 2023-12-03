@@ -11,10 +11,9 @@ using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Hosting.WindowsServices;
-using Microsoft.Extensions.Logging.EventLog;
 using Microsoft.Extensions.Options;
 using OrchardCore.Localization;
 
@@ -51,8 +50,12 @@ builder.Logging.AddRollingFileSink(opts => {
     opts.Directory = Path.Combine(builder.Environment.ContentRootPath, opts.Directory);
 });
 
+builder.Host.UseWindowsService();
+
 builder.WebHost.ConfigureKestrel((context, options) => {
-    options.Limits.MinRequestBodyDataRate = null;
+    options.ConfigureEndpointDefaults(opts => {
+        opts.Protocols = HttpProtocols.Http2 | HttpProtocols.Http3;
+    });
     options.ConfigureHttpsDefaults(opts => {
         opts.ClientCertificateMode = ClientCertificateMode.RequireCertificate;
         opts.CheckCertificateRevocation = false;
@@ -64,22 +67,8 @@ builder.WebHost.ConfigureKestrel((context, options) => {
         var authService = options.ApplicationServices.GetRequiredService<AuthorizationService>();
         opts.ClientCertificateValidation = authService.ValidateClientCertificate;
     });
+    options.Limits.MinRequestBodyDataRate = null;
 });
-
-// This would throw: "Changing the host configuration using WebApplicationBuilder.Host is not supported."
-// builder.Host.UseWindowsService();
-
-if (WindowsServiceHelpers.IsWindowsService()) {
-    builder.Logging.AddEventLog();
-    builder.Host.ConfigureServices((hostContext, services) => {
-        services.AddSingleton<IHostLifetime, WindowsServiceLifetime>();
-        services.Configure<EventLogSettings>(settings => {
-            if (string.IsNullOrEmpty(settings.SourceName)) {
-                settings.SourceName = hostContext.HostingEnvironment.ApplicationName;
-            }
-        });
-    });
-}
 
 #endregion
 
@@ -174,13 +163,7 @@ builder.Services.AddSingleton(provider => {
 builder.Services.AddPortableObjectLocalization(options => options.ResourcesPath = "Resources");
 builder.Services.Replace(ServiceDescriptor.Singleton<ILocalizationFileLocationProvider, LocalizationFileProvider>());
 builder.Services.Configure<RequestLocalizationOptions>(options => {
-    var supportedCultures = new List<CultureInfo> {
-        new ("en-US"),
-        new ("fr"),
-        new ("es"),
-        new ("de")
-    };
-
+    var supportedCultures = new List<CultureInfo> { new("en-US"), new("fr"), new("es"), new("de") };
     options.DefaultRequestCulture = new RequestCulture("en-US");
     options.SupportedCultures = supportedCultures;
     options.SupportedUICultures = supportedCultures;
