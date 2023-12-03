@@ -13,6 +13,7 @@
 - On a new installation
   - Edit the included `appsettings.Local.json` according to the local requirements (see [Local Configuration](#local-configuration) below).
   - Edit the included `authorization.json` according to the local requirements (see [Local Configuration](#local-configuration) below).
+  - Make sure to remove comments as they cause errors.
 - On an existing installation:
   - Take note of the current install directory, if it needs to stay the same
   - Update the currently installed `appsettings.Local.json` file if changes are desired.

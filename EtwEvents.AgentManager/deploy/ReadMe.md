@@ -19,7 +19,7 @@
   
   1) Unzip archive.
   2) Copy certificates into unzipped folder (if provided).
-  3) Modify `appsettings.Local.json` and `authorization.json` if needed.
+  3) Modify `appsettings.Local.json` and `authorization.json` if needed, make sure to remove comments as they cause errors.
   4) Double click `InstallService.cmd`, follow prompts.
 
 ### User Authentication
