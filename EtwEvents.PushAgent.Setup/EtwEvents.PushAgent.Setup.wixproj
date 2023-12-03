@@ -3,10 +3,6 @@
     <SuppressSpecificWarnings>5150;5151;1076</SuppressSpecificWarnings>
     <DefaultCompressionLevel>mszip</DefaultCompressionLevel>
     <InstallerPlatform>x64</InstallerPlatform>
-    <HarvestProjectsSuppressUniqueIds>true</HarvestProjectsSuppressUniqueIds>
-    <HarvestProjectsDirectoryIds>HARVESTROOT</HarvestProjectsDirectoryIds>
-    <HarvestProjectsVerboseOutput>true</HarvestProjectsVerboseOutput>
-    <HarvestFileGenerateGuidsNow>true</HarvestFileGenerateGuidsNow>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="WixToolset.Iis.wixext" Version="4.0.3" />
@@ -19,6 +15,7 @@
       <ComponentGroupName>Published</ComponentGroupName>
       <DirectoryRefId>INSTALLFOLDER</DirectoryRefId>
       <SuppressRootDirectory>true</SuppressRootDirectory>
+      <SuppressCom>true</SuppressCom>
       <Transforms>./RemoveServiceExe.xslt</Transforms>
     </HarvestDirectory>
     <!--
