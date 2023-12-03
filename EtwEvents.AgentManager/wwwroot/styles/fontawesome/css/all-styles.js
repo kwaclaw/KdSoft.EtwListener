@@ -3,7 +3,7 @@ import { css } from '@kdsoft/lit-mvvm';
 export default css`
 
 /*!
- * Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com
+ * Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com
  * License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License)
  * Copyright 2023 Fonticons, Inc.
  */
@@ -5973,9 +5973,6 @@ readers do not read off random characters that represent icons */
 .fa-share::before {
   content: "\\f064"; }
 
-.fa-arrow-turn-right::before {
-  content: "\\f064"; }
-
 .fa-mail-forward::before {
   content: "\\f064"; }
 
@@ -6425,6 +6422,9 @@ readers do not read off random characters that represent icons */
 .fa-ups:before {
   content: "\\f7e0"; }
 
+.fa-pixiv:before {
+  content: "\\e640"; }
+
 .fa-wpexplorer:before {
   content: "\\f2de"; }
 
@@ -6529,6 +6529,9 @@ readers do not read off random characters that represent icons */
 
 .fa-deskpro:before {
   content: "\\f38f"; }
+
+.fa-brave:before {
+  content: "\\e63c"; }
 
 .fa-sistrix:before {
   content: "\\f3ee"; }
@@ -6698,6 +6701,9 @@ readers do not read off random characters that represent icons */
 .fa-cloudsmith:before {
   content: "\\f384"; }
 
+.fa-opensuse:before {
+  content: "\\e62b"; }
+
 .fa-pied-piper-alt:before {
   content: "\\f1a8"; }
 
@@ -6842,6 +6848,9 @@ readers do not read off random characters that represent icons */
 .fa-bluetooth-b:before {
   content: "\\f294"; }
 
+.fa-square-letterboxd:before {
+  content: "\\e62e"; }
+
 .fa-sticker-mule:before {
   content: "\\f3f7"; }
 
@@ -6874,6 +6883,9 @@ readers do not read off random characters that represent icons */
 
 .fa-confluence:before {
   content: "\\f78d"; }
+
+.fa-shoelace:before {
+  content: "\\e60c"; }
 
 .fa-mdb:before {
   content: "\\f8ca"; }
@@ -6997,6 +7009,9 @@ readers do not read off random characters that represent icons */
 
 .fa-envira:before {
   content: "\\f299"; }
+
+.fa-google-scholar:before {
+  content: "\\e63b"; }
 
 .fa-square-gitlab:before {
   content: "\\e5ae"; }
@@ -7130,6 +7145,9 @@ readers do not read off random characters that represent icons */
 .fa-vine:before {
   content: "\\f1ca"; }
 
+.fa-signal-messenger:before {
+  content: "\\e663"; }
+
 .fa-paypal:before {
   content: "\\f1ed"; }
 
@@ -7163,6 +7181,9 @@ readers do not read off random characters that represent icons */
 .fa-nfc-symbol:before {
   content: "\\e531"; }
 
+.fa-mintbit:before {
+  content: "\\e62f"; }
+
 .fa-ethereum:before {
   content: "\\f42e"; }
 
@@ -7186,6 +7207,9 @@ readers do not read off random characters that represent icons */
 
 .fa-bimobject:before {
   content: "\\f378"; }
+
+.fa-brave-reverse:before {
+  content: "\\e63d"; }
 
 .fa-facebook-f:before {
   content: "\\f39e"; }
@@ -7288,6 +7312,9 @@ readers do not read off random characters that represent icons */
 
 .fa-tencent-weibo:before {
   content: "\\f1d5"; }
+
+.fa-letterboxd:before {
+  content: "\\e62d"; }
 
 .fa-symfony:before {
   content: "\\f83d"; }
@@ -7426,6 +7453,9 @@ readers do not read off random characters that represent icons */
 
 .fa-cmplid:before {
   content: "\\e360"; }
+
+.fa-upwork:before {
+  content: "\\e641"; }
 
 .fa-facebook:before {
   content: "\\f09a"; }
@@ -7600,6 +7630,9 @@ readers do not read off random characters that represent icons */
 
 .fa-supple:before {
   content: "\\f3f9"; }
+
+.fa-webflow:before {
+  content: "\\e65c"; }
 
 .fa-rebel:before {
   content: "\\f1d0"; }

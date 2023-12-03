@@ -10,22 +10,22 @@
     "@kdsoft/lit-mvvm-components": "^2.0.0-beta.5",
     "@nx-js/observer-util": "^4.2.2",
     "@nx-js/queue-util": "^1.1.1",
-    "@tailwindcss/forms": "^0.5.6",
+    "@tailwindcss/forms": "^0.5.7",
     "dialog-polyfill": "^0.5.6",
     "gettext.js": "^2.0.0",
-    "lit-html": "^2.8.0",
-    "@lit/reactive-element": "1.6.3"
+    "lit-html": "^3.1.0",
+    "@lit/reactive-element": "2.0.2"
   },
   "devDependencies": {
-    "@fortawesome/fontawesome-free": "^6.4.2",
+    "@fortawesome/fontawesome-free": "^6.5.1",
     "autoprefixer": "10.4.16",
     "cpy-cli": "^5.0.0",
-    "eslint": "^8.51.0",
+    "eslint": "^8.55.0",
     "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-plugin-import": "^2.28.1",
+    "eslint-plugin-import": "^2.29.0",
     "glob": "^10.3.10",
     "rimraf": "^5.0.5",
-    "tailwindcss": "^3.3.3"
+    "tailwindcss": "^3.3.5"
   },
   "scripts": {
     "wrap-css": "node node_modules/@kdsoft/lit-mvvm-components/scripts/wrap-css.mjs",
