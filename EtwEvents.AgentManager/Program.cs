@@ -175,11 +175,11 @@ builder.Services.AddPortableObjectLocalization(options => options.ResourcesPath 
 builder.Services.Replace(ServiceDescriptor.Singleton<ILocalizationFileLocationProvider, LocalizationFileProvider>());
 builder.Services.Configure<RequestLocalizationOptions>(options => {
     var supportedCultures = new List<CultureInfo> {
-                    new CultureInfo("en-US"),
-                    new CultureInfo("fr"),
-                    new CultureInfo("es"),
-                    new CultureInfo("de")
-                };
+        new ("en-US"),
+        new ("fr"),
+        new ("es"),
+        new ("de")
+    };
 
     options.DefaultRequestCulture = new RequestCulture("en-US");
     options.SupportedCultures = supportedCultures;
@@ -246,11 +246,11 @@ var cspHeaderValues = string.Join(
     "font-src fonts.gstatic.com  cdnjs.cloudflare.com"
 );
 app.Use(async (context, next) => {
-    context.Response.Headers.Add("X-Frame-Options", "DENY");
-    context.Response.Headers.Add("X-Xss-Protection", "1; mode=block");
-    context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
-    context.Response.Headers.Add("Referrer-Policy", "no-referrer");
-    context.Response.Headers.Add("Content-Security-Policy", cspHeaderValues);
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    context.Response.Headers.Append("X-Xss-Protection", "1; mode=block");
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("Referrer-Policy", "no-referrer");
+    context.Response.Headers.Append("Content-Security-Policy", cspHeaderValues);
     await next();
 });
 
