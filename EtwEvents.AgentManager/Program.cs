@@ -14,6 +14,9 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+#if !DEBUG
+using Microsoft.Extensions.Hosting.WindowsServices;
+#endif
 using Microsoft.Extensions.Options;
 using OrchardCore.Localization;
 

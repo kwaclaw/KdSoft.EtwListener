@@ -18,26 +18,26 @@
     "EtwEvents.AgentManager Dev": {
       "commandName": "Project",
       "launchBrowser": true,
+      "launchUrl": "https://localhost:50300",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      },
-      "applicationUrl": "https://localhost:50300"
+      }
     },
     "EtwEvents.AgentManager Personal": {
       "commandName": "Project",
       "launchBrowser": true,
+      "launchUrl": "https://agent-manager.kd-soft.net:50300",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Personal"
-      },
-      "applicationUrl": "https://agent-manager.kd-soft.net:50300"
+      }
     },
     "EtwEvents.AgentManager Prod": {
       "commandName": "Project",
       "launchBrowser": true,
+      "launchUrl": "https://localhost:50300",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Production"
-      },
-      "applicationUrl": "https://localhost:50300"
+      }
     },
     "Docker": {
       "commandName": "Docker",
