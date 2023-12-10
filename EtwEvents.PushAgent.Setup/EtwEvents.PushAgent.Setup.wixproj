@@ -28,10 +28,10 @@
     <None Include="RemoveServiceExe.xslt" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../EtwEvents.PushAgent/EtwEvents.PushAgent.csproj" DoNotHarvest="true">
-      <!-- The publish directory must be specified even if the publish profile already contains it -->
+    <ProjectReference Include="../EtwEvents.PushAgent/EtwEvents.PushAgent.csproj" DoNotHarvest="true" Publish="true">
+       <!--The publish directory must be specified even if the publish profile already contains it--> 
       <PublishDir>../EtwEvents.PushAgent/deploy/publish/</PublishDir>
-      <!-- This seems to be the only way to specify the publish profile correctly -->
+       <!--This seems to be the only way to specify the publish profile correctly--> 
       <!--<Properties>PublishProfile=../EtwEvents.PushAgent/Properties/PublishProfiles/Platform.pubxml</Properties>-->
       <Properties>PublishProfile=../EtwEvents.PushAgent/Properties/PublishProfiles/SelfContained.pubxml</Properties>
     </ProjectReference>
