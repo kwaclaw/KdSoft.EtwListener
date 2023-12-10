@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography.X509Certificates;
+﻿using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using KdSoft.EtwEvents.AgentManager;
 using Xunit;
 using Xunit.Abstractions;
@@ -73,6 +74,10 @@ namespace KdSoft.EtwEvents.Tests
             store.Close();
         }
 
+        void WriteFileMessage(string filePath, [CallerLineNumber]int lineNo = 0) {
+            _output.WriteLine($"Line {lineNo}: {Path.GetFileName(filePath)}");
+        }
+
         [Fact]
         public void InstallCerts() {
             var filesPath = Path.Combine(TestUtils.ProjectDir!, "Files");
@@ -84,23 +89,27 @@ namespace KdSoft.EtwEvents.Tests
                 store.Remove(rootCert);
             }
 
-            // cert should not validate without root cert
-            var serverCert = new X509Certificate2(Path.Combine(filesPath, "server.kd-soft.net.p12"), "humpty_dumpty", X509KeyStorageFlags.PersistKeySet);
+            // cert should not validate without root cert;
+            var serverFile = Path.Combine(filesPath, "server.kd-soft.net.p12");
+            var serverCert = new X509Certificate2(serverFile, "humpty_dumpty", X509KeyStorageFlags.PersistKeySet);
             var serverChain = new X509Chain { ChainPolicy = new X509ChainPolicy { RevocationMode = X509RevocationMode.NoCheck } };
             bool valid = serverChain.Build(serverCert);
             if (!valid) {
+                WriteFileMessage(serverFile);
                 foreach (var cst in serverChain.ChainStatus) {
-                    _output.WriteLine("{0}: {1}", cst.Status, cst.StatusInformation);
+                    _output.WriteLine("\t{0}: {1}", cst.Status, cst.StatusInformation);
                 }
             }
             Assert.False(valid);
 
-            var clientCert = new X509Certificate2(Path.Combine(filesPath, "client.p12"), "humpty_dumpty", X509KeyStorageFlags.PersistKeySet);
+            var clientFile = Path.Combine(filesPath, "client.p12");
+            var clientCert = new X509Certificate2(clientFile, "humpty_dumpty", X509KeyStorageFlags.PersistKeySet);
             var clientChain = new X509Chain { ChainPolicy = new X509ChainPolicy { RevocationMode = X509RevocationMode.NoCheck } };
             valid = clientChain.Build(clientCert);
             if (!valid) {
+                WriteFileMessage(clientFile);
                 foreach (var cst in clientChain.ChainStatus) {
-                    _output.WriteLine("{0}: {1}", cst.Status, cst.StatusInformation);
+                    _output.WriteLine("\t{0}: {1}", cst.Status, cst.StatusInformation);
                 }
             }
             Assert.False(valid);
@@ -108,9 +117,21 @@ namespace KdSoft.EtwEvents.Tests
             CertUtils.InstallMachineCertificate(rootCert);
 
             valid = serverChain.Build(serverCert);
-            Assert.True(valid);
+            if (!valid) {
+                WriteFileMessage(serverFile);
+                foreach (var cst in serverChain.ChainStatus) {
+                    _output.WriteLine("\t{0}: {1}", cst.Status, cst.StatusInformation);
+                }
+            }
+            Assert.False(valid);
 
             valid = clientChain.Build(clientCert);
+            if (!valid) {
+                WriteFileMessage(clientFile);
+                foreach (var cst in clientChain.ChainStatus) {
+                    _output.WriteLine("\t{0}: {1}", cst.Status, cst.StatusInformation);
+                }
+            }
             Assert.True(valid);
         }
 
