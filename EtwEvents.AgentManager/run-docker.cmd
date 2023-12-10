@@ -16,7 +16,7 @@ docker run -dt -p 50301:80 -p 50300:443 ^
     -e "Kestrel:Endpoints:Https:Certificate:Password=%certPwd%" ^
     -e "ASPNETCORE_ENVIRONMENT=Production" ^
     --name "KdSoft_ETW_AgentManager" ^
-    waclawek/kdsoft-etw-agent-manager:1.2.1
+    waclawek/kdsoft-etw-agent-manager:1.2.2
 ::  if a network is specified, use the option --network=XXX
 
 :: clear certificate password
