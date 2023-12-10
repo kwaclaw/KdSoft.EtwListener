@@ -1,7 +1,6 @@
 #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-FROM m
-:8.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 # need custom root certificate in dev and prod images
 WORKDIR /usr/local/share/ca-certificates
 COPY ["./EtwEvents.AgentManager/certificates/Kd-Soft.crt", "./"]
