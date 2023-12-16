@@ -109,7 +109,7 @@ namespace KdSoft.EtwEvents.EventSinks
 
         // see https://github.com/Zimmergren/LogAnalytics.Client/blob/main/LogAnalytics.Client/LogAnalytics.Client/LogAnalyticsClient.cs
         async Task<(HttpStatusCode, string)> PostAsync(HttpClient http, Uri requestUri, ReadOnlyMemory<byte> evtBatchBytes) {
-            var request = new HttpRequestMessage(HttpMethod.Post, requestUri);
+            var request = new HttpRequestMessage(HttpMethod.Post, requestUri) { Version = HttpVersion.Version20 };
 
             var dateString = DateTime.UtcNow.ToString("r");
             var signature = BuildSignature(evtBatchBytes.Span, dateString);

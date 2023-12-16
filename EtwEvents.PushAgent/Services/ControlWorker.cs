@@ -319,9 +319,9 @@ namespace KdSoft.EtwEvents.PushAgent
         async Task PostMessage(string path, HttpContent content) {
             var opts = _controlOptions.CurrentValue;
             var postUri = new Uri(opts.Uri, path);
-            var httpMsg = new HttpRequestMessage(HttpMethod.Post, postUri) { Content = content };
+            var httpMsg = new HttpRequestMessage(HttpMethod.Post, postUri) { Version = HttpVersion.Version20, Content = content };
 
-            using var http = new HttpClient(_httpHandlerCache.Handler, false);
+            using var http = new HttpClient(_httpHandlerCache.Handler, false) { DefaultRequestVersion = HttpVersion.Version20 };
             var response = await http.SendAsync(httpMsg).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
         }

@@ -1,4 +1,5 @@
-﻿using System.Net.Security;
+﻿using System.Net;
+using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using Grpc.Net.Client;
@@ -31,7 +32,7 @@ namespace KdSoft.EtwEvents.EventSinks
 
             var channel = GrpcChannel.ForAddress(host, new GrpcChannelOptions {
                 Credentials = Grpc.Core.ChannelCredentials.SecureSsl,
-                HttpClient = new HttpClient(httpHandler, true),
+                HttpClient = new HttpClient(httpHandler, true) { DefaultRequestVersion = HttpVersion.Version20 },
                 DisposeHttpClient = true
             });
             return channel;

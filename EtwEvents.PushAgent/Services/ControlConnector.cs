@@ -1,4 +1,5 @@
-﻿using System.Threading.Channels;
+﻿using System.Net;
+using System.Threading.Channels;
 using LaunchDarkly.EventSource;
 
 namespace KdSoft.EtwEvents.PushAgent
@@ -32,7 +33,9 @@ namespace KdSoft.EtwEvents.PushAgent
 
         EventSource ConfigureEventSource(ControlOptions opts) {
             var evtUri = new Uri(opts.Uri, "Agent/GetEvents");
-            var cfgBuilder = Configuration.Builder(evtUri).HttpMessageHandler(_httpHandlerCache.Handler);
+            var cfgBuilder = Configuration.Builder(evtUri)
+                .HttpMessageHandler(_httpHandlerCache.Handler)
+                .HttpRequestModifier(request => { request.Version = HttpVersion.Version20; });
             if (opts.InitialRetryDelay != null)
                 cfgBuilder.InitialRetryDelay(opts.InitialRetryDelay.Value);
             if (opts.MaxRetryDelay != null)

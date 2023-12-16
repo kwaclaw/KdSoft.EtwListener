@@ -1,4 +1,5 @@
 ﻿using System.IO.Compression;
+using System.Net;
 using System.Net.Http.Json;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -122,6 +123,7 @@ namespace KdSoft.EtwEvents.PushAgent
             var opts = _controlOptions.Value;
             var moduleUri = new Uri(opts.Uri, "Agent/GetEventSinkModule");
             var request = new HttpRequestMessage(HttpMethod.Post, moduleUri) {
+                Version = HttpVersion.Version20,
                 Content = JsonContent.Create(new { sinkType, version })
             };
 
@@ -135,7 +137,7 @@ namespace KdSoft.EtwEvents.PushAgent
             var zipTempFilename = Path.Combine(tempDir, randFile);
 
             try {
-                using var http = new HttpClient(_httpHandlerCache.Handler, false);
+                using var http = new HttpClient(_httpHandlerCache.Handler, false) { DefaultRequestVersion = HttpVersion.Version20 };
                 using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
                 response.EnsureSuccessStatusCode();
 
