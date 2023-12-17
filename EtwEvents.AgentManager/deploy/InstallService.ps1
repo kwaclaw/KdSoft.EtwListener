@@ -97,10 +97,10 @@ function Import-Cert {
         [string] $storeLocation
     )
 
-    $cred = Get-Credential -UserName 'Installer' -Message ('Password for ' + $serverCertFile)
-    if ($cred) {
+    $certCred = Get-Credential -UserName 'Installer' -Message ('Password for ' + $serverCertFile)
+    if ($certCred) {
         try {
-            $serverCert = Import-PfxCertificate -FilePath $serverCertFile -CertStoreLocation $storeLocation -Password $cred.Password
+            $serverCert = Import-PfxCertificate -FilePath $serverCertFile -CertStoreLocation $storeLocation -Password $certCred.Password
         }
         catch {
             $serverCert = $null
@@ -258,9 +258,7 @@ if (!(Test-Path $targetDirPath)) {
 # LocalSystem account has all kinds of permissions already
 if ($cred.UserName -notlike '*\LocalSystem') {
     $acl = Get-Acl "$targetDirPath"
-    $aclRuleArgs = $cred.UserName, "Read,Write,ReadAndExecute", "ContainerInherit,ObjectInherit", "None", "Allow"
-    $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($aclRuleArgs)
-    #$accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($cred.UserName, "Read,Write,ReadAndExecute", "ContainerInherit,ObjectInherit", "None", "Allow")
+    $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($cred.UserName, "Read,Write,ReadAndExecute", "ContainerInherit,ObjectInherit", "None", "Allow")
     $acl.SetAccessRule($accessRule)
     $acl | Set-Acl "$targetDirPath"
 }
