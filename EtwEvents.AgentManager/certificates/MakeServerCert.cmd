@@ -21,18 +21,20 @@ set -email=
 
 :: we use this loop instead of 'for %%a in (%*) do' because for..in ignores arguments with an '*'
 :loop
-  set arg=%1
-  call :setarg %1
+  :: %~1 removes surrounding quotes from first parameter
+  set arg=%~1
+  call :checkarg %arg%
+  if not "%val%"=="" (call set "%param%=%val%") 
   shift
 if not "%~1"=="" goto loop
 goto :after
 
-:setarg
+:checkarg
 if /i [%arg:~0,1%] == [-] (
     set param=%arg%
+    call set "val="
 ) else (
-    :: %~1 removes surrounding quotes from first parameter
-    call set "%param%=%~1"
+    set val=%arg%
 )
 exit /b
 
