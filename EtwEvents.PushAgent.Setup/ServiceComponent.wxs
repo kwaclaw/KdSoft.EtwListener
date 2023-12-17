@@ -38,7 +38,7 @@
             ThirdFailureActionType="restart"
             RestartServiceDelayInSeconds="6" />
       </ServiceInstall>
-      <ServiceControl Name="EtwEvents.PushAgent" Remove="uninstall" />
+      <ServiceControl Name="EtwEvents.PushAgent" Start="install" Stop="both" Remove="uninstall" Wait="yes" />
     </Component>
   </Fragment>
 </Wix>
