@@ -79,6 +79,7 @@ message LiveViewOptions {
   repeated int32 standard_columns = 1;
   repeated LiveViewColumn payload_column_list = 2;
   repeated int32 payload_columns = 3;
+  repeated int32 standard_column_order = 4;
 }
 
 message AgentState {

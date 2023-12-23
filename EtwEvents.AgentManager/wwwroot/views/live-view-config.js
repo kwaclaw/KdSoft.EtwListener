@@ -1,4 +1,4 @@
-﻿import { observe, unobserve } from '@nx-js/observer-util';
+﻿import { observe, unobserve, raw } from '@nx-js/observer-util';
 import { LitMvvmElement, html, css } from '@kdsoft/lit-mvvm';
 import dialogPolyfill from 'dialog-polyfill';
 import checkboxStyles from '../styles/kds-checkbox-styles.js';
@@ -27,7 +27,7 @@ class LiveViewConfig extends LitMvvmElement {
   constructor() {
     super();
     this._getPayloadColumnListItemTemplate = getPayloadColumnListItemTemplate.bind(this);
-    this.changeCallback = (opts) => { };
+    this.changeCallback = () => { };
   }
 
   _fieldChange(e) {

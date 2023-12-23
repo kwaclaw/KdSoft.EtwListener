@@ -41,9 +41,17 @@ class LiveViewConfigModel {
   }
 
   refresh(liveViewOptions) {
-    const lvOpts = raw(liveViewOptions || new LiveViewOptions());
+    const rawOpts = raw(liveViewOptions);
+    let lvOpts = rawOpts;
+    if (!(lvOpts instanceof LiveViewOptions)) {
+      lvOpts = new LiveViewOptions();
+      Object.assign(lvOpts, rawOpts);
+    }
+    lvOpts.fixup();
+
+    const orderedStandardColumnList = standardColumnList.map((v, i, a) => a[lvOpts.standardColumnOrder[i]]);
     this.standardColumnCheckList = new KdsListModel(
-      utils.clone(standardColumnList),
+      orderedStandardColumnList,
       utils.clone(lvOpts.standardColumns || [0, 1, 2, 3, 4, 5, 6, 7, 8]),
       true,
       item => item.name
@@ -59,11 +67,13 @@ class LiveViewConfigModel {
 
   // when called via proxy, then this will be a proxy
   toOptions() {
-    return new LiveViewOptions(
+    const result = new LiveViewOptions(
+      raw(this.standardColumnCheckList.items.map(item => standardColumnList.findIndex(element => element.name === item.name))),
       raw(this.standardColumnCheckList.selectedIndexes),
       raw(this.payloadColumnCheckList.items),
       raw(this.payloadColumnCheckList.selectedIndexes)
     );
+    return result.fixup();
   }
 
   static get traceLevelList() { return observable(traceLevelList()); }
