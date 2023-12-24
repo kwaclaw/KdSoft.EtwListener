@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using System.Diagnostics;
+using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.Diagnostics.Tracing;
 using Mca = Microsoft.CodeAnalysis;
@@ -9,6 +10,9 @@ namespace KdSoft.EtwLogging
 {
     public static class ProtoExtensions
     {
+        public static readonly JsonParser JsonParser = new JsonParser(JsonParser.Settings.Default.WithIgnoreUnknownFields(false));
+        public static readonly JsonParser JsonParserIgnoreUnknown = new JsonParser(JsonParser.Settings.Default.WithIgnoreUnknownFields(true));
+
         // we ignore TraceEvent.FormattedMessage, as it just contains a formatted representation of the Payload
         public static EtwEvent SetTraceEvent(this EtwEvent etw, TraceEvent evt) {
             etw.ProviderName = evt.ProviderName;
@@ -78,6 +82,18 @@ namespace KdSoft.EtwLogging
                 filterSource.DynamicLineSpans.Add(lineSpan);
             }
             return filterSource;
+        }
+
+        /// <summary>
+        /// Workaround for <c>MessageParser&lt;T&gt;.WithDiscardUnknownFields(true).ParseJson()</c> not working as expected.
+        /// <seealso cref="https://github.com/protocolbuffers/protobuf/issues/8316"/>
+        public static T FromProtoJson<T>(this string json, bool discardUnknownFields = true) where T: IMessage<T>, new() {
+            if (discardUnknownFields) {
+                return JsonParserIgnoreUnknown.Parse<T>(json);
+            }
+            else {
+                return JsonParser.Parse<T>(json);
+            }
         }
     }
 }

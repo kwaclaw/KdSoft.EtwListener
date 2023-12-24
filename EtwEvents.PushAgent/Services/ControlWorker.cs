@@ -137,15 +137,18 @@ namespace KdSoft.EtwEvents.PushAgent
                     break;
 
                 case Constants.SetEmptyFilterEvent:
-                    var emptyFilter = string.IsNullOrEmpty(sse.Data) ? null : Filter.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
+                    var emptyFilter = string.IsNullOrEmpty(sse.Data)
+                        ? null
+                        : sse.Data.FromProtoJson<Filter>();
                     if (emptyFilter == null)
                         return;
                     _emptyFilterSource = Kdfu.BuildFilterSource(emptyFilter);
                     break;
 
                 case Constants.TestFilterEvent:
-                    // WithDiscardUnknownFields does currently not work, so we should fix this at source
-                    var filter = string.IsNullOrEmpty(sse.Data) ? new Filter() : Filter.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
+                    var filter = string.IsNullOrEmpty(sse.Data)
+                        ? new Filter()
+                        : sse.Data.FromProtoJson<Filter>();
                     filterResult = SessionWorker.TestFilter(filter);
                     await PostProtoMessage($"Agent/TestFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
                     break;
@@ -166,7 +169,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 case Constants.StartLiveViewSinkEvent:
                     var managerSinkProfile = string.IsNullOrEmpty(sse.Data)
                         ? null
-                        : EventSinkProfile.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
+                        : sse.Data.FromProtoJson<EventSinkProfile>();
                     if (managerSinkProfile == null)
                         return;
                     if (worker != null) {
@@ -186,7 +189,9 @@ namespace KdSoft.EtwEvents.PushAgent
                     break;
 
                 case Constants.ApplyAgentOptionsEvent:
-                    var agentOptions = string.IsNullOrEmpty(sse.Data) ? null : AgentOptions.Parser.WithDiscardUnknownFields(true).ParseJson(sse.Data);
+                    var agentOptions = string.IsNullOrEmpty(sse.Data)
+                        ? null
+                        : sse.Data.FromProtoJson<AgentOptions>();
                     if (agentOptions == null)
                         return;
 
