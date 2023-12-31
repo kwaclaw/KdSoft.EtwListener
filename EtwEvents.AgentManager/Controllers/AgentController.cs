@@ -181,7 +181,7 @@ namespace KdSoft.EtwEvents.AgentManager
             if (agentId == null)
                 return Unauthorized();
 
-            var state = stateObj.GetRawText().FromProtoJson<AgentState>();
+            var state = stateObj.GetRawText().ToProtoMessage<AgentState>();
 
             var agentProxy = _agentProxyManager.ActivateProxy(agentId);
             // AgentState.ID must always match the authenticated identity

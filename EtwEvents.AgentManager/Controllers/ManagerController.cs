@@ -379,7 +379,7 @@ namespace KdSoft.EtwEvents.AgentManager
                 foreach (var enabledProvider in enabledProviders.EnumerateArray()) {
                     if (enabledProvider.ValueKind != JsonValueKind.Object)
                         continue;
-                    var provider = enabledProvider.GetRawText().FromProtoJson<ProviderSetting>();
+                    var provider = enabledProvider.GetRawText().ToProtoMessage<ProviderSetting>();
                     result.EnabledProviders.Add(provider);
                 }
             }
@@ -418,7 +418,7 @@ namespace KdSoft.EtwEvents.AgentManager
 
             var liveViewOptions = rawOptions.GetProperty("liveViewOptions");
             if (liveViewOptions.ValueKind == JsonValueKind.Object) {
-                var lvOptions = liveViewOptions.GetRawText().FromProtoJson<LiveViewOptions>();
+                var lvOptions = liveViewOptions.GetRawText().ToProtoMessage<LiveViewOptions>();
                 result.LiveViewOptions = lvOptions;
             }
 

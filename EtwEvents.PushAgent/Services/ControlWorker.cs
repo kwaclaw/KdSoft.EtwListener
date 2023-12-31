@@ -139,7 +139,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 case Constants.SetEmptyFilterEvent:
                     var emptyFilter = string.IsNullOrEmpty(sse.Data)
                         ? null
-                        : sse.Data.FromProtoJson<Filter>();
+                        : sse.Data.ToProtoMessage<Filter>();
                     if (emptyFilter == null)
                         return;
                     _emptyFilterSource = Kdfu.BuildFilterSource(emptyFilter);
@@ -148,7 +148,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 case Constants.TestFilterEvent:
                     var filter = string.IsNullOrEmpty(sse.Data)
                         ? new Filter()
-                        : sse.Data.FromProtoJson<Filter>();
+                        : sse.Data.ToProtoMessage<Filter>();
                     filterResult = SessionWorker.TestFilter(filter);
                     await PostProtoMessage($"Agent/TestFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
                     break;
@@ -169,7 +169,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 case Constants.StartLiveViewSinkEvent:
                     var managerSinkProfile = string.IsNullOrEmpty(sse.Data)
                         ? null
-                        : sse.Data.FromProtoJson<EventSinkProfile>();
+                        : sse.Data.ToProtoMessage<EventSinkProfile>();
                     if (managerSinkProfile == null)
                         return;
                     if (worker != null) {
@@ -191,7 +191,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 case Constants.ApplyAgentOptionsEvent:
                     var agentOptions = string.IsNullOrEmpty(sse.Data)
                         ? null
-                        : sse.Data.FromProtoJson<AgentOptions>();
+                        : sse.Data.ToProtoMessage<AgentOptions>();
                     if (agentOptions == null)
                         return;
 
