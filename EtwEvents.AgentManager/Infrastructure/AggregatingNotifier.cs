@@ -11,7 +11,7 @@ namespace KdSoft.EtwEvents
         }
 
         public async ValueTask PostNotification() {
-            var changeEnumerators = _changeEnumerators;
+            var changeEnumerators = Volatile.Read(ref _changeEnumerators);
             foreach (var enumerator in changeEnumerators) {
                 try {
                     await enumerator.Advance().ConfigureAwait(false);
@@ -20,19 +20,14 @@ namespace KdSoft.EtwEvents
             }
         }
 
-        readonly object _enumeratorSync = new();
         ImmutableList<ChangeEnumerator> _changeEnumerators = ImmutableList<ChangeEnumerator>.Empty;
 
         void AddEnumerator(ChangeEnumerator enumerator) {
-            lock (_enumeratorSync) {
-                _changeEnumerators = _changeEnumerators.Add(enumerator);
-            }
+            ImmutableInterlocked.Update(ref _changeEnumerators, ce => ce.Add(enumerator));
         }
 
         void RemoveEnumerator(ChangeEnumerator enumerator) {
-            lock (_enumeratorSync) {
-                _changeEnumerators = _changeEnumerators.Remove(enumerator);
-            }
+            ImmutableInterlocked.Update(ref _changeEnumerators, ce => ce.Remove(enumerator));
         }
 
         public IAsyncEnumerable<T> GetNotifications() {
