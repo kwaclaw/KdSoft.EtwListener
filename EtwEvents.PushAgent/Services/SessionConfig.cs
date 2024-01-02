@@ -23,8 +23,10 @@ namespace KdSoft.EtwEvents.PushAgent
         const string DataProtectionPurpose = "sink-credentials";
         const string LocalSettingsFile = "appsettings.Local.json";
 
-        static readonly JsonFormatter _jsonFormatter = new(
-            JsonFormatter.Settings.Default.WithFormatDefaultValues(true).WithFormatEnumsAsIntegers(true)
+        static readonly JsonFormatter _jsonFormatter = new(JsonFormatter.Settings.Default
+            .WithFormatDefaultValues(true)
+            .WithFormatEnumsAsIntegers(true)
+            .WithIndentation("  ")
         );
 
         static readonly JsonSerializerOptions _jsonOptions = new() {
