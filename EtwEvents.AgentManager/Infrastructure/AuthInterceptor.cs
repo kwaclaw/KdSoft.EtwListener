@@ -16,12 +16,16 @@ namespace KdSoft.EtwEvents
             if (context == null)
                 throw new ArgumentNullException(nameof(context));
 
+            if (!context.AuthContext.IsPeerAuthenticated) {
+                throw new RpcException(new Status(StatusCode.Unauthenticated, "Unauthenticated or missing Certificate"));
+            }
+
             var authorized = _authService.AuthorizePeerIdentity(context.AuthContext.PeerIdentity, context, Role.Agent);
             if (authorized) {
                 return;
             }
 
-            throw new RpcException(new Status(StatusCode.PermissionDenied, "Unauthorized or missing Certificate"));
+            throw new RpcException(new Status(StatusCode.PermissionDenied, "Unauthorized or missing roles in Certificate"));
         }
 
         public override Task<TResponse> UnaryServerHandler<TRequest, TResponse>(TRequest request, ServerCallContext context, UnaryServerMethod<TRequest, TResponse> continuation) {
