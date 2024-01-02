@@ -27,7 +27,7 @@
     </ComponentGroup>
 
     <Component Id="ServiceComponent" Guid="{F0446A09-ABAF-4C90-AF96-46A62246745D}" Directory="INSTALLFOLDER">
-      <File Source="../EtwEvents.PushAgent/deploy/publish/KdSoft.EtwEvents.PushAgent.exe" KeyPath="true"/>
+      <File Id="ServiceExe" Source="../EtwEvents.PushAgent/deploy/publish/KdSoft.EtwEvents.PushAgent.exe" KeyPath="true"/>
 
       <ServiceInstall Name="EtwEvents.PushAgent" DisplayName="!(loc.ServiceDisplayName)" Type="ownProcess" Description="!(loc.ServiceDescription)"
                       Start="auto" ErrorControl="normal" Account="[QUALIFIED_SERVICE_ACCOUNT]" Password="[SERVICE_PASSWORD]">

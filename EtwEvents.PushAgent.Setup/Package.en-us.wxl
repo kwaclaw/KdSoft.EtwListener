@@ -3,6 +3,8 @@ This file contains the declaration of all the localizable strings.
 -->
 <WixLocalization xmlns="http://wixtoolset.org/schemas/v4/wxl" Culture="en-US">
 
+  <String Id="WelcomeDlgTitle" Value="{\WixUI_Font_Bigger}Welcome to the [ProductName] [ProductVersion] Setup Wizard" />
+  
   <String Id="DowngradeError" Value="A newer version of [ProductName] is already installed." />
   <String Id="ConfigDlgTitle" Value="Configure Setup" />
   <String Id="ConfigDlgHeader" Value="Configuration Dialog" />
@@ -31,6 +33,5 @@ This file contains the declaration of all the localizable strings.
 
   <String Id="ServiceDisplayName" Value="ETW Events Agent" />
   <String Id="ServiceDescription" Value="Forwards ETW Events to an Event Sink" />
-
 
 </WixLocalization>

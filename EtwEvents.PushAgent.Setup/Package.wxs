@@ -3,7 +3,7 @@
      xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
   <Package Name="EtwEvents.PushAgent"
            Manufacturer="KD Soft"
-           Version="1.0.2.0"
+           Version="!(bind.FileVersion.ServiceExe)"
            Scope="perMachine"
            UpgradeCode="92ba2f4a-5b30-438c-9ae2-158382011ca9"
   >
