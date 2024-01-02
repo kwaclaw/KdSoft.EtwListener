@@ -264,86 +264,100 @@ namespace KdSoft.EtwEvents.AgentManager
 
         #region Control Messages to Agent
 
-        IActionResult PostAgent(string agentId, string eventName, string jsonData) {
-            ProblemDetails pd;
-            if (_agentProxyManager.TryGetProxy(agentId, out var proxy)) {
-                var evt = new ControlEvent {
-                    Id = proxy.GetNextEventId().ToString(),
-                    Event = eventName,
-                    Data = jsonData
+        AgentProxy? TryGetAgentProxy(string agentId, out IActionResult? proxyResult) {
+            if (!_agentProxyManager.TryGetProxy(agentId, out var proxy)) {
+                var pd = new ProblemDetails {
+                    Status = (int)HttpStatusCode.NotFound,
+                    Title = "Agent does not exist.",
                 };
-
-                if (proxy.Post(evt)) {
-                    return Ok();
-                }
-                else {
-                    pd = new ProblemDetails {
-                        Status = (int)HttpStatusCode.InternalServerError,
-                        Title = "Could not post message.",
-                    };
-                    return StatusCode(pd.Status.Value, pd);
-                }
+                proxyResult = StatusCode(pd.Status.Value, pd);
             }
-            pd = new ProblemDetails {
-                Status = (int)HttpStatusCode.NotFound,
-                Title = "Agent does not exist.",
-            };
-            return StatusCode(pd.Status.Value, pd);
+            else {
+                proxyResult = null;
+            }
+            return proxy;
         }
 
-        async Task<IActionResult> CallAgent(string agentId, string eventName, string jsonData, TimeSpan timeout) {
+        IActionResult PostAgent(AgentProxy proxy, string eventName, string jsonData) {
             ProblemDetails pd;
-            if (_agentProxyManager.TryGetProxy(agentId, out var proxy)) {
-                var eventId = proxy.GetNextEventId().ToString();
-                var evt = new ControlEvent {
-                    Id = eventId,
-                    Event = eventName,
-                    Data = jsonData
-                };
-
-                //TODO configure response timeout externally
-
-                var cts = new CancellationTokenSource(timeout);
-                try {
-                    var resultJson = await proxy.CallAsync(eventId, evt, cts.Token).ConfigureAwait(false);
-                    return Content(resultJson, new MediaTypeHeaderValue("application/json"));
-                }
-                catch (Exception ex) {
-                    //TODO handle exception types, like cancellation due to timeout
-                    pd = new ProblemDetails {
-                        Status = (int)HttpStatusCode.InternalServerError,
-                        Title = ex.Message,
-                    };
-                    return StatusCode(pd.Status.Value, pd);
-                }
-            }
-            pd = new ProblemDetails {
-                Status = (int)HttpStatusCode.NotFound,
-                Title = "Agent does not exist.",
+            var evt = new ControlEvent {
+                Id = proxy.GetNextEventId().ToString(),
+                Event = eventName,
+                Data = jsonData
             };
-            return StatusCode(pd.Status.Value, pd);
+
+            if (proxy.Post(evt)) {
+                return Ok();
+            }
+            else {
+                pd = new ProblemDetails {
+                    Status = (int)HttpStatusCode.InternalServerError,
+                    Title = "Could not post message.",
+                };
+                return StatusCode(pd.Status.Value, pd);
+            }
+        }
+
+        async Task<IActionResult> CallAgent(AgentProxy proxy, string eventName, string jsonData, TimeSpan timeout) {
+            ProblemDetails pd;
+            var eventId = proxy.GetNextEventId().ToString();
+            var evt = new ControlEvent {
+                Id = eventId,
+                Event = eventName,
+                Data = jsonData
+            };
+
+            //TODO configure response timeout externally
+
+            var cts = new CancellationTokenSource(timeout);
+            try {
+                var resultJson = await proxy.CallAsync(eventId, evt, cts.Token).ConfigureAwait(false);
+                return Content(resultJson, new MediaTypeHeaderValue("application/json"));
+            }
+            catch (Exception ex) {
+                //TODO handle exception types, like cancellation due to timeout
+                pd = new ProblemDetails {
+                    Status = (int)HttpStatusCode.InternalServerError,
+                    Title = ex.Message,
+                };
+                return StatusCode(pd.Status.Value, pd);
+            }
         }
 
         [HttpPost]
         public IActionResult Start(string agentId) {
+            var proxy = TryGetAgentProxy(agentId, out var errorResult);
+            if (proxy is null)
+                return errorResult!;
+
             _logger.LogInformation("{user}: Starting agent {agentid}.", UserInfo(), agentId);
-            return PostAgent(agentId, Constants.StartEvent, "");
+            return PostAgent(proxy, Constants.StartEvent, "");
         }
 
         [HttpPost]
         public IActionResult Stop(string agentId) {
+            var proxy = TryGetAgentProxy(agentId, out var errorResult);
+            if (proxy is null)
+                return errorResult!;
+
             _logger.LogInformation("{user}: Stopping agent {agentid}.", UserInfo(), agentId);
-            return PostAgent(agentId, Constants.StopEvent, "");
+            return PostAgent(proxy, Constants.StopEvent, "");
         }
 
         [HttpPost]
         public IActionResult GetState(string agentId) {
-            return PostAgent(agentId, Constants.GetStateEvent, "");
+            var proxy = TryGetAgentProxy(agentId, out var errorResult);
+            if (proxy is null)
+                return errorResult!;
+            return PostAgent(proxy, Constants.GetStateEvent, "");
         }
 
         [HttpPost]
         public IActionResult Reset(string agentId) {
-            return PostAgent(agentId, Constants.ResetEvent, "");
+            var proxy = TryGetAgentProxy(agentId, out var errorResult);
+            if (proxy is null)
+                return errorResult!;
+            return PostAgent(proxy, Constants.ResetEvent, "");
         }
 
         /// <summary>
@@ -360,13 +374,18 @@ namespace KdSoft.EtwEvents.AgentManager
         /// </param>
         [HttpPost]
         public Task<IActionResult> TestFilter(string agentId, [FromBody] JsonElement filterObj) {
+            var proxy = TryGetAgentProxy(agentId, out var errorResult);
+            if (proxy is null)
+                return Task.FromResult(errorResult!);
+
             var dynamicParts = filterObj.GetProperty("dynamicParts").EnumerateArray().Select(dp => dp.GetString()).ToImmutableArray();
             var filter = dynamicParts.Length == 0
                 ? new EtwLogging.Filter()  // we are clearing the filter
                 : Filter.MergeFilterTemplate(dynamicParts); // WE are supplying the filter template
+
             var json = _jsonFormatter.Format(filter);
             _logger.LogInformation("{user}: Testing filter on agent {agentid}:\n{filter}", UserInfo(), agentId, json);
-            return CallAgent(agentId, Constants.TestFilterEvent, json, TimeSpan.FromSeconds(15));
+            return CallAgent(proxy, Constants.TestFilterEvent, json, TimeSpan.FromSeconds(15));
         }
 
         AgentOptions BuildAgentOptions(JsonElement rawOptions) {
@@ -427,10 +446,15 @@ namespace KdSoft.EtwEvents.AgentManager
 
         [HttpPost]
         public Task<IActionResult> ApplyAgentOptions(string agentId, [FromBody] JsonElement rawOptions) {
+            var proxy = TryGetAgentProxy(agentId, out var errorResult);
+            if (proxy is null)
+                return Task.FromResult(errorResult!);
+
             var agentOptions = BuildAgentOptions(rawOptions);
+
             var agentOptionsJson = _jsonFormatter.Format(agentOptions);
             _logger.LogInformation("{user}: Setting agent options on agent {agentid}:\n{options}", UserInfo(), agentId, agentOptionsJson);
-            return CallAgent(agentId, Constants.ApplyAgentOptionsEvent, agentOptionsJson, TimeSpan.FromSeconds(15));
+            return CallAgent(proxy, Constants.ApplyAgentOptionsEvent, agentOptionsJson, TimeSpan.FromSeconds(15));
         }
 
         #endregion
