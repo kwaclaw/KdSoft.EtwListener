@@ -1,4 +1,6 @@
-﻿using System.Formats.Asn1;
+﻿using System.Collections.Immutable;
+using System.Collections.ObjectModel;
+using System.Formats.Asn1;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -8,7 +10,6 @@ namespace KdSoft.EtwEvents
     public record RdnAttribute(Oid Type, string Value);
 
     public record Rdn(ICollection<RdnAttribute> Attributes);
-
 
     public static class CertUtils
     {
@@ -123,6 +124,7 @@ namespace KdSoft.EtwEvents
 
         public const string ClientAuthentication = "1.3.6.1.5.5.7.3.2";
         public const string ServerAuthentication = "1.3.6.1.5.5.7.3.1";
+        public const string EmailProtection = "1.3.6.1.5.5.7.3.4";
 
         /// <summary>
         /// Get certificates from certificate store based on application policy OID and predicate callback.
@@ -167,7 +169,7 @@ namespace KdSoft.EtwEvents
         ///     as they cannot be checked for revocation.</param>
         public static X509ChainPolicy GetServerCertPolicy(bool checkRevocation = false) {
             var result = new X509ChainPolicy();
-            // Enhanced Key Usage: Client Validation
+            // Enhanced Key Usage: Server Validation
             result.ApplicationPolicy.Add(Oid.FromOidValue(ServerAuthentication, OidGroup.EnhancedKeyUsage));
             if (!checkRevocation)
                 result.RevocationMode = X509RevocationMode.NoCheck;
@@ -306,6 +308,22 @@ namespace KdSoft.EtwEvents
             return builder.ToString();
         }
 
+        // Many types are allowable.  We're only going to support the string-like ones
+        // (This excludes IPAddress, X400 address, and other weird stuff)
+        // https://www.rfc-editor.org/rfc/rfc5280#page-37
+        // https://www.rfc-editor.org/rfc/rfc5280#page-112
+        static readonly ImmutableHashSet<UniversalTagNumber> _allowedRdnTags = [
+            UniversalTagNumber.TeletexString,
+            UniversalTagNumber.PrintableString,
+            UniversalTagNumber.UniversalString,
+            UniversalTagNumber.UTF8String,
+            UniversalTagNumber.BMPString,
+            UniversalTagNumber.IA5String,
+            UniversalTagNumber.NumericString,
+            UniversalTagNumber.VisibleString,
+            UniversalTagNumber.T61String
+        ];
+
         /// <summary>
         /// Extracts the Relative Distinguished Names (RDNs) from a Distinguished Name (DN).
         /// Supports multi-valued RDNs. Does not support values other than string types.
@@ -320,21 +338,6 @@ namespace KdSoft.EtwEvents
             if (!snSeq.HasData) {
                 throw new InvalidOperationException();
             }
-            // Many types are allowable.  We're only going to support the string-like ones
-            // (This excludes IPAddress, X400 address, and other weird stuff)
-            // https://www.rfc-editor.org/rfc/rfc5280#page-37
-            // https://www.rfc-editor.org/rfc/rfc5280#page-112
-            var allowedRdnTags = new[] {
-                UniversalTagNumber.TeletexString,
-                UniversalTagNumber.PrintableString,
-                UniversalTagNumber.UniversalString,
-                UniversalTagNumber.UTF8String,
-                UniversalTagNumber.BMPString,
-                UniversalTagNumber.IA5String,
-                UniversalTagNumber.NumericString,
-                UniversalTagNumber.VisibleString,
-                UniversalTagNumber.T61String
-            };
             while (snSeq.HasData) {
                 var rdnSet = snSeq.ReadSetOf();
                 var rdnAttributes = new List<RdnAttribute>();
@@ -343,7 +346,7 @@ namespace KdSoft.EtwEvents
                     while (rdnSeq.HasData) {
                         var attrOid = rdnSeq.ReadObjectIdentifier();
                         var attrValueTagNo = (UniversalTagNumber)rdnSeq.PeekTag().TagValue;
-                        if (!allowedRdnTags.Contains(attrValueTagNo)) {
+                        if (!_allowedRdnTags.Contains(attrValueTagNo)) {
                             throw new NotSupportedException($"Unknown tag type {attrValueTagNo} for attr {attrOid}");
                         }
                         var attrValue = rdnSeq.ReadCharacterString(attrValueTagNo);
@@ -352,6 +355,121 @@ namespace KdSoft.EtwEvents
                 }
                 yield return new Rdn(rdnAttributes);
             }
+        }
+
+        public static void GetRelativeNameValues(this X500DistinguishedName distinguishedName, Oid oid, List<string> values) {
+            var result = new List<string>();
+            var rdns = distinguishedName.GetRelativeNames();
+            foreach (var rdn in rdns) {
+                foreach (var att in rdn.Attributes) {
+                    if (att.Type.Value == oid.Value) {
+                        values.Add(att.Value);
+                    }
+                }
+            }
+        }
+
+        public static string? GetRelativeNameValue(this X500DistinguishedName distinguishedName, Oid oid) {
+            var result = new List<string>();
+            var rdns = distinguishedName.GetRelativeNames();
+            foreach (var rdn in rdns) {
+                foreach (var att in rdn.Attributes) {
+                    if (att.Type.Value == oid.Value) {
+                        return att.Value;
+                    }
+                }
+            }
+            return null;
+        }
+
+        public static void AddServerExtensions(Collection<X509Extension> extensions, string? dnsName, PublicKey publicKey) {
+            extensions.Add(new X509KeyUsageExtension(
+                X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.NonRepudiation | X509KeyUsageFlags.KeyEncipherment,
+                false
+            ));
+            extensions.Add(new X509EnhancedKeyUsageExtension(new OidCollection {
+                Oid.FromOidValue(ServerAuthentication, OidGroup.EnhancedKeyUsage)
+            }, false));
+
+            if (!string.IsNullOrEmpty(dnsName)) {
+                var sanBuilder = new SubjectAlternativeNameBuilder();
+                sanBuilder.AddDnsName(dnsName);
+                var sanExtension = sanBuilder.Build();
+                extensions.Add(sanExtension);
+            }
+
+            extensions.Add(new X509BasicConstraintsExtension(false, false, 0, true));
+            extensions.Add(new X509SubjectKeyIdentifierExtension(publicKey, false));
+        }
+
+        public static void AddClientExtensions(Collection<X509Extension> extensions, string? principalName, PublicKey publicKey) {
+            extensions.Add(new X509KeyUsageExtension(
+                X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment | X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.KeyAgreement,
+                false
+            ));
+            extensions.Add(new X509EnhancedKeyUsageExtension(new OidCollection {
+                Oid.FromOidValue(ClientAuthentication, OidGroup.EnhancedKeyUsage),
+                Oid.FromOidValue(EmailProtection, OidGroup.EnhancedKeyUsage)
+            }, false));
+
+            if (!string.IsNullOrEmpty(principalName)) {
+                var sanBuilder = new SubjectAlternativeNameBuilder();
+                sanBuilder.AddUserPrincipalName(principalName);
+                var sanExtension = sanBuilder.Build();
+                extensions.Add(sanExtension);
+            }
+
+            extensions.Add(new X509BasicConstraintsExtension(false, false, 0, true));
+            extensions.Add(new X509SubjectKeyIdentifierExtension(publicKey, false));
+        }
+
+        public static X509Certificate2 CreateCertificate(
+            X509Certificate2 issuer,
+            X500DistinguishedName subjectName,
+            Action<CertificateRequest> modifyRequest,
+            DateTimeOffset startDate = default,
+            ushort daysValid = 398
+        ) {
+            if (startDate == default)
+                startDate = DateTimeOffset.UtcNow;
+
+            // the issuer certificate public key algorithm must match the value for the certificate request
+            CertificateRequest request;
+            var issuerRSAKey = issuer.GetRSAPublicKey();
+            if (issuerRSAKey != null) {
+                var key = RSA.Create(issuerRSAKey.ExportParameters(false));
+                request = new CertificateRequest(subjectName, key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            }
+            else if (issuer.GetECDsaPublicKey() is ECDsa issuerECDsaKey) {
+                var key = ECDsa.Create(issuerECDsaKey.ExportParameters(false));
+                request = new CertificateRequest(subjectName, key, HashAlgorithmName.SHA384);
+            }
+            else {
+                throw new ArgumentException("Issuer certificate does not have acceptable public key.", nameof(issuer));
+            }
+
+            modifyRequest(request);
+
+            Span<byte> serialNumber = stackalloc byte[8];
+            RandomNumberGenerator.Fill(serialNumber);
+
+            return request.Create(issuer, startDate, startDate.AddDays(daysValid), serialNumber);
+        }
+
+        public static X509Certificate2 CreateServerCertificate(X509Certificate2 issuer, X500DistinguishedName subjectName, DateTimeOffset startDate = default, ushort daysValid = 398) {
+            Action<CertificateRequest> modifyRequest = (request) => {
+                var subjectAltName = subjectName.GetRelativeNameValue(Oid.FromFriendlyName("CN", OidGroup.Attribute));
+                AddServerExtensions(request.CertificateExtensions, subjectAltName, request.PublicKey);
+            };
+            return CreateCertificate(issuer, subjectName, modifyRequest, startDate, daysValid);
+        }
+
+        public static X509Certificate2 CreateClientCertificate(X509Certificate2 issuer, X500DistinguishedName subjectName, DateTimeOffset startDate = default, ushort daysValid = 398) {
+            Action<CertificateRequest> modifyRequest = (request) => {
+                var email = subjectName.GetRelativeNameValue(Oid.FromFriendlyName("email", OidGroup.Attribute));
+                AddClientExtensions(request.CertificateExtensions, email, request.PublicKey);
+            };
+            return CreateCertificate(issuer, subjectName, modifyRequest, startDate, daysValid);
         }
     }
 }

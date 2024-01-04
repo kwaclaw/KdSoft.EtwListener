@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using KdSoft.EtwEvents.AgentManager;
 using Xunit;
@@ -12,6 +13,48 @@ namespace KdSoft.EtwEvents.Tests
 
         public CertificateTests(ITestOutputHelper output) {
             this._output = output;
+        }
+
+        void WriteCertificateInfo(X509Certificate2 certificate, X509Chain chain) {
+            _output.WriteLine("{0}======================= CERTIFICATE ======================={0}", Environment.NewLine);
+
+            //Output chain information of the selected certificate.
+            //chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+            bool valid = chain.Build(certificate);
+            _output.WriteLine("Chain Information - valid: {0}", valid);
+            _output.WriteLine("Chain revocation flag: {0}", chain.ChainPolicy.RevocationFlag);
+            _output.WriteLine("Chain revocation mode: {0}", chain.ChainPolicy.RevocationMode);
+            _output.WriteLine("Chain verification flag: {0}", chain.ChainPolicy.VerificationFlags);
+            _output.WriteLine("Chain verification time: {0}", chain.ChainPolicy.VerificationTime);
+            _output.WriteLine("Chain status length: {0}", chain.ChainStatus.Length);
+            _output.WriteLine("Chain application policy count: {0}", chain.ChainPolicy.ApplicationPolicy.Count);
+            _output.WriteLine("Chain certificate policy count: {0} {1}", chain.ChainPolicy.CertificatePolicy.Count, Environment.NewLine);
+
+            //Output chain element information.
+            _output.WriteLine("Chain Element Information");
+            _output.WriteLine("Number of chain elements: {0}", chain.ChainElements.Count);
+            _output.WriteLine("Chain elements synchronized? {0}", chain.ChainElements.IsSynchronized);
+
+            foreach (X509ChainElement element in chain.ChainElements) {
+                _output.WriteLine("");
+                _output.WriteLine("Element Subject: {0}", element.Certificate.Subject);
+                _output.WriteLine("Element information: {0}", element.Information);
+                _output.WriteLine("Element Signature Algorithm: {0}", element.Certificate.SignatureAlgorithm.FriendlyName);
+                _output.WriteLine("Element issuer name: {0}", element.Certificate.Issuer);
+                _output.WriteLine("Element certificate is valid: {0}", chain.Build(element.Certificate));
+                _output.WriteLine("Element certificate expires after: {0}", element.Certificate.NotAfter);
+                _output.WriteLine("Element error status length: {0}", element.ChainElementStatus.Length);
+                _output.WriteLine("Number of element extensions: {0}", element.Certificate.Extensions.Count);
+                foreach (var ext in element.Certificate.Extensions) {
+                    _output.WriteLine("\t{0}:{1}", ext.Oid?.FriendlyName, ext.Format(false));
+                }
+                if (chain.ChainStatus.Length > 1) {
+                    for (int index = 0; index < element.ChainElementStatus.Length; index++) {
+                        var cst = element.ChainElementStatus[index];
+                        _output.WriteLine("Chain status {0}: {1}", cst.Status, cst.StatusInformation);
+                    }
+                }
+            }
         }
 
         [Fact]
@@ -34,47 +77,14 @@ namespace KdSoft.EtwEvents.Tests
 
             var certs = CertUtils.GetCertificates(StoreLocation.LocalMachine, CertUtils.ClientAuthentication, (Predicate<X509Certificate2>?)null);
             foreach (var certificate in certs) {
-                _output.WriteLine("{0}======================= CERTIFICATE ======================={0}", Environment.NewLine);
-
-                //Output chain information of the selected certificate.
-                var ch = new X509Chain { ChainPolicy = CertUtils.GetClientCertPolicy() };
-                //ch.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-                bool valid = ch.Build(certificate);
-                _output.WriteLine("Chain Information - valid: {0}", valid);
-                _output.WriteLine("Chain revocation flag: {0}", ch.ChainPolicy.RevocationFlag);
-                _output.WriteLine("Chain revocation mode: {0}", ch.ChainPolicy.RevocationMode);
-                _output.WriteLine("Chain verification flag: {0}", ch.ChainPolicy.VerificationFlags);
-                _output.WriteLine("Chain verification time: {0}", ch.ChainPolicy.VerificationTime);
-                _output.WriteLine("Chain status length: {0}", ch.ChainStatus.Length);
-                _output.WriteLine("Chain application policy count: {0}", ch.ChainPolicy.ApplicationPolicy.Count);
-                _output.WriteLine("Chain certificate policy count: {0} {1}", ch.ChainPolicy.CertificatePolicy.Count, Environment.NewLine);
-
-                //Output chain element information.
-                _output.WriteLine("Chain Element Information");
-                _output.WriteLine("Number of chain elements: {0}", ch.ChainElements.Count);
-                _output.WriteLine("Chain elements synchronized? {0}", ch.ChainElements.IsSynchronized);
-
-                foreach (X509ChainElement element in ch.ChainElements) {
-                    _output.WriteLine("");
-                    _output.WriteLine("Element issuer name: {0}", element.Certificate.Issuer);
-                    _output.WriteLine("Element certificate valid until: {0}", element.Certificate.NotAfter);
-                    _output.WriteLine("Element certificate is valid: {0}", element.Certificate.Verify());
-                    _output.WriteLine("Element error status length: {0}", element.ChainElementStatus.Length);
-                    _output.WriteLine("Element information: {0}", element.Information);
-                    _output.WriteLine("Number of element extensions: {0}", element.Certificate.Extensions.Count);
-                    if (ch.ChainStatus.Length > 1) {
-                        for (int index = 0; index < element.ChainElementStatus.Length; index++) {
-                            var cst = element.ChainElementStatus[index];
-                            _output.WriteLine("Chain status {0}: {1}", cst.Status, cst.StatusInformation);
-                        }
-                    }
-                }
+                var chain = new X509Chain { ChainPolicy = CertUtils.GetClientCertPolicy() };
+                WriteCertificateInfo(certificate, chain);
             }
 
             store.Close();
         }
 
-        void WriteFileMessage(string filePath, [CallerLineNumber]int lineNo = 0) {
+        void WriteFileMessage(string filePath, [CallerLineNumber] int lineNo = 0) {
             _output.WriteLine($"Line {lineNo}: {Path.GetFileName(filePath)}");
         }
 
@@ -221,6 +231,72 @@ namespace KdSoft.EtwEvents.Tests
                     Assert.Equal(fileCert.GetRawCertData(), bytesCert.GetRawCertData());
                 }
             }
+        }
+
+        [Fact]
+        public void CreateServerCertificate() {
+            var filesDir = new DirectoryInfo(Path.Combine(TestUtils.ProjectDir!, "Files"));
+            var x500Name = new X500DistinguishedName("E=karl@waclawek.net, CN=*.kd-soft.net, OU=ETW, O=Kd-Soft, L=Oshawa, S=ON, C=CA");
+
+            var caFile = Path.Combine(filesDir.FullName, "Kd-Soft.crt");
+            var keyFile = Path.Combine(filesDir.FullName, "Kd-Soft.key");
+            var caCert = X509Certificate2.CreateFromPemFile(caFile, keyFile);
+            var cert = CertUtils.CreateServerCertificate(caCert, x500Name);
+
+            var chain = new X509Chain { ChainPolicy = CertUtils.GetServerCertPolicy() };
+            WriteCertificateInfo(cert, chain);
+            Assert.True(chain.Build(cert));
+
+            caFile = Path.Combine(filesDir.FullName, "Kd-Soft_DEV-Signing_CA.pfx");
+            var caCerts = new X509Certificate2Collection();
+            caCerts.Import(caFile, "dummy");
+
+            cert = CertUtils.CreateServerCertificate(caCerts.Last(), x500Name);
+
+            var chainPolicy = CertUtils.GetServerCertPolicy();
+            // we assume the signing certificates in the chain are not installed
+            chainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+            foreach (var cac in caCerts) {
+                if (cac != cert)
+                    chainPolicy.CustomTrustStore.Add(cac);
+            }
+            chain = new X509Chain { ChainPolicy = chainPolicy };
+            WriteCertificateInfo(cert, chain);
+            Assert.True(chain.Build(cert));
+        }
+
+        [Fact]
+        public void CreateClientCertificate() {
+            var filesDir = new DirectoryInfo(Path.Combine(TestUtils.ProjectDir!, "Files"));
+            //var roleOid = Oid.FromOidValue("2.5.4.72", OidGroup.All); //this throws "The OID value is invalid" for some reason
+            var roleOid = new Oid("2.5.4.72");
+            var x500Name = new X500DistinguishedName($"{roleOid.Value}=etw-admin+{roleOid.Value}=etw-manager, E=karl@waclawek.net, CN=Karl Waclawek, OU=ETW, O=Kd-Soft, L=Oshawa, S=ON, C=CA");
+
+            var caFile = Path.Combine(filesDir.FullName, "Kd-Soft.crt");
+            var keyFile = Path.Combine(filesDir.FullName, "Kd-Soft.key");
+            var caCert = X509Certificate2.CreateFromPemFile(caFile, keyFile);
+            var cert = CertUtils.CreateClientCertificate(caCert, x500Name);
+
+            var chain = new X509Chain { ChainPolicy = CertUtils.GetClientCertPolicy() };
+            WriteCertificateInfo(cert, chain);
+            Assert.True(chain.Build(cert));
+
+            caFile = Path.Combine(filesDir.FullName, "Kd-Soft_DEV-Signing_CA.pfx");
+            var caCerts = new X509Certificate2Collection();
+            caCerts.Import(caFile, "dummy");
+
+            cert = CertUtils.CreateClientCertificate(caCerts.Last(), x500Name);
+
+            var chainPolicy = CertUtils.GetClientCertPolicy();
+            // we assume the signing certificates in the chain are not installed
+            chainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+            foreach (var cac in caCerts) {
+                if (cac != cert)
+                    chainPolicy.CustomTrustStore.Add(cac);
+            }
+            chain = new X509Chain { ChainPolicy = chainPolicy };
+            WriteCertificateInfo(cert, chain);
+            Assert.True(chain.Build(cert));
         }
     }
 }
