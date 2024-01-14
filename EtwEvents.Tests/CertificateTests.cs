@@ -75,7 +75,7 @@ namespace KdSoft.EtwEvents.Tests
             //X509Certificate2 certificate = collection[0];
             //X509Certificate2UI.DisplayCertificate(certificate);
 
-            var certs = CertUtils.GetCertificates(StoreLocation.LocalMachine, CertUtils.OidClientAuthentication, (Predicate<X509Certificate2>?)null);
+            var certs = CertUtils.GetCertificates(StoreLocation.LocalMachine, Oids.ClientAuthentication, (Predicate<X509Certificate2>?)null);
             foreach (var certificate in certs) {
                 var chain = new X509Chain { ChainPolicy = CertUtils.GetClientCertPolicy() };
                 WriteCertificateInfo(certificate, chain);
@@ -269,7 +269,7 @@ namespace KdSoft.EtwEvents.Tests
         public void CreateClientCertificate() {
             var filesDir = new DirectoryInfo(Path.Combine(TestUtils.ProjectDir!, "Files"));
             //var roleOid = Oid.FromOidValue("2.5.4.72", OidGroup.All); //this throws "The OID value is invalid" for some reason
-            var roleOid = new Oid(CertUtils.OidRole);
+            var roleOid = new Oid(Oids.Role);
             var x500Name = new X500DistinguishedName($"{roleOid.Value}=etw-admin+{roleOid.Value}=etw-manager, E=karl@waclawek.net, CN=Karl Waclawek, OU=ETW, O=Kd-Soft, L=Oshawa, S=ON, C=CA");
 
             var caFile = Path.Combine(filesDir.FullName, "Kd-Soft.crt");

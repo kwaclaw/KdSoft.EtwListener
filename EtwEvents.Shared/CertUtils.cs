@@ -11,6 +11,13 @@ namespace KdSoft.EtwEvents
 
     public record Rdn(ICollection<RdnAttribute> Attributes);
 
+    public static class Oids {
+        public const string ClientAuthentication = "1.3.6.1.5.5.7.3.2";
+        public const string ServerAuthentication = "1.3.6.1.5.5.7.3.1";
+        public const string EmailProtection = "1.3.6.1.5.5.7.3.4";
+        public const string Role = "2.5.4.72";
+    }
+
     public static class CertUtils
     {
         /// <summary>
@@ -113,7 +120,7 @@ namespace KdSoft.EtwEvents
             var rdns = cert.SubjectName.GetRelativeNames();
             var result = new List<string>();
             //var roleOid = Oid.FromOidValue(OidRole, OidGroup.All); //this throws "The OID value is invalid" for some reason
-            var roleOID = new Oid(OidRole);
+            var roleOID = new Oid(Oids.Role);
             foreach (var rdn in rdns) {
                 foreach (var att in rdn.Attributes) {
                     if (att.Type.Value == roleOID.Value)
@@ -122,11 +129,6 @@ namespace KdSoft.EtwEvents
             }
             return result;
         }
-
-        public const string OidClientAuthentication = "1.3.6.1.5.5.7.3.2";
-        public const string OidServerAuthentication = "1.3.6.1.5.5.7.3.1";
-        public const string OidEmailProtection = "1.3.6.1.5.5.7.3.4";
-        public const string OidRole = "2.5.4.72";
 
         /// <summary>
         /// Get certificates from certificate store based on application policy OID and predicate callback.
@@ -157,7 +159,7 @@ namespace KdSoft.EtwEvents
         public static X509ChainPolicy GetClientCertPolicy(bool checkRevocation = false) {
             var result = new X509ChainPolicy();
             // Enhanced Key Usage: Client Validation
-            result.ApplicationPolicy.Add(Oid.FromOidValue(OidClientAuthentication, OidGroup.EnhancedKeyUsage));
+            result.ApplicationPolicy.Add(Oid.FromOidValue(Oids.ClientAuthentication, OidGroup.EnhancedKeyUsage));
             if (!checkRevocation)
                 result.RevocationMode = X509RevocationMode.NoCheck;
             return result;
@@ -172,7 +174,7 @@ namespace KdSoft.EtwEvents
         public static X509ChainPolicy GetServerCertPolicy(bool checkRevocation = false) {
             var result = new X509ChainPolicy();
             // Enhanced Key Usage: Server Validation
-            result.ApplicationPolicy.Add(Oid.FromOidValue(OidServerAuthentication, OidGroup.EnhancedKeyUsage));
+            result.ApplicationPolicy.Add(Oid.FromOidValue(Oids.ServerAuthentication, OidGroup.EnhancedKeyUsage));
             if (!checkRevocation)
                 result.RevocationMode = X509RevocationMode.NoCheck;
             return result;
@@ -389,7 +391,7 @@ namespace KdSoft.EtwEvents
                 false
             ));
             extensions.Add(new X509EnhancedKeyUsageExtension(new OidCollection {
-                Oid.FromOidValue(OidServerAuthentication, OidGroup.EnhancedKeyUsage)
+                Oid.FromOidValue(Oids.ServerAuthentication, OidGroup.EnhancedKeyUsage)
             }, false));
 
             if (!string.IsNullOrEmpty(dnsName)) {
@@ -409,8 +411,8 @@ namespace KdSoft.EtwEvents
                 false
             ));
             extensions.Add(new X509EnhancedKeyUsageExtension(new OidCollection {
-                Oid.FromOidValue(OidClientAuthentication, OidGroup.EnhancedKeyUsage),
-                Oid.FromOidValue(OidEmailProtection, OidGroup.EnhancedKeyUsage)
+                Oid.FromOidValue(Oids.ClientAuthentication, OidGroup.EnhancedKeyUsage),
+                Oid.FromOidValue(Oids.EmailProtection, OidGroup.EnhancedKeyUsage)
             }, false));
 
             if (!string.IsNullOrEmpty(principalName)) {

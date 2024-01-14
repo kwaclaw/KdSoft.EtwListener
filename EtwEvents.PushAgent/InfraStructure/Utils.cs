@@ -16,11 +16,11 @@ namespace KdSoft.EtwEvents.PushAgent
 
             var result = new List<X509Certificate2>();
             if (certOptions.SubjectCN.Length > 0) {
-                var clientCerts = CertUtils.GetCertificates(certOptions.Location, certOptions.SubjectCN, CertUtils.ClientAuthentication);
+                var clientCerts = CertUtils.GetCertificates(certOptions.Location, certOptions.SubjectCN, Oids.ClientAuthentication);
                 result.AddRange(clientCerts);
             }
             if (certOptions.SubjectRole.Length > 0) {
-                var clientCerts = CertUtils.GetCertificates(certOptions.Location, CertUtils.ClientAuthentication, crt => {
+                var clientCerts = CertUtils.GetCertificates(certOptions.Location, Oids.ClientAuthentication, crt => {
                     var roles = crt.GetSubjectRoles();
                     if (roles.Exists(certRole => certRole.Equals(certOptions.SubjectRole, StringComparison.OrdinalIgnoreCase)))
                         return true;
