@@ -4,12 +4,12 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0-windows</TargetFramework>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <VersionPrefix>1.2.0</VersionPrefix>
     <UserSecretsId>dotnet-EtwEvents.PushAgent-2DA4777E-5631-4E75-9630-82767D1F596C</UserSecretsId>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
-
+  
   <ItemGroup>
     <Content Update="deploy/**/*">
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
