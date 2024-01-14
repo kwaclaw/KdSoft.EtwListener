@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="KdSoft.Utils" Version="5.0.0" />
+    <PackageReference Include="KdSoft.Utils" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>
