@@ -25,6 +25,9 @@ namespace KdSoft.EtwLogging
             etw.TaskName = evt.TaskName;
             etw.TimeStamp = evt.TimeStamp.ToUniversalTime().ToTimestamp();
             etw.Version = evt.Version;
+            etw.ProcessId = evt.ProcessID;
+            etw.ThreadId = evt.ThreadID;
+            etw.ProcessName = evt.ProcessName;
             for (int indx = 0; indx < evt.PayloadNames.Length; indx++) {
                 var propName = evt.PayloadNames[indx];
                 etw.Payload[propName] = evt.PayloadString(indx);

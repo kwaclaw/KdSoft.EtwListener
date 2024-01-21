@@ -140,7 +140,7 @@ namespace KdSoft.EtwEvents.EventSinks
             _jsonWriter.WriteNumber("channel", evt.Channel);
             _jsonWriter.WriteNumber("id", evt.Id);
             _jsonWriter.WriteNumber("keywords", evt.Keywords);
-            _jsonWriter.WriteString("level", evt.Level.ToString());
+            _jsonWriter.WriteNumber("level", (int)evt.Level);
             _jsonWriter.WriteNumber("opcode", evt.Opcode);
             _jsonWriter.WriteString("opcodeName", evt.OpcodeName);
             _jsonWriter.WriteString("taskName", evt.TaskName);
@@ -150,6 +150,9 @@ namespace KdSoft.EtwEvents.EventSinks
                 _jsonWriter.WriteString("timeStamp", evt.TimeStamp.ToDateTimeOffset().ToString("o"));
             }
             _jsonWriter.WriteNumber("version", evt.Version);
+            _jsonWriter.WriteNumber("processId", evt.ProcessId);
+            _jsonWriter.WriteNumber("threadId", evt.ThreadId);
+            _jsonWriter.WriteString("processName", evt.ProcessName);
 
             _jsonWriter.WriteStartObject("payload");
             foreach (var payload in evt.Payload) {

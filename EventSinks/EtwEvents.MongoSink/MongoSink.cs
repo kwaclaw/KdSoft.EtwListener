@@ -77,6 +77,9 @@ namespace KdSoft.EtwEvents.EventSinks
                     "OpcodeName" => _fb.Eq(ef, evt.OpcodeName),
                     "TaskName" => _fb.Eq(ef, evt.TaskName),
                     "Version" => _fb.Eq(ef, evt.Version),
+                    "ProcessId" => _fb.Eq(ef, evt.ProcessId),
+                    "ThreadId" => _fb.Eq(ef, evt.ThreadId),
+                    "ProcessName" => _fb.Eq(ef, evt.ProcessName),
                     _ => throw new ArgumentOutOfRangeException($"Event filter field not allowed: {ef}"),
                 };
             }
@@ -106,6 +109,9 @@ namespace KdSoft.EtwEvents.EventSinks
                 .Add("OpcodeName", BsonValue.Create(evt.OpcodeName))
                 .Add("TaskName", BsonValue.Create(evt.TaskName))
                 .Add("Version", BsonValue.Create(evt.Version))
+                .Add("ProcessId", BsonValue.Create(evt.ProcessId))
+                .Add("ThreadId", BsonValue.Create(evt.ThreadId))
+                .Add("ProcessName", BsonValue.Create(evt.ProcessName))
                 .Add(new BsonElement("Payload", payloadDoc));
             return new ReplaceOneModel<BsonDocument>(filter, replacement) { IsUpsert = true };
         }

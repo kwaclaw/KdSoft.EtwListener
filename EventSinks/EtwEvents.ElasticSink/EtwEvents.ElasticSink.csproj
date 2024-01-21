@@ -4,7 +4,7 @@
   <Import Project="..\eventSink.targets" />
 
   <PropertyGroup>
-    <VersionPrefix>1.3.3</VersionPrefix>
+    <VersionPrefix>1.4.0</VersionPrefix>
     <SinkName>ElasticSink</SinkName>
   </PropertyGroup>
 
