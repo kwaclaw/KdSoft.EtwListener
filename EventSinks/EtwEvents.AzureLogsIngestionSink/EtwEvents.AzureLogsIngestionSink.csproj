@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\eventSink.props" />
+  <Import Project="..\eventSink.targets" />
+
+  <PropertyGroup>
+    <VersionPrefix>1.0.0</VersionPrefix>
+    <SinkName>LogsIngestionSink</SinkName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.10.4" />
+    <PackageReference Include="Azure.Monitor.Ingestion" Version="1.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- see https://docs.microsoft.com/en-us/dotnet/core/tutorials/creating-app-with-plugin-support -->
+    <ProjectReference Include="..\..\EtwEvents.Shared.EventSink\EtwEvents.Shared.EventSink.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\..\EtwEvents.Shared\EtwEvents.Shared.csproj" />
+  </ItemGroup>
+
+</Project>
