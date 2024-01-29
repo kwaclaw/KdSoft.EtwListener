@@ -18,6 +18,7 @@
         public const string StopLiveViewSinkEvent = "StopLiveViewSink";
         public const string ResetEvent = "Reset";
         public const string InstallCertEvent = "InstallCert";
+        public const string SetControlOptionsEvent = "SetControlOptions";
 
         public const string X500DistNameClaim = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/x500distinguishedname";
     }

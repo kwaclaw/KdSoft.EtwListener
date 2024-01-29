@@ -25,6 +25,7 @@ namespace KdSoft.EtwEvents.PushAgent
         readonly SocketsHandlerCache _httpHandlerCache;
         readonly ControlConnector _controlConnector;
         readonly Channel<ControlEvent> _channel;
+        readonly NamedPipeHandler _pipeHandler;
         readonly IOptionsMonitor<ControlOptions> _controlOptions;
         readonly SessionConfig _sessionConfig;
         readonly ILogger<ControlWorker> _logger;
@@ -42,6 +43,7 @@ namespace KdSoft.EtwEvents.PushAgent
         int _sessionWorkerAvailable = 0;
         SessionWorker? SessionWorker => _sessionWorkerAvailable == 0 ? null : _sessionWorker!;
 
+
         static readonly byte[] _emptyBytes = Array.Empty<byte>();
 
         public ControlWorker(
@@ -50,6 +52,7 @@ namespace KdSoft.EtwEvents.PushAgent
             SocketsHandlerCache httpHandlerCache,
             ControlConnector controlConnector,
             Channel<ControlEvent> channel,
+            NamedPipeHandler pipeHandler,
             IOptionsMonitor<ControlOptions> controlOptions,
             SessionConfig sessionConfig,
             ILogger<ControlWorker> logger
@@ -59,6 +62,7 @@ namespace KdSoft.EtwEvents.PushAgent
             this._httpHandlerCache = httpHandlerCache;
             this._controlConnector = controlConnector;
             this._channel = channel;
+            this._pipeHandler = pipeHandler;
             this._controlOptions = controlOptions;
             this._sessionConfig = sessionConfig;
             this._logger = logger;
@@ -76,8 +80,10 @@ namespace KdSoft.EtwEvents.PushAgent
 
         #region Control Channel
 
-        async Task ProcessEvent(ControlEvent sse) {
-            switch (sse.Event) {
+        async Task ProcessEvent(ControlEvent cevt) {
+            BuildFilterResult filterResult;
+
+            switch (cevt.Event) {
                 case Constants.StartEvent:
                     if (_sessionWorkerAvailable != 0) {
                         _logger.LogDebug("Session already starting.");
@@ -99,6 +105,36 @@ namespace KdSoft.EtwEvents.PushAgent
                     await SendStateUpdate().ConfigureAwait(false);
                     return;
 
+                case Constants.InstallCertEvent:
+                    if (string.IsNullOrEmpty(cevt.Data))
+                        return;
+                    var installed = await InstallPemCertificate(cevt.Data).ConfigureAwait(false);
+
+                    // this could lead to infinite recursion if the installed certificate is not picked up on reconnect
+                    await SendStateUpdate().ConfigureAwait(false);
+                    break;
+
+                case Constants.SetControlOptionsEvent:
+
+                    break;
+
+                case Constants.SetEmptyFilterEvent:
+                    var emptyFilter = string.IsNullOrEmpty(cevt.Data)
+                        ? null
+                        : cevt.Data.ToProtoMessage<Filter>();
+                    if (emptyFilter == null)
+                        return;
+                    _emptyFilterSource = Kdfu.BuildFilterSource(emptyFilter);
+                    break;
+
+                case Constants.TestFilterEvent:
+                    var filter = string.IsNullOrEmpty(cevt.Data)
+                        ? new Filter()
+                        : cevt.Data.ToProtoMessage<Filter>();
+                    filterResult = SessionWorker.TestFilter(filter);
+                    await PostProtoMessage($"Agent/TestFilterResult?eventId={cevt.Id}", filterResult).ConfigureAwait(false);
+                    break;
+
                 default:
                     break;
             }
@@ -106,9 +142,7 @@ namespace KdSoft.EtwEvents.PushAgent
             // need different logic depending on whether a session is active or not
             var worker = _sessionWorkerAvailable == 0 ? null : SessionWorker;
 
-            BuildFilterResult filterResult;
-
-            switch (sse.Event) {
+            switch (cevt.Event) {
                 case Constants.ResetEvent:
                     // simple way to create empty file
                     File.WriteAllBytes(_stoppedFilePath, _emptyBytes);
@@ -136,23 +170,6 @@ namespace KdSoft.EtwEvents.PushAgent
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
 
-                case Constants.SetEmptyFilterEvent:
-                    var emptyFilter = string.IsNullOrEmpty(sse.Data)
-                        ? null
-                        : sse.Data.ToProtoMessage<Filter>();
-                    if (emptyFilter == null)
-                        return;
-                    _emptyFilterSource = Kdfu.BuildFilterSource(emptyFilter);
-                    break;
-
-                case Constants.TestFilterEvent:
-                    var filter = string.IsNullOrEmpty(sse.Data)
-                        ? new Filter()
-                        : sse.Data.ToProtoMessage<Filter>();
-                    filterResult = SessionWorker.TestFilter(filter);
-                    await PostProtoMessage($"Agent/TestFilterResult?eventId={sse.Id}", filterResult).ConfigureAwait(false);
-                    break;
-
                 //case Constants.CloseEventSinkEvent:
                 //    var sinkName = sse.Data;
                 //    if (sinkName == null)
@@ -167,9 +184,9 @@ namespace KdSoft.EtwEvents.PushAgent
                 //    break;
 
                 case Constants.StartLiveViewSinkEvent:
-                    var managerSinkProfile = string.IsNullOrEmpty(sse.Data)
+                    var managerSinkProfile = string.IsNullOrEmpty(cevt.Data)
                         ? null
-                        : sse.Data.ToProtoMessage<EventSinkProfile>();
+                        : cevt.Data.ToProtoMessage<EventSinkProfile>();
                     if (managerSinkProfile == null)
                         return;
                     if (worker != null) {
@@ -189,9 +206,9 @@ namespace KdSoft.EtwEvents.PushAgent
                     break;
 
                 case Constants.ApplyAgentOptionsEvent:
-                    var agentOptions = string.IsNullOrEmpty(sse.Data)
+                    var agentOptions = string.IsNullOrEmpty(cevt.Data)
                         ? null
-                        : sse.Data.ToProtoMessage<AgentOptions>();
+                        : cevt.Data.ToProtoMessage<AgentOptions>();
                     if (agentOptions == null)
                         return;
 
@@ -239,16 +256,7 @@ namespace KdSoft.EtwEvents.PushAgent
                         _sessionConfig.SaveLiveViewOptions(liveViewOptions);
                     }
 
-                    await PostProtoMessage($"Agent/ApplyAgentOptionsResult?eventId={sse.Id}", applyResult).ConfigureAwait(false);
-                    await SendStateUpdate().ConfigureAwait(false);
-                    break;
-
-                case Constants.InstallCertEvent:
-                    if (string.IsNullOrEmpty(sse.Data))
-                        return;
-                    var installed = await InstallPemCertificate(sse.Data).ConfigureAwait(false);
-
-                    // this could lead to infinite recursion if the installed certificate is not picked up on reconnect
+                    await PostProtoMessage($"Agent/ApplyAgentOptionsResult?eventId={cevt.Id}", applyResult).ConfigureAwait(false);
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
 
@@ -413,6 +421,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 EnabledProviders = { enabledProviders },
                 // Id = string.IsNullOrWhiteSpace(agentEmail) ? agentName : $"{agentName} ({agentEmail})",
                 Id = string.Empty,  // will be filled in on server using the client certificate
+                //Host = Dns.GetHostEntry(IPAddress.Loopback).HostName,
                 Host = Dns.GetHostName(),
                 Site = clientCert?.GetNameInfo(X509NameType.SimpleName, false) ?? "<Undefined>",
                 ClientCertLifeSpan = clientCertLifeSpan,
@@ -430,9 +439,9 @@ namespace KdSoft.EtwEvents.PushAgent
         async Task<bool> ProcessEvents(CancellationToken stoppingToken) {
             var finished = true;
             try {
-                await foreach (var sse in _channel.Reader.ReadAllAsync(stoppingToken).ConfigureAwait(false)) {
+                await foreach (var cevt in _channel.Reader.ReadAllAsync(stoppingToken).ConfigureAwait(false)) {
                     try {
-                        await ProcessEvent(sse).ConfigureAwait(false);
+                        await ProcessEvent(cevt).ConfigureAwait(false);
                         if (stoppingToken.IsCancellationRequested) {
                             finished = false;
                             break;
@@ -537,7 +546,18 @@ namespace KdSoft.EtwEvents.PushAgent
             }
         }
 
+        //TODO treat both, SSE connections and NamedPipes, as source of control events
+
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
+            ValueTask pipeTask;
+            try {
+                pipeTask = _pipeHandler.ProcessPipeMessages(stoppingToken);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Failure starting NamedPipe server. Terminating service.");
+                return;
+            }
+
             try {
                 _cancelRegistration = stoppingToken.Register(async () => {
                     try {
@@ -547,15 +567,26 @@ namespace KdSoft.EtwEvents.PushAgent
                         _logger.LogError(ex, "Failure stopping session.");
                     }
                 });
+
                 // start ControlConnector
                 _controlOptionsListener = _controlOptions.OnChange(async opts => await ControlOptionsChanged(opts, stoppingToken).ConfigureAwait(false));
-                await _controlConnector.StartAsync(_controlOptions.CurrentValue, stoppingToken).ConfigureAwait(false);
+                var started = await _controlConnector.StartAsync(_controlOptions.CurrentValue, stoppingToken).ConfigureAwait(false);
+
+                if (started) {
+                    try {
+                        await SendStateUpdate().ConfigureAwait(false);
+                    }
+                    catch (Exception ex) {
+                        _logger.LogError(ex, "Error sending update to agent.");
+                    }
+                }
             }
             catch (Exception ex) {
                 _cancelRegistration.Dispose();
+                _cancelRegistration = default;
                 _controlOptionsListener?.Dispose();
-                _controlConnector.Dispose();
-                _logger.LogError(ex, "Failure running service.");
+                _controlOptionsListener = null;
+                _logger.LogError(ex, "Failure starting ControlConnector. Terminating service.");
                 return;
             }
 
@@ -569,20 +600,14 @@ namespace KdSoft.EtwEvents.PushAgent
             }
 
             try {
-                await SendStateUpdate().ConfigureAwait(false);
-            }
-            catch (Exception ex) {
-                _logger.LogError(ex, "Error sending update to agent.");
-            }
-
-            try {
                 await ProcessEvents(stoppingToken).ConfigureAwait(false);
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Error processing control events.");
             }
 
-            // this task ends only when the stoppingToken is triggered
+            // these tasks end only when the stoppingToken is triggered
+            await pipeTask.ConfigureAwait(false);
             await _controlConnector.RunTask.ConfigureAwait(false);
         }
 
@@ -590,7 +615,7 @@ namespace KdSoft.EtwEvents.PushAgent
             base.Dispose();
             _cancelRegistration.Dispose();
             _controlOptionsListener?.Dispose();
-            _controlConnector?.Dispose();
+            _controlConnector.Dispose();
             _sessionScope?.Dispose();
         }
 

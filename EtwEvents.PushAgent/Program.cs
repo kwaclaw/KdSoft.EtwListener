@@ -85,6 +85,7 @@ builder.ConfigureServices((hostContext, services) => {
         forever: true
     ));
     services.AddSingleton<ControlConnector>();
+    services.AddSingleton<NamedPipeHandler>();
     services.AddScoped<SessionWorker>();
     services.AddHostedService<ControlWorker>();
 });
