@@ -24,6 +24,9 @@ const standardColumnList = [
   { name: 'opcodeName', label: 'Opcode Name', type: 'string' },
   { name: 'timeStamp', label: 'TimeStamp', type: 'date' },
   { name: 'level', label: 'Level', type: 'number' },
+  { name: 'processId', label: 'Process Id', type: 'number' },
+  { name: 'threadId', label: 'Thread Id', type: 'number' },
+  { name: 'processName', label: 'Process Name', type: 'string' },
   { name: 'payload', label: 'Payload', type: 'object' }
 ];
 
