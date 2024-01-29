@@ -7,8 +7,8 @@
   }
 
   fixup() {
-    if (!Array.isArray(this.standardColumnOrder) || this.standardColumnOrder.length !== 10) {
-      this.standardColumnOrder = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    if (!Array.isArray(this.standardColumnOrder) || this.standardColumnOrder.length !== 13) {
+      this.standardColumnOrder = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
     }
     if (!Array.isArray(this.standardColumns)) {
       this.standardColumns = [0, 1, 2, 3, 4, 5, 6, 7, 8];
