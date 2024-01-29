@@ -134,9 +134,7 @@ class EtwAppSideBar extends LitMvvmElement {
   _searchTextChanged(e) {
     const searchText = e.currentTarget.value;
     const regex = new RegExp(searchText, 'i');
-    this.agentChecklistModel.filter = item => {
-      return regex.test(item.state.id);
-    };
+    this.agentChecklistModel.filter = item => regex.test(item.state.id);
   }
 
   //#region overrides
@@ -366,7 +364,8 @@ class EtwAppSideBar extends LitMvvmElement {
         </span>
         <div part="header" slot="header" class="flex items-baseline pr-1 text-white">
           <label class="pl-1 font-bold text-xl">${entry.state.id}</label>
-          <span part="cert-warning" class="ml-2 fa fas fa-exclamation-triangle text-red-500 ${warningActive}" title=${clientCertWarning}></span>
+          <span part="cert-warning" class="ml-2 fa fas fa-exclamation-triangle text-red-500 ${warningActive}"
+            title=${clientCertWarning}></span>
           <span class="ml-auto">
             <span class="mr-4">
               ${onlyModified ? html`<button class="mr-1 text-yellow-800 fas fa-pencil-alt"></button>` : nothing}
@@ -440,7 +439,10 @@ class EtwAppSideBar extends LitMvvmElement {
               </button>`
               : nothing
             }
-            <label for="upload-agent-certs" class="flex items-center text-orange-500 ${uploadLeftMargin}" title="Upload Agent Certificates">
+            <label for="upload-agent-certs"
+              class="flex items-center text-orange-500 ${uploadLeftMargin}"
+              title="Upload Agent Certificates"
+            >
               <i class="fas fa-upload"></i>
               <input id="upload-agent-certs" type="file" class="hidden"
                 @change=${e => this._uploadAgentCerts(e)}

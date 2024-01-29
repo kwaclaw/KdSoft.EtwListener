@@ -313,11 +313,13 @@ class EtwAgent extends LitMvvmElement {
               break;
             case 3:
               modified = this.model.getProcessingModified(activeEntry);
-            break;
+              break;
+            default:
+              break;
           }
           const modifiedClass = modified ? 'italic text-red-500' : '';
           return html`
-            <button type="button" slot="tabs" class="px-2 py-1 bg-white" ?active=${active} ?first=${index===0}
+            <button type="button" slot="tabs" class="px-2 py-1 bg-white" ?active=${active} ?first=${index === 0}
                 @click=${() => { this.model._kds_activeTab = index; }}
             >
               <span class="${modifiedClass}">${tab}</span>
@@ -337,7 +339,7 @@ class EtwAgent extends LitMvvmElement {
           <div class="form-footer flex flex-wrap mt-2 bt-1">
             <button type="button" class="py-1 px-2 ml-auto" @click=${e => this._addProviderClick(e, activeAgentState)}>
               <i class="fas fa-lg fa-plus text-gray-500"></i>
-            </span>
+            </button>
             <button type="button" class="py-1 px-2 ml-4" @click=${() => this.model.applyProviders(activeAgentState)} title="Apply">
               <i class="fas fa-lg fa-check text-green-500"></i>
             </button>
@@ -372,7 +374,7 @@ class EtwAgent extends LitMvvmElement {
             </button>
             <button type="button" class="py-1 px-2 ml-auto" @click=${this._addEventSinkClick}>
               <i class="fas fa-lg fa-plus text-gray-500"></i>
-            </span>
+            </button>
             <button type="button" class="py-1 px-2 ml-4" @click=${e => this._updateEventSinks(e, activeAgentState)} title="Apply">
               <i class="fas fa-lg fa-check text-green-500"></i>
             </button>
