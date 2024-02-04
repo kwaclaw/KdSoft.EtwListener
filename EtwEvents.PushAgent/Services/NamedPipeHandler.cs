@@ -41,12 +41,12 @@ namespace KdSoft.EtwEvents.PushAgent
             return new NamedMessagePipeServer(pipeName, "default", shutdownToken, -1, pipeSecurity);
         }
 
-        ValueTask WriteMessage(NamedMessagePipeServer server, string msg) {
+        public ValueTask WriteMessage(NamedMessagePipeServer pipe, string msg) {
             using var memOwner = MemoryPool<byte>.Shared.Rent(1024);
             var buffer = memOwner.Memory.Span;
             var count = Encoding.UTF8.GetBytes(msg, buffer);
             buffer[count++] = 0;
-            return server.Stream.WriteAsync(memOwner.Memory);
+            return pipe.Stream.WriteAsync(memOwner.Memory);
         }
 
         public async ValueTask ProcessPipeMessages(CancellationToken shutdownToken) {
@@ -82,7 +82,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     await WriteMessage(pipeServer, "Invalid message");
                     return;
                 }
-                var controlEvent = new ControlEvent { Event = parts[0], Id = "", Data = parts[1] };
+                var controlEvent = new ControlEvent { Event = parts[0], Id = "", Data = parts[1], UserData = pipeServer};
                 var couldWrite = _controlChannel.Writer.TryWrite(controlEvent);
                 if (couldWrite) {
                     await WriteMessage(pipeServer, $"{parts[0]} message queued");

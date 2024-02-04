@@ -37,7 +37,6 @@
             }
         }
 
-
         public static void WriteFileAtomic(ReadOnlySpan<byte> buffer, string filePath, string? backupPath = null) {
             // Requirement of File.Replace(): the source file and target file must be on the same drive/volume
             var replacePath = Path.GetDirectoryName(filePath) ?? Path.GetPathRoot(filePath);

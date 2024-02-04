@@ -12,6 +12,7 @@ using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using KdSoft.EtwEvents.Server;
 using KdSoft.EtwLogging;
+using KdSoft.NamedMessagePipe;
 using Microsoft.Extensions.Options;
 using Gpb = Google.Protobuf;
 using Kdfu = KdSoft.EtwEvents.FilterUtils;
@@ -72,6 +73,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 AllowTrailingCommas = true,
                 WriteIndented = true
             };
+
             var jsonSettings = JsonFormatter.Settings.Default.WithFormatDefaultValues(true).WithFormatEnumsAsIntegers(true);
             _jsonFormatter = new JsonFormatter(jsonSettings);
 
@@ -82,6 +84,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
         async Task ProcessEvent(ControlEvent cevt) {
             BuildFilterResult filterResult;
+            var pipe = cevt.UserData as NamedMessagePipeServer;
 
             switch (cevt.Event) {
                 case Constants.StartEvent:
@@ -91,6 +94,10 @@ namespace KdSoft.EtwEvents.PushAgent
                     }
                     File.Delete(_stoppedFilePath);
                     var started = await StartSessionWorker(default).ConfigureAwait(false);
+
+                    if (pipe is not null)
+                        await TrySendPipeMessage(pipe, $"ETW Session Started: {started}");
+
                     await SendStateUpdate().ConfigureAwait(false);
                     return;
 
@@ -110,13 +117,16 @@ namespace KdSoft.EtwEvents.PushAgent
                         return;
                     var installed = await InstallPemCertificate(cevt.Data).ConfigureAwait(false);
 
+                    if (pipe is not null)
+                        await TrySendPipeMessage(pipe, $"Certificate Installed: {installed}");
+
                     // this could lead to infinite recursion if the installed certificate is not picked up on reconnect
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
 
                 case Constants.SetControlOptionsEvent:
-
-                    break;
+                    await SetControlOptions(cevt.Data, pipe).ConfigureAwait(false);
+                    return;
 
                 case Constants.SetEmptyFilterEvent:
                     var emptyFilter = string.IsNullOrEmpty(cevt.Data)
@@ -167,6 +177,10 @@ namespace KdSoft.EtwEvents.PushAgent
                     // simple way to create empty file
                     File.WriteAllBytes(_stoppedFilePath, _emptyBytes);
                     var stopped = await StopSessionWorker(default).ConfigureAwait(false);
+
+                    if (pipe is not null)
+                        await TrySendPipeMessage(pipe, $"ETW Session Stopped: {stopped}");
+
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
 
@@ -329,6 +343,51 @@ namespace KdSoft.EtwEvents.PushAgent
             return success;
         }
 
+        async Task SetControlOptions(string? controlData, NamedMessagePipeServer? pipe) {
+            if (string.IsNullOrEmpty(controlData)) {
+                if (pipe is not null)
+                    await TrySendPipeMessage(pipe, $"Invalid request: Control Options Missing");
+                return;
+            }
+
+            ControlOptions? controlOptions = null;
+            try {
+                var controlJsonOpts = new JsonSerializerOptions {
+                    PropertyNamingPolicy = null,  // write as is
+                    AllowTrailingCommas = true,
+                    WriteIndented = true,
+                    ReadCommentHandling = JsonCommentHandling.Allow,
+                };
+                controlOptions = JsonSerializer.Deserialize<ControlOptions>(controlData);
+            }
+            catch {
+                if (pipe is not null)
+                    await TrySendPipeMessage(pipe, $"Invalid data format: Control Options");
+                throw;
+            }
+
+            if (controlOptions is null) {
+                if (pipe is not null)
+                    await TrySendPipeMessage(pipe, $"Invalid request: Control Options Empty");
+                return;
+            }
+
+            bool saved = false;
+            try {
+                // _controlOptionsListener will handle processing of changed options
+                Utils.SaveControlOptions("appsettings.Local.json", controlOptions);
+                saved = true;
+            }
+            catch {
+                saved = false;
+                throw;
+            }
+            finally {
+                if (pipe is not null)
+                    await TrySendPipeMessage(pipe, $"Control Options Saved: {saved}");
+            }
+        }
+
         async Task PostMessage(string path, HttpContent content) {
             var opts = _controlOptions.CurrentValue;
             var postUri = new Uri(opts.Uri, path);
@@ -348,6 +407,15 @@ namespace KdSoft.EtwEvents.PushAgent
         Task PostProtoMessage<T>(string path, T content) where T : IMessage<T> {
             var httpContent = new StringContent(_jsonFormatter.Format(content), Encoding.UTF8, MediaTypeNames.Application.Json);
             return PostMessage(path, httpContent);
+        }
+
+        async ValueTask TrySendPipeMessage(NamedMessagePipeServer pipe, string message) {
+            try {
+                await _pipeHandler.WriteMessage(pipe, message).ConfigureAwait(false);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error sending NamedPipe message.");
+            }
         }
 
         Dictionary<string, EventSinkState> GetEventSinkStates() {
@@ -559,6 +627,8 @@ namespace KdSoft.EtwEvents.PushAgent
             }
 
             try {
+                _controlOptionsListener = _controlOptions.OnChange(async opts => await ControlOptionsChanged(opts, stoppingToken).ConfigureAwait(false));
+ 
                 _cancelRegistration = stoppingToken.Register(async () => {
                     try {
                         await StopSessionWorker(default).ConfigureAwait(false);
@@ -569,7 +639,6 @@ namespace KdSoft.EtwEvents.PushAgent
                 });
 
                 // start ControlConnector
-                _controlOptionsListener = _controlOptions.OnChange(async opts => await ControlOptionsChanged(opts, stoppingToken).ConfigureAwait(false));
                 var started = await _controlConnector.StartAsync(_controlOptions.CurrentValue, stoppingToken).ConfigureAwait(false);
 
                 if (started) {
