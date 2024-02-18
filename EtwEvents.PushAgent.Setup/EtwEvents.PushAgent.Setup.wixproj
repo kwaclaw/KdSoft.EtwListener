@@ -5,10 +5,10 @@
     <InstallerPlatform>x64</InstallerPlatform>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="WixToolset.Iis.wixext" Version="4.0.3" />
-    <PackageReference Include="WixToolset.UI.wixext" Version="4.0.3" />
-    <PackageReference Include="WixToolset.Util.wixext" Version="4.0.3" />
-    <PackageReference Include="WixToolset.Heat" Version="4.0.3" />
+    <PackageReference Include="WixToolset.Iis.wixext" Version="4.0.4" />
+    <PackageReference Include="WixToolset.UI.wixext" Version="4.0.4" />
+    <PackageReference Include="WixToolset.Util.wixext" Version="4.0.4" />
+    <PackageReference Include="WixToolset.Heat" Version="4.0.4" />
   </ItemGroup>
   <ItemGroup>
     <HarvestDirectory Include="../EtwEvents.PushAgent/deploy/publish/">
@@ -29,9 +29,9 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../EtwEvents.PushAgent/EtwEvents.PushAgent.csproj" DoNotHarvest="true" Publish="true">
-       <!--The publish directory must be specified even if the publish profile already contains it--> 
+      <!--The publish directory must be specified even if the publish profile already contains it-->
       <PublishDir>../EtwEvents.PushAgent/deploy/publish/</PublishDir>
-       <!--This seems to be the only way to specify the publish profile correctly--> 
+      <!--This seems to be the only way to specify the publish profile correctly-->
       <!--<Properties>PublishProfile=../EtwEvents.PushAgent/Properties/PublishProfiles/Platform.pubxml</Properties>-->
       <Properties>PublishProfile=../EtwEvents.PushAgent/Properties/PublishProfiles/SelfContained.pubxml</Properties>
     </ProjectReference>
