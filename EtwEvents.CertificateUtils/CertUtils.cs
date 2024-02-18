@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Formats.Asn1;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -7,15 +8,32 @@ using System.Text;
 
 namespace KdSoft.EtwEvents
 {
-    public record RdnAttribute(Oid Type, string Value);
+    /// <summary>
+    /// Describes an element/attribute of a <see cref="X500RelativeDistinguishedName">Relative Distinguished Name</see>.
+    /// </summary>
+    /// <param name="Oid">Object Identifier for attribute.</param>
+    /// <param name="Value">Attribute Value.</param>
+    /// <param name="TagNo">Universal ASN.1 tag number for the attribute.</param>
+    public record class RdnAttribute(string Oid, string Value, UniversalTagNumber? TagNo): IEquatable<RdnAttribute>
+    {
+        public bool Equals(RdnAttribute? x, RdnAttribute? y) => x?.Oid == y?.Oid && x?.Value == y?.Value;
+        public int GetHashCode([DisallowNull] RdnAttribute obj) => obj.Oid.GetHashCode() ^ obj.Value.GetHashCode();
+    }
 
-    public record Rdn(ICollection<RdnAttribute> Attributes);
+    /// <summary>
+    /// Describes a <see cref="X500RelativeDistinguishedName">Relative Distinguished Name</see>.
+    /// </summary>
+    /// <param name="Attributes">List of <see cref="RdnAttribute"/> instances making up the RDN.</param>
+    public record class Rdn(IList<RdnAttribute> Attributes);
 
-    public static class Oids {
+    public static class Oids
+    {
         public const string ClientAuthentication = "1.3.6.1.5.5.7.3.2";
         public const string ServerAuthentication = "1.3.6.1.5.5.7.3.1";
         public const string EmailProtection = "1.3.6.1.5.5.7.3.4";
         public const string Role = "2.5.4.72";
+        public const string CommonName = "2.5.4.3";
+        public const string EmailAddress = "1.2.840.113549.1.9.1";
     }
 
     public static class CertUtils
@@ -52,12 +70,12 @@ namespace KdSoft.EtwEvents
         /// <param name="ekus">Enhanced key usage identifiers, all of which the certificate must support.
         /// Applies only when looking for a match on <paramref name="subjectCN"/>.</param>
         /// <returns>Matching certificate, or <c>null</c> if none was found.</returns>
-        public static X509Certificate2? GetCertificate(StoreLocation location, string thumbprint, string subjectCN, params string[] ekus) {
+        public static X509Certificate2? GetCertificate(StoreName storeName, StoreLocation location, string thumbprint, string subjectCN, params string[] ekus) {
             if (thumbprint.Length == 0 && subjectCN.Length == 0)
                 return null;
 
             // find matching certificate, use thumbprint if available, otherwise use subject common name (CN)
-            using (var store = new X509Store(location)) {
+            using (var store = new X509Store(storeName, location)) {
                 store.Open(OpenFlags.ReadOnly);
                 X509Certificate2? cert = null;
                 if (thumbprint.Length > 0) {
@@ -96,9 +114,9 @@ namespace KdSoft.EtwEvents
         /// <param name="subjectCN">Subject common name to look for, comparison is not case sensitive.</param>
         /// <param name="ekus">Enhanced key usage identifiers, all of which the certificate must support.</param>
         /// <returns>Matching certificates, or an empty collection if none were found.</returns>
-        public static IEnumerable<X509Certificate2> GetCertificates(StoreLocation location, string subjectCN, params string[] ekus) {
+        public static IEnumerable<X509Certificate2> GetCertificates(StoreName storeName, StoreLocation location, string subjectCN, params string[] ekus) {
             // find matching certificate, use thumbprint if available, otherwise use subject common name (CN)
-            using var store = new X509Store(location);
+            using var store = new X509Store(storeName, location);
             store.Open(OpenFlags.ReadOnly);
             var certs = store.Certificates.Find(X509FindType.FindBySubjectName, subjectCN, true);
             foreach (var matchingCert in certs) {
@@ -116,6 +134,11 @@ namespace KdSoft.EtwEvents
             }
         }
 
+        /// <summary>
+        /// Get roles from certificate subject (role OID = 2.5.4.72).
+        /// </summary>
+        /// <param name="cert">Certificate whose subject to inspect.</param>
+        /// <returns>List of roles.</returns>
         public static List<string> GetSubjectRoles(this X509Certificate2 cert) {
             var rdns = cert.SubjectName.GetRelativeNames();
             var result = new List<string>();
@@ -123,7 +146,7 @@ namespace KdSoft.EtwEvents
             var roleOID = new Oid(Oids.Role);
             foreach (var rdn in rdns) {
                 foreach (var att in rdn.Attributes) {
-                    if (att.Type.Value == roleOID.Value)
+                    if (att.Oid == roleOID.Value)
                         result.Add(att.Value);
                 }
             }
@@ -138,11 +161,11 @@ namespace KdSoft.EtwEvents
         /// <param name="policyOID">Application policy OID to look for, e.g. Client Authentication (1.3.6.1.5.5.7.3.2). Required.</param>
         /// <param name="predicate">Callback to check certificate against a condition. Optional.</param>
         /// <returns>Matching certificates, or an empty collection if none are found.</returns>
-        public static IEnumerable<X509Certificate2> GetCertificates(StoreLocation location, string policyOID, Predicate<X509Certificate2>? predicate) {
+        public static IEnumerable<X509Certificate2> GetCertificates(StoreName storeName, StoreLocation location, string policyOID, Predicate<X509Certificate2>? predicate) {
             if (policyOID.Length == 0)
                 return Enumerable.Empty<X509Certificate2>();
 
-            using var store = new X509Store(location);
+            using var store = new X509Store(storeName, location);
             store.Open(OpenFlags.ReadOnly);
             var certs = store.Certificates.Find(X509FindType.FindByApplicationPolicy, policyOID, true);
             if (certs.Count == 0 || predicate == null)
@@ -210,7 +233,19 @@ namespace KdSoft.EtwEvents
             store.Add(certificate);
         }
 
-        public static X509Certificate2 LoadCertificate(string filePath) {
+        /// <summary>
+        /// Loads certificate from file, accepting multiple file types (PEM, Pkcs#12).
+        /// </summary>
+        /// <param name="filePath">Path to certificate file.</param>
+        /// <param name="keyPath">Path to key file, if key is in separate file.</param>
+        /// <param name="pwd">Password, if applicable.</param>
+        /// <returns><see cref="X509Certificate2"/> instance.</returns>
+        /// <exception cref="ArgumentException"></exception>
+        /// <remarks>If the key is encrypted it must be in encrypted PKCS#8 format, with label 'ENCRYPTED PRIVATE KEY'.</remarks>
+        public static X509Certificate2 LoadCertificate(string filePath, string? keyPath, string? pwd) {
+            keyPath = string.IsNullOrEmpty(keyPath) ? null : keyPath;
+            pwd = string.IsNullOrEmpty(pwd) ? null : pwd;
+
             X509ContentType contentType;
             try {
                 contentType = X509Certificate2.GetCertContentType(filePath);
@@ -219,10 +254,16 @@ namespace KdSoft.EtwEvents
                 contentType = X509ContentType.Unknown;
             }
             return contentType switch {
-                // we assume it is a PEM certificate with the unencrypted private key included
-                X509ContentType.Unknown => X509Certificate2.CreateFromPemFile(filePath, filePath),
-                X509ContentType.Cert => new X509Certificate2(filePath),
-                X509ContentType.Pfx => new X509Certificate2(filePath, (string?)null, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable),
+                // we assume it is a PEM certificate
+                X509ContentType.Unknown => pwd is null
+                    ? X509Certificate2.CreateFromPemFile(filePath, keyPath)
+                    : X509Certificate2.CreateFromEncryptedPemFile(filePath, pwd, keyPath),
+                X509ContentType.Cert => keyPath is not null
+                    ? (pwd is null
+                        ? X509Certificate2.CreateFromPemFile(filePath, keyPath)
+                        : X509Certificate2.CreateFromEncryptedPemFile(filePath, pwd, keyPath))
+                    : new X509Certificate2(filePath, pwd),
+                X509ContentType.Pfx => new X509Certificate2(filePath, pwd, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable),
                 _ => throw new ArgumentException($"Unrecognized certificate type in file: {filePath}"),
             };
         }
@@ -336,7 +377,7 @@ namespace KdSoft.EtwEvents
         /// <exception cref="InvalidOperationException"></exception>
         /// <exception cref="NotSupportedException"></exception>
         public static IEnumerable<Rdn> GetRelativeNames(this X500DistinguishedName distinguishedName) {
-            var reader = new AsnReader(distinguishedName.RawData, AsnEncodingRules.BER);
+            var reader = new AsnReader(distinguishedName.RawData, AsnEncodingRules.DER);
             var snSeq = reader.ReadSequence();
             if (!snSeq.HasData) {
                 throw new InvalidOperationException();
@@ -353,10 +394,30 @@ namespace KdSoft.EtwEvents
                             throw new NotSupportedException($"Unknown tag type {attrValueTagNo} for attr {attrOid}");
                         }
                         var attrValue = rdnSeq.ReadCharacterString(attrValueTagNo);
-                        rdnAttributes.Add(new RdnAttribute(new Oid(attrOid), attrValue));
+                        rdnAttributes.Add(new RdnAttribute(attrOid, attrValue, attrValueTagNo));
                     }
                 }
                 yield return new Rdn(rdnAttributes);
+            }
+        }
+
+        /// <summary>
+        /// Writes relative distinguished names to an ASN.1 writer.
+        /// </summary>
+        /// <param name="rdns">Collection of <see cref="Rdn"/> instances.</param>
+        /// <param name="writer"><see cref="AsnWriter"/> instance to use.</param>
+        public static void WriteRelativeNames(IEnumerable<Rdn> rdns, AsnWriter writer) {
+            using (writer.PushSequence()) {
+                foreach (var rdn in rdns) {
+                    using (writer.PushSetOf())
+                        foreach (var att in rdn.Attributes) {
+                            if (att.Oid is null) { continue; }
+                            using (writer.PushSequence()) {
+                                writer.WriteObjectIdentifier(att.Oid);
+                                writer.WriteCharacterString(att.TagNo ?? UniversalTagNumber.UTF8String, att.Value);
+                            }
+                        }
+                }
             }
         }
 
@@ -365,7 +426,7 @@ namespace KdSoft.EtwEvents
             var rdns = distinguishedName.GetRelativeNames();
             foreach (var rdn in rdns) {
                 foreach (var att in rdn.Attributes) {
-                    if (att.Type.Value == oid.Value) {
+                    if (att.Oid == oid.Value) {
                         values.Add(att.Value);
                     }
                 }
@@ -377,7 +438,7 @@ namespace KdSoft.EtwEvents
             var rdns = distinguishedName.GetRelativeNames();
             foreach (var rdn in rdns) {
                 foreach (var att in rdn.Attributes) {
-                    if (att.Type.Value == oid.Value) {
+                    if (att.Oid == oid.Value) {
                         return att.Value;
                     }
                 }

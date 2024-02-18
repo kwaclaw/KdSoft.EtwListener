@@ -153,7 +153,7 @@ namespace KdSoft.EtwEvents.PushAgent
         // re-encode with the new certificate and store the new thumbprint.
         // Do the same at runtime when the client certs change.
         IDataProtectionProvider InitializeDataProtection(DataCertOptions certOptions) {
-            var dataCertificate = CertUtils.GetCertificate(certOptions.Location, certOptions.Thumbprint, "");
+            var dataCertificate = CertUtils.GetCertificate(StoreName.My, certOptions.Location, certOptions.Thumbprint, "");
             var clientCertificate = ((X509Certificate2Collection)_httpHandlerCache.Handler.SslOptions.ClientCertificates!).First();
             if (dataCertificate is null || (clientCertificate.Thumbprint.ToLower() != certOptions.Thumbprint.ToLower())) {
                 var clientCertOptions = new DataCertOptions {

@@ -42,7 +42,7 @@ namespace KdSoft.EtwEvents.EventSinks
             if (creds.CertificatePem != null && creds.CertificateKeyPem != null) {
                 return X509Certificate2.CreateFromPem(creds.CertificatePem, creds.CertificateKeyPem);
             }
-            return CertUtils.GetCertificate(StoreLocation.LocalMachine, creds.CertificateThumbPrint ?? string.Empty, creds.CertificateSubjectCN ?? string.Empty);
+            return CertUtils.GetCertificate(StoreName.My, StoreLocation.LocalMachine, creds.CertificateThumbPrint ?? string.Empty, creds.CertificateSubjectCN ?? string.Empty);
         }
 
         public Task<IEventSink> Create(gRPCSinkOptions options, gRPCSinkCredentials creds, IEventSinkContext context) {

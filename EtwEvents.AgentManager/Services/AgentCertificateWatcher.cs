@@ -127,7 +127,7 @@ namespace KdSoft.EtwEvents.AgentManager
         /// Tries to post new certificate to agent, otherwise saves the certificate for later when agent connects.
         /// </summary>
         void ProcessUpdatedCertificate(string certFilePath) {
-            var newCert = CertUtils.LoadCertificate(certFilePath);
+            var newCert = CertUtils.LoadCertificate(certFilePath, certFilePath, null);
             var newKey = newCert.GetNameInfo(X509NameType.SimpleName, false);
             // track the certificate so we can remove the file once we get a successful update from the agent
             var newValue = (newCert, certFilePath);

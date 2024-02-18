@@ -20,7 +20,7 @@ namespace KdSoft.EtwEvents.EventSinks
             if (certSettings.CertificatePem != null && certSettings.CertificateKeyPem != null) {
                 return X509Certificate2.CreateFromPem(certSettings.CertificatePem, certSettings.CertificateKeyPem);
             }
-            return CertUtils.GetCertificate(StoreLocation.LocalMachine, certSettings.CertificateThumbPrint ?? string.Empty, certSettings.CertificateSubjectCN ?? string.Empty);
+            return CertUtils.GetCertificate(StoreName.My, StoreLocation.LocalMachine, certSettings.CertificateThumbPrint ?? string.Empty, certSettings.CertificateSubjectCN ?? string.Empty);
         }
 
         public static Azure.Core.TokenCredential GetCredential(LogsIngestionSinkCredentials creds) {

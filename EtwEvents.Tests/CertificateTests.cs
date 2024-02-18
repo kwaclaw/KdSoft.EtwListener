@@ -75,7 +75,7 @@ namespace KdSoft.EtwEvents.Tests
             //X509Certificate2 certificate = collection[0];
             //X509Certificate2UI.DisplayCertificate(certificate);
 
-            var certs = CertUtils.GetCertificates(StoreLocation.LocalMachine, Oids.ClientAuthentication, (Predicate<X509Certificate2>?)null);
+            var certs = CertUtils.GetCertificates(StoreName.My, StoreLocation.LocalMachine, Oids.ClientAuthentication, (Predicate<X509Certificate2>?)null);
             foreach (var certificate in certs) {
                 var chain = new X509Chain { ChainPolicy = CertUtils.GetClientCertPolicy() };
                 WriteCertificateInfo(certificate, chain);
@@ -225,7 +225,7 @@ namespace KdSoft.EtwEvents.Tests
             var filesDir = new DirectoryInfo(Path.Combine(TestUtils.ProjectDir!, "Files"));
             foreach (var file in filesDir.GetFiles()) {
                 if (file.Name.Contains("-1") || file.Name.Contains("-2")) {
-                    var fileCert = CertUtils.LoadCertificate(file.FullName);
+                    var fileCert = CertUtils.LoadCertificate(file.FullName, file.FullName, null);
                     var certBytes = File.ReadAllBytes(file.FullName);
                     var bytesCert = CertUtils.LoadCertificate(certBytes);
                     Assert.Equal(fileCert.GetRawCertData(), bytesCert.GetRawCertData());
@@ -247,7 +247,7 @@ namespace KdSoft.EtwEvents.Tests
             WriteCertificateInfo(cert, chain);
             Assert.True(chain.Build(cert));
 
-            caFile = Path.Combine(filesDir.FullName, "Kd-Soft_DEV-Signing_CA.pfx");
+            caFile = Path.Combine(filesDir.FullName, "Kd-Soft_Test-Signing_CA.pfx");
             var caCerts = new X509Certificate2Collection();
             caCerts.Import(caFile, "dummy");
 
@@ -266,7 +266,7 @@ namespace KdSoft.EtwEvents.Tests
         }
 
         [Fact]
-        public void CreateClientCertificate() {
+        public void CreateClientCertificateFromFile() {
             var filesDir = new DirectoryInfo(Path.Combine(TestUtils.ProjectDir!, "Files"));
             //var roleOid = Oid.FromOidValue("2.5.4.72", OidGroup.All); //this throws "The OID value is invalid" for some reason
             var roleOid = new Oid(Oids.Role);
@@ -281,7 +281,7 @@ namespace KdSoft.EtwEvents.Tests
             WriteCertificateInfo(cert, chain);
             Assert.True(chain.Build(cert));
 
-            caFile = Path.Combine(filesDir.FullName, "Kd-Soft_DEV-Signing_CA.pfx");
+            caFile = Path.Combine(filesDir.FullName, "Kd-Soft_Test-Signing_CA.pfx");
             var caCerts = new X509Certificate2Collection();
             caCerts.Import(caFile, "dummy");
 

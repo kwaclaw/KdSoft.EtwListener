@@ -28,8 +28,8 @@ namespace KdSoft.EtwEvents.EventSinks
                 }
                 else {
                     connectionUrl = options.GetConnectionUrl();
-                    var cert = CertUtils.GetCertificate(StoreLocation.CurrentUser, string.Empty, creds.CertificateCommonName)
-                        ?? CertUtils.GetCertificate(StoreLocation.LocalMachine, string.Empty, creds.CertificateCommonName)
+                    var cert = CertUtils.GetCertificate(StoreName.My, StoreLocation.CurrentUser, string.Empty, creds.CertificateCommonName)
+                        ?? CertUtils.GetCertificate(StoreName.My, StoreLocation.LocalMachine, string.Empty, creds.CertificateCommonName)
                         ?? throw new ArgumentException($"Cannot find certificate for common name '{creds.CertificateCommonName}'.");
                     // if provided the user name would have to match the certificate's Subject DN exactly
                     credential = MongoCredential.CreateMongoX509Credential(null);

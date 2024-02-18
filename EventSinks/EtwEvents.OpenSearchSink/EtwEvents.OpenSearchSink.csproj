@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\EtwEvents.CertificateUtils\EtwEvents.CertificateUtils.csproj" />
     <ProjectReference Include="..\..\EtwEvents.Shared\EtwEvents.Shared.csproj" />
     <!-- see https://docs.microsoft.com/en-us/dotnet/core/tutorials/creating-app-with-plugin-support -->
     <ProjectReference Include="..\..\EtwEvents.Shared.EventSink\EtwEvents.Shared.EventSink.csproj">

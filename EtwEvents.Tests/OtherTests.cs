@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Diagnostics.Tracing;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
@@ -72,7 +73,7 @@ namespace KdSoft.EtwEvents.Tests
             };
             var filesPath = Path.Combine(TestUtils.ProjectDir!, "Files");
 
-            var jsonBytes = File.ReadAllBytes(Path.Combine(filesPath, "appsettings.json"));
+            var jsonBytes = File.ReadAllBytes(Path.Combine(filesPath, "pushagent.appsettings.json"));
             var readerOpts = new JsonReaderOptions { AllowTrailingCommas = true, CommentHandling = JsonCommentHandling.Skip };
             var jsonReader = new Utf8JsonReader(jsonBytes, readerOpts);
 
