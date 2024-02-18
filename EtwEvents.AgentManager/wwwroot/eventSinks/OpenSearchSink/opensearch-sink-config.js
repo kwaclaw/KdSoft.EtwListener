@@ -23,12 +23,14 @@ class OpenSearchSinkConfig extends LitMvvmElement {
     const subjectCN = utils.getFieldValue(this.renderRoot.getElementById('subjectCN'));
     if (!!user && !!password) {
       validatedElement.setCustomValidity('');
-    } else if (!!apiKey) {
+    } else if (apiKey) {
       validatedElement.setCustomValidity('');
-    } else if (!!subjectCN) {
+    } else if (subjectCN) {
       validatedElement.setCustomValidity('');
     } else {
-      validatedElement.setCustomValidity('Require credentials: user and password, or apiKeyId (optional) and apiKey, or subjectCN.');
+      validatedElement.setCustomValidity(
+        'Require credentials: user and password, or apiKeyId (optional) and apiKey, or subjectCN.'
+      );
       return false;
     }
     this.model.credentials.user = user;

@@ -8,7 +8,7 @@ using KdSoft.Logging;
 using Microsoft.Diagnostics.Tracing.Session;
 using Microsoft.Extensions.Options;
 
-[assembly: InternalsVisibleTo("EtwEvents.Tests")]
+[assembly: InternalsVisibleTo("KdSoft.EtwEvents.Tests")]
 
 // Today you have to be Admin to turn on ETW events (anyone can write ETW events).   
 if (!(TraceEventSession.IsElevated() ?? false)) {
