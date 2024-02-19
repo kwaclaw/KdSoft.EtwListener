@@ -1,7 +1,10 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Formats.Asn1;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using KdSoft.EtwEvents.AgentCommand;
 using KdSoft.EtwEvents.AgentManager;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -170,7 +173,7 @@ namespace KdSoft.EtwEvents.Tests
                 }
             }
 
-            await certMgr.StartAsync(System.Threading.CancellationToken.None);
+            await certMgr.StartAsync(CancellationToken.None);
 
             //await Task.Delay(waitTime);
 
@@ -298,5 +301,92 @@ namespace KdSoft.EtwEvents.Tests
             WriteCertificateInfo(cert, chain);
             Assert.True(chain.Build(cert));
         }
+
+        [Fact]
+        public void ModifyX500DistinguishedName() {
+            var roleOid = new Oid(Oids.Role);
+            var x500Name = $"{roleOid.Value}=etw-admin+{roleOid.Value}=etw-manager, E=karl@waclawek.net, CN=Karl Waclawek, OU=ETW, O=Kd-Soft, L=Oshawa, S=ON, C=CA";
+            var x500Dn = new X500DistinguishedName(x500Name);
+            _output.WriteLine(x500Dn.Decode(X500DistinguishedNameFlags.Reversed));
+
+            var rdns = x500Dn.GetRelativeNames();
+
+            var writer = new AsnWriter(AsnEncodingRules.DER);
+            CertUtils.WriteRelativeNames(rdns, writer);
+            var x500Dn2 = new X500DistinguishedName(writer.Encode());
+            _output.WriteLine(x500Dn2.Decode(X500DistinguishedNameFlags.Reversed));
+
+            Assert.Equal<byte>(x500Dn.RawData, x500Dn2.RawData);
+
+            var x500Name3 = $"{roleOid.Value}=etw-admin+{roleOid.Value}=etw-manager+{roleOid.Value}=etw-agent, E=john@mock.de, CN=John Mock, OU=ETW, O=Kd-Soft, L=Oshawa, S=ON, C=CA";
+            var x500Dn3 = new X500DistinguishedName(x500Name3);
+            _output.WriteLine(x500Dn3.Decode(X500DistinguishedNameFlags.Reversed));
+
+            // build x500Dn4 by modifying x500Dn, to be identical to x500Dn3
+            var mergedRdns = CertificateFactory.MergeX500Rdns(rdns, "John Mock", "john@mock.de", "etw-agent");
+            writer.Reset();
+            CertUtils.WriteRelativeNames(mergedRdns, writer);
+            var x500Dn4Intermediate = new X500DistinguishedName(writer.Encode());
+            // re-create x500Dn4 to get the canonical oputput for comparison purposes
+            var x500Dn4 = new X500DistinguishedName(x500Dn4Intermediate.Decode(X500DistinguishedNameFlags.Reversed));
+            _output.WriteLine(x500Dn4.Decode(X500DistinguishedNameFlags.Reversed));
+
+            Assert.Equal<byte>(x500Dn3.RawData, x500Dn4.RawData);
+        }
+
+        void CreateClientCertificateFromConfiguration(string configFile) {
+            var filesDir = Path.Combine(TestUtils.ProjectDir!, "Files");
+            var settingsPath = Path.Combine(filesDir, configFile);
+            var cfgBuilder = new ConfigurationBuilder();
+            cfgBuilder.AddJsonFile(settingsPath);
+            var cfg = cfgBuilder.Build();
+
+            Directory.SetCurrentDirectory(Path.Combine(TestUtils.ProjectDir!, "Files"));
+
+            var certFactory = new CertificateFactory(cfg);
+            var utcNow = DateTimeOffset.UtcNow;
+            // round to full seconds
+            var now = new DateTimeOffset(utcNow.Year, utcNow.Month, utcNow.Day, utcNow.Hour, utcNow.Minute, utcNow.Second, TimeSpan.Zero);
+
+            var cert = certFactory.CreateClientCertificate("Ezechiel Ratcliff", "ezratcliff@test.com", now, 666);
+            Assert.Equal("Ezechiel Ratcliff", cert.GetNameInfo(X509NameType.SimpleName, false));
+            Assert.Equal("ezratcliff@test.com", cert.GetNameInfo(X509NameType.EmailName, false));
+            Assert.Equal(now, new DateTimeOffset(cert.NotBefore.ToUniversalTime(), TimeSpan.Zero));
+            Assert.Equal(now + TimeSpan.FromDays(666), new DateTimeOffset(cert.NotAfter.ToUniversalTime(), TimeSpan.Zero));
+
+            // CA certificate used to sign the Issuer certificate, which is an intermediate CA
+            var caFile = Path.Combine(filesDir, "Kd-Soft.crt");
+            var keyFile = Path.Combine(filesDir, "Kd-Soft.key");
+            var caCert = X509Certificate2.CreateFromPemFile(caFile, keyFile);
+
+            var chainPolicy = CertUtils.GetClientCertPolicy();
+            // we assume the signing certificates in the chain are not installed
+            chainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+            chainPolicy.CustomTrustStore.Add(caCert);
+            chainPolicy.CustomTrustStore.Add(certFactory.IssuerCert);
+            var chain = new X509Chain { ChainPolicy = chainPolicy };
+            WriteCertificateInfo(cert, chain);
+            Assert.True(chain.Build(cert));
+        }
+
+        [Fact]
+        public void CreateClientCertificateFromConfiguration1() {
+            CreateClientCertificateFromConfiguration("agentcommand1.appsettings.json");
+        }
+
+        [Fact]
+        public void CreateClientCertificateFromConfiguration2() {
+            var filesDir = Path.Combine(TestUtils.ProjectDir!, "Files");
+            var rootCert = new X509Certificate2(Path.Combine(filesDir, "Kd-Soft.crt"));
+            CertUtils.InstallMachineCertificate(rootCert);
+
+            var caFile = Path.Combine(filesDir, "Kd-Soft_Test-Signing_CA.pfx");
+            var caCerts = new X509Certificate2Collection();
+            caCerts.Import(caFile, "dummy");
+            CertUtils.InstallMachineCertificate(caCerts.Last());
+
+            CreateClientCertificateFromConfiguration("agentcommand2.appsettings.json");
+        }
+
     }
 }

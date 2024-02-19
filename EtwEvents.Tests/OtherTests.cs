@@ -37,7 +37,7 @@ namespace KdSoft.EtwEvents.Tests
                 }
             };
             var filesPath = Path.Combine(TestUtils.ProjectDir!, "Files");
-            using var instream = File.OpenRead(Path.Combine(filesPath, "appsettings.json"));
+            using var instream = File.OpenRead(Path.Combine(filesPath, "pushagent.appsettings.json"));
             using var reader = new StreamReader(instream, Encoding.UTF8, true);
             var json = reader.ReadToEnd();
 

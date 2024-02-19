@@ -1,0 +1,18 @@
+{
+  "DistinguishedBaseName": "E=karl@waclawek.net, OU=ETW, O=Kd-Soft, L=Oshawa, S=ON, C=CA",
+  "Roles": [ "etw-agent" ],
+  "StartDate":  null,
+  "DaysValid": 397,
+  "IssuerCertificate": {
+    "Path": "./Kd-Soft_Test-Signing_CA.crt",
+    "KeyPath": "./Kd-Soft_Test-Signing_CA.key",
+    "Password": "dummy"
+
+    //"Store": "CertificateAuthority",
+    //"Location": "LocalMachine",
+    //"Subject": " Kd-Soft Test-Signing CA",
+    //"AllowInvalid": false,
+
+    //"Thumbprint": "e6a3b45b062d509b3382282d196efe97d5956ccb"
+  }
+}

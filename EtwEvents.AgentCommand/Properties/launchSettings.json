@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "EtwEvents.AgentCommand": {
+      "commandName": "Project",
+      "commandLineArgs": "--host=abrakafdabra"
+    }
+  }
+}

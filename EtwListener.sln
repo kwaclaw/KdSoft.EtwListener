@@ -66,6 +66,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.AzureLogsIngestio
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.AzureLogsIngestionSink.Tests", "EventSinks\EtwEvents.AzureLogsIngestionSink.Tests\EtwEvents.AzureLogsIngestionSink.Tests.csproj", "{8F3CE414-58D4-40FC-A3C9-DF4A4FCACB8E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EtwEvents.AgentCommand", "EtwEvents.AgentCommand\EtwEvents.AgentCommand.csproj", "{5ED813F7-0BEC-41B5-BAF6-4AA4F7D0C6ED}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtwEvents.CertificateUtils", "EtwEvents.CertificateUtils\EtwEvents.CertificateUtils.csproj", "{0A343D29-DC11-483C-B69A-DD73BC8B95C4}"
 EndProject
 Global
@@ -396,6 +398,22 @@ Global
 		{8F3CE414-58D4-40FC-A3C9-DF4A4FCACB8E}.Release|x64.Build.0 = Release|Any CPU
 		{8F3CE414-58D4-40FC-A3C9-DF4A4FCACB8E}.Release|x86.ActiveCfg = Release|Any CPU
 		{8F3CE414-58D4-40FC-A3C9-DF4A4FCACB8E}.Release|x86.Build.0 = Release|Any CPU
+		{5ED813F7-0BEC-41B5-BAF6-4AA4F7D0C6ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5ED813F7-0BEC-41B5-BAF6-4AA4F7D0C6ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5ED813F7-0BEC-41B5-BAF6-4AA4F7D0C6ED}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{5ED813F7-0BEC-41B5-BAF6-4AA4F7D0C6ED}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{5ED813F7-0BEC-41B5-BAF6-4AA4F7D0C6ED}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5ED813F7-0BEC-41B5-BAF6-4AA4F7D0C6ED}.Debug|x64.Build.0 = Debug|Any CPU
+		{5ED813F7-0BEC-41B5-BAF6-4AA4F7D0C6ED}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5ED813F7-0BEC-41B5-BAF6-4AA4F7D0C6ED}.Debug|x86.Build.0 = Debug|Any CPU
+		{5ED813F7-0BEC-41B5-BAF6-4AA4F7D0C6ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5ED813F7-0BEC-41B5-BAF6-4AA4F7D0C6ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5ED813F7-0BEC-41B5-BAF6-4AA4F7D0C6ED}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{5ED813F7-0BEC-41B5-BAF6-4AA4F7D0C6ED}.Release|ARM64.Build.0 = Release|Any CPU
+		{5ED813F7-0BEC-41B5-BAF6-4AA4F7D0C6ED}.Release|x64.ActiveCfg = Release|Any CPU
+		{5ED813F7-0BEC-41B5-BAF6-4AA4F7D0C6ED}.Release|x64.Build.0 = Release|Any CPU
+		{5ED813F7-0BEC-41B5-BAF6-4AA4F7D0C6ED}.Release|x86.ActiveCfg = Release|Any CPU
+		{5ED813F7-0BEC-41B5-BAF6-4AA4F7D0C6ED}.Release|x86.Build.0 = Release|Any CPU
 		{0A343D29-DC11-483C-B69A-DD73BC8B95C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0A343D29-DC11-483C-B69A-DD73BC8B95C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0A343D29-DC11-483C-B69A-DD73BC8B95C4}.Debug|ARM64.ActiveCfg = Debug|Any CPU
