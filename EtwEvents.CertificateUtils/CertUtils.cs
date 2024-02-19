@@ -73,37 +73,38 @@ namespace KdSoft.EtwEvents
         public static X509Certificate2? GetCertificate(StoreName storeName, StoreLocation location, string thumbprint, string subjectCN, params string[] ekus) {
             if (thumbprint.Length == 0 && subjectCN.Length == 0)
                 return null;
+            thumbprint = thumbprint.Trim();
+            subjectCN = subjectCN.Trim();
 
             // find matching certificate, use thumbprint if available, otherwise use subject common name (CN)
-            using (var store = new X509Store(storeName, location)) {
-                store.Open(OpenFlags.ReadOnly);
-                X509Certificate2? cert = null;
-                if (thumbprint.Length > 0) {
-                    var certs = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, true);
-                    if (certs.Count > 0)
-                        cert = certs.OrderByDescending(cert => cert.NotBefore).First();
-                }
-                else {
-                    var certs = store.Certificates.Find(X509FindType.FindBySubjectName, subjectCN, true);
-                    foreach (var matchingCert in certs) {
-                        // X509NameType.SimpleName extracts CN from subject (common name)
-                        var cn = matchingCert.GetNameInfo(X509NameType.SimpleName, false);
-                        if (string.Equals(cn, subjectCN, StringComparison.InvariantCultureIgnoreCase)) {
-                            var matchesEkus = true;
-                            foreach (var oid in ekus) {
-                                matchesEkus = matchesEkus && matchingCert.SupportsEnhancedKeyUsage(oid);
-                            }
-                            if (matchesEkus) {
-                                if (cert == null)
-                                    cert = matchingCert;
-                                else if (cert.NotBefore < matchingCert.NotBefore)
-                                    cert = matchingCert;
-                            }
+            using var store = new X509Store(storeName, location);
+            store.Open(OpenFlags.ReadOnly);
+            X509Certificate2? cert = null;
+            if (thumbprint.Length > 0) {
+                var certs = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, true);
+                if (certs.Count > 0)
+                    cert = certs.OrderByDescending(cert => cert.NotBefore).First();
+            }
+            else {
+                var certs = store.Certificates.Find(X509FindType.FindBySubjectName, subjectCN, true);
+                foreach (var matchingCert in certs) {
+                    // X509NameType.SimpleName extracts CN from subject (common name)
+                    var cn = matchingCert.GetNameInfo(X509NameType.SimpleName, false);
+                    if (string.Equals(cn, subjectCN, StringComparison.InvariantCultureIgnoreCase)) {
+                        var matchesEkus = true;
+                        foreach (var oid in ekus) {
+                            matchesEkus = matchesEkus && matchingCert.SupportsEnhancedKeyUsage(oid);
+                        }
+                        if (matchesEkus) {
+                            if (cert == null)
+                                cert = matchingCert;
+                            else if (cert.NotBefore < matchingCert.NotBefore)
+                                cert = matchingCert;
                         }
                     }
                 }
-                return cert;
             }
+            return cert;
         }
 
         /// <summary>
@@ -115,7 +116,8 @@ namespace KdSoft.EtwEvents
         /// <param name="ekus">Enhanced key usage identifiers, all of which the certificate must support.</param>
         /// <returns>Matching certificates, or an empty collection if none were found.</returns>
         public static IEnumerable<X509Certificate2> GetCertificates(StoreName storeName, StoreLocation location, string subjectCN, params string[] ekus) {
-            // find matching certificate, use thumbprint if available, otherwise use subject common name (CN)
+            subjectCN = subjectCN.Trim();
+
             using var store = new X509Store(storeName, location);
             store.Open(OpenFlags.ReadOnly);
             var certs = store.Certificates.Find(X509FindType.FindBySubjectName, subjectCN, true);
