@@ -353,16 +353,17 @@ namespace KdSoft.EtwEvents.Tests
 
             Directory.SetCurrentDirectory(Path.Combine(TestUtils.ProjectDir!, "Files"));
 
-            var certFactory = new CertificateFactory(cfg);
+            var certFactory = new CertificateFactory(cfg, () => "dummy");
             var utcNow = DateTimeOffset.UtcNow;
             // round to full seconds
-            var now = new DateTimeOffset(utcNow.Year, utcNow.Month, utcNow.Day, utcNow.Hour, utcNow.Minute, utcNow.Second, TimeSpan.Zero);
+            var now = new DateTimeOffset(utcNow.Ticks - (utcNow.Ticks % TimeSpan.TicksPerSecond), TimeSpan.Zero);
 
             var cert = certFactory.CreateClientCertificate("Ezechiel Ratcliff", "ezratcliff@test.com", now, 666);
             Assert.Equal("Ezechiel Ratcliff", cert.GetNameInfo(X509NameType.SimpleName, false));
             Assert.Equal("ezratcliff@test.com", cert.GetNameInfo(X509NameType.EmailName, false));
             Assert.Equal(now, new DateTimeOffset(cert.NotBefore.ToUniversalTime(), TimeSpan.Zero));
             Assert.Equal(now + TimeSpan.FromDays(666), new DateTimeOffset(cert.NotAfter.ToUniversalTime(), TimeSpan.Zero));
+            Assert.True(cert.HasPrivateKey);
 
             // CA certificate used to sign the Issuer certificate, which is an intermediate CA
             var caFile = Path.Combine(filesDir, "Kd-Soft.crt");
@@ -381,6 +382,10 @@ namespace KdSoft.EtwEvents.Tests
 
         [Fact]
         public void CreateClientCertificateFromConfiguration1() {
+            var filesDir = Path.Combine(TestUtils.ProjectDir!, "Files");
+            var rootCert = new X509Certificate2(Path.Combine(filesDir, "Kd-Soft.crt"));
+            CertUtils.InstallMachineCertificate(rootCert);
+
             CreateClientCertificateFromConfiguration("agentcommand1.appsettings.json");
         }
 
@@ -390,13 +395,7 @@ namespace KdSoft.EtwEvents.Tests
             var rootCert = new X509Certificate2(Path.Combine(filesDir, "Kd-Soft.crt"));
             CertUtils.InstallMachineCertificate(rootCert);
 
-            var caFile = Path.Combine(filesDir, "Kd-Soft_Test-Signing_CA.pfx");
-            var caCerts = new X509Certificate2Collection();
-            caCerts.Import(caFile, "dummy");
-            CertUtils.InstallMachineCertificate(caCerts.Last());
-
             CreateClientCertificateFromConfiguration("agentcommand2.appsettings.json");
         }
-
     }
 }
