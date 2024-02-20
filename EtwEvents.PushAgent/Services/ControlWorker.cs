@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Channels;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
@@ -43,7 +44,6 @@ namespace KdSoft.EtwEvents.PushAgent
         SessionWorker? _sessionWorker;  // only valid when _sessionWorkerAvailable != 0
         int _sessionWorkerAvailable = 0;
         SessionWorker? SessionWorker => _sessionWorkerAvailable == 0 ? null : _sessionWorker!;
-
 
         static readonly byte[] _emptyBytes = Array.Empty<byte>();
 
@@ -90,6 +90,8 @@ namespace KdSoft.EtwEvents.PushAgent
                 case Constants.StartEvent:
                     if (_sessionWorkerAvailable != 0) {
                         _logger.LogDebug("Session already starting.");
+                        if (pipe is not null)
+                            await TrySendPipeMessage(pipe, $"ETW Session already starting.");
                         return;
                     }
                     File.Delete(_stoppedFilePath);
@@ -104,6 +106,8 @@ namespace KdSoft.EtwEvents.PushAgent
                 case Constants.StopEvent:
                     if (_sessionWorkerAvailable == 0) {
                         _logger.LogDebug("Session already stopping.");
+                        if (pipe is not null)
+                            await TrySendPipeMessage(pipe, $"ETW Session already stopping.");
                         return;
                     }
                     break;
@@ -353,12 +357,12 @@ namespace KdSoft.EtwEvents.PushAgent
             ControlOptions? controlOptions = null;
             try {
                 var controlJsonOpts = new JsonSerializerOptions {
-                    PropertyNamingPolicy = null,  // write as is
+                    Converters = { new JsonStringEnumConverter() },
+                    PropertyNamingPolicy = null,
                     AllowTrailingCommas = true,
-                    WriteIndented = true,
-                    ReadCommentHandling = JsonCommentHandling.Allow,
+                    ReadCommentHandling = JsonCommentHandling.Skip,
                 };
-                controlOptions = JsonSerializer.Deserialize<ControlOptions>(controlData);
+                controlOptions = JsonSerializer.Deserialize<ControlOptions>(controlData, controlJsonOpts);
             }
             catch {
                 if (pipe is not null)
@@ -628,7 +632,7 @@ namespace KdSoft.EtwEvents.PushAgent
 
             try {
                 _controlOptionsListener = _controlOptions.OnChange(async opts => await ControlOptionsChanged(opts, stoppingToken).ConfigureAwait(false));
- 
+
                 _cancelRegistration = stoppingToken.Register(async () => {
                     try {
                         await StopSessionWorker(default).ConfigureAwait(false);
