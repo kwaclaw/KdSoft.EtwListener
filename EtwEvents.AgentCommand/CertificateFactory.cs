@@ -1,4 +1,5 @@
 ﻿using System.Formats.Asn1;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Configuration;
 
@@ -10,7 +11,7 @@ namespace KdSoft.EtwEvents.AgentCommand
         readonly X509Certificate2 _issuerCert;
         readonly ushort _daysValid;
 
-        public CertificateFactory(IConfigurationRoot cfg) {
+        public CertificateFactory(IConfigurationRoot cfg, Func<string?> getPassword) {
             var x500BaseDn = cfg["DistinguishedBaseName"];
             ArgumentException.ThrowIfNullOrWhiteSpace(x500BaseDn, "DistinguishedBaseName");
 
@@ -21,7 +22,8 @@ namespace KdSoft.EtwEvents.AgentCommand
 
             _daysValid = cfg.GetValue<ushort>("DaysValid", 397);
             _rdns = GetX500Rdns(x500BaseDn, cfg.GetSection("Roles"));
-            _issuerCert = LoadX509Certificate(issuer);
+
+            _issuerCert = LoadX509Certificate(issuer, getPassword);
         }
 
         public X509Certificate2 IssuerCert => _issuerCert;
@@ -104,25 +106,16 @@ namespace KdSoft.EtwEvents.AgentCommand
             return result;
         }
 
-        static X509Certificate2 LoadX509Certificate(IConfigurationSection cfg) {
+        X509Certificate2 LoadX509Certificate(IConfigurationSection cfg, Func<string?> getPassword) {
             var path = cfg["Path"];
             var keypath = cfg["KeyPath"];
-            var pwd = cfg["Password"];
             if (!string.IsNullOrEmpty(path)) {
-                return CertUtils.LoadCertificate(path, keypath, pwd);
+                string? pwd = getPassword();
+                var cert = CertUtils.LoadCertificate(path, keypath, pwd);
+                pwd = null;
+                return cert;
             }
-
-            if (!Enum.TryParse<StoreLocation>(cfg["Location"], out var storeLocation))
-                storeLocation = StoreLocation.LocalMachine;
-            if (!Enum.TryParse<StoreName>(cfg["Store"], out var storeName))
-                storeName = StoreName.My;
-            var thumbprint = cfg["Thumbprint"] ?? "";
-            var subject = cfg["Subject"] ?? "";
-            var cert = CertUtils.GetCertificate(storeName, storeLocation, thumbprint, subject);
-            if (cert is null) {
-                throw new ArgumentException("Cannot find certificate for given parameters.", nameof(cfg));
-            }
-            return cert;
+            throw new ArgumentException("Missing issuer certificate path.", nameof(cfg));
         }
 
         public X509Certificate2 CreateClientCertificate(string commonName, string? email, DateTimeOffset startDate = default, ushort? daysValid = null) {
@@ -133,7 +126,14 @@ namespace KdSoft.EtwEvents.AgentCommand
             CertUtils.WriteRelativeNames(rdns, writer);
             var x500Dn = new X500DistinguishedName(writer.Encode());
 
-            return CertUtils.CreateClientCertificate(_issuerCert, x500Dn, startDate, daysValid ?? _daysValid);
+            using var key = CertUtils.CreateAsymmetricKey(_issuerCert);
+            var request = CertUtils.CreateCertificateRequest(x500Dn, key);
+            using var cert = CertUtils.CreateClientCertificate(request, _issuerCert, startDate, daysValid ?? _daysValid);
+
+            if (key is RSA rsa) {
+                return cert.CopyWithPrivateKey(rsa);
+            }
+            return cert.CopyWithPrivateKey((ECDsa)key);
         }
 
         public void Dispose() => _issuerCert?.Dispose();
