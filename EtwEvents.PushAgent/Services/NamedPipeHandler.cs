@@ -41,12 +41,17 @@ namespace KdSoft.EtwEvents.PushAgent
             return new NamedMessagePipeServer(pipeName, "default", shutdownToken, -1, pipeSecurity);
         }
 
-        public ValueTask WriteMessage(NamedMessagePipeServer pipe, string msg) {
-            using var memOwner = MemoryPool<byte>.Shared.Rent(1024);
-            var buffer = memOwner.Memory.Span;
+        int WriteToBuffer(Memory<byte> memory, string msg) {
+            var buffer = memory.Span;
             var count = Encoding.UTF8.GetBytes(msg, buffer);
             buffer[count++] = 0;
-            return pipe.Stream.WriteAsync(memOwner.Memory);
+            return count;
+        }
+
+        public async ValueTask WriteMessage(NamedMessagePipeServer pipe, string msg) {
+            using var memOwner = MemoryPool<byte>.Shared.Rent(1024);
+            var count = WriteToBuffer(memOwner.Memory, msg);
+            await pipe.Stream.WriteAsync(memOwner.Memory.Slice(0, count));
         }
 
         public async ValueTask ProcessPipeMessages(CancellationToken shutdownToken) {
