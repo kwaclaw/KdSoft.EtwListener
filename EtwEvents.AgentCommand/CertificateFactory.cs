@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace KdSoft.EtwEvents.AgentCommand
 {
-    class CertificateFactory
+    class CertificateFactory: IDisposable
     {
         readonly List<Rdn> _rdns;
         readonly X509Certificate2 _issuerCert;
@@ -135,5 +135,7 @@ namespace KdSoft.EtwEvents.AgentCommand
 
             return CertUtils.CreateClientCertificate(_issuerCert, x500Dn, startDate, daysValid ?? _daysValid);
         }
+
+        public void Dispose() => _issuerCert?.Dispose();
     }
 }

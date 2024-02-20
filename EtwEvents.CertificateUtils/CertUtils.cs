@@ -312,22 +312,14 @@ namespace KdSoft.EtwEvents
                 var privateKey = GetPrivateKey(cert, out var isRSA);
                 if (privateKey is not null) {
                     if (isRSA && privateKey is RSA rsaKey) {
-                        rsaKey.ExportParameters(true);
-                        var rsaKeyPEM = PemEncoding.Write("RSA PRIVATE KEY", rsaKey.ExportRSAPrivateKey());
-                        //var rsaKeyPEM = PemEncoding.Write("RSA PRIVATE KEY", rsaKey.ExportPkcs8PrivateKey());
-                        builder.Append(rsaKeyPEM).AppendLine();
+                        builder.Append(rsaKey.ExportPkcs8PrivateKeyPem()).AppendLine();
                     }
                     else if (privateKey is ECDsa ecdsaKey) {
-                        ecdsaKey.ExportParameters(true);
-                        ecdsaKey.ExportExplicitParameters(true);
-                        var ecdsaKeyPEM = PemEncoding.Write("ECP PRIVATE KEY", ecdsaKey.ExportECPrivateKey());
-                        //var ecdsaKeyPEM = PemEncoding.Write("ECP PRIVATE KEY", ecdsaKey.ExportPkcs8PrivateKey());
-                        builder.Append(ecdsaKeyPEM).AppendLine();
+                        builder.Append(ecdsaKey.ExportPkcs8PrivateKeyPem()).AppendLine();
                     }
                 }
             }
-            var certPEM = PemEncoding.Write("CERTIFICATE", cert.GetRawCertData());
-            builder.Append(certPEM);
+            builder.Append(cert.ExportCertificatePem());
         }
 
         /// <summary>
@@ -424,7 +416,6 @@ namespace KdSoft.EtwEvents
         }
 
         public static void GetRelativeNameValues(this X500DistinguishedName distinguishedName, Oid oid, List<string> values) {
-            var result = new List<string>();
             var rdns = distinguishedName.GetRelativeNames();
             foreach (var rdn in rdns) {
                 foreach (var att in rdn.Attributes) {

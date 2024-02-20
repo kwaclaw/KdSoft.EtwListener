@@ -33,7 +33,7 @@ packages/
 
 node_modules/
 
-*/deploy/publish/
+publish/
 out/
 dev/
 _tmp/
