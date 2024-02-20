@@ -101,7 +101,7 @@ namespace KdSoft.EtwEvents.AgentManager
             var roles = cert.GetSubjectRoles();
             foreach (var role in roles) {
                 switch (role) {
-                    case "etw-pushagent":
+                    case "etw-agent":
                         roleSet.Add(Role.Agent);
                         break;
                     case "etw-manager":
@@ -303,7 +303,7 @@ namespace KdSoft.EtwEvents.AgentManager
         //            // get role from certificate
         //            string? certRole = clientCert.GetSubjectRole()?.ToLowerInvariant();
         //            if (certRole != null) {
-        //                if (certRole.Equals("etw-pushagent")) {
+        //                if (certRole.Equals("etw-agent")) {
         //                    roleSet.Add(Role.Agent);
         //                }
         //                else if (certRole.Equals("etw-manager")) {

@@ -33,7 +33,7 @@ One of these applies (when prompted by the browser):
 
 One of these applies:
 
-- Use a client certificate where the subject (DN) includes "role=etw-pushagent".
+- Use a client certificate where the subject (DN) includes "role=etw-agent".
 - Use a client certificate where the Common Name (CN) is listed in authorization.json under AgentValidation.
 
 ### Local Configuration

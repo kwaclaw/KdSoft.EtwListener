@@ -52,7 +52,7 @@
 
 The User and the ETW PushAgent authenticate themselves to the AgentManager using client certificates.
 - The client certificate must be configured to support client authorization.
-- The client certificate presented by the PushAgent will be authorized if the DN contains role=etw-pushagent.
+- The client certificate presented by the PushAgent will be authorized if the DN contains role=etw-agent.
 - The client certificate presented by the User will be authorized if the DN contains role=etw-manager.
 - If the client certificate does not have the appropriate role, it can be authorized by having its common name listed
   in the AuthorizedCommonNames setting of the AgentManager's `authorization.json` file:
@@ -65,7 +65,7 @@ The User and the ETW PushAgent authenticate themselves to the AgentManager using
     ]
   },
   "AgentValidation": {
-    // this is only checked when the agent's certificate does not have role=etw-pushagent
+    // this is only checked when the agent's certificate does not have role=etw-agent
     "AuthorizedCommonNames": []
   },
   // when specified then we only accept certificates derived from this root certificate

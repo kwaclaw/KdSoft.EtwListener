@@ -8,7 +8,7 @@
      - The client certificate must be copied into this directory (once unzipped).
      - The certificate must be a PKCS12 certificate with a `.p12` file extension.
      - One of these applies:
-        - Use a client certificate where the subject (DN) includes "role=etw-pushagent" 
+        - Use a client certificate where the subject (DN) includes "role=etw-agent" 
         - Use a client certificate where the Common Name (CN) is listed in the Agent Manager's authorization.json under AgentValidation
      - The installer will import any matching client certificates it can find in this directory.
      - Note: On install, the Control::ClientCertificate::SubjectCN property in appsettings.Local.json will be set to the last imported client certificate's Common Name'.

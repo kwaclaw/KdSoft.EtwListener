@@ -33,7 +33,7 @@ namespace KdSoft.EtwEvents.Tests
                 ClientCertificate = new Kdp.ClientCertOptions {
                     Location = StoreLocation.LocalMachine,
                     SubjectCN = "XXXX",
-                    SubjectRole = "etw-pushagent"
+                    SubjectRole = "etw-agent"
                 }
             };
             var filesPath = Path.Combine(TestUtils.ProjectDir!, "Files");
@@ -68,7 +68,7 @@ namespace KdSoft.EtwEvents.Tests
                 ClientCertificate = new Kdp.ClientCertOptions {
                     Location = StoreLocation.LocalMachine,
                     SubjectCN = "XXXX",
-                    SubjectRole = "etw-pushagent"
+                    SubjectRole = "etw-agent"
                 }
             };
             var filesPath = Path.Combine(TestUtils.ProjectDir!, "Files");

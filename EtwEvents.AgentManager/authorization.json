@@ -8,7 +8,7 @@
       ]
     },
     "AgentValidation": {
-      // this is only checked when the agent's certificate does not have role=etw-pushagent
+      // this is only checked when the agent's certificate does not have role=etw-agent
       "AuthorizedCommonNames": []
     },
     // when specified then we only accept certificates derived from that root certificate

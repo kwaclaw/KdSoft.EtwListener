@@ -20,7 +20,7 @@ INSTALL USING POWERSHELL
   - Update the current `appsettings.Local.json` file if changes are desired.
 - Check that the proper client certificate for the site is copied to the deploy directory (see [Client Authentication](#client-authentication) below).
   - It must include the private key, and it must be a PKCS12 encoded file with the ".p12" file extension.
-  - It should have the role attribute (OID: 2.5.4.72): "etw-pushagent" .
+  - It should have the role attribute (OID: 2.5.4.72): "etw-agent" .
   - It must be signed by a root/intermediate certificate accessible to the PushAgent installation.
     - If custom root/intermediate certificates need to be installed as well, then they must be copied to the deploy directory too.
     - They must **not** contain the private key, and their file extension must be ".cer".
@@ -52,7 +52,7 @@ INSTALL USING POWERSHELL
 
 The ETW PushAgent authenticates itself to the AgentManager using a client certificate.
 - The client certificate must be configured to support client authorization.
-- The client certificate presented by the PushAgent will be authorized if the DN contains role=etw-pushagent.
+- The client certificate presented by the PushAgent will be authorized if the DN contains role=etw-agent.
 - If the client certificate does not have the role above, it can be authorized by being listed in the AuthorizedCommonNames setting of the AgentManager.
 - To create client certificates, check the scripts in the `EtwEvents.PushAgent/certificates` folder.
   - They need to be modified for the individual install scenario.
@@ -77,7 +77,7 @@ When a certificate is provided, then the installer will set the certificate's Su
     "Uri": "https://agent-manager.kd-soft.net:5300",
     "ClientCertificate": {
       "Location": "LocalMachine",
-      "SubjectRole": "etw-pushagent", (optional)
+      "SubjectRole": "etw-agent", (optional)
       "SubjectCN": "XXXX..." (optional)
     }
 ```

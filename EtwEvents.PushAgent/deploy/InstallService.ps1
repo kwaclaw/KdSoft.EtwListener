@@ -221,7 +221,7 @@ function Update-MergedAppSettings {
         $jsonObject.Control.ClientCertificate | Add-Member -Force -MemberType NoteProperty -Name 'SubjectCN' -Value $subjectCN
     } else {
         # if no client certificate is supplied, we add the SubjectRole property so that an already installed certificate can be matched
-        $jsonObject.Control.ClientCertificate | Add-Member -Force -MemberType NoteProperty -Name 'SubjectRole' -Value 'etw-pushagent'
+        $jsonObject.Control.ClientCertificate | Add-Member -Force -MemberType NoteProperty -Name 'SubjectRole' -Value 'etw-agent'
     }
 
     Save-JsonObject $jsonFile $jsonObject
@@ -247,8 +247,8 @@ Write-Host Checking PKCS12 certificates
 $clientCert = $null
 foreach ($clientCertFile in Get-ChildItem -Path . -Filter '*.p12') {
     $role, $clientCert = Import-Cert $clientCertFile Cert:\localMachine\my
-    if ($role -eq 'etw-pushagent') {
-        Write-Host Imported certificate $clientCertFile with role 'etw-pushagent'
+    if ($role -eq 'etw-agent') {
+        Write-Host Imported certificate $clientCertFile with role 'etw-agent'
     } elseif ($clientCert) {
         Write-Host Imported certificate $clientCertFile
     } else {
