@@ -489,53 +489,70 @@ namespace KdSoft.EtwEvents
             extensions.Add(new X509SubjectKeyIdentifierExtension(publicKey, false));
         }
 
+        /// <summary>
+        /// Creates an asymmetric key compatible with a given issuer certificate.
+        /// </summary>
+        /// <param name="issuer">Certificate to derive key from.</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        public static AsymmetricAlgorithm CreateAsymmetricKey(X509Certificate2 issuer) {
+            using var issuerRSAKey = issuer.GetRSAPublicKey();
+            if (issuerRSAKey is not null) {
+                return RSA.Create();
+            }
+            using var issuerECDsaKey = issuer.GetECDsaPublicKey();
+            if (issuerECDsaKey is not null) {
+                return ECDsa.Create(issuerECDsaKey.ExportParameters(false).Curve);
+            }
+            throw new ArgumentException("Issuer certificate does not have an acceptable public key.", nameof(issuer));
+        }
+
+        /// <summary>
+        /// Creates a certificate request for the given Subject Distinguished Name and asymmetric key.
+        /// </summary>
+        public static CertificateRequest CreateCertificateRequest(X500DistinguishedName subjectName, AsymmetricAlgorithm key) {
+            if (key is RSA rsa)
+                return new CertificateRequest(subjectName, rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            else if (key is ECDsa ecdsa)
+                return new CertificateRequest(subjectName, ecdsa, HashAlgorithmName.SHA384);
+            throw new ArgumentException("Key is not of acceptable type.", nameof(key));
+        }
+
+        /// <summary>
+        /// Creates a certificate from a given request and issuer.
+        /// </summary>
         public static X509Certificate2 CreateCertificate(
+            CertificateRequest request,
             X509Certificate2 issuer,
-            X500DistinguishedName subjectName,
-            Action<CertificateRequest> modifyRequest,
             DateTimeOffset startDate = default,
             ushort daysValid = 398
         ) {
-            if (startDate == default)
-                startDate = DateTimeOffset.UtcNow;
-
-            // the issuer certificate public key algorithm must match the value for the certificate request
-            CertificateRequest request;
-            var issuerRSAKey = issuer.GetRSAPublicKey();
-            if (issuerRSAKey != null) {
-                var key = RSA.Create(issuerRSAKey.ExportParameters(false));
-                request = new CertificateRequest(subjectName, key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-            }
-            else if (issuer.GetECDsaPublicKey() is ECDsa issuerECDsaKey) {
-                var key = ECDsa.Create(issuerECDsaKey.ExportParameters(false));
-                request = new CertificateRequest(subjectName, key, HashAlgorithmName.SHA384);
-            }
-            else {
-                throw new ArgumentException("Issuer certificate does not have acceptable public key.", nameof(issuer));
-            }
-
-            modifyRequest(request);
-
             Span<byte> serialNumber = stackalloc byte[8];
             RandomNumberGenerator.Fill(serialNumber);
 
-            return request.Create(issuer, startDate, startDate.AddDays(daysValid), serialNumber);
+            if (startDate == default)
+                startDate = DateTimeOffset.UtcNow;
+            var notBefore = startDate < issuer.NotBefore ? issuer.NotBefore : startDate;
+
+            return request.Create(issuer, notBefore, notBefore.AddDays(daysValid), serialNumber);
         }
 
-        public static X509Certificate2 CreateServerCertificate(X509Certificate2 issuer, X500DistinguishedName subjectName, DateTimeOffset startDate = default, ushort daysValid = 398) {
-            Action<CertificateRequest> modifyRequest = (request) => {
-                var subjectAltName = subjectName.GetRelativeNameValue(Oid.FromFriendlyName("CN", OidGroup.Attribute));
-                AddServerExtensions(request.CertificateExtensions, subjectAltName, request.PublicKey);
-            };
-            return CreateCertificate(issuer, subjectName, modifyRequest, startDate, daysValid);
+        /// <summary>
+        /// Creates a certificate usable for a server from a given request and issuer.
+        /// </summary>
+        public static X509Certificate2 CreateServerCertificate(CertificateRequest request, X509Certificate2 issuer, DateTimeOffset startDate = default, ushort daysValid = 398) {
+            var subjectAltName = request.SubjectName.GetRelativeNameValue(Oid.FromFriendlyName("CN", OidGroup.Attribute));
+            AddServerExtensions(request.CertificateExtensions, subjectAltName, request.PublicKey);
+            return CreateCertificate(request, issuer, startDate, daysValid);
         }
 
-        public static X509Certificate2 CreateClientCertificate(X509Certificate2 issuer, X500DistinguishedName subjectName, DateTimeOffset startDate = default, ushort daysValid = 398) {
-            Action<CertificateRequest> modifyRequest = (request) => {
-                var email = subjectName.GetRelativeNameValue(Oid.FromFriendlyName("email", OidGroup.Attribute));
-                AddClientExtensions(request.CertificateExtensions, email, request.PublicKey);
-            };
-            return CreateCertificate(issuer, subjectName, modifyRequest, startDate, daysValid);
+        /// <summary>
+        /// Creates a certificate usable for client authentication from a given request and issuer.
+        /// </summary>
+        public static X509Certificate2 CreateClientCertificate(CertificateRequest request, X509Certificate2 issuer, DateTimeOffset startDate = default, ushort daysValid = 398) {
+            var email = request.SubjectName.GetRelativeNameValue(Oid.FromFriendlyName("email", OidGroup.Attribute));
+            AddClientExtensions(request.CertificateExtensions, email, request.PublicKey);
+            return CreateCertificate(request, issuer, startDate, daysValid);
         }
     }
 }

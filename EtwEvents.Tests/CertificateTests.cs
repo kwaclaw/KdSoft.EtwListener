@@ -244,7 +244,10 @@ namespace KdSoft.EtwEvents.Tests
             var caFile = Path.Combine(filesDir.FullName, "Kd-Soft.crt");
             var keyFile = Path.Combine(filesDir.FullName, "Kd-Soft.key");
             var caCert = X509Certificate2.CreateFromPemFile(caFile, keyFile);
-            var cert = CertUtils.CreateServerCertificate(caCert, x500Name);
+
+            var key = CertUtils.CreateAsymmetricKey(caCert);
+            var request = CertUtils.CreateCertificateRequest(x500Name, key);
+            var cert = CertUtils.CreateServerCertificate(request, caCert);
 
             var chain = new X509Chain { ChainPolicy = CertUtils.GetServerCertPolicy() };
             WriteCertificateInfo(cert, chain);
@@ -254,7 +257,9 @@ namespace KdSoft.EtwEvents.Tests
             var caCerts = new X509Certificate2Collection();
             caCerts.Import(caFile, "dummy");
 
-            cert = CertUtils.CreateServerCertificate(caCerts.Last(), x500Name);
+            key = CertUtils.CreateAsymmetricKey(caCerts.Last());
+            request = CertUtils.CreateCertificateRequest(x500Name, key);
+            cert = CertUtils.CreateServerCertificate(request, caCerts.Last());
 
             var chainPolicy = CertUtils.GetServerCertPolicy();
             // we assume the signing certificates in the chain are not installed
@@ -278,7 +283,10 @@ namespace KdSoft.EtwEvents.Tests
             var caFile = Path.Combine(filesDir.FullName, "Kd-Soft.crt");
             var keyFile = Path.Combine(filesDir.FullName, "Kd-Soft.key");
             var caCert = X509Certificate2.CreateFromPemFile(caFile, keyFile);
-            var cert = CertUtils.CreateClientCertificate(caCert, x500Name);
+
+            var key = CertUtils.CreateAsymmetricKey(caCert);
+            var request = CertUtils.CreateCertificateRequest(x500Name, key);
+            var cert = CertUtils.CreateClientCertificate(request, caCert);
 
             var chain = new X509Chain { ChainPolicy = CertUtils.GetClientCertPolicy() };
             WriteCertificateInfo(cert, chain);
@@ -288,7 +296,9 @@ namespace KdSoft.EtwEvents.Tests
             var caCerts = new X509Certificate2Collection();
             caCerts.Import(caFile, "dummy");
 
-            cert = CertUtils.CreateClientCertificate(caCerts.Last(), x500Name);
+            key = CertUtils.CreateAsymmetricKey(caCerts.Last());
+            request = CertUtils.CreateCertificateRequest(x500Name, key);
+            cert = CertUtils.CreateClientCertificate(request, caCerts.Last());
 
             var chainPolicy = CertUtils.GetClientCertPolicy();
             // we assume the signing certificates in the chain are not installed
