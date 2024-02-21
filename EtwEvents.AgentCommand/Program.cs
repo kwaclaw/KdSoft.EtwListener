@@ -61,11 +61,16 @@ if (string.IsNullOrWhiteSpace(command)) {
 }
 
 try {
-    using var namedPipeClient = await NamedMessagePipeClient.ConnectAsync(host, "KdSoft.EtwEvents.PushAgent", "default");
-    var cts = new CancellationTokenSource(10000);
+    if (!TimeSpan.TryParse(cfg["ConnectTimeout"], out var connectTimeout))
+        connectTimeout = TimeSpan.FromSeconds(10);
+    using var cts = new CancellationTokenSource(connectTimeout);
+    using var namedPipeClient = await NamedMessagePipeClient.ConnectAsync(host, "KdSoft.EtwEvents.PushAgent", "default", cancelToken: cts.Token);
     var messageTask = ReadNamedPipeMessages(namedPipeClient, cts.Token);
     await ExecuteCommand(namedPipeClient, command);
     await messageTask;
+}
+catch (OperationCanceledException) {
+    Console.WriteLine($"Timeout communicating with host '{host}'.");
 }
 catch (Exception ex) {
     ShowUsage(ex.Message);
