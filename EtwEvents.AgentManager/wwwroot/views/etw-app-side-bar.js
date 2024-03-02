@@ -170,7 +170,7 @@ class EtwAppSideBar extends LitMvvmElement {
         const oldActiveAgentId = this.model.activeAgentId;
         const selEntry = this.agentChecklistModel.firstSelectedEntry;
         const selAgent = selEntry?.item;
-        this.model.activeAgentId = selAgent?.state.id;
+        this.model.activeAgentId = selAgent?.state.id.toLowerCase();
         if (oldActiveAgentId !== this.model.activeAgentId) {
           this.model.stopEtwEvents();
         }
