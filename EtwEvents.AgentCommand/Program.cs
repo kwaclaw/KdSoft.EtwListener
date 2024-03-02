@@ -92,6 +92,7 @@ void ShowUsage(string message) {
     Console.WriteLine("\t\tstop");
     Console.WriteLine("\t\tnew-cert --site-name <site name> [--site-email <contact email>]");
     Console.WriteLine("\t\tset-control (uses \"Control\" section in config file)");
+    Console.WriteLine("\t\tset-options --site-options <options file> (as exported from agent manager)");
 }
 
 async Task ExecuteCommand(NamedMessagePipeClient pipeClient, string command) {
@@ -142,6 +143,26 @@ async Task ExecuteCommand(NamedMessagePipeClient pipeClient, string command) {
                 };
                 var controlJson = controlNode.ToJsonString(jsonOptions);
                 await WriteNamedPipeMessage(pipeClient, $"SetControlOptions:{controlJson}");
+            }
+            catch (Exception ex) {
+                ShowUsage(ex.Message);
+            }
+            break;
+
+        case "set-options":
+            try {
+                var optionsFile = cfg["site-options"];
+                if (string.IsNullOrEmpty(optionsFile)) {
+                    ShowUsage("Missing site-options.");
+                    break;
+                }
+                optionsFile = Environment.ExpandEnvironmentVariables(optionsFile);
+                if (!File.Exists(optionsFile)) {
+                    ShowUsage($"File does not exist: {optionsFile}.");
+                    break;
+                }
+                var optionsJson = File.ReadAllText(optionsFile);
+                await WriteNamedPipeMessage(pipeClient, $"ApplyAgentOptions:{optionsJson}");
             }
             catch (Exception ex) {
                 ShowUsage(ex.Message);

@@ -2,7 +2,7 @@
   "profiles": {
     "EtwEvents.AgentCommand": {
       "commandName": "Project",
-      "commandLineArgs": "--host=abrakafdabra"
+      "commandLineArgs": "--config=\"appsettings.json\" --host .  --cmd set-options --site-options=\"D:\\Downloads\\TestSite1.command2.json\""
     }
   }
 }
