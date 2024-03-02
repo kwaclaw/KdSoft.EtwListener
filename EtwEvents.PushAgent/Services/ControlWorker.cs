@@ -129,6 +129,11 @@ namespace KdSoft.EtwEvents.PushAgent
                     break;
 
                 case Constants.SetControlOptionsEvent:
+                    if (string.IsNullOrEmpty(cevt.Data)) {
+                        if (pipe is not null)
+                            await TrySendPipeMessage(pipe, $"Invalid request: Control Options Missing");
+                        return;
+                    }
                     await SetControlOptions(cevt.Data, pipe).ConfigureAwait(false);
                     return;
 
@@ -224,57 +229,15 @@ namespace KdSoft.EtwEvents.PushAgent
                     break;
 
                 case Constants.ApplyAgentOptionsEvent:
-                    var agentOptions = string.IsNullOrEmpty(cevt.Data)
-                        ? null
-                        : cevt.Data.ToProtoMessage<AgentOptions>();
-                    if (agentOptions == null)
+                    if (string.IsNullOrEmpty(cevt.Data)) {
+                        if (pipe is not null)
+                            await TrySendPipeMessage(pipe, $"Invalid request: Agent Options Missing");
                         return;
-
-                    var applyResult = new ApplyAgentOptionsResult();
-
-                    if (agentOptions.HasEnabledProviders) {
-                        var providerSettings = agentOptions.EnabledProviders;
-                        if (worker == null) {
-                            _sessionConfig.SaveProviderSettings(providerSettings);
-                        }
-                        else {
-                            worker.UpdateProviders(providerSettings);
-                        }
                     }
-
-                    var processingOptions = agentOptions.ProcessingOptions;
-                    if (processingOptions != null) {
-                        // if we are not running, lets treat this like a filter test with saving
-                        if (worker == null) {
-                            filterResult = SessionWorker.TestFilter(processingOptions.Filter ?? new Filter());
-                            var processingState = new ProcessingState {
-                                FilterSource = filterResult.FilterSource,
-                            };
-                            var saveFilterSource = filterResult.Diagnostics.Count == 0; // also true when clearing filter
-                            _sessionConfig.SaveProcessingState(processingState, saveFilterSource);
-                        }
-                        else {
-                            filterResult = worker.ApplyProcessingOptions(processingOptions);
-                        }
-                        applyResult.FilterResult = filterResult;
+                    var applyResult = await ApplyAgentOptions(cevt.Data, worker, pipe);
+                    if (!string.IsNullOrEmpty(cevt.Id)) {
+                        await PostProtoMessage($"Agent/ApplyAgentOptionsResult?eventId={cevt.Id}", applyResult).ConfigureAwait(false);
                     }
-
-                    if (agentOptions.HasEventSinkProfiles) {
-                        var eventSinkProfiles = agentOptions.EventSinkProfiles;
-                        if (worker == null) {
-                            _sessionConfig.SaveSinkProfiles(eventSinkProfiles);
-                        }
-                        else {
-                            await worker.UpdateEventChannels(eventSinkProfiles).ConfigureAwait(false);
-                        }
-                    }
-
-                    var liveViewOptions = agentOptions.LiveViewOptions;
-                    if (liveViewOptions != null) {
-                        _sessionConfig.SaveLiveViewOptions(liveViewOptions);
-                    }
-
-                    await PostProtoMessage($"Agent/ApplyAgentOptionsResult?eventId={cevt.Id}", applyResult).ConfigureAwait(false);
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
 
@@ -345,6 +308,77 @@ namespace KdSoft.EtwEvents.PushAgent
                 _lastCertInstall = new InstallCertResult { Error = CertificateError.Other, ErrorMessage = ex.Message, InstallTime = installTime };
             }
             return success;
+        }
+
+        async Task<ApplyAgentOptionsResult> ApplyAgentOptions(string optionsData, SessionWorker? worker, NamedMessagePipeServer? pipe) {
+            AgentOptions agentOptions;
+            try {
+                agentOptions = optionsData.ToProtoMessage<AgentOptions>();
+            }
+            catch(Exception ex) {
+                if (pipe is not null)
+                    await TrySendPipeMessage(pipe, $"Invalid data format: Agent Options");
+                throw;
+            }
+
+            bool applied = false;
+            try {
+                var applyResult = new ApplyAgentOptionsResult();
+
+                if (agentOptions.HasEnabledProviders) {
+                    var providerSettings = agentOptions.EnabledProviders;
+                    if (worker == null) {
+                        _sessionConfig.SaveProviderSettings(providerSettings);
+                    }
+                    else {
+                        worker.UpdateProviders(providerSettings);
+                    }
+                }
+
+                var processingOptions = agentOptions.ProcessingOptions;
+                if (processingOptions != null) {
+                    BuildFilterResult filterResult;
+                    // if we are not running, lets treat this like a filter test with saving
+                    if (worker == null) {
+                        filterResult = SessionWorker.TestFilter(processingOptions.Filter ?? new Filter());
+                        var processingState = new ProcessingState {
+                            FilterSource = filterResult.FilterSource,
+                        };
+                        var saveFilterSource = filterResult.Diagnostics.Count == 0; // also true when clearing filter
+                        _sessionConfig.SaveProcessingState(processingState, saveFilterSource);
+                    }
+                    else {
+                        filterResult = worker.ApplyProcessingOptions(processingOptions);
+                    }
+                    applyResult.FilterResult = filterResult;
+                }
+
+                if (agentOptions.HasEventSinkProfiles) {
+                    var eventSinkProfiles = agentOptions.EventSinkProfiles;
+                    if (worker == null) {
+                        _sessionConfig.SaveSinkProfiles(eventSinkProfiles);
+                    }
+                    else {
+                        await worker.UpdateEventChannels(eventSinkProfiles).ConfigureAwait(false);
+                    }
+                }
+
+                var liveViewOptions = agentOptions.LiveViewOptions;
+                if (liveViewOptions != null) {
+                    _sessionConfig.SaveLiveViewOptions(liveViewOptions);
+                }
+
+                applied = true;
+                return applyResult;
+            }
+            catch {
+                applied = false;
+                throw;
+            }
+            finally {
+                if (pipe is not null)
+                    await TrySendPipeMessage(pipe, $"Agent Options Applied: {applied}");
+            }
         }
 
         async Task SetControlOptions(string? controlData, NamedMessagePipeServer? pipe) {
