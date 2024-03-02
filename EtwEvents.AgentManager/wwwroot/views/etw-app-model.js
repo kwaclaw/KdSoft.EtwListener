@@ -664,6 +664,20 @@ class EtwAppModel {
     this.setAgentState(entry, utils.clone(entry.current));
   }
 
+  async getAllOptionsAsCommand(agentState) {
+    if (!agentState) {
+      return;
+    }
+    const options = this.getAgentOptions(agentState);
+    try {
+      const optionsCommand = await this.fetcher.postJson('GetAgentOptionsCommand', { agentId: agentState.id }, options);
+      return optionsCommand;
+    }
+    catch (error) {
+      window.etwApp.defaultHandleError(error);
+    }
+  }
+
   //#endregion
 
   //#region Certificates

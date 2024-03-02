@@ -117,8 +117,10 @@ namespace KdSoft.EtwEvents.AgentManager
 
         IActionResult CompleteResponse(string eventId, string responseJson) {
             var agentId = User.Identity?.Name;
-            if (agentId == null)
+            if (agentId is null)
                 return Unauthorized();
+            if (eventId is null)
+                return Ok();
 
             var agentProxy = _agentProxyManager.ActivateProxy(agentId);
             bool success = agentProxy.CompleteResponse(eventId, responseJson);

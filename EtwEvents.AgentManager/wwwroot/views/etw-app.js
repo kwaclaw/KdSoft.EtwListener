@@ -222,6 +222,26 @@ class EtwApp extends LitMvvmElement {
     }
   }
 
+  async _exportAgentCommand(agentState) {
+    if (!agentState) {
+      return;
+    }
+    const exportObject = await this.model.getAllOptionsAsCommand(agentState);
+    const exportString = JSON.stringify(exportObject, null, 2);
+    const exportURL = `data:text/plain,${exportString}`;
+
+    const a = document.createElement('a');
+    try {
+      a.style.display = 'none';
+      a.href = exportURL;
+      a.download = `${agentState.id}.command.json`;
+      document.body.appendChild(a);
+      a.click();
+    } finally {
+      document.body.removeChild(a);
+    }
+  }
+
   _importAgentConfigDialog(e) {
     const fileDlg = e.currentTarget.parentElement.querySelector('input[type="file"]');
     // reset value so that @change event fires reliably
@@ -432,6 +452,9 @@ class EtwApp extends LitMvvmElement {
                     <i class="fas fa-file-import"></i>
                   </button>
                   <button class="ml-2 text-gray-300" @click=${() => this._exportAgentConfig(activeAgentState)} title="Export Configuration">
+                    <i class="fas fa-file-export"></i>
+                  </button>
+                  <button class="ml-2 text-blue-300" @click=${() => this._exportAgentCommand(activeAgentState)} title="Export As Command">
                     <i class="fas fa-file-export"></i>
                   </button>
 

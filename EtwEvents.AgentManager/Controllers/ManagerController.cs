@@ -1,6 +1,7 @@
 ﻿using System.Buffers;
 using System.Collections.Immutable;
 using System.Net;
+using System.Net.Mime;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -389,7 +390,6 @@ namespace KdSoft.EtwEvents.AgentManager
         }
 
         AgentOptions BuildAgentOptions(JsonElement rawOptions) {
-            var jsonSerializerOptions = _jsonOptions.Value.JsonSerializerOptions;
             var result = new AgentOptions();
 
             var enabledProviders = rawOptions.GetProperty("enabledProviders");
@@ -442,6 +442,13 @@ namespace KdSoft.EtwEvents.AgentManager
             }
 
             return result;
+        }
+
+        [HttpPost]
+        public ContentResult GetAgentOptionsCommand(string agentId, [FromBody] JsonElement rawOptions) {
+            var agentOptions = BuildAgentOptions(rawOptions);
+            var agentOptionsJson = _jsonFormatter.Format(agentOptions);
+            return Content(agentOptionsJson, new MediaTypeHeaderValue(MediaTypeNames.Application.Json));
         }
 
         [HttpPost]
