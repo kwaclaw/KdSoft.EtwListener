@@ -1,6 +1,6 @@
 INSTALL USING POWERSHELL
 
-## Prepare Install Package
+## Prepare Install Package (Alternative to MSI)
 
 - Open project EtwEvents.PushAgent and publish it using either the Platform or the SelfContained profile.
   - This will copy the published files to the `publish` folder in the `deploy` directory.

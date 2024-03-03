@@ -92,7 +92,7 @@ void ShowUsage(string message) {
     Console.WriteLine("\t\tstop");
     Console.WriteLine("\t\tnew-cert --site-name <site name> [--site-email <contact email>]");
     Console.WriteLine("\t\tset-control (uses \"Control\" section in config file)");
-    Console.WriteLine("\t\tset-options --site-options <options file> (as exported from agent manager)");
+    Console.WriteLine("\t\tset-options --site-options <options file> (\"Exported as Command\" from agent manager)");
 }
 
 async Task ExecuteCommand(NamedMessagePipeClient pipeClient, string command) {

@@ -13,6 +13,8 @@ An EtwListener deployment consists of two types of nodes:
 1. One or more agents: they are installed on each machine that needs log collection.
 2. One agent manager: it configures, starts and stops the agents.
 
+In addition, there is also a command line tool for remotely configuring, starting and stopping agent nodes.
+
 Agents communicate with the agent manager by establishing an SSE (Server Sent Events) connection to the configured agent manager. The agent manager in turn uses this connection to "push" control messages to the agents.
 
 - Some control messages update the agent's configuration or start/stop the agent.
@@ -39,7 +41,8 @@ Event sink components are currently available for:
 - [OpenSearch](https://opensearch.org/)
 - [MongoDB](https://www.mongodb.com/)
 - [Seq](https://datalust.co/seq)
-- [Azure HTTP Data Collector API](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/data-collector-api)
+- [Azure HTTP Data Collector API (deprecated)](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/data-collector-api)
+- [Azure LogsIngestion API](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/logs-ingestion-api-overview)
 - gRPC (needs a gRPC endpoint matching its protobuf definitions)
 - File System (implements a rolling file strategy)
 
@@ -66,7 +69,8 @@ The UI consists of two main sections, a side bar and a main pane for configurati
   - **Live View** display settings.
   
   All configurations settings can be applied to the running agent and will take effect as soon as possible.
-  Settings can be exported and importedfrom/to JSON files.
+  Settings (overall and individual) can be exported and importedfrom/to JSON files.
+  The overall settings for an agent can also be "exported as command", so they can be used by the command line tool.
 
 ![AgentManager.png](doc/AgentManager.png)
 
@@ -120,3 +124,6 @@ Occasionally, an agent's certificate will expire. When that time approaches a wa
   - If the file is PEM encoded then the private key must be unencrypted.
   - If the file is PKCS#12 encoded, then the password (for the private key) must be empty/blank.
   - Should a certificate not disappear from the the AgentCerts folder after a few minutes then check the AgentManager's current log file for the reason.
+
+  Alternatively, the command line tool (KdSoft.EtwEvents.AgentCommand.exe) can be used to generate and import a new certificate, as long as it can connect to the agent's host.
+  In this case, authentication and authorization is Windows based, and the user running the command line tool must be an administrator on the agent's host machine.
