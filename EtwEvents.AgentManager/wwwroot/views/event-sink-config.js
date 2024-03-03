@@ -21,6 +21,8 @@ function sinkConfigForm(sinkType) {
       return 'seq-sink-config';
     case 'DataCollectorSink':
       return 'data-collector-sink-config';
+    case 'LogsIngestionSink':
+      return 'logs-ingestion-sink-config';
     default:
       throw new Error(`No configuration form for '${sinkType}'.`);
   }
@@ -42,6 +44,8 @@ function sinkConfigModel(sinkType) {
       return 'seq-sink-config-model';
     case 'DataCollectorSink':
       return 'data-collector-sink-config-model';
+    case 'LogsIngestionSink':
+      return 'logs-ingestion-sink-config-model';
     default:
       throw new Error(`No configuration model for '${sinkType}'.`);
   }

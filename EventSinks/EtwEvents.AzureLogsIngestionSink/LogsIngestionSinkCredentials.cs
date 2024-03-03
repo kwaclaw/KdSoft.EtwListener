@@ -13,7 +13,7 @@
         public UsernamePasswordSettings? UsernamePassword { get; set; }
 
         public class ClientSecretSettings(string clientSecret) {
-            public string ClientSecret { get; set; } = clientSecret;
+            public string Secret { get; set; } = clientSecret;
         }
 
         public class ClientCertificateSettings {

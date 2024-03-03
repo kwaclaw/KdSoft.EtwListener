@@ -33,7 +33,7 @@ namespace KdSoft.EtwEvents.EventSinks
             }
 
             if (creds.ClientSecret is not null) {
-                return new ClientSecretCredential(creds.TenantId, creds.ClientId, creds.ClientSecret.ClientSecret);
+                return new ClientSecretCredential(creds.TenantId, creds.ClientId, creds.ClientSecret.Secret);
             }
 
             if (creds.ClientCertificate is not null) {
@@ -45,7 +45,7 @@ namespace KdSoft.EtwEvents.EventSinks
                 return new UsernamePasswordCredential(creds.UsernamePassword.Username, creds.UsernamePassword.Password, creds.TenantId, creds.ClientId);
             }
 
-            throw new InvalidOperationException("TenantId and ClientId must both be either empty or non-empty.");
+            throw new InvalidOperationException("No acceptable credentials found.");
         }
 
         public Task<IEventSink> Create(LogsIngestionSinkOptions options, LogsIngestionSinkCredentials creds, IEventSinkContext context) {
