@@ -110,7 +110,7 @@ class LogsIngestionSinkConfig extends LitMvvmElement {
                 <label for="certificateKeyPem">Certificate Key Pem</label>
                 <textarea id="certificateKeyPem" name="certificateKeyPem" .value=${creds.clientCertificate.certificateKeyPem}></textarea>
                 <label for="certificateThumbPrint">Certificate ThumbPrint</label>
-                <input type="text" id="certificateThumbPrint" name="certificateThumbPrint" .value=${creds.clientCertificate.certificateThumbPrint}></input>
+                <input type="text" id="certificateThumbPrint" name="certificateThumbPrint" .value=${creds.clientCertificate.certificateThumbprint}></input>
                 <label for="certificateSubjectCN">Certificate SubjectCN</label>
                 <input type="text" id="certificateSubjectCN" name="certificateSubjectCN" .value=${creds.clientCertificate.certificateSubjectCN}></input>
               </div>
@@ -119,9 +119,9 @@ class LogsIngestionSinkConfig extends LitMvvmElement {
               <legend>User Credentials</legend>
               <div>
                 <label for="username">User Name</label>
-                <input type="text" id="username" name="username" .value=${creds.userNamePassword.username}></input>
+                <input type="text" id="username" name="username" .value=${creds.usernamePassword.username}></input>
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" .value=${creds.userNamePassword.password}></input>
+                <input type="password" id="password" name="password" .value=${creds.usernamePassword.password}></input>
               </div>
             </fieldset>
           </fieldset>

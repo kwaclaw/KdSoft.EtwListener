@@ -19,7 +19,7 @@ class LogsIngestionSinkConfigModel {
         certificateThumbprint: '',
         certificateSubjectCN: '',
       },
-      UsernamePassword: {
+      usernamePassword: {
         username: '',
         password: '',
       }
