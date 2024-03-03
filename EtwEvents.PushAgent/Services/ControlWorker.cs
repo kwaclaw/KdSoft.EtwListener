@@ -316,6 +316,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 agentOptions = optionsData.ToProtoMessage<AgentOptions>();
             }
             catch(Exception ex) {
+                _logger.LogError(ex, "Error parsing Agent Options.");
                 if (pipe is not null)
                     await TrySendPipeMessage(pipe, $"Invalid data format: Agent Options");
                 throw;
@@ -398,7 +399,8 @@ namespace KdSoft.EtwEvents.PushAgent
                 };
                 controlOptions = JsonSerializer.Deserialize<ControlOptions>(controlData, controlJsonOpts);
             }
-            catch {
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error parsing Control Options.");
                 if (pipe is not null)
                     await TrySendPipeMessage(pipe, $"Invalid data format: Control Options");
                 throw;
