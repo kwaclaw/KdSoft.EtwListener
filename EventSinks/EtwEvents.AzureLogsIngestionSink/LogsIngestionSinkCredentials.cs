@@ -1,10 +1,17 @@
 ﻿namespace KdSoft.EtwEvents.EventSinks
 {
     // See https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet
-    public class LogsIngestionSinkCredentials(string? tenantId = null, string? clientId = null)
+    public class LogsIngestionSinkCredentials
     {
-        public string? TenantId { get; set; } = tenantId;
-        public string? ClientId { get; set; } = clientId;
+        public LogsIngestionSinkCredentials() { }
+
+        public LogsIngestionSinkCredentials(string? tenantId = null, string? clientId = null) {
+            this.TenantId = tenantId;
+            this.ClientId = clientId;
+        }
+
+        public string? TenantId { get; set; }
+        public string? ClientId { get; set; }
 
         public ClientSecretSettings? ClientSecret { get; set; }
 
@@ -12,11 +19,13 @@
 
         public UsernamePasswordSettings? UsernamePassword { get; set; }
 
-        public class ClientSecretSettings(string clientSecret) {
-            public string Secret { get; set; } = clientSecret;
+        public class ClientSecretSettings {
+            public string Secret { get; set; } = "";
         }
 
         public class ClientCertificateSettings {
+            public ClientCertificateSettings() { }
+
             public ClientCertificateSettings(ReadOnlySpan<char> certPem) {
                 CertificatePem = new string(certPem);
             }
