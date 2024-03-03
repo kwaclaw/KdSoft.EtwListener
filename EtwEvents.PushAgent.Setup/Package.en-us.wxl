@@ -31,7 +31,7 @@ This file contains the declaration of all the localizable strings.
   <String Id="ConfigDlgCancelText" Value="Cancel" />
   <String Id="ConfigDlgBackText" Value="Back" />
 
-  <String Id="ServiceDisplayName" Value="ETW Events Agent" />
+  <String Id="ServiceDisplayName" Value="KdSoft ETW Agent" />
   <String Id="ServiceDescription" Value="Forwards ETW Events to an Event Sink" />
 
 </WixLocalization>

@@ -29,7 +29,7 @@
     <Component Id="ServiceComponent" Guid="{F0446A09-ABAF-4C90-AF96-46A62246745D}" Directory="INSTALLFOLDER">
       <File Id="ServiceExe" Source="../EtwEvents.PushAgent/deploy/publish/KdSoft.EtwEvents.PushAgent.exe" KeyPath="true"/>
 
-      <ServiceInstall Name="EtwEvents.PushAgent" DisplayName="!(loc.ServiceDisplayName)" Type="ownProcess" Description="!(loc.ServiceDescription)"
+      <ServiceInstall Name="KdSoft.EtwEvents.PushAgent" DisplayName="!(loc.ServiceDisplayName)" Type="ownProcess" Description="!(loc.ServiceDescription)"
                       Start="auto" ErrorControl="normal" Account="[QUALIFIED_SERVICE_ACCOUNT]" Password="[SERVICE_PASSWORD]">
         <util:ServiceConfig
             ResetPeriodInDays="1"
@@ -37,8 +37,9 @@
             SecondFailureActionType="restart"
             ThirdFailureActionType="restart"
             RestartServiceDelayInSeconds="6" />
+        <ServiceConfig DelayedAutoStart="yes" OnInstall="yes" OnReinstall="yes" />
       </ServiceInstall>
-      <ServiceControl Name="EtwEvents.PushAgent" Start="install" Stop="both" Remove="uninstall" Wait="yes" />
+      <ServiceControl Name="KdSoft.EtwEvents.PushAgent" Start="install" Stop="both" Remove="uninstall" Wait="yes" />
     </Component>
   </Fragment>
 </Wix>
