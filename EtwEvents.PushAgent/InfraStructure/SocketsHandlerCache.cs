@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using System.Security.Cryptography.X509Certificates;
+using Microsoft.Extensions.Options;
 
 namespace KdSoft.EtwEvents.PushAgent
 {
@@ -17,8 +18,12 @@ namespace KdSoft.EtwEvents.PushAgent
 
         SocketsHttpHandler CreateHandler() {
             var clientCerts = Utils.GetClientCertificates(_options.CurrentValue.ClientCertificate);
-            if (clientCerts.Count == 0)
-                throw new ArgumentException("Cannot find a client certificate based on specified options.", nameof(_options.CurrentValue.ClientCertificate));
+            if (clientCerts.Count == 0) {
+                var defaultCertOpts = new ClientCertOptions { SubjectCN = "kd-soft-default-client", Location = StoreLocation.LocalMachine };
+                clientCerts = Utils.GetClientCertificates(defaultCertOpts);
+                if (clientCerts.Count == 0)
+                    throw new ArgumentException("Cannot find the default client certificate.");
+            }
             return Utils.CreateHttpHandler(clientCerts.ToArray());
         }
 
