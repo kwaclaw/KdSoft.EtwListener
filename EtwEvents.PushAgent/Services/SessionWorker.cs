@@ -184,6 +184,10 @@ namespace KdSoft.EtwEvents.PushAgent
                 }
             }
 
+            if (isPersistent) {
+                _sessionConfig.SaveSinkProfile(sinkProfile);
+            }
+
             EventChannel CreateChannel(IEventSink eventSink) {
                 var batchSize = sinkProfile.BatchSize == 0 ? 100 : sinkProfile.BatchSize;
                 var maxWriteDelayMSecs = sinkProfile.MaxWriteDelayMSecs == 0 ? 400 : sinkProfile.MaxWriteDelayMSecs;
@@ -222,9 +226,6 @@ namespace KdSoft.EtwEvents.PushAgent
             }
             try {
                 newChannel = _eventProcessor.AddChannel(sinkProfile.Name, sinkProxy, CreateChannel);
-                if (isPersistent) {
-                    _sessionConfig.SaveSinkProfile(sinkProfile);
-                }
                 sinkProxy.Changed += () => {
                     if (_eventProcessor.ActiveEventChannels.ContainsKey(sinkProfile.Name)) {
                         var couldWrite = _controlChannel.Writer.TryWrite(ControlConnector.GetStateMessage);

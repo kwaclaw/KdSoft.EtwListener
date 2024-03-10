@@ -224,7 +224,6 @@ namespace KdSoft.EtwEvents.PushAgent
 
         bool SaveSessionState(EventSessionState state) {
             try {
-                //TODO add indentation to JSON once it is supported in Google.protobuf
                 var json = _jsonFormatter.Format(state);
                 SaveUtf8FileAtomic(EventSessionStatePath, json);
                 _sessionState = state;
@@ -289,7 +288,6 @@ namespace KdSoft.EtwEvents.PushAgent
                     }
                     clonedProfiles[profileEntry.Key] = clonedProfile;
                 }
-                //TODO add indentation to JSON once it is supported in Google.protobuf
                 var json = _jsonFormatter.Format(new EventSinkProfiles { Profiles = { clonedProfiles } });
                 SaveUtf8FileAtomic(EventSinkOptionsPath, json);
                 _sinkProfiles = new Dictionary<string, EventSinkProfile>(profiles, StringComparer.CurrentCultureIgnoreCase);
