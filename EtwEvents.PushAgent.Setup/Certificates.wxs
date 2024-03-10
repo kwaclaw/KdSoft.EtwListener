@@ -1,10 +1,16 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:iis="http://wixtoolset.org/schemas/v4/wxs/iis">
   <Fragment>
+    <Binary Id="RootCertFile" SourceFile="../EtwEvents.PushAgent/certificates/Kd-Soft.crt" />
+    <Binary Id="ClientCertFile" SourceFile="../EtwEvents.PushAgent/certificates/kd-soft-default-client.p12" />
     <ComponentGroup Id="Certificates" Directory="INSTALLFOLDER">
-      <!-- This always fails with "InstallCertificates:  Error 0x80070057: Invalid Certificate.Attributes." -->
-      <Component Id="ClientCertificateComponent" Guid="{A7DADB6E-6DC2-49B6-AA4B-46E5494ABC8C}" Condition="CLIENT_CERTIFICATE &lt;&gt; &quot;&quot;">
-        <iis:Certificate Id="EtwClientCert"  CertificatePath="[CLIENT_CERTIFICATE]" PFXPassword="[CLIENT_CERTIFICATE_PASSWORD]"
+      <Component Id="RootCertificateComponent" Guid="{7BA51EB3-0711-45D1-9394-B7C825FD5A8E}">
+        <!-- WiX bug: Using CertificatePath instead of BinaryRef will fail with "InstallCertificates:  Error 0x80070057: Invalid Certificate.Attributes." -->
+        <iis:Certificate Id="EtwRootCert" BinaryRef="RootCertFile"
+          Name="KdSoft Root Certificate" StoreLocation="localMachine" StoreName="root" Request="no" />
+      </Component>
+      <Component Id="ClientCertificateComponent" Guid="{A7DADB6E-6DC2-49B6-AA4B-46E5494ABC8C}">
+        <iis:Certificate Id="EtwClientCert" BinaryRef="ClientCertFile"
           Name="ETW PushAgent Client Certificate" StoreLocation="localMachine" StoreName="personal" Request="no" />
       </Component>
     </ComponentGroup>

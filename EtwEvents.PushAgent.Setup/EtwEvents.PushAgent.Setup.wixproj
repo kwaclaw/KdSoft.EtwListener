@@ -1,4 +1,4 @@
-﻿<Project Sdk="WixToolset.Sdk/4.0.3">
+﻿<Project Sdk="WixToolset.Sdk/4.0.4">
   <PropertyGroup>
     <SuppressSpecificWarnings>5150;5151;1076;1149</SuppressSpecificWarnings>
     <DefaultCompressionLevel>mszip</DefaultCompressionLevel>
