@@ -315,7 +315,7 @@ namespace KdSoft.EtwEvents.PushAgent
             try {
                 agentOptions = optionsData.ToProtoMessage<AgentOptions>();
             }
-            catch(Exception ex) {
+            catch (Exception ex) {
                 _logger.LogError(ex, "Error parsing Agent Options.");
                 if (pipe is not null)
                     await TrySendPipeMessage(pipe, $"Invalid data format: Agent Options");
@@ -657,14 +657,7 @@ namespace KdSoft.EtwEvents.PushAgent
         //TODO treat both, SSE connections and NamedPipes, as source of control events
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
-            ValueTask pipeTask;
-            try {
-                pipeTask = _pipeHandler.ProcessPipeMessages(stoppingToken);
-            }
-            catch (Exception ex) {
-                _logger.LogError(ex, "Failure starting NamedPipe server. Terminating service.");
-                return;
-            }
+            var pipeTask = _pipeHandler.ProcessPipeMessages(stoppingToken);
 
             try {
                 _controlOptionsListener = _controlOptions.OnChange(async opts => await ControlOptionsChanged(opts, stoppingToken).ConfigureAwait(false));
@@ -679,9 +672,14 @@ namespace KdSoft.EtwEvents.PushAgent
                 });
 
                 // start ControlConnector
-                var started = await _controlConnector.StartAsync(_controlOptions.CurrentValue, stoppingToken).ConfigureAwait(false);
-
-                if (started) {
+                bool controlConnectionStarted = false;
+                try {
+                    controlConnectionStarted = await _controlConnector.StartAsync(_controlOptions.CurrentValue, stoppingToken).ConfigureAwait(false);
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "Failure starting ControlConnector.");
+                }
+                if (controlConnectionStarted) {
                     try {
                         await SendStateUpdate().ConfigureAwait(false);
                     }
@@ -695,7 +693,7 @@ namespace KdSoft.EtwEvents.PushAgent
                 _cancelRegistration = default;
                 _controlOptionsListener?.Dispose();
                 _controlOptionsListener = null;
-                _logger.LogError(ex, "Failure starting ControlConnector. Terminating service.");
+                _logger.LogError(ex, "Failure starting NamedPipe server. Terminating service.");
                 return;
             }
 
