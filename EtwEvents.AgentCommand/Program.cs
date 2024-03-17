@@ -23,8 +23,9 @@ cfgBuilder.AddJsonFile(configFile, false);
 cfgBuilder.AddCommandLine(args);
 var cfg = cfgBuilder.Build();
 
-byte[] entropy = [ 23, 89, 222, 96, 144, 253, 99, 35, 11, 169, 73, 31, 2, 29, 47, 122 ];
+byte[] entropy = [23, 89, 222, 96, 144, 253, 99, 35, 11, 169, 73, 31, 2, 29, 47, 122];
 byte[] encryptedPwdBytes = [];
+char[] commandSeparators = [' ', ',', ';'];
 
 var pwdFile = cfg["IssuerCertificate:PasswordPath"];
 if (!string.IsNullOrWhiteSpace(pwdFile) && File.Exists(pwdFile)) {
@@ -53,24 +54,43 @@ if (string.IsNullOrWhiteSpace(host)) {
     return;
 }
 
-var command = cfg["cmd"];
-if (string.IsNullOrWhiteSpace(command)) {
-    ShowUsage("Missing command.");
+var commands = cfg["cmds"];
+if (string.IsNullOrWhiteSpace(commands)) {
+    ShowUsage("Missing commands.");
     Console.ReadLine();
     return;
 }
+var commandList = commands.Split(commandSeparators, StringSplitOptions.RemoveEmptyEntries);
 
 try {
     if (!TimeSpan.TryParse(cfg["ConnectTimeout"], out var connectTimeout))
-        connectTimeout = TimeSpan.FromSeconds(10);
+        connectTimeout = TimeSpan.FromSeconds(30);
     using var cts = new CancellationTokenSource(connectTimeout);
     using var namedPipeClient = await NamedMessagePipeClient.ConnectAsync(host, "KdSoft.EtwEvents.PushAgent", "default", cancelToken: cts.Token);
     var messageTask = ReadNamedPipeMessages(namedPipeClient, cts.Token);
-    await ExecuteCommand(namedPipeClient, command);
+    foreach (var command in commandList) {
+        bool success;
+        try {
+            success = await ExecuteCommand(namedPipeClient, command);
+            if (!success) {
+                Console.WriteLine($"{host}: Could not send command: {command}.");
+                continue;
+            }
+        }
+        catch (OperationCanceledException) {
+            Console.WriteLine($"{host}: Timeout communicating with host, could not send command {command}.");
+            continue;
+        }
+        catch (Exception ex) {
+            Console.WriteLine($"{host}: {ex}");
+            continue;
+        }
+    }
+
     await messageTask;
 }
 catch (OperationCanceledException) {
-    Console.WriteLine($"Timeout communicating with host '{host}'.");
+    Console.WriteLine($"{host}: Timeout communicating with host.");
 }
 catch (Exception ex) {
     ShowUsage(ex.Message);
@@ -78,16 +98,19 @@ catch (Exception ex) {
     return;
 }
 
-Console.ReadLine();
+#if DEBUG
+Console.WriteLine("Press any key to exit.");
+Console.ReadKey();
+#endif
 
 
 void ShowUsage(string message) {
     Console.WriteLine(message + Environment.NewLine);
-    Console.WriteLine("Usage: KdSoft.EtwEvents.AgentCommand.exe [options] --cmd <command> [commmand-options]");
+    Console.WriteLine("Usage: KdSoft.EtwEvents.AgentCommand.exe [options] --cmds <command list> [commmand-options]");
     Console.WriteLine("\tOptions:");
     Console.WriteLine("\t\t--cfg <config file> (optional, defaults to appsettings.json)");
     Console.WriteLine("\t\t--host <host to connect to> (required)");
-    Console.WriteLine("\tCommands:");
+    Console.WriteLine("\tCommands: (<command list> separated by ',', ';' or space)");
     Console.WriteLine("\t\tstart");
     Console.WriteLine("\t\tstop");
     Console.WriteLine("\t\tnew-cert --site-name <site name> [--site-email <contact email>]");
@@ -95,45 +118,47 @@ void ShowUsage(string message) {
     Console.WriteLine("\t\tset-options --site-options <options file> (\"Exported as Command\" from agent manager)");
 }
 
-async Task ExecuteCommand(NamedMessagePipeClient pipeClient, string command) {
+async Task<bool> ExecuteCommand(NamedMessagePipeClient pipeClient, string command) {
     switch (command.ToLower()) {
         case "start":
             await WriteNamedPipeMessage(pipeClient, "Start:");
-            break;
+            return true;
 
         case "stop":
             await WriteNamedPipeMessage(pipeClient, "Stop:");
-            break;
+            return true;
 
         case "new-cert":
             var siteName = cfg["site-name"];
             if (string.IsNullOrEmpty(siteName?.Trim())) {
-                ShowUsage("Missing site-name option.");
-                break;
+                Console.WriteLine($"{host}: Missing site-name option.");
+                return false;
             }
             var siteEmail = cfg["site-email"];
+            string pemEncoded;
             try {
-                string pemEncoded;
                 using (var certFactory = new CertificateFactory(cfg, GetPassword)) {
                     using (var cert = certFactory.CreateClientCertificate(siteName.Trim(), siteEmail?.Trim())) {
                         pemEncoded = CertUtils.ExportToPEM(cert, true);
                     }
                 }
-                await WriteNamedPipeMessage(pipeClient, $"InstallCert:{pemEncoded}");
             }
             catch (Exception ex) {
-                ShowUsage(ex.Message);
+                Console.WriteLine($"{host}: {ex}");
+                return false;
             }
-            break;
+            await WriteNamedPipeMessage(pipeClient, $"InstallCert:{pemEncoded}");
+            return true;
 
         case "set-control":
+            string controlJson;
             try {
                 var jsonDocOptions = new JsonDocumentOptions { AllowTrailingCommas = true, CommentHandling = JsonCommentHandling.Skip };
                 var jsonDoc = JsonNode.Parse(File.ReadAllText(configFile), null, jsonDocOptions);
                 var controlNode = jsonDoc?["Control"];
                 if (controlNode is null) {
-                    ShowUsage("Missing Control options.");
-                    break;
+                    Console.WriteLine($"{host}: Missing Control options.");
+                    return false;
                 }
 
                 var jsonOptions = new JsonSerializerOptions {
@@ -141,38 +166,42 @@ async Task ExecuteCommand(NamedMessagePipeClient pipeClient, string command) {
                     AllowTrailingCommas = true,
                     WriteIndented = false
                 };
-                var controlJson = controlNode.ToJsonString(jsonOptions);
-                await WriteNamedPipeMessage(pipeClient, $"SetControlOptions:{controlJson}");
+                controlJson = controlNode.ToJsonString(jsonOptions);
             }
             catch (Exception ex) {
-                ShowUsage(ex.Message);
+                Console.WriteLine($"{host}: {ex}");
+                return false;
             }
-            break;
+            await WriteNamedPipeMessage(pipeClient, $"SetControlOptions:{controlJson}");
+            return true;
 
         case "set-options":
+            string optionsJson;
             try {
                 var optionsFile = cfg["site-options"];
                 if (string.IsNullOrEmpty(optionsFile)) {
-                    ShowUsage("Missing site-options.");
+                    Console.WriteLine($"{host}: Missing site-options.");
                     break;
                 }
                 optionsFile = Environment.ExpandEnvironmentVariables(optionsFile);
                 if (!File.Exists(optionsFile)) {
-                    ShowUsage($"File does not exist: {optionsFile}.");
-                    break;
+                    Console.WriteLine($"{host}: File does not exist: {optionsFile}.");
+                    return false;
                 }
-                var optionsJson = File.ReadAllText(optionsFile);
-                await WriteNamedPipeMessage(pipeClient, $"ApplyAgentOptions:{optionsJson}");
+                optionsJson = File.ReadAllText(optionsFile);
             }
             catch (Exception ex) {
-                ShowUsage(ex.Message);
+                Console.WriteLine($"{host}: {ex}");
+                return false;
             }
-            break;
+            await WriteNamedPipeMessage(pipeClient, $"ApplyAgentOptions:{optionsJson}");
+            return true;
 
         default:
-            ShowUsage($"Invalid command found: {command}.");
-            break;
+            Console.WriteLine($"{host}: Invalid command found: {command}.");
+            return false;
     }
+    return true;
 }
 
 string? GetPassword() {
@@ -190,7 +219,7 @@ string GetPipeString(ReadOnlySequence<byte> sequence) {
 async Task ReadNamedPipeMessages(NamedMessagePipeClient pipeClient, CancellationToken cancelToken) {
     await foreach (var msgSequence in pipeClient.Messages(cancelToken)) {
         var msg = GetPipeString(msgSequence);
-        Console.WriteLine(msg);
+        Console.WriteLine($"{host}: { msg}");
     }
 }
 

@@ -2,7 +2,8 @@
   "profiles": {
     "EtwEvents.AgentCommand": {
       "commandName": "Project",
-      "commandLineArgs": "--config=\"appsettings.json\" --host .  --cmd set-options --site-options=\"D:\\Downloads\\TestSite1.command2.json\""
+      "commandLineArgs": "--config=\"appsettings.json\" --host waclawek-home  --cmds \"stop, set-options, new-cert, start\" --site-options=\"D:\\Downloads\\TestSite1.command2.json\" --site-name=waclawek-home-origin"
+      //"commandLineArgs": "--config=\"appsettings.json\" --host waclawek-home  --cmd start"
     }
   }
 }
