@@ -98,7 +98,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     var started = await StartSessionWorker(default).ConfigureAwait(false);
 
                     if (pipe is not null)
-                        await TrySendPipeMessage(pipe, $"ETW Session Started: {started}");
+                        await TrySendPipeMessage(pipe, $"ETW Session Started: {(started ? "Yes" : "No")}");
 
                     await SendStateUpdate().ConfigureAwait(false);
                     return;
@@ -119,10 +119,12 @@ namespace KdSoft.EtwEvents.PushAgent
                 case Constants.InstallCertEvent:
                     if (string.IsNullOrEmpty(cevt.Data))
                         return;
-                    var installed = await InstallPemCertificate(cevt.Data).ConfigureAwait(false);
+                    var installResult = await InstallPemCertificate(cevt.Data).ConfigureAwait(false);
 
-                    if (pipe is not null)
-                        await TrySendPipeMessage(pipe, $"Certificate Installed: {installed}");
+                    if (pipe is not null) {
+                        var installMsg = installResult == CertificateError.None ? "Yes" : $"No, {installResult + Environment.NewLine + _lastCertInstall.ErrorMessage}";
+                        await TrySendPipeMessage(pipe, $"Certificate Installed: {installMsg}");
+                    }
 
                     // this could lead to infinite recursion if the installed certificate is not picked up on reconnect
                     await SendStateUpdate().ConfigureAwait(false);
@@ -188,7 +190,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     var stopped = await StopSessionWorker(default).ConfigureAwait(false);
 
                     if (pipe is not null)
-                        await TrySendPipeMessage(pipe, $"ETW Session Stopped: {stopped}");
+                        await TrySendPipeMessage(pipe, $"ETW Session Stopped: {(stopped ? "Yes" : "No")}");
 
                     await SendStateUpdate().ConfigureAwait(false);
                     break;
@@ -246,8 +248,8 @@ namespace KdSoft.EtwEvents.PushAgent
             }
         }
 
-        async Task<bool> InstallPemCertificate(string pemData) {
-            bool success = false;
+        async Task<CertificateError> InstallPemCertificate(string pemData) {
+            CertificateError result;
             var installTime = Timestamp.FromDateTimeOffset(DateTimeOffset.UtcNow);
             try {
                 var ephemeralCert = X509Certificate2.CreateFromPem(pemData, pemData);
@@ -255,8 +257,8 @@ namespace KdSoft.EtwEvents.PushAgent
                 //      because X509Certificate2.CreateFromPem does not allow setting the KeyStorageFlags
                 var cert = new X509Certificate2(ephemeralCert.Export(X509ContentType.Pkcs12, ""), "", X509KeyStorageFlags.PersistKeySet);
                 var ch = new X509Chain { ChainPolicy = CertUtils.GetClientCertPolicy() };
-                success = ch.Build(cert);
-                if (!success) {
+                var valid = ch.Build(cert);
+                if (!valid) {
                     var sb = new StringBuilder();
                     foreach (var cst in ch.ChainStatus) {
                         sb.AppendLine($"{cst.Status}: {cst.StatusInformation}");
@@ -267,6 +269,7 @@ namespace KdSoft.EtwEvents.PushAgent
                         Thumbprint = cert.Thumbprint,
                         InstallTime = installTime
                     };
+                    result = CertificateError.Invalid;
                 }
                 else {
                     // Is the certificate already installed? If yes, don't reconnect.
@@ -275,13 +278,14 @@ namespace KdSoft.EtwEvents.PushAgent
                     var alreadyInstalled = clientCerts.FindIndex(c => c.Thumbprint.ToLower() == certPrint) >= 0;
 
                     if (alreadyInstalled) {
+                        result = CertificateError.None;
                         _lastCertInstall = new InstallCertResult { Thumbprint = cert.Thumbprint, InstallTime = installTime };
                     }
                     else {
                         CertUtils.InstallMachineCertificate(cert);
                         clientCerts = Utils.GetClientCertificates(_controlOptions.CurrentValue.ClientCertificate);
-                        success = clientCerts.FindIndex(c => c.Thumbprint.ToLower() == certPrint) >= 0;
-                        if (success) {
+                        var found = clientCerts.FindIndex(c => c.Thumbprint.ToLower() == certPrint) >= 0;
+                        if (found) {
                             // we need to use the new certificate everywhere
                             _httpHandlerCache.Refresh();
                             // we need to load and resave protected data with the new certificate
@@ -292,22 +296,24 @@ namespace KdSoft.EtwEvents.PushAgent
                             // and we need to restart the control connection
                             await _controlConnector.StartAsync(_controlOptions.CurrentValue, _cancelRegistration.Token).ConfigureAwait(false);
                             _lastCertInstall = new InstallCertResult { Thumbprint = cert.Thumbprint, InstallTime = installTime };
+                            result = CertificateError.None;
                         }
                         else {
-                            _lastCertInstall = new InstallCertResult { Error = CertificateError.Install, Thumbprint = cert.Thumbprint, InstallTime = installTime };
+                            result = CertificateError.Install;
+                            _lastCertInstall = new InstallCertResult { Error = result, Thumbprint = cert.Thumbprint, InstallTime = installTime };
                         }
                     }
                 }
             }
             catch (CryptographicException cex) {
-                success = false;
-                _lastCertInstall = new InstallCertResult { Error = CertificateError.Crypto, ErrorMessage = cex.Message, InstallTime = installTime };
+                result = CertificateError.Crypto;
+                _lastCertInstall = new InstallCertResult { Error = result, ErrorMessage = cex.Message, InstallTime = installTime };
             }
             catch (Exception ex) {
-                success = false;
-                _lastCertInstall = new InstallCertResult { Error = CertificateError.Other, ErrorMessage = ex.Message, InstallTime = installTime };
+                result = CertificateError.Other;
+                _lastCertInstall = new InstallCertResult { Error = result, ErrorMessage = ex.Message, InstallTime = installTime };
             }
-            return success;
+            return result;
         }
 
         async Task<ApplyAgentOptionsResult> ApplyAgentOptions(string optionsData, SessionWorker? worker, NamedMessagePipeServer? pipe) {
@@ -378,7 +384,7 @@ namespace KdSoft.EtwEvents.PushAgent
             }
             finally {
                 if (pipe is not null)
-                    await TrySendPipeMessage(pipe, $"Agent Options Applied: {applied}");
+                    await TrySendPipeMessage(pipe, $"Agent Options Applied: {(applied ? "Yes" : "No")}");
             }
         }
 
@@ -424,7 +430,7 @@ namespace KdSoft.EtwEvents.PushAgent
             }
             finally {
                 if (pipe is not null)
-                    await TrySendPipeMessage(pipe, $"Control Options Saved: {saved}");
+                    await TrySendPipeMessage(pipe, $"Control Options Saved: {(saved ? "Yes" : "No")}");
             }
         }
 
