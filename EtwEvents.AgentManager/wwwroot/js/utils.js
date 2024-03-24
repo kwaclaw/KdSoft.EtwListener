@@ -256,6 +256,23 @@ export function getFieldValue(input) {
   return val;
 }
 
+// sets Javascript object's property value, interpreting a dotted propery name as a path to nested objects
+export function setFieldValue(obj, key, value) {
+  const path = key.split('.');
+  let pathObj;
+  let indx = 0;
+  for (; indx < path.length - 1; indx += 1) {
+    pathObj = obj[path[indx]];
+    if (typeof pathObj == 'object' && pathObj !== null) {
+      continue;
+    } else {
+      pathObj = {};
+      obj[path[indx]] = pathObj;
+    }
+  }
+  pathObj[path[indx]] = value;
+}
+
 export function containerOffsetLeft(container, element) {
   let containerLeft = 0;
   while (element !== null) {

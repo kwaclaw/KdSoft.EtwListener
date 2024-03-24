@@ -14,7 +14,8 @@ class LogsIngestionSinkConfig extends LitMvvmElement {
 
   _credentialsChange(e) {
     e.stopPropagation();
-    this.model.credentials[e.target.name] = utils.getFieldValue(e.target);
+    const fieldValue = utils.getFieldValue(e.target);
+    utils.setFieldValue(this.model.credentials, e.target.name, fieldValue);
   }
 
   // first event when model is available
@@ -99,7 +100,7 @@ class LogsIngestionSinkConfig extends LitMvvmElement {
               <legend>Client Secret</legend>
               <div>
                 <label for="clientSecret">Secret</label>
-                <input type="text" id="clientSecret" name="clientSecret" .value=${creds.clientSecret.secret}></input>
+                <input type="password" id="clientSecret" name="clientSecret.secret" .value=${creds.clientSecret.secret}></input>
               </div>
             </fieldset>
             <fieldset>
