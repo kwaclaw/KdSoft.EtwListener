@@ -33,12 +33,12 @@
     <PackageReference Include="KdSoft.NamedMessagePipe" Version="4.0.0" />
     <PackageReference Include="KdSoft.Utils" Version="6.0.0" />
     <PackageReference Include="LaunchDarkly.EventSource" Version="5.1.0" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="8.0.2" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="8.0.2" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="8.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="8.0.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.3" />
   </ItemGroup>
 
   <ItemGroup>
