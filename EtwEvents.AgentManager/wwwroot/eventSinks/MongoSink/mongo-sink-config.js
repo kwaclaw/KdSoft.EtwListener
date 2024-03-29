@@ -101,7 +101,7 @@ class MongoSinkConfig extends LitMvvmElement {
         }
 
         valid-section {
-          min-width: 75%;
+          min-width: 100%;
         }
 
         valid-section fieldset {
@@ -111,11 +111,15 @@ class MongoSinkConfig extends LitMvvmElement {
 
         #options fieldset > div {
           display:grid;
-          grid-template-columns: auto auto minmax(auto, 12em);
-          grid-template-rows: repeat(8, auto);
+          grid-template-columns: auto auto;
+          /* grid-template-rows: repeat(8, auto); */
           align-items: baseline;
           row-gap: 5px;
           column-gap: 10px;
+        }
+
+        #options fieldset > div > div {
+          display:grid;
         }
 
         #credentials {
@@ -124,7 +128,7 @@ class MongoSinkConfig extends LitMvvmElement {
 
         #credentials fieldset > div {
           display:grid;
-          grid-template-columns: auto auto minmax(auto, 12em);
+          /* grid-template-columns: auto auto; */
           align-items: baseline;
           row-gap: 5px;
           column-gap: 10px;
@@ -134,6 +138,7 @@ class MongoSinkConfig extends LitMvvmElement {
           border: 2px solid red;
         }
 
+        /*
         valid-section fieldset > div > label {
           grid-column: 1;
         }
@@ -164,6 +169,7 @@ class MongoSinkConfig extends LitMvvmElement {
           background-color: lightgray;
           --max-scroll-height: 100%;
         }
+        */
 
         .pad {
           height: 3ex;
@@ -183,29 +189,31 @@ class MongoSinkConfig extends LitMvvmElement {
           <fieldset>
             <legend>Options</legend>
             <div>
-              <label for="origin">Origin</label>
-              <input type="url" id="origin" name="origin" size="50" .value=${opts.origin} required></input>
-              <label for="replicaset">Replica Set</label>
-              <input type="text" id="replicaset" name="replicaset" .value=${opts.replicaset}></input>
-              <label for="database">Database</label>
-              <input type="text" id="database" name="database" .value=${opts.database} required></input>
-              <label for="collection">Collection</label>
-              <input type="text" id="collection" name="collection" .value=${opts.collection} required></input>
-              <label for="evtFieldList">Event Filter Fields</label>
-              <div id="evtFieldList">
-                <etw-checklist class="text-black"
-                  .model=${this.evtFieldChecklistModel}
-                  .itemTemplate=${item => html`${item.id}`}
-                  checkboxes>
-                </etw-checklist>
+              <div>
+                <label for="origin">Origin</label>
+                <input type="url" id="origin" name="origin" size="50" .value=${opts.origin} required></input>
+                <label for="replicaset">Replica Set</label>
+                <input type="text" id="replicaset" name="replicaset" .value=${opts.replicaset}></input>
+                <label for="database">Database</label>
+                <input type="text" id="database" name="database" .value=${opts.database} required></input>
+                <label for="collection">Collection</label>
+                <input type="text" id="collection" name="collection" .value=${opts.collection} required></input>
+                <label for="payloadFilterFields">Payload Filter Fields</label>
+                <input type="text"
+                  id="payloadFilterFields" name="payloadFilterFields"
+                  .value=${payloadFieldsList} @change=${this._fieldListChange}
+                  placeholder="Comma delimited list"></input>
               </div>
-              <label for="payloadFilterFields">Payload Filter Fields</label>
-              <input type="text"
-                id="payloadFilterFields" name="payloadFilterFields"
-                .value=${payloadFieldsList} @change=${this._fieldListChange}
-                placeholder="Comma delimited list"></input>
-              <div class="pad"></div><div class="pad"></div><div class="pad"></div>
-              <div class="pad"></div><div class="pad"></div><div class="pad"></div>
+              <div>
+                <label for="evtFieldList">Event Filter Fields</label>
+                <div id="evtFieldList">
+                  <etw-checklist class="text-black"
+                    .model=${this.evtFieldChecklistModel}
+                    .itemTemplate=${item => html`${item.id}`}
+                    checkboxes>
+                  </etw-checklist>
+                </div>
+              </div>
             </div>
           </fieldset>
         </valid-section>

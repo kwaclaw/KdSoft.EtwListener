@@ -45,7 +45,7 @@ class LogsIngestionSinkConfig extends LitMvvmElement {
         }
 
         section {
-          min-width: 75%;
+          min-width: 100%;
         }
 
         section fieldset {
@@ -55,7 +55,7 @@ class LogsIngestionSinkConfig extends LitMvvmElement {
 
         section fieldset > div {
           display:grid;
-          grid-template-columns: auto auto;
+          /* grid-template-columns: auto auto; */
           align-items: baseline;
           row-gap: 5px;
           column-gap: 10px;

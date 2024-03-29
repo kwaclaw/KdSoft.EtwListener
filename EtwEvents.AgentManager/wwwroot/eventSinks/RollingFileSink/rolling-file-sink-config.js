@@ -43,7 +43,7 @@ class RollingFileSinkConfig extends LitMvvmElement {
         }
 
         section {
-          min-width: 75%;
+          min-width: 100%;
         }
 
         section fieldset {
@@ -57,6 +57,10 @@ class RollingFileSinkConfig extends LitMvvmElement {
           align-items: baseline;
           row-gap: 5px;
           column-gap: 10px;
+        }
+
+        section fieldset > div > .two-cols {
+          grid-column: span 2;
         }
 
         input:invalid {
@@ -76,8 +80,8 @@ class RollingFileSinkConfig extends LitMvvmElement {
           <fieldset>
             <legend>Options</legend>
             <div>
-              <label for="directory">Directory</label>
-              <input type="text" id="directory" name="directory" .value=${opts.directory} required></input>
+              <label for="directory" class="two-cols">Directory</label>
+              <input type="text" id="directory" name="directory" class="two-cols" .value=${opts.directory} required></input>
               <label for="fileNameFormat">Filename Template</label>
               <input type="text" id="fileNameFormat" name="fileNameFormat" size="32" .value=${opts.fileNameFormat}></input>
               <label for="fileExtension">File Extension</label>

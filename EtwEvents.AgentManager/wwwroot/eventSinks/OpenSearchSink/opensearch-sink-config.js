@@ -111,7 +111,7 @@ class OpenSearchSinkConfig extends LitMvvmElement {
         }
 
         valid-section {
-          min-width: 75%;
+          min-width: 100%;
         }
 
         valid-section fieldset {
@@ -121,7 +121,7 @@ class OpenSearchSinkConfig extends LitMvvmElement {
 
         valid-section fieldset > div {
           display:grid;
-          grid-template-columns: auto auto;
+          /* grid-template-columns: auto auto; */
           align-items: baseline;
           row-gap: 5px;
           column-gap: 10px;
