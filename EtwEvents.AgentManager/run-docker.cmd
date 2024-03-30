@@ -25,7 +25,7 @@ set certPwd=
 :: install root certificate
 @echo Installing root certificate C:/Temp/etw-manager/certs/Kd-Soft_Root_CA.crt and Kd-Soft_ETW-Signing_CA.crt
 docker cp "C:/Temp/etw-manager/certs/Kd-Soft_Root_CA.crt" KdSoft_ETW_AgentManager:"/usr/local/share/ca-certificates"
-docker cp "C:/Temp/etw-manager/certs/Kd-Soft_ETW-Signing_CA.crt" KdSoft_ETW_AgentManager:"/usr/local/share/ca-certificates"
+docker cp "C:/Temp/etw-manager/certs/Kd-Soft_Test-Signing_CA.crt" KdSoft_ETW_AgentManager:"/usr/local/share/ca-certificates"
 docker exec -dt -w "/usr/local/share/ca-certificates" KdSoft_ETW_AgentManager update-ca-certificates
 
 popd
