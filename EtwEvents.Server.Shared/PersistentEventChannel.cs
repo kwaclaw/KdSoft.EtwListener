@@ -183,6 +183,10 @@ namespace KdSoft.EtwEvents.Server
             var cts = Interlocked.Exchange(ref _stoppingTokenSource, null);
             if (cts == null)  // already disposed
                 return;
+
+            // we dont need to call base.DisposeAsync() because we are disposing the event sink
+            // in the cancellation callback (cts.Token.Register(...))
+
             GC.SuppressFinalize(this);
             try {
                 cts.Cancel();
@@ -190,6 +194,9 @@ namespace KdSoft.EtwEvents.Server
                 if (runTask != null)
                     await runTask.ConfigureAwait(false);
                 _channel.Dispose();
+            }
+            catch (OperationCanceledException) when (cts.IsCancellationRequested) {
+                // expected
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Error closing event channel.");
