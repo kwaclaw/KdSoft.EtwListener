@@ -1,15 +1,7 @@
-using System.Buffers;
-using System.Diagnostics.Tracing;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
-using KdSoft.EtwEvents.AgentManager;
 using KdSoft.EtwEvents.PushAgent;
-using KdSoft.EtwEvents.Server;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Configuration;
 using Xunit;
 using Xunit.Abstractions;

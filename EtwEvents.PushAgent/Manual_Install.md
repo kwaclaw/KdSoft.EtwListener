@@ -1,4 +1,4 @@
-INSTALL USING POWERSHELL
+INSTALL USING COMMAND LINE AND POWERSHELL
 
 ## Prepare Install Package (Alternative to MSI)
 
