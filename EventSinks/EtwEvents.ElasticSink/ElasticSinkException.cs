@@ -1,4 +1,4 @@
-﻿using Elasticsearch.Net;
+﻿using Elastic.Transport.Products.Elasticsearch;
 
 namespace KdSoft.EtwEvents.EventSinks
 {
@@ -8,11 +8,11 @@ namespace KdSoft.EtwEvents.EventSinks
         public ElasticSinkException() : base() { }
         public ElasticSinkException(string message) : base(message) { }
         public ElasticSinkException(string message, Exception inner) : base(message, inner) { }
-        public ElasticSinkException(string message, ServerError error) : base(message) {
+        public ElasticSinkException(string message, ElasticsearchServerError error) : base(message) {
             this.Error = error;
         }
 
-        public ServerError? Error { get; private set; }
+        public ElasticsearchServerError? Error { get; private set; }
 
         public override string ToString() => base.ToString() + Environment.NewLine + Error?.ToString();
     }

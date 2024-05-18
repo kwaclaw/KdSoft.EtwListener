@@ -82,6 +82,12 @@ namespace KdSoft.EtwEvents.EventSinks
         ]
       }
     },
+    ""CloudId"": {
+      ""type"": [
+        ""string"",
+        ""null""
+      ]
+    },
     ""IndexFormat"": {
       ""type"": [
         ""string"",
@@ -91,6 +97,7 @@ namespace KdSoft.EtwEvents.EventSinks
   },
   ""required"": [
     ""Nodes"",
+    ""CloudId"",
     ""IndexFormat""
   ]
 }

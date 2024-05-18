@@ -4,12 +4,12 @@
   <Import Project="..\eventSink.targets" />
 
   <PropertyGroup>
-    <VersionPrefix>1.4.0</VersionPrefix>
+    <VersionPrefix>2.0.0</VersionPrefix>
     <SinkName>ElasticSink</SinkName>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Elasticsearch.Net" Version="7.17.5" />
+    <PackageReference Include="Elastic.Transport" Version="0.4.19" />
   </ItemGroup>
 
   <ItemGroup>

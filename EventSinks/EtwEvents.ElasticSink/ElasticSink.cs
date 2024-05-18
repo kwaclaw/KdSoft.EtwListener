@@ -1,9 +1,11 @@
 using System.Security.Cryptography.X509Certificates;
-using Elasticsearch.Net;
+using Elastic.Transport;
+using Elastic.Transport.Products.Elasticsearch;
 using Google.Protobuf;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Logging;
 
+//TODO upgrade - https://github.com/elastic/elastic-transport-net
 namespace KdSoft.EtwEvents.EventSinks
 {
     public class ElasticSink: IEventSink
@@ -11,11 +13,11 @@ namespace KdSoft.EtwEvents.EventSinks
         readonly ElasticSinkOptions _options;
         readonly ILogger _logger;
         readonly string _indexFormat;
-        readonly IConnectionPool _connectionPool;
         readonly TaskCompletionSource<bool> _tcs;
         readonly List<string> _evl;
-        readonly ElasticLowLevelClient _client;
         readonly JsonFormatter _jsonFormatter;
+
+        readonly ITransport _transport;
 
         int _isDisposed = 0;
 
@@ -24,7 +26,7 @@ namespace KdSoft.EtwEvents.EventSinks
         public ElasticSink(ElasticSinkOptions options, ElasticSinkCredentials creds, IEventSinkContext context) {
             this._options = options;
             this._logger = context.Logger;
-            this._indexFormat = options.IndexFormat.Replace("{site}", context.SiteName);
+            this._indexFormat = options.IndexFormat.Replace("{site}", context.SiteName).ToLower();
 
             _tcs = new TaskCompletionSource<bool>();
             RunTask = _tcs.Task;
@@ -32,35 +34,39 @@ namespace KdSoft.EtwEvents.EventSinks
             _evl = new List<string>();
 
             try {
-                IConnectionPool connectionPool;
-                if (options.Nodes.Length == 1)
-                    connectionPool = new SingleNodeConnectionPool(new Uri(options.Nodes[0]));
-                else if (options.Nodes.Length > 1)
-                    connectionPool = new SniffingConnectionPool(options.Nodes.Select(node => new Uri(node)));
-                else
-                    throw new ArgumentException("Must provide at least one ElasticSearch node Uri", nameof(options));
-                this._connectionPool = connectionPool;
+                AuthorizationHeader authHeader;
+                if (string.IsNullOrEmpty(creds.ApiKey)) {
+                    authHeader = new BasicAuthentication(creds.User ?? "anonymous", creds.Password ?? "");
+                }
+                else if (string.IsNullOrEmpty(creds.ApiKeyId)) {
+                    // this must be the already Base64 encoded API key, which does not require an id
+                    authHeader = new ApiKey(creds.ApiKey);
+                }
+                else {  // used for Cloud
+                    authHeader = new Base64ApiKey(creds.ApiKeyId, creds.ApiKey);
+                }
 
-                var config = new ConnectionConfiguration(connectionPool);
-
+                X509Certificate2? clientCert = null;
                 if (!string.IsNullOrEmpty(creds.SubjectCN)) {
-                    var clientCert = CertUtils.GetCertificate(StoreName.My, StoreLocation.LocalMachine, "", creds.SubjectCN);
-                    if (clientCert != null)
-                        config.ClientCertificate(clientCert);
+                    clientCert = CertUtils.GetCertificate(StoreName.My, StoreLocation.LocalMachine, "", creds.SubjectCN);
                 }
-                if (!string.IsNullOrEmpty(creds.ApiKey)) {
-                    ApiKeyAuthenticationCredentials apiCreds;
-                    if (string.IsNullOrEmpty(creds.ApiKeyId))
-                        // this must be the base64 encoded API key, which does not require an id
-                        apiCreds = new ApiKeyAuthenticationCredentials(creds.ApiKey);
-                    else
-                        apiCreds = new ApiKeyAuthenticationCredentials(creds.ApiKeyId, creds.ApiKey);
-                    config.ApiKeyAuthentication(apiCreds);
+
+                NodePool? connectionPool = null;
+                if (string.IsNullOrWhiteSpace(options.CloudId)) {
+                    if (options.Nodes.Length == 1)
+                        connectionPool = new SingleNodePool(new Uri(options.Nodes[0]));
+                    else if (options.Nodes.Length > 1)
+                        connectionPool = new SniffingNodePool(options.Nodes.Select(node => new Uri(node)));
                 }
-                if (!string.IsNullOrEmpty(creds.User) && creds.Password != null) {
-                    config.BasicAuthentication(creds.User, creds.Password);
-                }
-                _client = new ElasticLowLevelClient(config);
+                else if (!string.IsNullOrWhiteSpace(options.CloudId) && authHeader is not null)
+                    connectionPool = new CloudNodePool(options.CloudId, authHeader);
+                if (connectionPool is null)
+                    throw new ArgumentException("Must provide at least one ElasticSearch node Uri, or a cloud id with credentials", nameof(options));
+
+                var settings = new TransportConfiguration(connectionPool).Authentication(authHeader);
+                if (clientCert is not null)
+                    settings = settings.ClientCertificate(clientCert);
+                _transport = new DistributedTransport<TransportConfiguration>(settings);
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Error in {eventSink} initialization.", nameof(ElasticSink));
@@ -84,7 +90,7 @@ namespace KdSoft.EtwEvents.EventSinks
             var oldDisposed = Interlocked.CompareExchange(ref _isDisposed, 99, 0);
             if (oldDisposed == 0) {
                 try {
-                    _connectionPool.Dispose();
+                    // _transport.Dispose();
                 }
                 catch (Exception ex) {
                     _logger.LogError(ex, "Error closing event sink '{eventSink)}'.", nameof(ElasticSink));
@@ -108,19 +114,25 @@ namespace KdSoft.EtwEvents.EventSinks
         }
 
         async Task<bool> FlushAsyncInternal() {
-            var bulkMeta = $@"{{ ""index"": {{ ""_index"" : ""{string.Format(this._indexFormat, DateTimeOffset.UtcNow)}"" }} }}";
+            var indexName = string.Format(this._indexFormat, DateTimeOffset.UtcNow);
+            var bulkMeta = $@"{{ ""index"": {{ ""_index"" : ""{indexName}"" }} }}";
             var postItems = EnumerateInsertRecords(bulkMeta, _evl);
-            var bulkResponse = await _client.BulkAsync<StringResponse>(PostData.MultiJson(postItems)).ConfigureAwait(false);
+
+            //var bulkResponse = await _client.BulkAsync<StringResponse>(PostData.MultiJson(postItems)).ConfigureAwait(false);
+            var bulkResponse = await _transport.PostAsync<StringResponse>("/_bulk", PostData.MultiJson(postItems)).ConfigureAwait(false);
 
             _evl.Clear();
-            if (bulkResponse.Success)
+            if (bulkResponse.ApiCallDetails.HasSuccessfulStatusCode)
                 return true;
 
-            if (bulkResponse.TryGetServerError(out var error) && error.Error != null) {
-                throw new ElasticSinkException($"Error sending bulk response in {nameof(ElasticSink)}.", error);
+            if (bulkResponse.TryGetElasticsearchServerError(out var error) && error.Error != null) {
+                throw new ElasticSinkException($"Error sending bulk response in {nameof(ElasticSink)}: {error}.", error);
+            }
+            else if (bulkResponse.ApiCallDetails.OriginalException is null) {
+                throw new ElasticSinkException(bulkResponse.ApiCallDetails.DebugInformation);
             }
             else {
-                throw new ElasticSinkException(bulkResponse.DebugInformation, bulkResponse.OriginalException);
+                throw new ElasticSinkException(bulkResponse.ApiCallDetails.DebugInformation, bulkResponse.ApiCallDetails.OriginalException);
             }
         }
 

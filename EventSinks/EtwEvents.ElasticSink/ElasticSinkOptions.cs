@@ -11,6 +11,8 @@
 
         public string[] Nodes { get; set; } = Array.Empty<string>();
 
+        public string? CloudId { get; set; }
+
         public string IndexFormat { get; set; } = string.Empty;
     }
 }

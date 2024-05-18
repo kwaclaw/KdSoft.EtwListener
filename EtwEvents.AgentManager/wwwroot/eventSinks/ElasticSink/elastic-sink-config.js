@@ -5,14 +5,34 @@ import * as utils from '../../js/utils.js';
 
 class ElasticSinkConfig extends LitMvvmElement {
   isValid() {
-    const validatedElement = this.renderRoot.getElementById('credentials');
-    this._setValidatedCredentials(validatedElement);
+    const validatedCredentials = this.renderRoot.getElementById('credentials');
+    this._setValidatedCredentials(validatedCredentials);
+    const validatedOptions = this.renderRoot.getElementById('options');
+    this._setValidatedOptions(validatedOptions);
     return this.renderRoot.querySelector('form').reportValidity();
+  }
+
+  _setValidatedOptions(validatedElement) {
+    const nodesElement = this.renderRoot.getElementById('nodes');
+    const nodes = utils.getFieldValue(nodesElement);
+    const cloudId = utils.getFieldValue(this.renderRoot.getElementById('cloudId'));
+    if (!!nodes || !!cloudId) {
+      validatedElement.setCustomValidity('');
+    } else {
+      validatedElement.setCustomValidity('Require either Hosts or Cloud Id to be specified.');
+      return false;
+    }
+    this.model.options.nodes = this._validateNodeUrls(nodesElement);
+    this.model.options.cloudId = cloudId;
+    this.model.options.indexFormat = utils.getFieldValue(this.renderRoot.getElementById('indexFormat'));
+    return true;
   }
 
   _optionsChange(e) {
     e.stopPropagation();
-    this.model.options[e.target.name] = utils.getFieldValue(e.target);
+    const validatedElement = this.renderRoot.getElementById('options');
+    this._setValidatedOptions(validatedElement);
+    validatedElement.reportValidity();
   }
 
   _setValidatedCredentials(validatedElement) {
@@ -23,9 +43,9 @@ class ElasticSinkConfig extends LitMvvmElement {
     const subjectCN = utils.getFieldValue(this.renderRoot.getElementById('subjectCN'));
     if (!!user && !!password) {
       validatedElement.setCustomValidity('');
-    } else if (!!apiKey) {
+    } else if (apiKey) {
       validatedElement.setCustomValidity('');
-    } else if (!!subjectCN) {
+    } else if (subjectCN) {
       validatedElement.setCustomValidity('');
     } else {
       validatedElement.setCustomValidity('Require credentials: user and password, or apiKeyId (optional) and apiKey, or subjectCN.');
@@ -48,7 +68,10 @@ class ElasticSinkConfig extends LitMvvmElement {
 
   _validateNodeUrls(nodesElement) {
     const nodesStr = (nodesElement.value || '').trim();
-    if (!nodesStr) return [];
+    if (!nodesStr) {
+      nodesElement.setCustomValidity('');
+      return [];
+    }
 
     const nodes = nodesStr.split('\n');
     const checkUrl = this.renderRoot.getElementById('check-url');
@@ -143,7 +166,7 @@ class ElasticSinkConfig extends LitMvvmElement {
   render() {
     const opts = this.model.options;
     const creds = this.model.credentials;
-    const nodesList = opts.nodes?.join('\n') || [];
+    const nodesList = Array.isArray(opts.nodes) ? opts.nodes.join('\n') : [];
 
     const result = html`
       <form>
@@ -156,9 +179,12 @@ class ElasticSinkConfig extends LitMvvmElement {
               <textarea id="nodes" name="nodes"
                 cols="42" rows="3" wrap="hard"
                 @change=${this._nodesChanged}
-                placeholder="Enter one or more URLs, each on its own line" required>${nodesList}</textarea>
-              <label for="index">Index Format</label>
-              <input type="text" id="indexFormat" name="indexFormat" .value=${opts.indexFormat} />
+                placeholder="Enter one or more URLs, each on its own line">${nodesList}</textarea>
+              <label for="cloudId">Cloud Id</label>
+              <input type="text" id="cloudId" name="cloudId" .value=${opts.cloudId} />
+              <label for="indexFormat">Index Format</label>
+              <input type="text" id="indexFormat" name="indexFormat" .value=${opts.indexFormat}
+                title="Index name must be lower-case."/>
             </div>
           </fieldset>
         </valid-section>
