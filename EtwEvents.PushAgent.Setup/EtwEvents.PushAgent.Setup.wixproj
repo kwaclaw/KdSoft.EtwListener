@@ -1,14 +1,14 @@
-﻿<Project Sdk="WixToolset.Sdk/4.0.5">
+﻿<Project Sdk="WixToolset.Sdk/5.0.0">
   <PropertyGroup>
     <SuppressSpecificWarnings>5150;5151;1076;1149</SuppressSpecificWarnings>
     <DefaultCompressionLevel>mszip</DefaultCompressionLevel>
     <InstallerPlatform>x64</InstallerPlatform>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="WixToolset.Iis.wixext" Version="4.0.5" />
-    <PackageReference Include="WixToolset.UI.wixext" Version="4.0.5" />
-    <PackageReference Include="WixToolset.Util.wixext" Version="4.0.5" />
-    <PackageReference Include="WixToolset.Heat" Version="4.0.5" />
+    <PackageReference Include="WixToolset.Iis.wixext" Version="5.0.0" />
+    <PackageReference Include="WixToolset.UI.wixext" Version="5.0.0" />
+    <PackageReference Include="WixToolset.Util.wixext" Version="5.0.0" />
+    <PackageReference Include="WixToolset.Heat" Version="5.0.0" />
   </ItemGroup>
   <ItemGroup>
     <HarvestDirectory Include="../EtwEvents.PushAgent/deploy/publish/">
