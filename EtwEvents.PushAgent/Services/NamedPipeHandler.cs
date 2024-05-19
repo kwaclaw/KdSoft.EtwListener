@@ -87,7 +87,7 @@ namespace KdSoft.EtwEvents.PushAgent
                     await WriteMessage(pipeServer, "Invalid message");
                     return;
                 }
-                var controlEvent = new ControlEvent { Event = parts[0], Id = "", Data = parts[1], UserData = pipeServer};
+                var controlEvent = new ControlEvent { Event = parts[0], Id = "", Data = parts[1], UserData = pipeServer };
                 var couldWrite = _controlChannel.Writer.TryWrite(controlEvent);
                 if (couldWrite) {
                     await WriteMessage(pipeServer, $"{parts[0]} message queued");

@@ -19,11 +19,13 @@
 
         public UsernamePasswordSettings? UsernamePassword { get; set; }
 
-        public class ClientSecretSettings {
+        public class ClientSecretSettings
+        {
             public string Secret { get; set; } = "";
         }
 
-        public class ClientCertificateSettings {
+        public class ClientCertificateSettings
+        {
             public ClientCertificateSettings() { }
 
             public ClientCertificateSettings(ReadOnlySpan<char> certPem) {

@@ -90,7 +90,7 @@ namespace KdSoft.EtwLogging
         /// <summary>
         /// Workaround for <c>MessageParser&lt;T&gt;.WithDiscardUnknownFields(true).ParseJson()</c> not working as expected.
         /// <seealso cref="https://github.com/protocolbuffers/protobuf/issues/8316"/>
-        public static T ToProtoMessage<T>(this string json, bool discardUnknownFields = true) where T: IMessage<T>, new() {
+        public static T ToProtoMessage<T>(this string json, bool discardUnknownFields = true) where T : IMessage<T>, new() {
             if (discardUnknownFields) {
                 return JsonParserIgnoreUnknown.Parse<T>(json);
             }

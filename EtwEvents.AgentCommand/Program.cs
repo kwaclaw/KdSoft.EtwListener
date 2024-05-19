@@ -219,7 +219,7 @@ string GetPipeString(ReadOnlySequence<byte> sequence) {
 async Task ReadNamedPipeMessages(NamedMessagePipeClient pipeClient, CancellationToken cancelToken) {
     await foreach (var msgSequence in pipeClient.Messages(cancelToken)) {
         var msg = GetPipeString(msgSequence);
-        Console.WriteLine($"{host}: { msg}");
+        Console.WriteLine($"{host}: {msg}");
     }
 }
 
