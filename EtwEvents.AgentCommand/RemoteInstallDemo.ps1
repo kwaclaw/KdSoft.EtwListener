@@ -1,4 +1,6 @@
-﻿# Create PowerShell session on remote host
+﻿# INSTALLING AGENT ON REMOTE HOST
+
+# Create PowerShell session on remote host
 # Note: -UseSSL is only necessary for using WinRM with standalone hosts (and is hard to configure on the host)
 $session = New-PSSession -ComputerName <remote host> [-Credential <admin user name>] [-UseSSL]
 
@@ -11,18 +13,19 @@ Invoke-Command -Session $session -ScriptBlock { msiexec /i c:\temp\EtwEvents.Pus
 # Exit remote session
 Remove-PSSession -Session $session
 
-# Switch to directory where the agent command line tool can be found, then run the following commands
+# CONFIGURING AGENT ON REMOTE HOST
+# Switch to directory where the agent command line tool can be found, then run any of the following commands
 
-# Set control options (must be pre-configured in appsettings.json)
+# Example for setting control options (must be pre-configured in appsettings.json)
 KdSoft.EtwEvents.AgentCommand.exe --config="appsettings.json" --host <remote host> --cmd set-control
 
-# Install new client certificate, the site name must be unique (will be created, email is optional)
+# Example for installing a new client certificate, the site name must be unique (certificate will be created, email is optional)
 KdSoft.EtwEvents.AgentCommand.exe --host <remote host> --cmd new-cert --site-name test-site-1 [--site-email <contact email>]
 
-# Set site options (configure and download from agent manager - "Export as Command")
+# Example for setting site options (configure options in agent manager and download using "Export as Command")
 # Note: the options file does not have to include a complete set of options, one can, for instance, just set the event sinks
 KdSoft.EtwEvents.AgentCommand.exe --host <remote host> --cmd set-options --site-options="D:\\Downloads\\TestSite1.options-command.json\"
 
-# Start the agent
+# Example for starting the agent
 KdSoft.EtwEvents.AgentCommand.exe --host <remote host> --cmd start
 

@@ -5,7 +5,6 @@ using Google.Protobuf;
 using KdSoft.EtwLogging;
 using Microsoft.Extensions.Logging;
 
-//TODO upgrade - https://github.com/elastic/elastic-transport-net
 namespace KdSoft.EtwEvents.EventSinks
 {
     public class ElasticSink: IEventSink
@@ -118,7 +117,6 @@ namespace KdSoft.EtwEvents.EventSinks
             var bulkMeta = $@"{{ ""index"": {{ ""_index"" : ""{indexName}"" }} }}";
             var postItems = EnumerateInsertRecords(bulkMeta, _evl);
 
-            //var bulkResponse = await _client.BulkAsync<StringResponse>(PostData.MultiJson(postItems)).ConfigureAwait(false);
             var bulkResponse = await _transport.PostAsync<StringResponse>("/_bulk", PostData.MultiJson(postItems)).ConfigureAwait(false);
 
             _evl.Clear();

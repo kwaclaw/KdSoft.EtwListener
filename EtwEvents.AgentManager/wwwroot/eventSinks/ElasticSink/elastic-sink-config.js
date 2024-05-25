@@ -48,7 +48,8 @@ class ElasticSinkConfig extends LitMvvmElement {
     } else if (subjectCN) {
       validatedElement.setCustomValidity('');
     } else {
-      validatedElement.setCustomValidity('Require credentials: user and password, or apiKeyId (optional) and apiKey, or subjectCN.');
+      validatedElement.setCustomValidity(
+        'Require credentials: user and password, or apiKeyId (optional) and apiKey, or subjectCN.');
       return false;
     }
     this.model.credentials.user = user;

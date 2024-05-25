@@ -28,7 +28,7 @@ A typical deployment example with Elastic Search as log destination:
 
 An agent is a Windows service that can make outgoing network connections.
 
-- It is always connected to the agent manager configured during the install.
+- It attempts to connect to the agent manager configured during the install.
 - Depending on configuration, the agent can also connect to an external endpoint to send the log events to.
 - For installation instructions, see [Install.md](EtwEvents.PushAgent/Install.md) and [deploy/ReadMe.md](EtwEvents.PushAgent/deploy/ReadMe.md).
 
@@ -116,7 +116,7 @@ Occasionally, an agent's certificate will expire. When that time approaches a wa
   - Certificates can also be uploaded through the UI (upload icon at top of side bar).
   - A successful install can be checked by observing a change in the expiry countdown, or by checking if the thumbprint has changed (hover over "Certificate" label).
 
-- Certificates must conform to these requirements:
+- Certificates deployed to the AgentCerts folder must conform to these requirements:
   
   - The Subject Common Name must match the agent's name as displayed in the UI (as it reflects the current certificate's Subject Common Name).
   - If the certificate has the *role* attribute (OID 2.5.4.72) in the Subject set to "etw-agent" it will be authorized automatically, otherwise it's Common Name will need to be listed in appsettings.json.
@@ -125,5 +125,9 @@ Occasionally, an agent's certificate will expire. When that time approaches a wa
   - If the file is PKCS#12 encoded, then the password (for the private key) must be empty/blank.
   - Should a certificate not disappear from the the AgentCerts folder after a few minutes then check the AgentManager's current log file for the reason.
 
-  Alternatively, the command line tool (KdSoft.EtwEvents.AgentCommand.exe) can be used to generate and import a new certificate, as long as it can connect to the agent's host.
-  In this case, authentication and authorization is Windows based, and the user running the command line tool must be an administrator on the agent's host machine.
+- Alternatively, the command line tool (KdSoft.EtwEvents.AgentCommand.exe) can be used to generate and deploy a new certificate
+
+  - One must be able to connect from the command line's host to the agent's host.
+  - Authentication and authorization is Windows based.
+  - The user running the command line tool must be an administrator on the agent's host machine.
+  - see the example script RemnoteInstallDemo.ps1 in the commandline tool's project folder.

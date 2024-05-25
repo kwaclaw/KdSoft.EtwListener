@@ -9,7 +9,7 @@ Or better, just run `npm install` in `wwwroot`, which performs an NPM install fo
 
 ## Debug with Visual Studio in Docker
 
-- Before debugging, switch to wwwroot directory and run `npm install`, if necessary
+- Before debugging, switch to the wwwroot directory and run `npm install`, if necessary
 - Then debug with the Docker default launch settings selected, which use localhost.
 - To allow external clients to connect to the agent manager, you must use a publicly visible domain name with a matching server certificate.
 - When switching between Docker and regular debugging, rebuild the project.
