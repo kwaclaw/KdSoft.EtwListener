@@ -24,9 +24,9 @@ Or better, just run `npm install` in `wwwroot`, which performs an NPM install fo
 
 Use the `docker run` command with arguments as described below. As an example review `run-docker.cmd` in the `EtwEvents.AgentManager` directory.
 
-#### Asp.NET 7.0 specific arguments
+#### Asp.NET 8.0 specific arguments
 
-We neeed to mount some directories required by Asp.NET 7.0 into pre-determined paths in the container:
+We need to mount some directories required by Asp.NET 8.0 into pre-determined paths in the container:
 
 - ONLY IN DEVELOPMENT ENVIRONMENT (Debugging): Mount user secrets directory to `/root/.microsoft/usersecrets`
   e.g. `--mount type=bind,src="%APPDATA%\\Microsoft\\UserSecrets\\",dst=/root/.microsoft/usersecrets/,readonly`
