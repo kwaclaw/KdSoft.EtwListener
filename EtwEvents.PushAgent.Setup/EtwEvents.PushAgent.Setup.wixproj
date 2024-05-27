@@ -1,5 +1,6 @@
 ﻿<Project Sdk="WixToolset.Sdk/5.0.0">
   <PropertyGroup>
+    <HarvestGenerateGuidsNow>true</HarvestGenerateGuidsNow>
     <SuppressSpecificWarnings>5150;5151;1076;1149</SuppressSpecificWarnings>
     <DefaultCompressionLevel>mszip</DefaultCompressionLevel>
     <InstallerPlatform>x64</InstallerPlatform>
@@ -16,6 +17,7 @@
       <DirectoryRefId>INSTALLFOLDER</DirectoryRefId>
       <SuppressRootDirectory>true</SuppressRootDirectory>
       <SuppressCom>true</SuppressCom>
+      <SuppressRegistry>true</SuppressRegistry>
       <Transforms>./RemoveServiceExe.xslt</Transforms>
     </HarvestDirectory>
     <!--

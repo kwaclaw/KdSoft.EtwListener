@@ -40,7 +40,7 @@
     <!-- http://www.installsite.org/pages/en/isnews/200108/index.htm -->
 
     <InstallExecuteSequence>
-      <Custom Action="SetDeferredActionData" Before="InstallInitialize" />
+      <Custom Action="SetDeferredActionData" Before="CostFinalize" />
       <Custom Action="InstallRootCertificates" Before="InstallClientCertificate"
               Condition="NOT(REMOVE~=&quot;ALL&quot;) OR NOT(Installed AND (InstallMode~=&quot;Repair&quot;))" />
       <Custom Action="InstallClientCertificate"  Before="MergeSettingsOverride"
