@@ -16,7 +16,7 @@ for %%a in (%*) do (
     shift
 )
 
-set defaultDir="%ProgramFiles%\Kd-Soft\EtwEvents.PushAgent"
+set defaultDir="%ProgramFiles%\KD Soft\EtwEvents.PushAgent"
 
 rem prompt for INSTALL DIRECTORY if not provided as input argument
 
