@@ -24,7 +24,7 @@ namespace EtwEvents.PushAgent.Setup.Tools
                 session.Log("End OpenFileDialog Action");
             }
             catch (Exception ex) {
-                session.Log("Error in OpenFileDialog: {0}\r\n StackTrace: {1}", ex.Message, ex.StackTrace);
+                session.Log("Error in OpenFileDialog:\r\n{0}", ex);
                 return ActionResult.Failure;
             }
             return ActionResult.Success;
@@ -48,7 +48,7 @@ namespace EtwEvents.PushAgent.Setup.Tools
             }
             catch (Exception ex) {
                 session["CLIENT_CERTIFICATE_VALID"] = "0";
-                session.Log("Error in ValidateClientCertificate: {0}\r\n StackTrace: {1}", ex.Message, ex.StackTrace);
+                session.Log("Error in ValidateClientCertificate:\r\n{0}", ex);
                 var errorDlgTitle = session["_validateErrorTitle"] ?? "Client Certificate Not Valid";
                 ShowMessageDialog(ex.Message, errorDlgTitle, MessageBoxIcon.Exclamation);
             }
@@ -59,20 +59,24 @@ namespace EtwEvents.PushAgent.Setup.Tools
         public static ActionResult InstallClientCertificate(Session session) {
             try {
                 var data = session.CustomActionData;
-                session.Log("InstallClientCertificate - Got CustomActionData: {0}", data.ToString());
+                session.Log("InstallClientCertificate - CustomActionData: {0}", data.ToString());
 
-                var certPath = (data["CLIENT_CERTIFICATE"] ?? "").Trim();
-                if (certPath == string.Empty)
+                if (!data.TryGetValue("CLIENT_CERTIFICATE", out var clientCert) || string.IsNullOrWhiteSpace(clientCert)) {
+                    session.Log("No client certificate to install");
                     return ActionResult.Success;
+                }
 
-                var certPwd = data["CLIENT_CERTIFICATE_PASSWORD"] ?? "";
-                var certToInstall = new X509Certificate2(certPath, certPwd, X509KeyStorageFlags.PersistKeySet);
+                var certPath = clientCert.Trim();
+                if (!data.TryGetValue("CLIENT_CERTIFICATE_PASSWORD", out var certPwd) || string.IsNullOrWhiteSpace(certPwd)) {
+                    certPwd = "";
+                }
+                var certToInstall = new X509Certificate2(certPath, certPwd.Trim(), X509KeyStorageFlags.PersistKeySet);
 
                 InstallMachineCertificate(certToInstall);
                 session.Log($"Installed client certificate {certPath}");
             }
             catch (Exception ex) {
-                session.Log("Error in InstallClientCertificate: {0}\r\n StackTrace: {1}", ex.Message, ex.StackTrace);
+                session.Log("Error in InstallClientCertificate:\r\n{0}", ex);
                 return ActionResult.Failure;
             }
             return ActionResult.Success;
@@ -96,7 +100,7 @@ namespace EtwEvents.PushAgent.Setup.Tools
             }
             catch (Exception ex) {
                 session["ROOT_CERTIFICATES_VALID"] = "0";
-                session.Log("Error in ValidateRootCertificates: {0}\r\n StackTrace: {1}", ex.Message, ex.StackTrace);
+                session.Log("Error in ValidateRootCertificates:\r\n{0}", ex);
                 var errorDlgTitle = session["_validateErrorTitle"] ?? "Root Certificate Not Valid";
                 ShowMessageDialog(currentCertPath + "\n    " + ex.Message, errorDlgTitle, MessageBoxIcon.Exclamation);
             }
@@ -107,9 +111,14 @@ namespace EtwEvents.PushAgent.Setup.Tools
         public static ActionResult InstallRootCertificates(Session session) {
             try {
                 var data = session.CustomActionData;
-                session.Log("InstallRootCertificates - Got CustomActionData: {0}", data.ToString());
+                session.Log("InstallRootCertificates - CustomActionData: {0}", data.ToString());
 
-                var certPaths = (data["ROOT_CERTIFICATES"] ?? "").Split(new[] { ';', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                if (!data.TryGetValue("ROOT_CERTIFICATES", out var rootCerts) || string.IsNullOrWhiteSpace(rootCerts)) {
+                    session.Log("No root certificates to install");
+                    return ActionResult.Success;
+                }
+
+                var certPaths = rootCerts.Split(new[] { ';', '\n' }, StringSplitOptions.RemoveEmptyEntries);
                 foreach (var certPath in certPaths) {
                     var trimmedPath = certPath.Trim();
                     if (trimmedPath == string.Empty)
@@ -122,7 +131,7 @@ namespace EtwEvents.PushAgent.Setup.Tools
                 }
             }
             catch (Exception ex) {
-                session.Log("Error in InstallRootCertificates: {0}\r\n StackTrace: {1}", ex.Message, ex.StackTrace);
+                session.Log("Error in InstallRootCertificates:\r\n{0}", ex);
                 return ActionResult.Failure;
             }
             return ActionResult.Success;
@@ -137,15 +146,15 @@ namespace EtwEvents.PushAgent.Setup.Tools
             var data = new CustomActionData();
             data["ROOT_CERTIFICATES"] = session["ROOT_CERTIFICATES"];
             var dataStr = data.ToString();
-            session.Log("InstallRootCertificates - Set CustomActionData for: {0}", dataStr);
-            session["InstallRootCertificates"] = dataStr;
+            session.Log("{0} - Set CustomActionData for: {1}", nameof(InstallRootCertificates), dataStr);
+            session[nameof(InstallRootCertificates)] = dataStr;
 
             data = new CustomActionData();
             data["CLIENT_CERTIFICATE"] = session["CLIENT_CERTIFICATE"];
             data["CLIENT_CERTIFICATE_PASSWORD"] = session["CLIENT_CERTIFICATE_PASSWORD"];
             dataStr = data.ToString();
-            session.Log("InstallClientCertificate - Set CustomActionData: {0}", dataStr);
-            session["InstallClientCertificate"] = dataStr;
+            session.Log("{0} - Set CustomActionData for: {1}", nameof(InstallClientCertificate), dataStr);
+            session[nameof(InstallClientCertificate)] = dataStr;
 
             data = new CustomActionData();
             data["MANAGER_URL"] = session["MANAGER_URL"];
@@ -155,8 +164,8 @@ namespace EtwEvents.PushAgent.Setup.Tools
             data["SETTINGS_OVERRIDE_PATH"] = session["SETTINGS_OVERRIDE_PATH"];
 
             dataStr = data.ToString();
-            session.Log("MergeSettingsOverride - Set CustomActionData: {0}", dataStr);
-            session["MergeSettingsOverride"] = dataStr;
+            session.Log("{0} - Set CustomActionData for: {1}", nameof(MergeSettingsOverride), dataStr);
+            session[nameof(MergeSettingsOverride)] = dataStr;
             return ActionResult.Success;
         }
 #pragma warning restore IDE0028
@@ -170,7 +179,7 @@ namespace EtwEvents.PushAgent.Setup.Tools
         public static ActionResult MergeSettingsOverride(Session session) {
             try {
                 var data = session.CustomActionData;
-                session.Log("MergeSettingsOverride - Got CustomActionData: {0}", data.ToString());
+                session.Log("MergeSettingsOverride - CustomActionData: {0}", data.ToString());
 
                 var installFolder = data["INSTALLFOLDER"];
                 string settingsOverrideDestination;
@@ -237,7 +246,7 @@ namespace EtwEvents.PushAgent.Setup.Tools
                 session.Log("Settings override file merged: {0}", installedOverrideJson);
             }
             catch (Exception ex) {
-                session.Log("Error in MergeSettingsOverride: {0}\r\n StackTrace: {1}", ex.Message, ex.StackTrace);
+                session.Log("Error in MergeSettingsOverride:\r\n{0}", ex);
                 return ActionResult.Failure;
             }
             return ActionResult.Success;
